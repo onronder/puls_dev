@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "PULS",
+    "tagline": "KOBİ'ler için kariyer sağlığı ve proaktif İK"
+  },
+  "auth": {
+    "loginTitle": "Giriş Yap",
+    "email": "E-posta",
+    "password": "Şifre",
+    "signIn": "Giriş Yap",
+    "signingIn": "Giriş yapılıyor…",
+    "kvkkNotice": "Giriş yaparak KVKK aydınlatma metnini kabul etmiş olursunuz."
+  },
+  "nav": {
+    "dashboard": "Ana Sayfa",
+    "kpi": "KPI",
+    "koc": "AI Koç",
+    "tatil": "İzin",
+    "profil": "Profil",
+    "team": "Ekip",
+    "approvals": "Onaylar",
+    "hrManagement": "İK Yönetimi",
+    "employeeProcesses": "Çalışan Süreçleri",
+    "ai": "Yapay Zeka",
+    "setup": "Tanım & Kurulum",
+    "performans": "Performans",
+    "kariyer": "Kariyer",
+    "calisanlar": "Çalışanlar",
+    "belge": "Sözleşmeler",
+    "cuzdan": "Masraf",
+    "kale": "İş Değerleme",
+    "erp": "ERP Entegrasyon",
+    "settings": "Ayarlar"
+  },
+  "persona": {
+    "employee": "Çalışan Modu",
+    "manager": "Yönetici Modu"
+  },
+  "dashboard": {
+    "title": "Ana Sayfa",
+    "placeholder": "Sprint-1 iskelet — modül kartları yakında.",
+    "welcome": "Hoş geldin, {{name}}"
+  },
+  "ai": {
+    "floatingLabel": "AI Koç",
+    "placeholder": "Bir şey sor veya anlat…"
+  }
+}
