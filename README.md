@@ -28,9 +28,16 @@ If you already have a Lovable test project with `profiles`, `user_tenants`, `use
 
 1. Fill `.env.local` with that project’s URL + anon key (do **not** paste keys in chat).
 2. Link CLI: `supabase link --project-ref <your-ref>`
-3. Apply **only** the additive migration: `supabase db push` (uses `20260520130000_puls_on_lovable_auth.sql`)
-4. Do **not** run `20260520120000_foundation.sql` on that database — it would conflict with existing `tenants`.
-5. Audit schema: `pnpm audit:supabase`
+3. Apply additive migration: `supabase db push` (only `20260520130000_puls_on_lovable_auth.sql`)
+4. If a previous push failed on `foundation.sql`, mark it skipped then push again:
+
+```bash
+supabase migration repair 20260520120000 --status applied
+supabase db push
+```
+
+5. Greenfield SQL (`20260520120000_foundation.sql`) lives in `supabase/migrations-greenfield/` — **do not** push to Lovable DB.
+6. Audit schema: `pnpm audit:supabase`
 
 Existing `auth.users` + `profiles` + `user_tenants` continue to work. Login uses Supabase Auth; persona is resolved from `employees` or `user_roles`.
 
