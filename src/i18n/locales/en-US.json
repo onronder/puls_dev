@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "PULS",
+    "tagline": "Career health and proactive HR for SMBs"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "kvkkNotice": "By signing in you accept the privacy notice."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "kpi": "KPI",
+    "koc": "AI Coach",
+    "tatil": "Leave",
+    "profil": "Profile",
+    "team": "Team",
+    "approvals": "Approvals",
+    "hrManagement": "HR Management",
+    "employeeProcesses": "Employee Processes",
+    "ai": "Artificial Intelligence",
+    "setup": "Setup & Configuration",
+    "performans": "Performance",
+    "kariyer": "Career",
+    "calisanlar": "Employees",
+    "belge": "Contracts",
+    "cuzdan": "Expenses",
+    "kale": "Job Evaluation",
+    "erp": "ERP Integration",
+    "settings": "Settings"
+  },
+  "persona": {
+    "employee": "Employee Mode",
+    "manager": "Manager Mode"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "placeholder": "Sprint-1 scaffold — module cards coming soon.",
+    "welcome": "Welcome, {{name}}"
+  },
+  "ai": {
+    "floatingLabel": "AI Coach",
+    "placeholder": "Ask or tell something…"
+  }
+}
