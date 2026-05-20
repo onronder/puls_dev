@@ -117,10 +117,10 @@ CREATE TABLE public.performans_competency_templates (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE SCHEMA IF NOT EXISTS vault;
-CREATE SCHEMA IF NOT EXISTS audit;
+CREATE SCHEMA IF NOT EXISTS puls_vault;
+CREATE SCHEMA IF NOT EXISTS puls_audit;
 
-CREATE TABLE vault.conversation_messages (
+CREATE TABLE puls_vault.conversation_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   anonymous_employee_id UUID NOT NULL REFERENCES public.employees(anonymous_id) ON DELETE CASCADE,
@@ -131,7 +131,7 @@ CREATE TABLE vault.conversation_messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE audit.audit_logs (
+CREATE TABLE puls_audit.audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES public.tenants(id) ON DELETE SET NULL,
   actor_id UUID,
@@ -170,8 +170,8 @@ ALTER TABLE public.erp_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.erp_field_mappings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.erp_sync_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.performans_competency_templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE vault.conversation_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puls_vault.conversation_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puls_audit.audit_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY tenants_select ON public.tenants
   FOR SELECT TO authenticated
@@ -215,19 +215,19 @@ CREATE POLICY competency_templates_tenant ON public.performans_competency_templa
   USING (tenant_id = public.current_tenant_id())
   WITH CHECK (tenant_id = public.current_tenant_id());
 
-CREATE POLICY vault_employee_select_own ON vault.conversation_messages
+CREATE POLICY vault_employee_select_own ON puls_vault.conversation_messages
   FOR SELECT TO authenticated
   USING (anonymous_employee_id = public.current_employee_id());
 
-CREATE POLICY vault_employee_insert_own ON vault.conversation_messages
+CREATE POLICY vault_employee_insert_own ON puls_vault.conversation_messages
   FOR INSERT TO authenticated
   WITH CHECK (anonymous_employee_id = public.current_employee_id());
 
-CREATE POLICY audit_insert ON audit.audit_logs
+CREATE POLICY audit_insert ON puls_audit.audit_logs
   FOR INSERT TO authenticated
   WITH CHECK (tenant_id IS NULL OR tenant_id = public.current_tenant_id());
 
-CREATE POLICY audit_select_tenant ON audit.audit_logs
+CREATE POLICY audit_select_tenant ON puls_audit.audit_logs
   FOR SELECT TO authenticated
   USING (tenant_id = public.current_tenant_id());
 

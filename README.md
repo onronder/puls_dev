@@ -18,15 +18,49 @@ cp .env.example .env.local   # fill Supabase keys locally — never commit
 pnpm dev                     # http://localhost:3000
 ```
 
+Run `cp .env.example .env.local` in the **project root** (same folder as `package.json`) — in Cursor’s integrated terminal or your Mac Terminal after cloning the repo.
+
+If `pnpm install` fails with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` (pnpm 11 default), run `git pull` to get `pnpm-workspace.yaml`, or temporarily: `pnpm install --config.minimum-release-age=0`.
+
+## Existing Supabase (Lovable auth)
+
+If you already have a Lovable test project with `profiles`, `user_tenants`, `user_roles`, and `audit_log`:
+
+1. Fill `.env.local` with that project’s URL + anon key (do **not** paste keys in chat).
+2. Link CLI: `supabase link --project-ref <your-ref>`
+3. Apply additive migration: `supabase db push` (only `20260520130000_puls_on_lovable_auth.sql`)
+4. If a previous push failed on `foundation.sql`, either revert the phantom record or pull the stub:
+
+```bash
+# Option A — revert phantom applied record (simplest)
+supabase migration repair 20260520120000 --status reverted
+supabase db push
+
+# Option B — after git pull, stub file 20260520120000_foundation_skipped.sql syncs history
+supabase db push
+```
+
+5. Greenfield full SQL: `supabase/migrations-greenfield/20260520120000_foundation.sql`
+6. Audit schema: `pnpm audit:supabase`
+
+After migration, add `puls_vault` and `puls_audit` to **Supabase Dashboard → Project Settings → API → Exposed schemas** (in addition to `public`).
+
+Existing `auth.users` + `profiles` + `user_tenants` continue to work. Login uses Supabase Auth; persona is resolved from `employees` or `user_roles`.
+
 ## Supabase
 
 ```bash
 # Install CLI: https://supabase.com/docs/guides/cli
 supabase start
-supabase db reset            # migrations + seed
+supabase db reset            # Lovable compat migration only (see below)
 ```
 
-Migrations: `supabase/migrations/`. Seed includes Mert Teknik demo tenant + Canias mapping placeholders.
+| Scenario | Migrations folder | Notes |
+|---|---|---|
+| **Existing Lovable DB** | `supabase/migrations/` | `db push` — product tables on auth schema |
+| **Greenfield local** | `migrations-greenfield/` + seed | Copy foundation SQL manually or use local reset workflow |
+
+Migrations: `supabase/migrations/`. Greenfield-only: `supabase/migrations-greenfield/`. Seed includes Mert Teknik demo tenant + Canias mapping placeholders.
 
 ## Environment variables
 

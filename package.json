@@ -2,6 +2,7 @@
   "name": "puls_dev",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.33.3",
   "imports": {
     "#/*": "./src/*"
   },
@@ -13,6 +14,7 @@
     "lint": "eslint .",
     "format": "prettier --check .",
     "check-i18n": "node scripts/check-i18n.mjs",
+    "audit:supabase": "node scripts/audit-supabase-schema.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "prepare": "husky"
@@ -82,11 +84,5 @@
     "typescript-eslint": "^8.59.4",
     "vite": "^8.0.0",
     "vitest": "^4.1.5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
   }
 }

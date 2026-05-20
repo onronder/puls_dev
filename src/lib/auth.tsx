@@ -9,7 +9,13 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 
-import { supabase, type PersonaRole } from '#/lib/supabase'
+import {
+  isDualPersonaRole,
+  logPersonaSwitch,
+  resolvePersonaForUser,
+} from '#/lib/persona'
+import type { PersonaRole } from '#/lib/supabase'
+import { supabase } from '#/lib/supabase'
 
 export type ActivePersona = 'employee' | 'manager'
 
@@ -34,20 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   const loadPersona = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('employees')
-      .select('persona_role, tenant_id')
-      .eq('user_id', userId)
-      .maybeSingle()
-
-    const role = (data?.persona_role as PersonaRole | undefined) ?? 'employee'
-    setPersonaRole(role)
-
-    if (role === 'manager' || role === 'hr_admin') {
-      setActivePersonaState('manager')
-    } else {
-      setActivePersonaState('employee')
-    }
+    const { personaRole } = await resolvePersonaForUser(userId)
+    setPersonaRole(personaRole)
+    setActivePersonaState(isDualPersonaRole(personaRole) ? 'manager' : 'employee')
   }, [])
 
   useEffect(() => {
@@ -74,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [loadPersona])
 
-  const hasDualPersona = personaRole === 'manager' || personaRole === 'hr_admin'
+  const hasDualPersona = isDualPersonaRole(personaRole)
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -90,12 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setActivePersonaState(persona)
 
       if (session?.user) {
-        await supabase.schema('audit').from('audit_logs').insert({
-          tenant_id: null,
-          actor_id: session.user.id,
-          action: 'persona_switch',
-          target_object: { persona },
-          request_metadata: { source: 'PersonaTogglePill' },
+        const { tenantId } = await resolvePersonaForUser(session.user.id)
+        await logPersonaSwitch({
+          userId: session.user.id,
+          tenantId,
+          persona,
         })
       }
     },
