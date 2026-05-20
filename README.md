@@ -43,6 +43,8 @@ supabase db push
 5. Greenfield full SQL: `supabase/migrations-greenfield/20260520120000_foundation.sql`
 6. Audit schema: `pnpm audit:supabase`
 
+After migration, add `puls_vault` and `puls_audit` to **Supabase Dashboard → Project Settings → API → Exposed schemas** (in addition to `public`).
+
 Existing `auth.users` + `profiles` + `user_tenants` continue to work. Login uses Supabase Auth; persona is resolved from `employees` or `user_roles`.
 
 ## Supabase

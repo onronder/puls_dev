@@ -129,9 +129,9 @@ CREATE TABLE IF NOT EXISTS public.performans_competency_templates (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE SCHEMA IF NOT EXISTS vault;
+CREATE SCHEMA IF NOT EXISTS puls_vault;
 
-CREATE TABLE IF NOT EXISTS vault.conversation_messages (
+CREATE TABLE IF NOT EXISTS puls_vault.conversation_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   anonymous_employee_id UUID NOT NULL REFERENCES public.employees(anonymous_id) ON DELETE CASCADE,
@@ -142,9 +142,9 @@ CREATE TABLE IF NOT EXISTS vault.conversation_messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE SCHEMA IF NOT EXISTS audit;
+CREATE SCHEMA IF NOT EXISTS puls_audit;
 
-CREATE TABLE IF NOT EXISTS audit.audit_logs (
+CREATE TABLE IF NOT EXISTS puls_audit.audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES public.tenants(id) ON DELETE SET NULL,
   actor_id UUID,
@@ -215,8 +215,8 @@ ALTER TABLE public.erp_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.erp_field_mappings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.erp_sync_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.performans_competency_templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE vault.conversation_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puls_vault.conversation_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puls_audit.audit_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS departments_tenant ON public.departments;
 CREATE POLICY departments_tenant ON public.departments
@@ -264,23 +264,23 @@ CREATE POLICY competency_templates_tenant ON public.performans_competency_templa
   USING (tenant_id = public.current_tenant_id())
   WITH CHECK (tenant_id = public.current_tenant_id());
 
-DROP POLICY IF EXISTS vault_employee_select_own ON vault.conversation_messages;
-CREATE POLICY vault_employee_select_own ON vault.conversation_messages
+DROP POLICY IF EXISTS vault_employee_select_own ON puls_vault.conversation_messages;
+CREATE POLICY vault_employee_select_own ON puls_vault.conversation_messages
   FOR SELECT TO authenticated
   USING (anonymous_employee_id = public.current_employee_id());
 
-DROP POLICY IF EXISTS vault_employee_insert_own ON vault.conversation_messages;
-CREATE POLICY vault_employee_insert_own ON vault.conversation_messages
+DROP POLICY IF EXISTS vault_employee_insert_own ON puls_vault.conversation_messages;
+CREATE POLICY vault_employee_insert_own ON puls_vault.conversation_messages
   FOR INSERT TO authenticated
   WITH CHECK (anonymous_employee_id = public.current_employee_id());
 
-DROP POLICY IF EXISTS audit_insert ON audit.audit_logs;
-CREATE POLICY audit_insert ON audit.audit_logs
+DROP POLICY IF EXISTS audit_insert ON puls_audit.audit_logs;
+CREATE POLICY audit_insert ON puls_audit.audit_logs
   FOR INSERT TO authenticated
   WITH CHECK (tenant_id IS NULL OR tenant_id = public.current_tenant_id());
 
-DROP POLICY IF EXISTS audit_select_tenant ON audit.audit_logs;
-CREATE POLICY audit_select_tenant ON audit.audit_logs
+DROP POLICY IF EXISTS audit_select_tenant ON puls_audit.audit_logs;
+CREATE POLICY audit_select_tenant ON puls_audit.audit_logs
   FOR SELECT TO authenticated
   USING (tenant_id = public.current_tenant_id());
 
@@ -289,6 +289,13 @@ CREATE INDEX IF NOT EXISTS idx_positions_tenant ON public.positions(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_employees_tenant ON public.employees(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_employees_user ON public.employees(user_id);
 CREATE INDEX IF NOT EXISTS idx_erp_mappings_connection ON public.erp_field_mappings(connection_id);
+
+GRANT USAGE ON SCHEMA puls_vault TO authenticated, service_role;
+GRANT USAGE ON SCHEMA puls_audit TO authenticated, service_role;
+GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA puls_vault TO authenticated;
+GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA puls_audit TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA puls_vault TO service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA puls_audit TO service_role;
 
 -- Link existing auth user to tenant via profiles + user_tenants (optional bootstrap)
 CREATE OR REPLACE FUNCTION public.ensure_employee_from_profile()
