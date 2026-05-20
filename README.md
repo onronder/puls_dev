@@ -47,6 +47,14 @@ After migration, add `puls_vault` and `puls_audit` to **Supabase Dashboard → P
 
 Existing `auth.users` + `profiles` + `user_tenants` continue to work. Login uses Supabase Auth; persona is resolved from `employees` or `user_roles`.
 
+### Synthetic demo data (no real Mert Teknik export yet)
+
+1. Supabase Dashboard → Authentication → Users → copy your user UUID
+2. Open `supabase/seed-demo.sql`, replace `REPLACE_WITH_YOUR_AUTH_USER_UUID`
+3. Run in SQL Editor
+
+This creates Mert Teknik demo tenant, 3 departments, 4 employees, 3 competency templates, and links your login user as `hr_admin` (persona toggle enabled).
+
 ## Supabase
 
 ```bash

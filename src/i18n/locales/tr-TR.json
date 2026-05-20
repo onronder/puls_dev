@@ -38,8 +38,59 @@
   },
   "dashboard": {
     "title": "Ana Sayfa",
-    "placeholder": "Sprint-1 iskelet — modül kartları yakında.",
-    "welcome": "Hoş geldin, {{name}}"
+    "placeholder": "Sprint-2 — canlı veri kartları.",
+    "welcome": "Hoş geldin, {{name}}",
+    "noTenant": "Tenant bağlantısı yok — seed-demo.sql çalıştırın.",
+    "stats": {
+      "employees": "Çalışan",
+      "departments": "Departman",
+      "competencies": "Yetkinlik şablonu"
+    },
+    "cards": {
+      "bagla": {
+        "title": "Bağla™",
+        "description": "Ekip bağlılık sinyalleri (k≥5)",
+        "hint": "Sentetik skor — Sprint-2 sentiment-engine"
+      },
+      "kpi": {
+        "title": "KPI",
+        "managerDescription": "Organizasyon hedefleri",
+        "employeeDescription": "Kişisel hedeflerim"
+      },
+      "ai": {
+        "title": "AI Koç™",
+        "description": "Floating widget aktif",
+        "hint": "Sağ alttaki butondan erişilebilir"
+      }
+    },
+    "erpConnected": "Bağlı: {{provider}}",
+    "erpDisconnected": "ERP bağlantısı pasif (demo)",
+    "emptySeed": {
+      "title": "Demo veri yok",
+      "description": "Supabase SQL Editor'da supabase/seed-demo.sql dosyasını çalıştırın (USER_UUID değiştirin)."
+    }
+  },
+  "performans": {
+    "title": "Performans",
+    "subtitle": "Yetkinlik şablonları ve değerlendirme dönemleri",
+    "sprintBadge": "Sprint-2 iskelet",
+    "sections": {
+      "competencies": "Yetkinlik şablonları",
+      "competenciesHint": "Tenant bazlı şablonlar (performans_competency_templates)",
+      "cycles": "Değerlendirme dönemleri",
+      "cyclesHint": "360 / hedef dönemleri — yakında",
+      "goals": "Hedefler",
+      "goalsHint": "OKR ve pozisyon hedefleri — yakında"
+    },
+    "empty": {
+      "competencies": "Henüz şablon yok. seed-demo.sql ile 3 demo şablon ekleyebilirsiniz.",
+      "cycles": "Aktif dönem yok.",
+      "goals": "Atanmış hedef yok."
+    },
+    "actions": {
+      "createCycle": "Dönem oluştur (yakında)",
+      "backDashboard": "Ana sayfaya dön"
+    }
   },
   "ai": {
     "floatingLabel": "AI Koç",
