@@ -86,10 +86,10 @@ async function main() {
     else console.log(`  ? public.${table} — ${result.error}`)
   }
 
-  const auditSchema = await tableExists(supabase, 'audit_logs', 'audit')
+  const auditSchema = await tableExists(supabase, 'audit_logs', 'puls_audit')
   console.log('\n--- Audit ---')
-  if (auditSchema === true) console.log('  ✓ audit.audit_logs (Puls)')
-  else console.log('  ○ audit.audit_logs missing — will use public.audit_log if present')
+  if (auditSchema === true) console.log('  ✓ puls_audit.audit_logs (Puls)')
+  else console.log('  ○ puls_audit.audit_logs missing — will use public.audit_log if present')
 
   const { data: session } = await supabase.auth.getSession()
   console.log('\n--- Auth session ---')

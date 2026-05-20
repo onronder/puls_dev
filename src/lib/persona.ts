@@ -86,11 +86,18 @@ export async function logPersonaSwitch(params: {
   }
 
   const { error: pulsAuditError } = await supabase
-    .schema('audit')
+    .schema('puls_audit')
     .from('audit_logs')
     .insert(auditPayload)
 
   if (!pulsAuditError) return
+
+  const { error: legacyAuditError } = await supabase
+    .schema('audit')
+    .from('audit_logs')
+    .insert(auditPayload)
+
+  if (!legacyAuditError) return
 
   await supabase.from('audit_log').insert({
     tenant_id: tenantId,
