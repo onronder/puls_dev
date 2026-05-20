@@ -18,6 +18,20 @@ cp .env.example .env.local   # fill Supabase keys locally — never commit
 pnpm dev                     # http://localhost:3000
 ```
 
+Run `cp .env.example .env.local` in the **project root** (same folder as `package.json`) — in Cursor’s integrated terminal or your Mac Terminal after cloning the repo.
+
+## Existing Supabase (Lovable auth)
+
+If you already have a Lovable test project with `profiles`, `user_tenants`, `user_roles`, and `audit_log`:
+
+1. Fill `.env.local` with that project’s URL + anon key (do **not** paste keys in chat).
+2. Link CLI: `supabase link --project-ref <your-ref>`
+3. Apply **only** the additive migration: `supabase db push` (uses `20260520130000_puls_on_lovable_auth.sql`)
+4. Do **not** run `20260520120000_foundation.sql` on that database — it would conflict with existing `tenants`.
+5. Audit schema: `pnpm audit:supabase`
+
+Existing `auth.users` + `profiles` + `user_tenants` continue to work. Login uses Supabase Auth; persona is resolved from `employees` or `user_roles`.
+
 ## Supabase
 
 ```bash
