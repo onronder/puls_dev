@@ -29,14 +29,18 @@ If you already have a Lovable test project with `profiles`, `user_tenants`, `use
 1. Fill `.env.local` with that project’s URL + anon key (do **not** paste keys in chat).
 2. Link CLI: `supabase link --project-ref <your-ref>`
 3. Apply additive migration: `supabase db push` (only `20260520130000_puls_on_lovable_auth.sql`)
-4. If a previous push failed on `foundation.sql`, mark it skipped then push again:
+4. If a previous push failed on `foundation.sql`, either revert the phantom record or pull the stub:
 
 ```bash
-supabase migration repair 20260520120000 --status applied
+# Option A — revert phantom applied record (simplest)
+supabase migration repair 20260520120000 --status reverted
+supabase db push
+
+# Option B — after git pull, stub file 20260520120000_foundation_skipped.sql syncs history
 supabase db push
 ```
 
-5. Greenfield SQL (`20260520120000_foundation.sql`) lives in `supabase/migrations-greenfield/` — **do not** push to Lovable DB.
+5. Greenfield full SQL: `supabase/migrations-greenfield/20260520120000_foundation.sql`
 6. Audit schema: `pnpm audit:supabase`
 
 Existing `auth.users` + `profiles` + `user_tenants` continue to work. Login uses Supabase Auth; persona is resolved from `employees` or `user_roles`.
@@ -46,10 +50,15 @@ Existing `auth.users` + `profiles` + `user_tenants` continue to work. Login uses
 ```bash
 # Install CLI: https://supabase.com/docs/guides/cli
 supabase start
-supabase db reset            # migrations + seed
+supabase db reset            # Lovable compat migration only (see below)
 ```
 
-Migrations: `supabase/migrations/`. Seed includes Mert Teknik demo tenant + Canias mapping placeholders.
+| Scenario | Migrations folder | Notes |
+|---|---|---|
+| **Existing Lovable DB** | `supabase/migrations/` | `db push` — product tables on auth schema |
+| **Greenfield local** | `migrations-greenfield/` + seed | Copy foundation SQL manually or use local reset workflow |
+
+Migrations: `supabase/migrations/`. Greenfield-only: `supabase/migrations-greenfield/`. Seed includes Mert Teknik demo tenant + Canias mapping placeholders.
 
 ## Environment variables
 
