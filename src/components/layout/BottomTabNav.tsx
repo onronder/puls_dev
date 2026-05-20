@@ -6,7 +6,6 @@ import {
   CheckSquare,
   LayoutDashboard,
   User,
-  Users,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -26,7 +25,7 @@ export function BottomTabNav() {
 
   const employeeTabs: TabItem[] = [
     { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-    { to: '/dashboard', labelKey: 'nav.kpi', icon: BarChart3 },
+    { to: '/performans', labelKey: 'nav.performans', icon: BarChart3 },
     { to: '/dashboard', labelKey: 'nav.koc', icon: Bot },
     { to: '/dashboard', labelKey: 'nav.tatil', icon: CalendarDays },
     { to: '/dashboard', labelKey: 'nav.profil', icon: User },
@@ -34,7 +33,7 @@ export function BottomTabNav() {
 
   const managerTabs: TabItem[] = [
     { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-    { to: '/dashboard', labelKey: 'nav.team', icon: Users },
+    { to: '/performans', labelKey: 'nav.performans', icon: BarChart3 },
     { to: '/dashboard', labelKey: 'nav.approvals', icon: CheckSquare },
     { to: '/dashboard', labelKey: 'nav.koc', icon: Bot },
   ]

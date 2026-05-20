@@ -38,8 +38,59 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "placeholder": "Sprint-1 scaffold — module cards coming soon.",
-    "welcome": "Welcome, {{name}}"
+    "placeholder": "Sprint-2 — live data cards.",
+    "welcome": "Welcome, {{name}}",
+    "noTenant": "No tenant linked — run seed-demo.sql.",
+    "stats": {
+      "employees": "Employees",
+      "departments": "Departments",
+      "competencies": "Competency templates"
+    },
+    "cards": {
+      "bagla": {
+        "title": "Bağla™",
+        "description": "Team engagement signals (k≥5)",
+        "hint": "Synthetic score — Sprint-2 sentiment-engine"
+      },
+      "kpi": {
+        "title": "KPI",
+        "managerDescription": "Organization goals",
+        "employeeDescription": "My personal goals"
+      },
+      "ai": {
+        "title": "AI Coach™",
+        "description": "Floating widget active",
+        "hint": "Accessible from the bottom-right button"
+      }
+    },
+    "erpConnected": "Connected: {{provider}}",
+    "erpDisconnected": "ERP connection inactive (demo)",
+    "emptySeed": {
+      "title": "No demo data",
+      "description": "Run supabase/seed-demo.sql in Supabase SQL Editor (replace USER_UUID)."
+    }
+  },
+  "performans": {
+    "title": "Performance",
+    "subtitle": "Competency templates and review cycles",
+    "sprintBadge": "Sprint-2 skeleton",
+    "sections": {
+      "competencies": "Competency templates",
+      "competenciesHint": "Tenant-scoped templates (performans_competency_templates)",
+      "cycles": "Review cycles",
+      "cyclesHint": "360 / goal cycles — coming soon",
+      "goals": "Goals",
+      "goalsHint": "OKR and position goals — coming soon"
+    },
+    "empty": {
+      "competencies": "No templates yet. Add 3 demo templates via seed-demo.sql.",
+      "cycles": "No active cycle.",
+      "goals": "No assigned goals."
+    },
+    "actions": {
+      "createCycle": "Create cycle (soon)",
+      "backDashboard": "Back to dashboard"
+    }
   },
   "ai": {
     "floatingLabel": "AI Coach",

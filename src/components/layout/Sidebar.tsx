@@ -19,7 +19,7 @@ export function Sidebar() {
       titleKey: 'nav.hrManagement',
       items: [
         { to: '/dashboard', labelKey: 'nav.dashboard' },
-        { to: '/dashboard', labelKey: 'nav.performans' },
+        { to: '/performans', labelKey: 'nav.performans' },
         { to: '/dashboard', labelKey: 'nav.kariyer' },
         { to: '/dashboard', labelKey: 'nav.kpi' },
         { to: '/dashboard', labelKey: 'nav.kale' },
