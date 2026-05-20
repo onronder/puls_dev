@@ -52,8 +52,10 @@ BEGIN
     INSERT INTO public.user_tenants (user_id, tenant_id, is_default) VALUES (v_user_id, v_tenant_id, TRUE);
   END IF;
 
+  -- Optional user_roles (use a valid app_role enum value for your project):
+  -- patron | ik_admin | yonetici | calisan | finans | hukuk_uyum
   IF NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = v_user_id AND tenant_id = v_tenant_id) THEN
-    INSERT INTO public.user_roles (user_id, tenant_id, role) VALUES (v_user_id, v_tenant_id, 'admin');
+    INSERT INTO public.user_roles (user_id, tenant_id, role) VALUES (v_user_id, v_tenant_id, 'ik_admin');
   END IF;
 
   INSERT INTO public.erp_connections (id, tenant_id, provider, display_name, is_active, sync_schedule)
