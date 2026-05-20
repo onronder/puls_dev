@@ -52,9 +52,11 @@ BEGIN
     INSERT INTO public.user_tenants (user_id, tenant_id, is_default) VALUES (v_user_id, v_tenant_id, TRUE);
   END IF;
 
-  -- user_roles skipped: app_role enum varies per Lovable project (admin may not exist).
-  -- Persona + RLS use employees.persona_role. To add a role manually, list enum values:
-  --   SELECT enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid WHERE t.typname = 'app_role';
+  -- Optional user_roles (use a valid app_role enum value for your project):
+  -- patron | ik_admin | yonetici | calisan | finans | hukuk_uyum
+  IF NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = v_user_id AND tenant_id = v_tenant_id) THEN
+    INSERT INTO public.user_roles (user_id, tenant_id, role) VALUES (v_user_id, v_tenant_id, 'ik_admin');
+  END IF;
 
   INSERT INTO public.erp_connections (id, tenant_id, provider, display_name, is_active, sync_schedule)
   VALUES (

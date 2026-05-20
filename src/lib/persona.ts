@@ -57,14 +57,23 @@ export async function resolvePersonaForUser(userId: string): Promise<{
 function mapLovableRole(role: string | undefined): PersonaRole {
   switch (role) {
     case 'superadmin':
+    case 'patron':
       return 'superadmin'
     case 'owner':
     case 'admin':
     case 'hr_admin':
     case 'hr':
+    case 'ik_admin':
+    case 'finans':
+    case 'hukuk_uyum':
       return 'hr_admin'
     case 'manager':
+    case 'yonetici':
       return 'manager'
+    case 'calisan':
+    case 'employee':
+    case 'member':
+      return 'employee'
     default:
       return 'employee'
   }
