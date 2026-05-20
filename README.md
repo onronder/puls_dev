@@ -20,6 +20,8 @@ pnpm dev                     # http://localhost:3000
 
 Run `cp .env.example .env.local` in the **project root** (same folder as `package.json`) — in Cursor’s integrated terminal or your Mac Terminal after cloning the repo.
 
+If `pnpm install` fails with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` (pnpm 11 default), run `git pull` to get `pnpm-workspace.yaml`, or temporarily: `pnpm install --config.minimum-release-age=0`.
+
 ## Existing Supabase (Lovable auth)
 
 If you already have a Lovable test project with `profiles`, `user_tenants`, `user_roles`, and `audit_log`:
