@@ -78,18 +78,34 @@
       "competencies": "Competency templates",
       "competenciesHint": "Tenant-scoped templates (performans_competency_templates)",
       "cycles": "Review cycles",
-      "cyclesHint": "360 / goal cycles — coming soon",
+      "cyclesHint": "360 / goal cycles",
       "goals": "Goals",
       "goalsHint": "OKR and position goals — coming soon"
     },
+    "cycleStatus": {
+      "draft": "Draft",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "form": {
+      "cycleName": "Cycle name",
+      "startsAt": "Start date",
+      "endsAt": "End date"
+    },
     "empty": {
       "competencies": "No templates yet. Add 3 demo templates via seed-demo.sql.",
-      "cycles": "No active cycle.",
+      "cycles": "No active cycle. Switch to Manager Mode to create one.",
       "goals": "No assigned goals."
     },
     "actions": {
-      "createCycle": "Create cycle (soon)",
+      "createCycle": "Create cycle",
+      "activate": "Activate",
+      "saving": "Saving…",
       "backDashboard": "Back to dashboard"
+    },
+    "managerOnlyCreate": "Switch to Manager Mode to create review cycles.",
+    "errors": {
+      "noTenant": "No tenant found — run seed-demo.sql."
     }
   },
   "ai": {

@@ -15,4 +15,7 @@ __unconfig*
 todos.json
 test-results/
 playwright-report/
-test-results/
+ios/App/Pods/
+ios/App/build/
+android/.gradle/
+android/app/build/
