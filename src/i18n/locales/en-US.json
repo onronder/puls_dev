@@ -43,6 +43,7 @@
     "cuzdan": "Expenses",
     "kale": "Job Evaluation",
     "erp": "ERP Integration",
+    "sirketKurulum": "Company Setup",
     "settings": "Settings"
   },
   "persona": {
@@ -320,6 +321,40 @@
     },
     "status": {
       "mapped": "Matched",
+      "pending": "Pending"
+    }
+  },
+  "companySetup": {
+    "eyebrow": "Setup & Configuration",
+    "title": "Company Setup",
+    "description": "Manage tenant, company details, and default work settings.",
+    "metrics": {
+      "completion": "Completion",
+      "missing": "Missing fields",
+      "erpReadiness": "ERP readiness",
+      "language": "Language"
+    },
+    "fields": {
+      "name": "Company name",
+      "vkn": "Tax ID",
+      "sector": "Sector",
+      "band": "Employee band",
+      "language": "Default language",
+      "timezone": "Timezone",
+      "package": "Plan"
+    },
+    "sections": {
+      "companyInfo": "Company information",
+      "checklist": "Setup checklist"
+    },
+    "checklist": {
+      "tenant": "Tenant created",
+      "employees": "Demo employees added",
+      "erpMapping": "ERP field mapping pending",
+      "performanceCycle": "Performance cycle pending"
+    },
+    "status": {
+      "done": "Done",
       "pending": "Pending"
     }
   },

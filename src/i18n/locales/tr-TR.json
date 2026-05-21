@@ -43,6 +43,7 @@
     "cuzdan": "Masraf",
     "kale": "İş Değerleme",
     "erp": "ERP Entegrasyon",
+    "sirketKurulum": "Şirket Kurulum",
     "settings": "Ayarlar"
   },
   "persona": {
@@ -320,6 +321,40 @@
     },
     "status": {
       "mapped": "Eşleşti",
+      "pending": "Bekliyor"
+    }
+  },
+  "companySetup": {
+    "eyebrow": "Tanım & Kurulum",
+    "title": "Şirket Kurulum",
+    "description": "Tenant, şirket bilgileri ve varsayılan çalışma ayarlarını yönet.",
+    "metrics": {
+      "completion": "Tamamlanma",
+      "missing": "Eksik alan",
+      "erpReadiness": "ERP hazırlığı",
+      "language": "Dil"
+    },
+    "fields": {
+      "name": "Şirket adı",
+      "vkn": "VKN",
+      "sector": "Sektör",
+      "band": "Çalışan bandı",
+      "language": "Varsayılan dil",
+      "timezone": "Timezone",
+      "package": "Paket"
+    },
+    "sections": {
+      "companyInfo": "Şirket bilgileri",
+      "checklist": "Kurulum checklist"
+    },
+    "checklist": {
+      "tenant": "Tenant oluşturuldu",
+      "employees": "Demo çalışanlar eklendi",
+      "erpMapping": "ERP alan eşleştirme bekliyor",
+      "performanceCycle": "Performans dönemi bekliyor"
+    },
+    "status": {
+      "done": "Tamam",
       "pending": "Bekliyor"
     }
   },

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSirketKurulumRouteImport } from './routes/_app/sirket-kurulum'
 import { Route as AppPerformansRouteImport } from './routes/_app/performans'
 import { Route as AppMenuRouteImport } from './routes/_app/menu'
 import { Route as AppMasrafRouteImport } from './routes/_app/masraf'
@@ -33,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSirketKurulumRoute = AppSirketKurulumRouteImport.update({
+  id: '/sirket-kurulum',
+  path: '/sirket-kurulum',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppPerformansRoute = AppPerformansRouteImport.update({
   id: '/performans',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/masraf': typeof AppMasrafRoute
   '/menu': typeof AppMenuRoute
   '/performans': typeof AppPerformansRoute
+  '/sirket-kurulum': typeof AppSirketKurulumRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/masraf': typeof AppMasrafRoute
   '/menu': typeof AppMenuRoute
   '/performans': typeof AppPerformansRoute
+  '/sirket-kurulum': typeof AppSirketKurulumRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/_app/masraf': typeof AppMasrafRoute
   '/_app/menu': typeof AppMenuRoute
   '/_app/performans': typeof AppPerformansRoute
+  '/_app/sirket-kurulum': typeof AppSirketKurulumRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/masraf'
     | '/menu'
     | '/performans'
+    | '/sirket-kurulum'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/masraf'
     | '/menu'
     | '/performans'
+    | '/sirket-kurulum'
   id:
     | '__root__'
     | '/'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/_app/masraf'
     | '/_app/menu'
     | '/_app/performans'
+    | '/_app/sirket-kurulum'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -170,6 +182,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/sirket-kurulum': {
+      id: '/_app/sirket-kurulum'
+      path: '/sirket-kurulum'
+      fullPath: '/sirket-kurulum'
+      preLoaderRoute: typeof AppSirketKurulumRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/performans': {
       id: '/_app/performans'
@@ -231,6 +250,7 @@ interface AppRouteChildren {
   AppMasrafRoute: typeof AppMasrafRoute
   AppMenuRoute: typeof AppMenuRoute
   AppPerformansRoute: typeof AppPerformansRoute
+  AppSirketKurulumRoute: typeof AppSirketKurulumRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -241,6 +261,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMasrafRoute: AppMasrafRoute,
   AppMenuRoute: AppMenuRoute,
   AppPerformansRoute: AppPerformansRoute,
+  AppSirketKurulumRoute: AppSirketKurulumRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
