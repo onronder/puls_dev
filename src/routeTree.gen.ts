@@ -16,6 +16,7 @@ import { Route as AppPerformansRouteImport } from './routes/_app/performans'
 import { Route as AppMenuRouteImport } from './routes/_app/menu'
 import { Route as AppMasrafRouteImport } from './routes/_app/masraf'
 import { Route as AppIzinRouteImport } from './routes/_app/izin'
+import { Route as AppErpRouteImport } from './routes/_app/erp'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCalisanlarRouteImport } from './routes/_app/calisanlar'
 
@@ -53,6 +54,11 @@ const AppIzinRoute = AppIzinRouteImport.update({
   path: '/izin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppErpRoute = AppErpRouteImport.update({
+  id: '/erp',
+  path: '/erp',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/calisanlar': typeof AppCalisanlarRoute
   '/dashboard': typeof AppDashboardRoute
+  '/erp': typeof AppErpRoute
   '/izin': typeof AppIzinRoute
   '/masraf': typeof AppMasrafRoute
   '/menu': typeof AppMenuRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/calisanlar': typeof AppCalisanlarRoute
   '/dashboard': typeof AppDashboardRoute
+  '/erp': typeof AppErpRoute
   '/izin': typeof AppIzinRoute
   '/masraf': typeof AppMasrafRoute
   '/menu': typeof AppMenuRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/calisanlar': typeof AppCalisanlarRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/erp': typeof AppErpRoute
   '/_app/izin': typeof AppIzinRoute
   '/_app/masraf': typeof AppMasrafRoute
   '/_app/menu': typeof AppMenuRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/calisanlar'
     | '/dashboard'
+    | '/erp'
     | '/izin'
     | '/masraf'
     | '/menu'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/calisanlar'
     | '/dashboard'
+    | '/erp'
     | '/izin'
     | '/masraf'
     | '/menu'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/calisanlar'
     | '/_app/dashboard'
+    | '/_app/erp'
     | '/_app/izin'
     | '/_app/masraf'
     | '/_app/menu'
@@ -187,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIzinRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/erp': {
+      id: '/_app/erp'
+      path: '/erp'
+      fullPath: '/erp'
+      preLoaderRoute: typeof AppErpRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -207,6 +226,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCalisanlarRoute: typeof AppCalisanlarRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppErpRoute: typeof AppErpRoute
   AppIzinRoute: typeof AppIzinRoute
   AppMasrafRoute: typeof AppMasrafRoute
   AppMenuRoute: typeof AppMenuRoute
@@ -216,6 +236,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCalisanlarRoute: AppCalisanlarRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppErpRoute: AppErpRoute,
   AppIzinRoute: AppIzinRoute,
   AppMasrafRoute: AppMasrafRoute,
   AppMenuRoute: AppMenuRoute,

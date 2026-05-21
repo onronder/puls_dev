@@ -285,6 +285,44 @@
     "profileFallback": "PULS user",
     "signOut": "Sign out"
   },
+  "erp": {
+    "eyebrow": "Setup & Configuration",
+    "title": "ERP Integration",
+    "subtitle": "System: Canias · API access pending.",
+    "badge": "Pending",
+    "metrics": {
+      "system": "System",
+      "dataReadiness": "Data readiness",
+      "fieldMapping": "Field mapping",
+      "fieldMappingHint": "Mapped / total",
+      "lastAttempt": "Last attempt",
+      "lastAttemptHint": "Timeout"
+    },
+    "actions": {
+      "mapFields": "Map fields",
+      "testConnection": "Test connection"
+    },
+    "toast": {
+      "apiPendingTitle": "Canias API access is pending.",
+      "mapDescription": "The mapping editor will be enabled once customer-side API access is available.",
+      "testDescription": "Canias authentication is currently pending on the customer side."
+    },
+    "sections": {
+      "mapping": "Field mapping",
+      "mappingDescription": "PULS field → Canias field.",
+      "syncLogs": "Sync logs",
+      "syncLogsDescription": "Recent connection attempts."
+    },
+    "columns": {
+      "pulsField": "PULS field",
+      "erpField": "Canias field",
+      "status": "Status"
+    },
+    "status": {
+      "mapped": "Matched",
+      "pending": "Pending"
+    }
+  },
   "ai": {
     "floatingLabel": "AI Coach",
     "placeholder": "Ask or tell something…",

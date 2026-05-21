@@ -228,3 +228,84 @@ export function formatTry(amount: number, locale = 'tr-TR'): string {
 export function formatPercent(value: number): string {
   return `${Math.round(value)}%`
 }
+
+export type DemoErpMappingStatus = 'mapped' | 'pending'
+export type DemoErpSyncLevel = 'success' | 'warning' | 'info'
+
+export type DemoErpOverview = {
+  status: {
+    system: 'Canias'
+    status: 'beklemede'
+    statusLabel: string
+    mappedFields: number
+    totalFields: number
+    lastAttempt: string
+    readiness: number
+  }
+  mappings: Array<{
+    puls: string
+    erp: string
+    status: DemoErpMappingStatus
+  }>
+  syncLogs: Array<{
+    id: string
+    at: string
+    level: DemoErpSyncLevel
+    message: string
+  }>
+}
+
+const demoErpOverview: DemoErpOverview = {
+  status: {
+    system: 'Canias',
+    status: 'beklemede',
+    statusLabel: 'API erişimi bekleniyor',
+    mappedFields: 6,
+    totalFields: 11,
+    lastAttempt: 'Dün, 18:42',
+    readiness: 72,
+  },
+  mappings: [
+    { puls: 'Sicil no', erp: 'PERS_NO', status: 'mapped' },
+    { puls: 'Ad soyad', erp: 'AD_SOYAD', status: 'mapped' },
+    { puls: 'Departman', erp: 'DEPT_KOD', status: 'mapped' },
+    { puls: 'Pozisyon', erp: 'POZ_KOD', status: 'mapped' },
+    { puls: 'Yönetici', erp: 'YON_PERS_NO', status: 'mapped' },
+    { puls: 'İşe giriş tarihi', erp: 'ISE_GIRIS', status: 'mapped' },
+    { puls: 'E-posta', erp: '—', status: 'pending' },
+    { puls: 'Durum', erp: '—', status: 'pending' },
+    { puls: 'Telefon', erp: '—', status: 'pending' },
+    { puls: 'Lokasyon', erp: '—', status: 'pending' },
+    { puls: 'Vardiya', erp: '—', status: 'pending' },
+  ],
+  syncLogs: [
+    {
+      id: 's1',
+      at: 'Dün 18:42',
+      level: 'info',
+      message: 'Bağlantı denendi · zaman aşımı',
+    },
+    {
+      id: 's2',
+      at: 'Dün 18:40',
+      level: 'warning',
+      message: 'Kimlik doğrulama bekleniyor (müşteri tarafı)',
+    },
+    {
+      id: 's3',
+      at: 'Dün 14:10',
+      level: 'success',
+      message: 'Alan şeması hazırlandı · 11 alan',
+    },
+    {
+      id: 's4',
+      at: '16 May 09:22',
+      level: 'info',
+      message: 'Mapping taslağı oluşturuldu',
+    },
+  ],
+}
+
+export async function fetchDemoErpOverview(): Promise<DemoErpOverview> {
+  return demoErpOverview
+}
