@@ -3,6 +3,15 @@
     "name": "PULS",
     "tagline": "KOBİ'ler için kariyer sağlığı ve proaktif İK"
   },
+  "common": {
+    "soon": "Yakında",
+    "cancel": "İptal",
+    "close": "Kapat",
+    "loading": "Yükleniyor…",
+    "days": "gün",
+    "error": "Bir hata oluştu",
+    "retry": "Tekrar dene"
+  },
   "auth": {
     "loginTitle": "Giriş Yap",
     "email": "E-posta",
@@ -12,7 +21,11 @@
     "kvkkNotice": "Giriş yaparak KVKK aydınlatma metnini kabul etmiş olursunuz."
   },
   "nav": {
+    "group": {
+      "main": "Ana"
+    },
     "dashboard": "Ana Sayfa",
+    "menu": "Menü",
     "kpi": "KPI",
     "koc": "AI Koç",
     "tatil": "İzin",
@@ -41,16 +54,34 @@
     "placeholder": "Sprint-2 — canlı veri kartları.",
     "welcome": "Hoş geldin, {{name}}",
     "noTenant": "Tenant bağlantısı yok — seed-demo.sql çalıştırın.",
+    "erpCaniasInactive": "Canias pasif (hazırlık)",
     "stats": {
       "employees": "Çalışan",
       "departments": "Departman",
-      "competencies": "Yetkinlik şablonu"
+      "competencies": "Yetkinlik şablonu",
+      "dataReadiness": "Veri hazırlığı"
+    },
+    "sections": {
+      "setup": "Kurulum durumu",
+      "overview": "Genel bakış"
+    },
+    "setup": {
+      "erpTitle": "Canias ERP bağlantısı",
+      "inactive": "Pasif",
+      "approvalsTitle": "Bekleyen onaylar",
+      "approvalsHint": "İzin ve masraf onay kuyruğu"
+    },
+    "employee": {
+      "leaveBalance": "İzin bakiyesi",
+      "pendingExpense": "Bekleyen masraf",
+      "performanceScore": "Performans skoru",
+      "performanceHint": "Demo skor — performans modülü"
     },
     "cards": {
       "bagla": {
         "title": "Bağla™",
         "description": "Ekip bağlılık sinyalleri (k≥5)",
-        "hint": "Sentetik skor — Sprint-2 sentiment-engine"
+        "hint": "Sentetik skor — sentiment-engine"
       },
       "kpi": {
         "title": "KPI",
@@ -59,8 +90,8 @@
       },
       "ai": {
         "title": "AI Koç™",
-        "description": "Floating widget aktif",
-        "hint": "Sağ alttaki butondan erişilebilir"
+        "description": "Kişisel asistan yakında",
+        "hint": "MVP-2 — aktif sohbet henüz açık değil"
       }
     },
     "erpConnected": "Bağlı: {{provider}}",
@@ -73,14 +104,20 @@
   "performans": {
     "title": "Performans",
     "subtitle": "Yetkinlik şablonları ve değerlendirme dönemleri",
-    "sprintBadge": "Sprint-2 iskelet",
+    "phaseBadge": "Faz 1",
+    "metrics": {
+      "activeCycle": "Aktif dönem",
+      "avgScore": "Ortalama puan",
+      "templates": "Yetkinlik şablonu",
+      "pendingReviews": "Bekleyen değerlendirme"
+    },
     "sections": {
       "competencies": "Yetkinlik şablonları",
-      "competenciesHint": "Tenant bazlı şablonlar (performans_competency_templates)",
+      "competenciesHint": "Tenant bazlı şablonlar",
       "cycles": "Değerlendirme dönemleri",
       "cyclesHint": "360 / hedef dönemleri",
       "goals": "Hedefler",
-      "goalsHint": "OKR ve pozisyon hedefleri — yakında"
+      "goalsHint": "OKR ve pozisyon hedefleri"
     },
     "cycleStatus": {
       "draft": "Taslak",
@@ -93,8 +130,9 @@
       "endsAt": "Bitiş"
     },
     "empty": {
-      "competencies": "Henüz şablon yok. seed-demo.sql ile 3 demo şablon ekleyebilirsiniz.",
+      "competencies": "Henüz şablon yok. seed-demo.sql ile demo şablon ekleyebilirsiniz.",
       "cycles": "Aktif dönem yok. Yönetici modunda yeni dönem oluşturabilirsiniz.",
+      "cyclesHint": "İK yöneticisi dönem oluşturduğunda burada görünür.",
       "goals": "Atanmış hedef yok."
     },
     "actions": {
@@ -108,8 +146,157 @@
       "noTenant": "Tenant bulunamadı — seed-demo.sql çalıştırın."
     }
   },
+  "employees": {
+    "title": "Çalışanlar",
+    "subtitle": "Tenant çalışan listesi ve organizasyon özeti",
+    "managerOnly": "Yönetici görünümü",
+    "metrics": {
+      "active": "Aktif çalışan",
+      "departments": "Departman",
+      "positions": "Pozisyon"
+    },
+    "sections": {
+      "list": "Çalışan listesi"
+    },
+    "empty": {
+      "title": "Çalışan kaydı yok",
+      "description": "seed-demo.sql çalıştırıldığında Mert Teknik demo çalışanları listelenir."
+    },
+    "error": {
+      "loadFailed": "Çalışan listesi yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin."
+    },
+    "restricted": {
+      "title": "Bu ekran yönetici modunda",
+      "description": "Çalışan listesini görmek için üst bardaki persona anahtarından yönetici moduna geçin.",
+      "back": "Ana sayfaya dön"
+    }
+  },
+  "leave": {
+    "title": "İzin · Tatil™",
+    "subtitle": "Bakiye, geçmiş ve yeni izin talebi",
+    "hero": {
+      "remainingAnnual": "Kalan yıllık izin",
+      "summary": "{{used}} gün kullanıldı · toplam hak {{total}} gün"
+    },
+    "metrics": {
+      "pending": "Bekleyen talep"
+    },
+    "types": {
+      "annual": "Yıllık",
+      "excuse": "Mazeret",
+      "sick": "Hastalık"
+    },
+    "sections": {
+      "history": "İzin geçmişi"
+    },
+    "status": {
+      "pending": "Beklemede",
+      "approved": "Onaylandı",
+      "rejected": "Reddedildi",
+      "cancelled": "İptal"
+    },
+    "actions": {
+      "new": "Yeni izin talebi",
+      "submit": "Onaya gönder"
+    },
+    "sheet": {
+      "title": "Yeni izin talebi",
+      "description": "Demo adapter — gerçek onay akışı API katmanında bağlanacak."
+    },
+    "form": {
+      "type": "İzin türü",
+      "typePlaceholder": "İzin türü seçin",
+      "startDate": "Başlangıç",
+      "endDate": "Bitiş",
+      "delegate": "Vekil",
+      "delegatePlaceholder": "Vekil seçin",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "İsteğe bağlı açıklama",
+      "balanceAfter": "Bakiye sonrası",
+      "balanceAfterHint": "Hafta sonu/tatil kuralı Faz 2'de hesaplanacak.",
+      "dateError": "Geçerli bir tarih aralığı seçin."
+    },
+    "empty": {
+      "history": "Henüz izin kaydı yok."
+    },
+    "toast": {
+      "submitted": "İzin talebi onaya gönderildi (demo)."
+    }
+  },
+  "expense": {
+    "title": "Masraf · Cüzdan™",
+    "subtitle": "Masraf özeti ve yeni bildirim",
+    "hero": {
+      "approvedThisMonth": "Bu ay onaylanan",
+      "limitUsage": "Limit {{limit}} · kullanım %{{usage}}"
+    },
+    "metrics": {
+      "pending": "Bekleyen",
+      "yearTotal": "Yıl toplamı",
+      "topCategory": "En büyük kalem",
+      "monthlyAverage": "Ortalama/ay"
+    },
+    "categories": {
+      "travel": "Seyahat"
+    },
+    "sections": {
+      "recent": "Son masraflar"
+    },
+    "status": {
+      "draft": "Taslak",
+      "pending": "Beklemede",
+      "approved": "Onaylandı",
+      "rejected": "Reddedildi",
+      "paid": "Ödendi"
+    },
+    "actions": {
+      "new": "Yeni masraf",
+      "submit": "Onaya gönder"
+    },
+    "sheet": {
+      "title": "Yeni masraf bildirimi",
+      "description": "Demo adapter — OCR ve finans onayı sonraki fazda."
+    },
+    "form": {
+      "category": "Kategori",
+      "categoryPlaceholder": "Kategori seçin",
+      "title": "Başlık",
+      "titlePlaceholder": "Örn. İstanbul–Ankara uçak",
+      "defaultTitle": "Yeni masraf",
+      "amount": "Tutar (TRY)",
+      "amountError": "Geçerli bir tutar girin.",
+      "date": "Tarih",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "İş amacı ve detay",
+      "receipt": "Fiş / belge",
+      "receiptHint": "OCR MVP-2 — şimdilik yükleme alanı placeholder.",
+      "receiptPlaceholder": "Fiş fotoğrafla veya yükle (yakında)"
+    },
+    "empty": {
+      "list": "Henüz masraf kaydı yok."
+    },
+    "toast": {
+      "submitted": "Masraf bildirimi onaya gönderildi (demo)."
+    }
+  },
+  "menu": {
+    "title": "Menü",
+    "subtitle": "Profil ve modül kısayolları",
+    "profileFallback": "PULS kullanıcısı",
+    "signOut": "Çıkış yap"
+  },
   "ai": {
     "floatingLabel": "AI Koç",
-    "placeholder": "Bir şey sor veya anlat…"
+    "placeholder": "Bir şey sor veya anlat…",
+    "teaser": {
+      "title": "AI Koç™ yakında",
+      "description": "Kişisel İK asistanınız izin, masraf, kariyer ve performans konularında yardımcı olacak.",
+      "badge": "MVP-2",
+      "featureLeave": "İzin bakiyesi ve uygun tarih önerisi",
+      "featureExpense": "Masraf bildirimi ve politika rehberi",
+      "featureCareer": "Kariyer hazırlığı ve gelişim planı",
+      "featurePerformance": "KPI ve yetkinlik özeti",
+      "privacy": "Çalışan mahremiyeti için sınırlı erişim ve vault izolasyonu uygulanacaktır."
+    }
   }
 }
