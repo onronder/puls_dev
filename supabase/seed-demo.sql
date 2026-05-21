@@ -80,4 +80,11 @@ BEGIN
   INSERT INTO public.performans_competency_templates (tenant_id, name, description, weight, sort_order)
   SELECT v_tenant_id, 'İletişim', 'Sözlü ve yazılı iletişim', 1, 3
   WHERE NOT EXISTS (SELECT 1 FROM public.performans_competency_templates WHERE tenant_id = v_tenant_id AND name = 'İletişim');
+
+  INSERT INTO public.performans_cycles (tenant_id, name, status, starts_at, ends_at)
+  SELECT v_tenant_id, '2026 Yıllık Değerlendirme', 'active', '2026-01-01', '2026-12-31'
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.performans_cycles
+    WHERE tenant_id = v_tenant_id AND name = '2026 Yıllık Değerlendirme'
+  );
 END $$;

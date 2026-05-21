@@ -10,6 +10,7 @@ import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Avatar, AvatarFallback } from '#/components/ui/avatar'
+import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import { useAuth } from '#/lib/auth'
 import { fetchEmployeeList, fetchEmployeeListStats } from '#/lib/queries/employees'
@@ -28,7 +29,7 @@ function CalisanlarPage() {
     enabled: Boolean(user?.id) && activePersona === 'manager',
   })
 
-  const { data: employees, isLoading } = useQuery({
+  const { data: employees, isLoading, isError, refetch } = useQuery({
     queryKey: ['employee-list', user?.id],
     queryFn: () => fetchEmployeeList(user!.id),
     enabled: Boolean(user?.id) && activePersona === 'manager',
@@ -89,7 +90,18 @@ function CalisanlarPage() {
       </div>
 
       <SectionHeader title={t('employees.sections.list')} />
-      {isLoading ? (
+      {isError ? (
+        <EmptyState
+          icon={Users}
+          title={t('common.error')}
+          description={t('employees.error.loadFailed')}
+          action={
+            <Button type="button" variant="outline" onClick={() => void refetch()}>
+              {t('common.retry')}
+            </Button>
+          }
+        />
+      ) : isLoading ? (
         <div className="space-y-2">
           <Skeleton className="h-16 w-full rounded-xl" />
           <Skeleton className="h-16 w-full rounded-xl" />
@@ -104,8 +116,9 @@ function CalisanlarPage() {
             leading: (
               <Avatar className="h-9 w-9">
                 <AvatarFallback className="bg-[var(--color-bg-elevated)] text-xs">
-                  {employee.fullName
+                  {(employee.fullName || '?')
                     .split(' ')
+                    .filter(Boolean)
                     .map((part) => part[0])
                     .join('')
                     .slice(0, 2)

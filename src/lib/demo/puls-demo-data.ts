@@ -217,8 +217,8 @@ export async function fetchDemoExpenseOverview(): Promise<DemoExpenseOverview> {
   return demoExpenseOverview
 }
 
-export function formatTry(amount: number): string {
-  return new Intl.NumberFormat('tr-TR', {
+export function formatTry(amount: number, locale = 'tr-TR'): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'TRY',
     maximumFractionDigits: 0,

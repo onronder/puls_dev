@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PULS</string>
+    <string name="title_activity_main">PULS</string>
+    <string name="package_name">io.puls.app</string>
+    <string name="custom_url_scheme">io.puls.app</string>
+</resources>

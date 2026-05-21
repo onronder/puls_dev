@@ -8,7 +8,9 @@
     "cancel": "İptal",
     "close": "Kapat",
     "loading": "Yükleniyor…",
-    "days": "gün"
+    "days": "gün",
+    "error": "Bir hata oluştu",
+    "retry": "Tekrar dene"
   },
   "auth": {
     "loginTitle": "Giriş Yap",
@@ -117,15 +119,31 @@
       "goals": "Hedefler",
       "goalsHint": "OKR ve pozisyon hedefleri"
     },
+    "cycleStatus": {
+      "draft": "Taslak",
+      "active": "Aktif",
+      "closed": "Kapalı"
+    },
+    "form": {
+      "cycleName": "Dönem adı",
+      "startsAt": "Başlangıç",
+      "endsAt": "Bitiş"
+    },
     "empty": {
       "competencies": "Henüz şablon yok. seed-demo.sql ile demo şablon ekleyebilirsiniz.",
-      "cycles": "Aktif dönem yok",
+      "cycles": "Aktif dönem yok. Yönetici modunda yeni dönem oluşturabilirsiniz.",
       "cyclesHint": "İK yöneticisi dönem oluşturduğunda burada görünür.",
       "goals": "Atanmış hedef yok."
     },
     "actions": {
-      "createCycle": "Dönem oluştur (yakında)",
+      "createCycle": "Dönem oluştur",
+      "activate": "Aktifleştir",
+      "saving": "Kaydediliyor…",
       "backDashboard": "Ana sayfaya dön"
+    },
+    "managerOnlyCreate": "Dönem oluşturmak için Yönetici Modu'na geçin.",
+    "errors": {
+      "noTenant": "Tenant bulunamadı — seed-demo.sql çalıştırın."
     }
   },
   "employees": {
@@ -143,6 +161,9 @@
     "empty": {
       "title": "Çalışan kaydı yok",
       "description": "seed-demo.sql çalıştırıldığında Mert Teknik demo çalışanları listelenir."
+    },
+    "error": {
+      "loadFailed": "Çalışan listesi yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin."
     },
     "restricted": {
       "title": "Bu ekran yönetici modunda",
@@ -192,7 +213,8 @@
       "description": "Açıklama",
       "descriptionPlaceholder": "İsteğe bağlı açıklama",
       "balanceAfter": "Bakiye sonrası",
-      "balanceAfterHint": "Hafta sonu/tatil kuralı Faz 2'de hesaplanacak."
+      "balanceAfterHint": "Hafta sonu/tatil kuralı Faz 2'de hesaplanacak.",
+      "dateError": "Geçerli bir tarih aralığı seçin."
     },
     "empty": {
       "history": "Henüz izin kaydı yok."

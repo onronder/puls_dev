@@ -17,7 +17,9 @@
     "audit:supabase": "node scripts/audit-supabase-schema.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "cap:sync": "pnpm run build && pnpm exec cap sync",
+    "cap:sync": "pnpm run build && node scripts/write-capacitor-shell.mjs && pnpm exec cap sync",
+    "cap:add": "pnpm exec cap add ios && pnpm exec cap add android",
+    "cap:verify": "pnpm run cap:sync",
     "prepare": "husky"
   },
   "dependencies": {

@@ -27,6 +27,7 @@ import {
   formatTry,
   type DemoExpenseClaim,
 } from '#/lib/demo/puls-demo-data'
+import { parseDecimalAmount } from '#/lib/format'
 
 export const Route = createFileRoute('/_app/masraf')({
   component: MasrafPage,
@@ -49,7 +50,7 @@ function expenseStatusTone(status: ExpenseStatus): StatusTone {
 }
 
 function MasrafPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [localClaims, setLocalClaims] = useState<DemoExpenseClaim[]>([])
   const [category, setCategory] = useState('travel')
@@ -73,7 +74,7 @@ function MasrafPage() {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const parsedAmount = Number(amount)
+    const parsedAmount = parseDecimalAmount(amount)
     if (!parsedAmount || parsedAmount <= 0) {
       toast.error(t('expense.form.amountError'))
       return
@@ -116,11 +117,11 @@ function MasrafPage() {
       <MetricCard
         className="mb-6"
         label={t('expense.hero.approvedThisMonth')}
-        value={data ? formatTry(data.approvedThisMonth) : '—'}
+        value={data ? formatTry(data.approvedThisMonth, i18n.language) : '—'}
         hint={
           data
             ? t('expense.hero.limitUsage', {
-                limit: formatTry(data.monthlyLimit),
+                limit: formatTry(data.monthlyLimit, i18n.language),
                 usage: limitUsage,
               })
             : undefined
@@ -129,13 +130,13 @@ function MasrafPage() {
       />
 
       <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
-        <MetricCard compact label={t('expense.metrics.pending')} value={formatTry(pendingAmount)} />
-        <MetricCard compact label={t('expense.metrics.yearTotal')} value={data ? formatTry(data.yearTotal) : '—'} />
+        <MetricCard compact label={t('expense.metrics.pending')} value={formatTry(pendingAmount, i18n.language)} />
+        <MetricCard compact label={t('expense.metrics.yearTotal')} value={data ? formatTry(data.yearTotal, i18n.language) : '—'} />
         <MetricCard compact label={t('expense.metrics.topCategory')} value={data?.topCategoryShare ?? '—'} />
         <MetricCard
           compact
           label={t('expense.metrics.monthlyAverage')}
-          value={data ? formatTry(data.monthlyAverage) : '—'}
+          value={data ? formatTry(data.monthlyAverage, i18n.language) : '—'}
         />
       </div>
 
@@ -145,7 +146,7 @@ function MasrafPage() {
           id: claim.id,
           title: claim.title,
           subtitle: `${claim.category} · ${new Intl.DateTimeFormat('tr-TR').format(new Date(claim.expenseDate))}`,
-          meta: formatTry(claim.amount),
+          meta: formatTry(claim.amount, i18n.language),
           trailing: (
             <StatusPill tone={expenseStatusTone(claim.status)}>
               {t(`expense.status.${claim.status}`)}

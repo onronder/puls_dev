@@ -8,7 +8,9 @@
     "cancel": "Cancel",
     "close": "Close",
     "loading": "Loading…",
-    "days": "days"
+    "days": "days",
+    "error": "Something went wrong",
+    "retry": "Try again"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -117,15 +119,31 @@
       "goals": "Goals",
       "goalsHint": "OKR and position goals"
     },
+    "cycleStatus": {
+      "draft": "Draft",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "form": {
+      "cycleName": "Cycle name",
+      "startsAt": "Start date",
+      "endsAt": "End date"
+    },
     "empty": {
       "competencies": "No templates yet. Add demo templates via seed-demo.sql.",
-      "cycles": "No active cycle",
+      "cycles": "No active cycle. Switch to Manager Mode to create one.",
       "cyclesHint": "Cycles appear here once HR creates one.",
       "goals": "No assigned goals."
     },
     "actions": {
-      "createCycle": "Create cycle (soon)",
+      "createCycle": "Create cycle",
+      "activate": "Activate",
+      "saving": "Saving…",
       "backDashboard": "Back to dashboard"
+    },
+    "managerOnlyCreate": "Switch to Manager Mode to create review cycles.",
+    "errors": {
+      "noTenant": "No tenant found — run seed-demo.sql."
     }
   },
   "employees": {
@@ -143,6 +161,9 @@
     "empty": {
       "title": "No employee records",
       "description": "Run seed-demo.sql to list Mert Teknik demo employees."
+    },
+    "error": {
+      "loadFailed": "Could not load employees. Check your connection and try again."
     },
     "restricted": {
       "title": "Manager mode required",
@@ -192,7 +213,8 @@
       "description": "Description",
       "descriptionPlaceholder": "Optional note",
       "balanceAfter": "Balance after",
-      "balanceAfterHint": "Weekend/holiday rules will be calculated in Phase 2."
+      "balanceAfterHint": "Weekend/holiday rules will be calculated in Phase 2.",
+      "dateError": "Select a valid date range."
     },
     "empty": {
       "history": "No leave records yet."

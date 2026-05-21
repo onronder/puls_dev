@@ -45,8 +45,7 @@ export async function fetchEmployeeList(userId: string): Promise<EmployeeListIte
     .order('full_name', { ascending: true })
 
   if (error) {
-    console.warn('fetchEmployeeList:', error.message)
-    return []
+    throw new Error(`fetchEmployeeList: ${error.message}`)
   }
 
   return (data ?? []).map((row) => {
@@ -55,7 +54,7 @@ export async function fetchEmployeeList(userId: string): Promise<EmployeeListIte
 
     return {
       id: row.anonymous_id as string,
-      fullName: row.full_name as string,
+      fullName: (row.full_name as string | null) ?? '',
       email: (row.email as string | null) ?? null,
       jobTitle: (row.job_title as string | null) ?? null,
       departmentName: department?.name ?? null,
