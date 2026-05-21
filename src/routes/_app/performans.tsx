@@ -1,11 +1,14 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
-import { Badge } from '#/components/ui/badge'
+import { DataList } from '#/components/puls/DataList'
+import { EmptyState } from '#/components/puls/EmptyState'
+import { MetricCard } from '#/components/puls/MetricCard'
+import { PageHeader } from '#/components/puls/PageHeader'
+import { SectionHeader } from '#/components/puls/SectionHeader'
+import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
-import { Separator } from '#/components/ui/separator'
 import { Skeleton } from '#/components/ui/skeleton'
 import { fetchCompetencyTemplates } from '#/lib/queries/performans'
 
@@ -21,74 +24,74 @@ function PerformansPage() {
   })
 
   return (
-    <div className="mx-auto max-w-5xl p-4 md:p-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold md:text-3xl">{t('performans.title')}</h1>
-          <p className="mt-2 text-[var(--color-text-muted)]">{t('performans.subtitle')}</p>
-        </div>
-        <Badge variant="secondary">{t('performans.sprintBadge')}</Badge>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('performans.sections.competencies')}</CardTitle>
-            <CardDescription>{t('performans.sections.competenciesHint')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ) : templates && templates.length > 0 ? (
-              <ul className="space-y-2">
-                {templates.map((item) => (
-                  <li
-                    key={item.id}
-                    className="rounded-lg border border-[var(--color-border)] px-3 py-2"
-                  >
-                    <p className="font-medium">{item.name}</p>
-                    {item.description ? (
-                      <p className="text-xs text-[var(--color-text-muted)]">{item.description}</p>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-[var(--color-text-muted)]">{t('performans.empty.competencies')}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('performans.sections.cycles')}</CardTitle>
-            <CardDescription>{t('performans.sections.cyclesHint')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-[var(--color-text-muted)]">{t('performans.empty.cycles')}</p>
-            <Separator className="my-4" />
-            <Button variant="outline" disabled>
-              {t('performans.actions.createCycle')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-base">{t('performans.sections.goals')}</CardTitle>
-          <CardDescription>{t('performans.sections.goalsHint')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-[var(--color-text-muted)]">{t('performans.empty.goals')}</p>
-          <Button variant="ghost" asChild>
-            <Link to="/dashboard">{t('performans.actions.backDashboard')}</Link>
+    <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
+      <PageHeader
+        title={t('performans.title')}
+        subtitle={t('performans.subtitle')}
+        badge={<StatusPill tone="info">{t('performans.phaseBadge')}</StatusPill>}
+        actions={
+          <Button type="button" variant="outline" disabled>
+            {t('performans.actions.createCycle')}
           </Button>
-        </CardContent>
-      </Card>
+        }
+      />
+
+      <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
+        <MetricCard compact label={t('performans.metrics.activeCycle')} value="2026 H1" />
+        <MetricCard compact label={t('performans.metrics.avgScore')} value="82,4" />
+        <MetricCard compact label={t('performans.metrics.templates')} value={String(templates?.length ?? 0)} />
+        <MetricCard compact label={t('performans.metrics.pendingReviews')} value="—" hint={t('common.soon')} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section>
+          <SectionHeader
+            title={t('performans.sections.competencies')}
+            description={t('performans.sections.competenciesHint')}
+          />
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+          ) : templates && templates.length > 0 ? (
+            <DataList
+              items={templates.map((item) => ({
+                id: item.id,
+                title: item.name,
+                subtitle: item.description ?? undefined,
+                meta: item.weight ? `${item.weight}%` : undefined,
+              }))}
+            />
+          ) : (
+            <EmptyState title={t('performans.empty.competencies')} />
+          )}
+        </section>
+
+        <section>
+          <SectionHeader
+            title={t('performans.sections.cycles')}
+            description={t('performans.sections.cyclesHint')}
+          />
+          <EmptyState
+            title={t('performans.empty.cycles')}
+            description={t('performans.empty.cyclesHint')}
+            action={
+              <Button type="button" variant="outline" disabled>
+                {t('performans.actions.createCycle')}
+              </Button>
+            }
+          />
+        </section>
+      </div>
+
+      <section className="mt-6">
+        <SectionHeader
+          title={t('performans.sections.goals')}
+          description={t('performans.sections.goalsHint')}
+        />
+        <EmptyState title={t('performans.empty.goals')} />
+      </section>
     </div>
   )
 }

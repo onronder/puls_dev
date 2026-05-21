@@ -3,6 +3,13 @@
     "name": "PULS",
     "tagline": "Career health and proactive HR for SMBs"
   },
+  "common": {
+    "soon": "Coming soon",
+    "cancel": "Cancel",
+    "close": "Close",
+    "loading": "Loading…",
+    "days": "days"
+  },
   "auth": {
     "loginTitle": "Sign in",
     "email": "Email",
@@ -12,7 +19,11 @@
     "kvkkNotice": "By signing in you accept the privacy notice."
   },
   "nav": {
+    "group": {
+      "main": "Main"
+    },
     "dashboard": "Dashboard",
+    "menu": "Menu",
     "kpi": "KPI",
     "koc": "AI Coach",
     "tatil": "Leave",
@@ -41,16 +52,34 @@
     "placeholder": "Sprint-2 — live data cards.",
     "welcome": "Welcome, {{name}}",
     "noTenant": "No tenant linked — run seed-demo.sql.",
+    "erpCaniasInactive": "Canias inactive (preparation)",
     "stats": {
       "employees": "Employees",
       "departments": "Departments",
-      "competencies": "Competency templates"
+      "competencies": "Competency templates",
+      "dataReadiness": "Data readiness"
+    },
+    "sections": {
+      "setup": "Setup status",
+      "overview": "Overview"
+    },
+    "setup": {
+      "erpTitle": "Canias ERP connection",
+      "inactive": "Inactive",
+      "approvalsTitle": "Pending approvals",
+      "approvalsHint": "Leave and expense approval queue"
+    },
+    "employee": {
+      "leaveBalance": "Leave balance",
+      "pendingExpense": "Pending expenses",
+      "performanceScore": "Performance score",
+      "performanceHint": "Demo score — performance module"
     },
     "cards": {
       "bagla": {
         "title": "Bağla™",
         "description": "Team engagement signals (k≥5)",
-        "hint": "Synthetic score — Sprint-2 sentiment-engine"
+        "hint": "Synthetic score — sentiment-engine"
       },
       "kpi": {
         "title": "KPI",
@@ -59,8 +88,8 @@
       },
       "ai": {
         "title": "AI Coach™",
-        "description": "Floating widget active",
-        "hint": "Accessible from the bottom-right button"
+        "description": "Personal assistant coming soon",
+        "hint": "MVP-2 — active chat not enabled yet"
       }
     },
     "erpConnected": "Connected: {{provider}}",
@@ -73,18 +102,25 @@
   "performans": {
     "title": "Performance",
     "subtitle": "Competency templates and review cycles",
-    "sprintBadge": "Sprint-2 skeleton",
+    "phaseBadge": "Phase 1",
+    "metrics": {
+      "activeCycle": "Active cycle",
+      "avgScore": "Average score",
+      "templates": "Competency templates",
+      "pendingReviews": "Pending reviews"
+    },
     "sections": {
       "competencies": "Competency templates",
-      "competenciesHint": "Tenant-scoped templates (performans_competency_templates)",
+      "competenciesHint": "Tenant-scoped templates",
       "cycles": "Review cycles",
-      "cyclesHint": "360 / goal cycles — coming soon",
+      "cyclesHint": "360 / goal cycles",
       "goals": "Goals",
-      "goalsHint": "OKR and position goals — coming soon"
+      "goalsHint": "OKR and position goals"
     },
     "empty": {
-      "competencies": "No templates yet. Add 3 demo templates via seed-demo.sql.",
-      "cycles": "No active cycle.",
+      "competencies": "No templates yet. Add demo templates via seed-demo.sql.",
+      "cycles": "No active cycle",
+      "cyclesHint": "Cycles appear here once HR creates one.",
       "goals": "No assigned goals."
     },
     "actions": {
@@ -92,8 +128,153 @@
       "backDashboard": "Back to dashboard"
     }
   },
+  "employees": {
+    "title": "Employees",
+    "subtitle": "Tenant employee list and org summary",
+    "managerOnly": "Manager view",
+    "metrics": {
+      "active": "Active employees",
+      "departments": "Departments",
+      "positions": "Positions"
+    },
+    "sections": {
+      "list": "Employee list"
+    },
+    "empty": {
+      "title": "No employee records",
+      "description": "Run seed-demo.sql to list Mert Teknik demo employees."
+    },
+    "restricted": {
+      "title": "Manager mode required",
+      "description": "Switch to manager mode using the persona toggle in the header.",
+      "back": "Back to dashboard"
+    }
+  },
+  "leave": {
+    "title": "Leave · Time Off™",
+    "subtitle": "Balance, history, and new leave request",
+    "hero": {
+      "remainingAnnual": "Remaining annual leave",
+      "summary": "{{used}} days used · total entitlement {{total}} days"
+    },
+    "metrics": {
+      "pending": "Pending requests"
+    },
+    "types": {
+      "annual": "Annual",
+      "excuse": "Excused",
+      "sick": "Sick"
+    },
+    "sections": {
+      "history": "Leave history"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "new": "New leave request",
+      "submit": "Submit for approval"
+    },
+    "sheet": {
+      "title": "New leave request",
+      "description": "Demo adapter — real approval flow will connect via API layer."
+    },
+    "form": {
+      "type": "Leave type",
+      "typePlaceholder": "Select leave type",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "delegate": "Delegate",
+      "delegatePlaceholder": "Select delegate",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional note",
+      "balanceAfter": "Balance after",
+      "balanceAfterHint": "Weekend/holiday rules will be calculated in Phase 2."
+    },
+    "empty": {
+      "history": "No leave records yet."
+    },
+    "toast": {
+      "submitted": "Leave request submitted (demo)."
+    }
+  },
+  "expense": {
+    "title": "Expense · Wallet™",
+    "subtitle": "Expense summary and new claim",
+    "hero": {
+      "approvedThisMonth": "Approved this month",
+      "limitUsage": "Limit {{limit}} · usage {{usage}}%"
+    },
+    "metrics": {
+      "pending": "Pending",
+      "yearTotal": "Year total",
+      "topCategory": "Top category",
+      "monthlyAverage": "Monthly average"
+    },
+    "categories": {
+      "travel": "Travel"
+    },
+    "sections": {
+      "recent": "Recent expenses"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "paid": "Paid"
+    },
+    "actions": {
+      "new": "New expense",
+      "submit": "Submit for approval"
+    },
+    "sheet": {
+      "title": "New expense claim",
+      "description": "Demo adapter — OCR and finance approval in a later phase."
+    },
+    "form": {
+      "category": "Category",
+      "categoryPlaceholder": "Select category",
+      "title": "Title",
+      "titlePlaceholder": "e.g. Istanbul–Ankara flight",
+      "defaultTitle": "New expense",
+      "amount": "Amount (TRY)",
+      "amountError": "Enter a valid amount.",
+      "date": "Date",
+      "description": "Description",
+      "descriptionPlaceholder": "Business purpose and details",
+      "receipt": "Receipt",
+      "receiptHint": "OCR MVP-2 — upload area is a placeholder for now.",
+      "receiptPlaceholder": "Take or upload receipt (coming soon)"
+    },
+    "empty": {
+      "list": "No expense records yet."
+    },
+    "toast": {
+      "submitted": "Expense claim submitted (demo)."
+    }
+  },
+  "menu": {
+    "title": "Menu",
+    "subtitle": "Profile and module shortcuts",
+    "profileFallback": "PULS user",
+    "signOut": "Sign out"
+  },
   "ai": {
     "floatingLabel": "AI Coach",
-    "placeholder": "Ask or tell something…"
+    "placeholder": "Ask or tell something…",
+    "teaser": {
+      "title": "AI Coach™ coming soon",
+      "description": "Your personal HR assistant will help with leave, expenses, career, and performance.",
+      "badge": "MVP-2",
+      "featureLeave": "Leave balance and date suggestions",
+      "featureExpense": "Expense claims and policy guidance",
+      "featureCareer": "Career readiness and development plan",
+      "featurePerformance": "KPI and competency summary",
+      "privacy": "Employee privacy with limited access and vault isolation will apply."
+    }
   }
 }
