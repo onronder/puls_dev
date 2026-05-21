@@ -285,6 +285,44 @@
     "profileFallback": "PULS kullanıcısı",
     "signOut": "Çıkış yap"
   },
+  "erp": {
+    "eyebrow": "Tanım & Kurulum",
+    "title": "ERP Entegrasyon",
+    "subtitle": "Sistem: Canias · API erişimi bekleniyor.",
+    "badge": "Beklemede",
+    "metrics": {
+      "system": "Sistem",
+      "dataReadiness": "Veri hazırlığı",
+      "fieldMapping": "Alan eşleştirme",
+      "fieldMappingHint": "Mapped / toplam",
+      "lastAttempt": "Son deneme",
+      "lastAttemptHint": "Zaman aşımı"
+    },
+    "actions": {
+      "mapFields": "Alan eşleştir",
+      "testConnection": "Test bağlantısı"
+    },
+    "toast": {
+      "apiPendingTitle": "Canias API erişimi bekleniyor.",
+      "mapDescription": "Mapping editörü, müşteri tarafında API erişimi açıldığında devreye alınacak.",
+      "testDescription": "Şu an Canias tarafında kimlik doğrulama bekleniyor."
+    },
+    "sections": {
+      "mapping": "Alan eşleştirme",
+      "mappingDescription": "PULS alanı → Canias alanı.",
+      "syncLogs": "Sync logları",
+      "syncLogsDescription": "Son bağlantı denemeleri."
+    },
+    "columns": {
+      "pulsField": "PULS alanı",
+      "erpField": "Canias alanı",
+      "status": "Durum"
+    },
+    "status": {
+      "mapped": "Eşleşti",
+      "pending": "Bekliyor"
+    }
+  },
   "ai": {
     "floatingLabel": "AI Koç",
     "placeholder": "Bir şey sor veya anlat…",

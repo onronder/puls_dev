@@ -42,7 +42,7 @@ const menuLinks: MenuLink[] = [
   { id: 'masraf', to: '/masraf', labelKey: 'nav.cuzdan', icon: Wallet },
   { id: 'calisanlar', to: '/calisanlar', labelKey: 'nav.calisanlar', icon: Users, audience: 'manager' },
   { id: 'koc', to: '/menu', labelKey: 'nav.koc', icon: Sparkles, soon: true },
-  { id: 'erp', to: '/menu', labelKey: 'nav.erp', icon: Waypoints, soon: true },
+  { id: 'erp', to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
   { id: 'settings', to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
 ]
 

@@ -68,7 +68,7 @@ export const sidebarGroups: NavGroup[] = [
   {
     titleKey: 'nav.setup',
     items: [
-      { to: '/menu', labelKey: 'nav.erp', icon: Waypoints, soon: true },
+      { to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
       { to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
     ],
   },
