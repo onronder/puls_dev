@@ -352,3 +352,37 @@ const demoCompanySetup: DemoCompanySetup = {
 export async function fetchDemoCompanySetup(): Promise<DemoCompanySetup> {
   return demoCompanySetup
 }
+
+export type DemoDepartmentStatus = 'active'
+
+export type DemoDepartment = {
+  id: string
+  name: string
+  manager: string
+  count: number
+  status: DemoDepartmentStatus
+}
+
+export type DemoDepartmentsOverview = {
+  departmentCount: number
+  activeEmployees: number
+  assignedManagers: number
+  emptyManagers: number
+  departments: DemoDepartment[]
+}
+
+const demoDepartmentsOverview: DemoDepartmentsOverview = {
+  departmentCount: 3,
+  activeEmployees: 4,
+  assignedManagers: 3,
+  emptyManagers: 0,
+  departments: [
+    { id: 'd1', name: 'Mühendislik', manager: 'Murat Tan', count: 2, status: 'active' },
+    { id: 'd2', name: 'Operasyon', manager: 'Elif Demir', count: 1, status: 'active' },
+    { id: 'd3', name: 'İK & Finans', manager: 'Demo İK Yöneticisi', count: 1, status: 'active' },
+  ],
+}
+
+export async function fetchDemoDepartmentsOverview(): Promise<DemoDepartmentsOverview> {
+  return demoDepartmentsOverview
+}
