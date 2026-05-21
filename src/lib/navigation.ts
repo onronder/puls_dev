@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarDays,
   FileText,
+  GitBranch,
   LayoutDashboard,
   Menu,
   Settings,
@@ -71,6 +72,7 @@ export const sidebarGroups: NavGroup[] = [
     items: [
       { to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
       { to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
+      { to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
       { to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
     ],
   },

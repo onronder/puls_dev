@@ -44,6 +44,7 @@
     "kale": "İş Değerleme",
     "erp": "ERP Entegrasyon",
     "sirketKurulum": "Şirket Kurulum",
+    "departmanlar": "Departmanlar",
     "settings": "Ayarlar"
   },
   "persona": {
@@ -356,6 +357,47 @@
     "status": {
       "done": "Tamam",
       "pending": "Bekliyor"
+    }
+  },
+  "departments": {
+    "eyebrow": "Tanım & Kurulum",
+    "title": "Departmanlar",
+    "description": "Organizasyon yapısını, departman yöneticilerini ve çalışan dağılımını yönet.",
+    "metrics": {
+      "departments": "Departman",
+      "activeEmployees": "Aktif çalışan",
+      "assignedManagers": "Yönetici atanan",
+      "emptyManagers": "Boş yönetici"
+    },
+    "sections": {
+      "list": "Departman listesi"
+    },
+    "columns": {
+      "name": "Departman",
+      "manager": "Yönetici",
+      "count": "Çalışan",
+      "status": "Durum"
+    },
+    "employeeCount": "{{count}} çalışan",
+    "status": {
+      "active": "Aktif"
+    },
+    "actions": {
+      "add": "Departman ekle"
+    },
+    "sheet": {
+      "title": "Departman ekle",
+      "description": "Yeni departman oluşturma MVP-2 kapsamında açılacak.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "name": "Departman adı",
+        "manager": "Departman yöneticisi"
+      },
+      "placeholders": {
+        "name": "Örn. Mühendislik",
+        "manager": "Yönetici seçimi"
+      },
+      "submit": "Kaydet"
     }
   },
   "ai": {

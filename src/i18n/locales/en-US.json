@@ -44,6 +44,7 @@
     "kale": "Job Evaluation",
     "erp": "ERP Integration",
     "sirketKurulum": "Company Setup",
+    "departmanlar": "Departments",
     "settings": "Settings"
   },
   "persona": {
@@ -356,6 +357,47 @@
     "status": {
       "done": "Done",
       "pending": "Pending"
+    }
+  },
+  "departments": {
+    "eyebrow": "Setup & Configuration",
+    "title": "Departments",
+    "description": "Manage organization structure, department managers, and employee distribution.",
+    "metrics": {
+      "departments": "Departments",
+      "activeEmployees": "Active employees",
+      "assignedManagers": "Managers assigned",
+      "emptyManagers": "Unassigned managers"
+    },
+    "sections": {
+      "list": "Department list"
+    },
+    "columns": {
+      "name": "Department",
+      "manager": "Manager",
+      "count": "Employees",
+      "status": "Status"
+    },
+    "employeeCount": "{{count}} employees",
+    "status": {
+      "active": "Active"
+    },
+    "actions": {
+      "add": "Add department"
+    },
+    "sheet": {
+      "title": "Add department",
+      "description": "Creating new departments will be enabled in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "name": "Department name",
+        "manager": "Department manager"
+      },
+      "placeholders": {
+        "name": "e.g. Engineering",
+        "manager": "Select manager"
+      },
+      "submit": "Save"
     }
   },
   "ai": {
