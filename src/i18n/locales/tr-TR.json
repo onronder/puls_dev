@@ -78,18 +78,34 @@
       "competencies": "Yetkinlik şablonları",
       "competenciesHint": "Tenant bazlı şablonlar (performans_competency_templates)",
       "cycles": "Değerlendirme dönemleri",
-      "cyclesHint": "360 / hedef dönemleri — yakında",
+      "cyclesHint": "360 / hedef dönemleri",
       "goals": "Hedefler",
       "goalsHint": "OKR ve pozisyon hedefleri — yakında"
     },
+    "cycleStatus": {
+      "draft": "Taslak",
+      "active": "Aktif",
+      "closed": "Kapalı"
+    },
+    "form": {
+      "cycleName": "Dönem adı",
+      "startsAt": "Başlangıç",
+      "endsAt": "Bitiş"
+    },
     "empty": {
       "competencies": "Henüz şablon yok. seed-demo.sql ile 3 demo şablon ekleyebilirsiniz.",
-      "cycles": "Aktif dönem yok.",
+      "cycles": "Aktif dönem yok. Yönetici modunda yeni dönem oluşturabilirsiniz.",
       "goals": "Atanmış hedef yok."
     },
     "actions": {
-      "createCycle": "Dönem oluştur (yakında)",
+      "createCycle": "Dönem oluştur",
+      "activate": "Aktifleştir",
+      "saving": "Kaydediliyor…",
       "backDashboard": "Ana sayfaya dön"
+    },
+    "managerOnlyCreate": "Dönem oluşturmak için Yönetici Modu'na geçin.",
+    "errors": {
+      "noTenant": "Tenant bulunamadı — seed-demo.sql çalıştırın."
     }
   },
   "ai": {

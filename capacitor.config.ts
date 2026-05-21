@@ -1,12 +1,20 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
+/** Native shell loads SSR app from Vercel or local dev (TanStack Start has no static index.html). */
+const serverUrl = process.env.CAPACITOR_SERVER_URL
+
 const config: CapacitorConfig = {
   appId: 'io.puls.app',
   appName: 'PULS',
   webDir: '.output/public',
-  server: {
-    androidScheme: 'https',
-  },
+  server: serverUrl
+    ? {
+        url: serverUrl,
+        cleartext: serverUrl.startsWith('http://'),
+      }
+    : {
+        androidScheme: 'https',
+      },
   plugins: {
     SplashScreen: {
       launchAutoHide: true,

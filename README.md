@@ -83,10 +83,21 @@ Migrations: `supabase/migrations/`. Greenfield-only: `supabase/migrations-greenf
 
 ## Capacitor
 
+TanStack Start is SSR — native apps load the deployed web app (hybrid shell):
+
 ```bash
 pnpm build
-pnpm exec cap sync ios
-pnpm exec cap sync android
+pnpm cap:add          # once: creates ios/ + android/
+CAPACITOR_SERVER_URL=https://puls-dev.vercel.app pnpm cap:sync
+pnpm exec cap open ios    # or android — requires Xcode / Android Studio on Mac
+```
+
+Local dev in simulator: `CAPACITOR_SERVER_URL=http://localhost:3000 pnpm cap:sync` (with `pnpm dev` running).
+
+Apply new DB migration before demo cycles:
+
+```bash
+supabase db push   # includes performans_cycles
 ```
 
 ## Scripts
