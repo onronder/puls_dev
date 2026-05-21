@@ -1,0 +1,57 @@
+area,page,metric_or_block,label,demo_value,source_table_or_view,source_fields,formula_or_rule,notes
+dashboard,/dashboard,tenant_name,Tenant,Mert Teknik A.S.,tenants,name,current user tenant,Header context
+dashboard,/dashboard,employee_count,Aktif Calisan,4,employees,status,COUNT WHERE status='active',Current seed ile uyumlu
+dashboard,/dashboard,department_count,Departman,3,departments,status,COUNT WHERE active,Current seed ile uyumlu
+dashboard,/dashboard,position_count,Pozisyon,3,positions,status,COUNT WHERE active,Current seed ile uyumlu
+dashboard,/dashboard,competency_template_count,Yetkinlik Sablonu,3,performans_competency_templates,is_active,COUNT WHERE active,Mevcut Sprint-2
+dashboard,/dashboard,erp_status,ERP Durumu,Canias pasif,erp_connections,provider/status,latest by tenant,Logo Tiger kullanilmayacak
+dashboard,/dashboard,data_readiness,Veri Hazirligi,%72,demo_computed,,weighted setup completion,ERP mapping + employee completeness demo metric
+dashboard,/dashboard,kpi_health,KPI Durumu,%75,demo_computed,,active cycle completeness,Sentetik skor olabilir
+dashboard,/dashboard,pending_approvals,Bekleyen Onaylar,4,leave_requests+expense_claims,status,COUNT pending,Approval center icin
+performans,/performans,active_cycle,Aktif Donem,2026 H1,performans_cycles,name/status,status='active',PR #6 sonrasi
+performans,/performans,avg_performance,Ortalama Puan,82.4,performance_scores,overall_score,AVG current cycle,Demo view yoksa mock view
+performans,/performans,pending_reviews,Bekleyen Degerlendirme,12,performance_evaluations,status,COUNT pending,Future table olabilir
+performans,/performans,promotion_candidates,Terfi Adayi,5,career_recommendations,status,COUNT eligible,Future/demo
+performans,/performans,competency_templates,Yetkinlik Sablonu,3,performans_competency_templates,id,COUNT active,Mevcut tablo
+performans,/performans,employee_row,Calisan Performans Satiri,,employees+positions+departments,,join employee with score,Tablo ana kaydi
+performans,/performans,score_band,Skor Bandı,Cok Iyi,performance_scores,overall_score,>=90 Cok Iyi; 75-89 Iyi; 60-74 Gelisim; <60 Risk,Semantic token
+izin,/izin,annual_leave_remaining,Kalan Yillik Izin,14,leave_balances,remaining_days,type='annual',Calisan bazli
+izin,/izin,annual_leave_used,Kullanilan Izin,6,leave_balances,used_days,type='annual',
+izin,/izin,annual_leave_total,Toplam Hak,20,leave_balances,total_days,type='annual',
+izin,/izin,excuse_leave_remaining,Mazeret,7,leave_balances,remaining_days,type='excuse',
+izin,/izin,sick_leave_remaining,Hastalik,10,leave_balances,remaining_days,type='sick',
+izin,/izin,pending_leave_count,Bekleyen,2,leave_requests,status,COUNT WHERE pending,current employee or manager scope
+izin,/izin,calendar_events,Takvim Eventleri,,leave_requests,start_date/end_date/status,events by month,approved/pending/rejected colors
+izin,/izin,leave_history,Izin Gecmisi,,leave_requests,type/date/status/approver,latest 10,Mobile list
+izin,/izin,new_leave_total_days,Toplam Gun,5,computed,date range,business days excluding holidays,Sheet computed field
+izin,/izin,balance_after,Bakiye Sonrasi,9,computed,remaining-total_days,after submit preview,Validation
+masraf,/masraf,approved_this_month,Bu Ay Onaylanan,8640,expense_claims,amount/status/date,SUM approved current month,Artifact value
+masraf,/masraf,monthly_limit,Limit,15000,expense_policies,monthly_limit,employee/category policy,Demo policy
+masraf,/masraf,limit_usage,Kullanim,%58,computed,approved/limit,approved_this_month / monthly_limit,Round
+masraf,/masraf,pending_amount,Bekleyen Tutar,2340,expense_claims,amount/status,SUM pending,Artifact list ile tutar uyumlu olmali
+masraf,/masraf,pending_count,Bekleyen Kalem,2,expense_claims,status,COUNT pending,
+masraf,/masraf,year_total,Yil Toplami,34200,expense_claims,amount/date,SUM current year,
+masraf,/masraf,top_category,En Buyuk Kalem,Seyahat %41,expense_claims,category_id/amount,largest category share,
+masraf,/masraf,monthly_average,Ortalama/Ay,4900,computed,year_total/months_elapsed,year_total / elapsed months,
+masraf,/masraf,recent_expenses,Son Masraflar,,expense_claims,category/date/amount/status,latest 10,
+masraf,/masraf,policy_status,Policy Durumu,Uygun,expense_policies,,amount <= limit and document rules,New expense sheet
+calisanlar,/calisanlar,active_employees,Aktif Calisan,4,employees,status,COUNT active,
+calisanlar,/calisanlar,trial_employees,Deneme Suresi,1,employees,start_date/status,probation rule optional,
+calisanlar,/calisanlar,employee_table,Calisan Tablosu,,employees+departments+positions,,join list,IK/Yonetici scope
+kariyer,/kariyer,career_readiness,Hazirlik,%87,career_profiles,readiness_score,demo/future,Artifact value can stay future
+kariyer,/kariyer,current_level,Mevcut Seviye,Direktor,career_profiles,current_level,demo/future,
+kariyer,/kariyer,target_level,Hedef Seviye,Mudur,career_profiles,target_level,demo/future,
+sozlesmeler,/sozlesmeler,active_contracts,Aktif Sozlesme,4,contracts,status,COUNT active,Future table
+sozlesmeler,/sozlesmeler,expiring_contracts,Yaklasan Bitis,1,contracts,end_date,status,end_date within 60 days,
+sozlesmeler,/sozlesmeler,awaiting_signature,Imza Bekleyen,1,contracts,signature_status,COUNT awaiting,
+haklar,/haklar-uyum,overtime_risk,Fazla Mesai Riski,0,time_entries,total_hours,monthly > threshold,Future/ERP
+haklar,/haklar-uyum,open_complaints,Acik Sikayet,0,compliance_cases,status,COUNT open,Future
+haklar,/haklar-uyum,kvkk_missing,KVKK Eksigi,0,kvkk_consents,status,COUNT missing,Future
+ayarlar,/ayarlar/departmanlar,department_rows,Departman Listesi,3,departments,name/manager/status,active list,
+ayarlar,/ayarlar/pozisyonlar,position_rows,Pozisyon Listesi,3,positions,title/department/status,active list,
+ayarlar,/ayarlar/izin-tipleri,leave_type_rows,Izin Tipleri,8,leave_types,name/rules,active list,Seed required
+ayarlar,/ayarlar/masraf-kategorileri,expense_category_rows,Masraf Kategorileri,5,expense_categories,name/limit/rules,active list,Seed required
+ayarlar,/ayarlar/erp,erp_connection,ERP Baglantisi,Canias pasif,erp_connections,provider/status/last_sync,latest active config,No real credentials in demo
+ai,/ai-koc,ai_status,AI Koc Durumu,Yakinda,feature_flags,ai_coach_enabled,false for V1,Active chat in MVP-2
+menu,/menu,profile_card,Profil Karti,Demo IK Yoneticisi,profiles+employees,name/title/status,current user,
+menu,/menu,role_menu,Role Based Menu,,user_roles+employees,role/persona,filter menu items,Important IA
