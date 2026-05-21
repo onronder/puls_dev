@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BarChart3,
   Briefcase,
+  Building2,
   CalendarDays,
   FileText,
   LayoutDashboard,
@@ -69,6 +70,7 @@ export const sidebarGroups: NavGroup[] = [
     titleKey: 'nav.setup',
     items: [
       { to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
+      { to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
       { to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
     ],
   },

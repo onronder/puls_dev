@@ -309,3 +309,46 @@ const demoErpOverview: DemoErpOverview = {
 export async function fetchDemoErpOverview(): Promise<DemoErpOverview> {
   return demoErpOverview
 }
+
+export type DemoCompanySetupChecklistStatus = 'done' | 'pending'
+
+export type DemoCompanySetup = {
+  name: string
+  vkn: string
+  sector: string
+  band: string
+  language: string
+  timezone: string
+  package: string
+  completion: number
+  missing: number
+  erpReadiness: string
+  checklist: Array<{
+    id: string
+    labelKey: string
+    status: DemoCompanySetupChecklistStatus
+  }>
+}
+
+const demoCompanySetup: DemoCompanySetup = {
+  name: 'Mert Teknik A.Ş.',
+  vkn: '—',
+  sector: 'Üretim / Teknik servis',
+  band: '1-50 çalışan',
+  language: 'tr-TR',
+  timezone: 'Europe/Istanbul',
+  package: 'Pilot',
+  completion: 72,
+  missing: 3,
+  erpReadiness: '6 / 12',
+  checklist: [
+    { id: 'ck1', labelKey: 'companySetup.checklist.tenant', status: 'done' },
+    { id: 'ck2', labelKey: 'companySetup.checklist.employees', status: 'done' },
+    { id: 'ck3', labelKey: 'companySetup.checklist.erpMapping', status: 'pending' },
+    { id: 'ck4', labelKey: 'companySetup.checklist.performanceCycle', status: 'pending' },
+  ],
+}
+
+export async function fetchDemoCompanySetup(): Promise<DemoCompanySetup> {
+  return demoCompanySetup
+}

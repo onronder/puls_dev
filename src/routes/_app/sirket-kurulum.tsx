@@ -1,0 +1,161 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { AlertCircle, Building2, CheckCircle2, Clock, Plug } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+
+import { MetricCard } from '#/components/puls/MetricCard'
+import { PageHeader } from '#/components/puls/PageHeader'
+import { SectionHeader } from '#/components/puls/SectionHeader'
+import { StatusPill } from '#/components/puls/StatusPill'
+import { Skeleton } from '#/components/ui/skeleton'
+import {
+  fetchDemoCompanySetup,
+  type DemoCompanySetupChecklistStatus,
+} from '#/lib/demo/puls-demo-data'
+import { cn } from '#/lib/utils'
+
+export const Route = createFileRoute('/_app/sirket-kurulum')({
+  head: () => ({
+    meta: [
+      { title: 'Şirket Kurulum — PULS' },
+      {
+        name: 'description',
+        content: 'Tenant, şirket bilgileri ve varsayılan çalışma ayarları.',
+      },
+    ],
+  }),
+  component: SirketKurulumPage,
+})
+
+type InfoRowProps = {
+  label: string
+  value: string
+}
+
+function InfoRow({ label, value }: InfoRowProps) {
+  return (
+    <div className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[200px_1fr] sm:items-center sm:gap-3">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+        {label}
+      </dt>
+      <dd className="text-sm text-[var(--color-text-primary)]">{value}</dd>
+    </div>
+  )
+}
+
+function checklistIconTone(status: DemoCompanySetupChecklistStatus): string {
+  return status === 'done'
+    ? 'bg-[rgba(22,163,74,0.12)] text-[#86efac]'
+    : 'bg-[rgba(245,158,11,0.12)] text-[#fcd34d]'
+}
+
+function SirketKurulumPage() {
+  const { t } = useTranslation()
+  const { data, isLoading } = useQuery({
+    queryKey: ['demo-company-setup'],
+    queryFn: fetchDemoCompanySetup,
+  })
+
+  const companyFields = data
+    ? [
+        { label: t('companySetup.fields.name'), value: data.name },
+        { label: t('companySetup.fields.vkn'), value: data.vkn },
+        { label: t('companySetup.fields.sector'), value: data.sector },
+        { label: t('companySetup.fields.band'), value: data.band },
+        { label: t('companySetup.fields.language'), value: data.language },
+        { label: t('companySetup.fields.timezone'), value: data.timezone },
+        { label: t('companySetup.fields.package'), value: data.package },
+      ]
+    : []
+
+  return (
+    <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
+      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+        {t('companySetup.eyebrow')}
+      </p>
+      <PageHeader
+        className="mt-1"
+        title={t('companySetup.title')}
+        subtitle={t('companySetup.description')}
+      />
+
+      {isLoading ? (
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+        </div>
+      ) : data ? (
+        <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
+          <MetricCard
+            compact
+            label={t('companySetup.metrics.completion')}
+            value={`${data.completion}%`}
+            icon={CheckCircle2}
+          />
+          <MetricCard
+            compact
+            label={t('companySetup.metrics.missing')}
+            value={String(data.missing)}
+            icon={AlertCircle}
+          />
+          <MetricCard
+            compact
+            label={t('companySetup.metrics.erpReadiness')}
+            value={data.erpReadiness}
+            icon={Plug}
+          />
+          <MetricCard
+            compact
+            label={t('companySetup.metrics.language')}
+            value={data.language}
+            icon={Building2}
+          />
+        </div>
+      ) : null}
+
+      <section className="mb-6">
+        <SectionHeader title={t('companySetup.sections.companyInfo')} />
+        <dl className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          {isLoading ? (
+            <>
+              <Skeleton className="m-4 h-10 w-full" />
+              <Skeleton className="m-4 h-10 w-full" />
+            </>
+          ) : (
+            companyFields.map((field) => (
+              <InfoRow key={field.label} label={field.label} value={field.value} />
+            ))
+          )}
+        </dl>
+      </section>
+
+      <section>
+        <SectionHeader title={t('companySetup.sections.checklist')} />
+        <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          {(data?.checklist ?? []).map((item) => (
+            <li key={item.id} className="flex min-h-[52px] items-center gap-3 p-4">
+              <span
+                className={cn(
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                  checklistIconTone(item.status),
+                )}
+              >
+                {item.status === 'done' ? (
+                  <CheckCircle2 className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Clock className="h-4 w-4" aria-hidden />
+                )}
+              </span>
+              <div className="min-w-0 flex-1 text-sm">{t(item.labelKey)}</div>
+              <StatusPill tone={item.status === 'done' ? 'success' : 'warning'}>
+                {t(`companySetup.status.${item.status}`)}
+              </StatusPill>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  )
+}
