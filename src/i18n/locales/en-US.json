@@ -984,6 +984,70 @@
       "confirm": "Sign out"
     }
   },
+  "settingsSetup": {
+    "eyebrow": "System",
+    "title": "Settings",
+    "description": "Manage security, notifications, language, and system preferences.",
+    "meta": {
+      "title": "Settings — PULS",
+      "description": "Security, notifications, language, and system preferences."
+    },
+    "sectionsList": "Preferences",
+    "sheet": {
+      "mvpBadge": "MVP-2",
+      "submit": "Save"
+    },
+    "sections": {
+      "accountSecurity": {
+        "title": "Account & security",
+        "summary": "Password, 2FA, session history",
+        "action": "Manage",
+        "sheetDescription": "Account and security settings will be configurable in MVP-2.",
+        "sheetBody": "Password change, two-factor authentication, and session history are read-only in this release."
+      },
+      "tenant": {
+        "title": "Tenant settings",
+        "summary": "Mert Teknik A.Ş. · Pilot plan",
+        "action": "Open",
+        "sheetDescription": "Tenant configuration will expand in MVP-2.",
+        "sheetBody": "Plan, license, and tenant-level preferences will be managed here."
+      },
+      "notifications": {
+        "title": "Notification preferences",
+        "summary": "Email · In-app",
+        "action": "Edit",
+        "sheetDescription": "Notification channels will be customizable in MVP-2.",
+        "sheetBody": "Email and in-app notification preferences are shown as a demo summary for now."
+      },
+      "locale": {
+        "title": "Language & region",
+        "summary": "tr-TR · Europe/Istanbul",
+        "action": "Change",
+        "sheetDescription": "Language and region selection will roll out app-wide in MVP-2.",
+        "sheetBody": "Current language is tr-TR, timezone Europe/Istanbul."
+      },
+      "theme": {
+        "title": "Theme",
+        "summary": "System · Light · Dark",
+        "action": "Choose",
+        "sheetDescription": "Theme selection will be enabled in MVP-2.",
+        "sheetBody": "System, light, and dark theme options are being prepared."
+      },
+      "roleAccess": {
+        "title": "Role & access",
+        "summary": "HR Admin · 3 modules full access",
+        "action": "Review",
+        "sheetDescription": "Role and access details will be available in MVP-2.",
+        "sheetBody": "Module-level permissions and role assignments will be managed on this screen."
+      }
+    },
+    "auditLog": {
+      "title": "Audit log",
+      "summary": "{{count}} sensitive operations recorded in the last {{days}} days.",
+      "mvpNote": "Detailed log will be available in MVP-2.",
+      "backToMenu": "Back to menu"
+    }
+  },
   "aiCoachSetup": {
     "eyebrow": "Artificial Intelligence",
     "title": "AI Coach",
