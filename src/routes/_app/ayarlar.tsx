@@ -12,7 +12,7 @@ import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
-import i18n from '#/i18n'
+import { useAuth } from '#/lib/auth'
 import {
   adminSetupNavItems,
   type NavItem,
@@ -21,6 +21,8 @@ import {
   fetchDemoSettingsOverview,
   type DemoSettingsSection,
 } from '#/lib/demo/puls-demo-data'
+import { filterSettingsSectionsForRole, isSetupAdmin } from '#/lib/setup-access'
+import i18n from '#/i18n'
 
 export const Route = createFileRoute('/_app/ayarlar')({
   head: () => ({
@@ -57,16 +59,23 @@ function SetupNavRow({ item, label }: { item: NavItem; label: string }) {
 
 function AyarlarPage() {
   const { t } = useTranslation()
+  const { personaRole } = useAuth()
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
+  const showSetupHub = isSetupAdmin(personaRole)
 
   const { data, isLoading } = useQuery({
     queryKey: ['demo-settings-overview'],
     queryFn: fetchDemoSettingsOverview,
   })
 
+  const visibleSections = useMemo(
+    () => (data ? filterSettingsSectionsForRole(data.sections, personaRole) : []),
+    [data, personaRole],
+  )
+
   const selectedSection = useMemo(
-    () => data?.sections.find((section) => section.id === selectedSectionId),
-    [data, selectedSectionId],
+    () => visibleSections.find((section) => section.id === selectedSectionId),
+    [visibleSections, selectedSectionId],
   )
 
   const openSectionSheet = (section: DemoSettingsSection) => {
@@ -82,35 +91,39 @@ function AyarlarPage() {
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-        {t('settingsSetup.eyebrow')}
+        {t(showSetupHub ? 'settingsSetup.eyebrow' : 'settingsSetup.eyebrowPersonal')}
       </p>
       <PageHeader
         className="mt-1"
         title={t('settingsSetup.title')}
-        subtitle={t('settingsSetup.description')}
+        subtitle={t(
+          showSetupHub ? 'settingsSetup.description' : 'settingsSetup.descriptionPersonal',
+        )}
       />
 
-      <section className="mb-8">
-        <SectionHeader
-          title={t('settingsSetup.setupHub.title')}
-          description={t('settingsSetup.setupHub.description')}
-        />
-        <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-          {adminSetupNavItems.map((item) => (
-            <li key={item.to}>
-              <SetupNavRow item={item} label={t(item.labelKey)} />
-            </li>
-          ))}
-        </ul>
-      </section>
+      {showSetupHub ? (
+        <section className="mb-8">
+          <SectionHeader
+            title={t('settingsSetup.setupHub.title')}
+            description={t('settingsSetup.setupHub.description')}
+          />
+          <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+            {adminSetupNavItems.map((item) => (
+              <li key={item.to}>
+                <SetupNavRow item={item} label={t(item.labelKey)} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="mb-6">
         <SectionHeader title={t('settingsSetup.sectionsList')} />
         {isLoading ? (
           <Skeleton className="h-96 w-full rounded-xl" />
-        ) : data ? (
+        ) : visibleSections.length > 0 ? (
           <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-            {data.sections.map((section) => (
+            {visibleSections.map((section) => (
               <li key={section.id}>
                 <button
                   type="button"
@@ -134,7 +147,7 @@ function AyarlarPage() {
         ) : null}
       </section>
 
-      {data ? (
+      {showSetupHub && data ? (
         <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-medium text-[var(--color-text-primary)]">

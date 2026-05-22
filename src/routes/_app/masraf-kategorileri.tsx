@@ -19,9 +19,13 @@ import {
   fetchDemoExpenseCategoriesOverview,
   formatTry,
 } from '#/lib/demo/puls-demo-data'
+import { requireSetupAdminRoute } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/masraf-kategorileri')({
+  beforeLoad: async () => {
+    await requireSetupAdminRoute()
+  },
   head: () => ({
     meta: [
       { title: i18n.t('expenseCategorySetup.meta.title') },
