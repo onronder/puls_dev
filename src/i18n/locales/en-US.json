@@ -22,7 +22,8 @@
   },
   "nav": {
     "group": {
-      "main": "Main"
+      "main": "Main",
+      "system": "System"
     },
     "dashboard": "Dashboard",
     "menu": "Menu",
@@ -892,6 +893,95 @@
         "daysBefore": "e.g. 7"
       },
       "hint": "Email and in-app notification will be sent for the selected contract."
+    }
+  },
+  "profileSetup": {
+    "eyebrow": "System",
+    "title": "Profile",
+    "description": "View your personal information, role, and Self-HR summary.",
+    "meta": {
+      "title": "Profile — PULS",
+      "description": "Personal information, role, and Self-HR summary."
+    },
+    "status": {
+      "active": "Active"
+    },
+    "fields": {
+      "email": "Email",
+      "department": "Department",
+      "position": "Position",
+      "tenant": "Tenant",
+      "persona": "Persona",
+      "departmentValue": "HR & Finance",
+      "positionValue": "HR Manager",
+      "roleValue": "HR Manager"
+    },
+    "sections": {
+      "personalInfo": "Personal information",
+      "selfHr": "Self-HR summary",
+      "recentActivity": "Recent activity"
+    },
+    "selfHr": {
+      "leaveBalance": "Leave balance",
+      "leaveHint": "Annual leave",
+      "leaveValue": "{{remaining}}/{{total}}",
+      "pendingExpense": "Pending expenses",
+      "pendingExpenseHint": "{{count}} records",
+      "performance": "Performance",
+      "performanceCycle": "2026 Q2",
+      "performanceHint": "Not opened yet"
+    },
+    "activities": {
+      "leaveRequest": "submitted a leave request",
+      "expenseReport": "submitted an expense · {{amount}}",
+      "erpRetry": "retried Canias connection",
+      "profileUpdate": "updated profile information"
+    },
+    "when": {
+      "twoHoursAgo": "2 hours ago",
+      "fiveHoursAgo": "5 hours ago",
+      "yesterday": "Yesterday"
+    },
+    "actions": {
+      "edit": "Edit information",
+      "security": "Security settings",
+      "logout": "Sign out"
+    },
+    "editSheet": {
+      "title": "Edit information",
+      "description": "Profile editing form will open in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "submit": "Save",
+      "fields": {
+        "name": "Full name",
+        "email": "Email",
+        "department": "Department"
+      },
+      "placeholders": {
+        "name": "Full name",
+        "email": "you@company.com",
+        "department": "Department"
+      }
+    },
+    "securitySheet": {
+      "title": "Security settings",
+      "description": "Password and session management will be configurable in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "submit": "Save",
+      "fields": {
+        "password": "New password",
+        "sessions": "Active sessions"
+      },
+      "placeholders": {
+        "password": "••••••••",
+        "sessions": "This device"
+      }
+    },
+    "logoutSheet": {
+      "title": "Sign out?",
+      "description": "Your active session will be ended.",
+      "body": "Make sure any pending drafts are saved before continuing.",
+      "confirm": "Sign out"
     }
   },
   "aiCoachSetup": {

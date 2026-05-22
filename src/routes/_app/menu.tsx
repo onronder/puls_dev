@@ -15,6 +15,7 @@ import {
   Settings,
   SlidersHorizontal,
   Sparkles,
+  User,
   Users,
   Wallet,
   Waypoints,
@@ -46,6 +47,7 @@ type MenuLink = {
 
 const menuLinks: MenuLink[] = [
   { id: 'dashboard', to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { id: 'profil', to: '/profil', labelKey: 'nav.profil', icon: User },
   { id: 'performans', to: '/performans', labelKey: 'nav.performans', icon: BarChart3 },
   { id: 'izin', to: '/izin', labelKey: 'nav.tatil', icon: CalendarDays },
   { id: 'masraf', to: '/masraf', labelKey: 'nav.cuzdan', icon: Wallet },
