@@ -1416,3 +1416,62 @@ const demoPerformanceOverview: DemoPerformanceOverview = {
 export async function fetchDemoPerformanceOverview(): Promise<DemoPerformanceOverview> {
   return demoPerformanceOverview
 }
+
+export type DemoEmployeeStatus = 'active' | 'onleave' | 'inactive'
+
+export type DemoEmployeeFallback = {
+  status?: DemoEmployeeStatus
+  manager?: string
+  leaveUsed?: number
+  leaveTotal?: number
+  joinedLabel?: string
+}
+
+export type DemoEmployeesOverview = {
+  defaultStatus: DemoEmployeeStatus
+  defaultManager: string
+  defaultLeave: { used: number; total: number }
+  performanceScopePendingKey: string
+  byEmail: Record<string, DemoEmployeeFallback>
+}
+
+const demoEmployeesOverview: DemoEmployeesOverview = {
+  defaultStatus: 'active',
+  defaultManager: '—',
+  defaultLeave: { used: 0, total: 20 },
+  performanceScopePendingKey: 'employeesSetup.detail.performancePending',
+  byEmail: {
+    'ik@mertteknik.com': {
+      status: 'active',
+      manager: '—',
+      leaveUsed: 6,
+      leaveTotal: 20,
+      joinedLabel: '12 Oca 2023',
+    },
+    'ayse.kaya@mertteknik.com': {
+      status: 'onleave',
+      manager: 'Murat Tan',
+      leaveUsed: 8,
+      leaveTotal: 14,
+      joinedLabel: '04 Mar 2024',
+    },
+    'murat.tan@mertteknik.com': {
+      status: 'active',
+      manager: 'Demo İK Yöneticisi',
+      leaveUsed: 4,
+      leaveTotal: 18,
+      joinedLabel: '18 Eyl 2022',
+    },
+    'elif.demir@mertteknik.com': {
+      status: 'active',
+      manager: 'Demo İK Yöneticisi',
+      leaveUsed: 2,
+      leaveTotal: 14,
+      joinedLabel: '01 Şub 2025',
+    },
+  },
+}
+
+export async function fetchDemoEmployeesOverview(): Promise<DemoEmployeesOverview> {
+  return demoEmployeesOverview
+}
