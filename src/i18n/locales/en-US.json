@@ -46,6 +46,7 @@
     "sirketKurulum": "Company Setup",
     "departmanlar": "Departments",
     "pozisyonlar": "Positions",
+    "izinTanimlari": "Leave Definitions",
     "settings": "Settings"
   },
   "persona": {
@@ -445,6 +446,72 @@
         "name": "e.g. Field Engineer",
         "department": "Select department",
         "template": "Select template"
+      },
+      "submit": "Save"
+    }
+  },
+  "leaveTypeSetup": {
+    "eyebrow": "Setup & Configuration",
+    "title": "Leave Definitions",
+    "description": "Define leave types, entitlements, document and approval rules.",
+    "meta": {
+      "title": "Leave Definitions — PULS",
+      "description": "Leave types, entitlements, document and approval rules."
+    },
+    "metrics": {
+      "typeCount": "Leave types",
+      "paidCount": "Paid",
+      "docRequiredCount": "Document required",
+      "approvalFlow": "Approval flow",
+      "approvalFlowValue": "1 level"
+    },
+    "sections": {
+      "list": "Leave types"
+    },
+    "columns": {
+      "label": "Leave type",
+      "days": "Days",
+      "paid": "Pay",
+      "doc": "Document",
+      "carryOver": "Carry-over"
+    },
+    "dayCount": "{{count}} days",
+    "paid": {
+      "yes": "Paid",
+      "no": "Unpaid"
+    },
+    "doc": {
+      "required": "Required",
+      "none": "—"
+    },
+    "carryOver": {
+      "yes": "Yes",
+      "none": "—"
+    },
+    "types": {
+      "annual": "Annual",
+      "excuse": "Excuse",
+      "sick": "Sick",
+      "unpaid": "Unpaid",
+      "administrative": "Administrative",
+      "marriage": "Marriage",
+      "parental": "Parental",
+      "bereavement": "Bereavement"
+    },
+    "actions": {
+      "add": "Add leave type"
+    },
+    "sheet": {
+      "title": "Add leave type",
+      "description": "Creating new leave types will be enabled in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "label": "Leave type name",
+        "days": "Day entitlement"
+      },
+      "placeholders": {
+        "label": "e.g. Annual",
+        "days": "20"
       },
       "submit": "Save"
     }

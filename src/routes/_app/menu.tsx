@@ -6,6 +6,7 @@ import {
   CalendarDays,
   GitBranch,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Settings,
   Sparkles,
@@ -49,6 +50,7 @@ const menuLinks: MenuLink[] = [
   { id: 'sirket-kurulum', to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
   { id: 'departmanlar', to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
   { id: 'pozisyonlar', to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },
+  { id: 'izin-tanimlari', to: '/izin-tanimlari', labelKey: 'nav.izinTanimlari', icon: ListChecks },
   { id: 'settings', to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
 ]
 
