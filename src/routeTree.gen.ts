@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSozlesmelerRouteImport } from './routes/_app/sozlesmeler'
 import { Route as AppSirketKurulumRouteImport } from './routes/_app/sirket-kurulum'
 import { Route as AppPozisyonlarRouteImport } from './routes/_app/pozisyonlar'
 import { Route as AppPerformansParametreleriRouteImport } from './routes/_app/performans-parametreleri'
@@ -42,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSozlesmelerRoute = AppSozlesmelerRouteImport.update({
+  id: '/sozlesmeler',
+  path: '/sozlesmeler',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSirketKurulumRoute = AppSirketKurulumRouteImport.update({
   id: '/sirket-kurulum',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/performans-parametreleri': typeof AppPerformansParametreleriRoute
   '/pozisyonlar': typeof AppPozisyonlarRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
+  '/sozlesmeler': typeof AppSozlesmelerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/performans-parametreleri': typeof AppPerformansParametreleriRoute
   '/pozisyonlar': typeof AppPozisyonlarRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
+  '/sozlesmeler': typeof AppSozlesmelerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_app/performans-parametreleri': typeof AppPerformansParametreleriRoute
   '/_app/pozisyonlar': typeof AppPozisyonlarRoute
   '/_app/sirket-kurulum': typeof AppSirketKurulumRoute
+  '/_app/sozlesmeler': typeof AppSozlesmelerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/performans-parametreleri'
     | '/pozisyonlar'
     | '/sirket-kurulum'
+    | '/sozlesmeler'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/performans-parametreleri'
     | '/pozisyonlar'
     | '/sirket-kurulum'
+    | '/sozlesmeler'
   id:
     | '__root__'
     | '/'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_app/performans-parametreleri'
     | '/_app/pozisyonlar'
     | '/_app/sirket-kurulum'
+    | '/_app/sozlesmeler'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -279,6 +291,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/sozlesmeler': {
+      id: '/_app/sozlesmeler'
+      path: '/sozlesmeler'
+      fullPath: '/sozlesmeler'
+      preLoaderRoute: typeof AppSozlesmelerRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/sirket-kurulum': {
       id: '/_app/sirket-kurulum'
@@ -412,6 +431,7 @@ interface AppRouteChildren {
   AppPerformansParametreleriRoute: typeof AppPerformansParametreleriRoute
   AppPozisyonlarRoute: typeof AppPozisyonlarRoute
   AppSirketKurulumRoute: typeof AppSirketKurulumRoute
+  AppSozlesmelerRoute: typeof AppSozlesmelerRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -431,6 +451,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPerformansParametreleriRoute: AppPerformansParametreleriRoute,
   AppPozisyonlarRoute: AppPozisyonlarRoute,
   AppSirketKurulumRoute: AppSirketKurulumRoute,
+  AppSozlesmelerRoute: AppSozlesmelerRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

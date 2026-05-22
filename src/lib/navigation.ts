@@ -66,7 +66,7 @@ export const sidebarGroups: NavGroup[] = [
     items: [
       { to: '/izin', labelKey: 'nav.tatil', icon: CalendarDays },
       { to: '/masraf', labelKey: 'nav.cuzdan', icon: Wallet },
-      { to: '/dashboard', labelKey: 'nav.belge', icon: FileText, soon: true },
+      { to: '/sozlesmeler', labelKey: 'nav.sozlesmeler', icon: FileText },
     ],
   },
   {
