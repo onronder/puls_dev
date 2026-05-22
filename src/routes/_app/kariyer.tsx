@@ -173,9 +173,9 @@ function KariyerPage() {
                         className={cn(
                           'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums',
                           step.achieved &&
-                            'border-[rgba(22,163,74,0.35)] bg-[rgba(22,163,74,0.12)] text-[#86efac]',
+                            'border-[rgba(22,163,74,0.35)] bg-[rgba(22,163,74,0.12)] text-[var(--color-success)]',
                           step.current &&
-                            'border-[var(--color-primary)] bg-[var(--color-primary)] text-white',
+                            'border-[var(--color-primary)] bg-[var(--color-primary)] text-[#071006]',
                           !step.achieved &&
                             !step.current &&
                             'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-muted)]',
