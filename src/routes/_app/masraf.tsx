@@ -586,7 +586,7 @@ function ExpenseFormSheet({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5 text-[13.5px] font-medium text-ai">
                 {t('expenseSetup.form.ocrTitle')}
-                <span className="rounded-full bg-ai/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase">
+                <span className="rounded-full bg-ai/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase">
                   {t('expenseSetup.form.ocrSoon')}
                 </span>
               </div>

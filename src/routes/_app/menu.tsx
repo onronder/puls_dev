@@ -151,7 +151,7 @@ function MenuPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl overflow-x-hidden p-4 pb-24 md:p-8 md:pb-8">
+    <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
       <div className="mb-5">
         <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-muted-foreground">
           {t('menuSetup.eyebrow')}
@@ -215,7 +215,7 @@ function MenuPage() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <div className="text-sm font-semibold text-ai">{t('ai.floatingLabel')}</div>
-            <span className="rounded-full bg-ai/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-ai">
+            <span className="rounded-full bg-ai/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-ai">
               {t('common.soon')}
             </span>
           </div>
