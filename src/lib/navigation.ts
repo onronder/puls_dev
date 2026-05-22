@@ -53,7 +53,7 @@ export const sidebarGroups: NavGroup[] = [
     items: [
       { to: '/performans', labelKey: 'nav.performans', icon: BarChart3 },
       { to: '/calisanlar', labelKey: 'nav.calisanlar', icon: Users, audience: 'manager' },
-      { to: '/dashboard', labelKey: 'nav.kariyer', icon: Waypoints, soon: true },
+      { to: '/kariyer', labelKey: 'nav.kariyer', icon: Waypoints },
       { to: '/dashboard', labelKey: 'nav.kpi', icon: Briefcase, soon: true },
       { to: '/dashboard', labelKey: 'nav.kale', icon: FileText, soon: true },
     ],

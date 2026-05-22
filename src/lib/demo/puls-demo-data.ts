@@ -710,3 +710,106 @@ const demoPerformanceParametersOverview: DemoPerformanceParametersOverview = {
 export async function fetchDemoPerformanceParametersOverview(): Promise<DemoPerformanceParametersOverview> {
   return demoPerformanceParametersOverview
 }
+
+export type DemoCareerLadderStep = {
+  level: number
+  titleKey: string
+  current: boolean
+  achieved: boolean
+  target?: boolean
+}
+
+export type DemoCareerGap = {
+  id: string
+  nameKey: string
+  current: number
+  target: number
+}
+
+export type DemoDevelopmentPlanHorizon = 'd30' | 'd90' | 'd180'
+
+export type DemoDevelopmentPlanItem = {
+  id: string
+  labelKey: string
+}
+
+export type DemoCareerOverview = {
+  employee: {
+    name: string
+    initials: string
+    positionKey: string
+    departmentKey: string
+  }
+  readinessPercent: number
+  targetRoleKey: string
+  missingCompetencyCount: number
+  recommendedTrainingCount: number
+  ladderSubtitleKey: string
+  careerLadder: DemoCareerLadderStep[]
+  careerGaps: DemoCareerGap[]
+  developmentPlan: Record<DemoDevelopmentPlanHorizon, DemoDevelopmentPlanItem[]>
+}
+
+const demoCareerOverview: DemoCareerOverview = {
+  employee: {
+    name: 'Ayşe Kaya',
+    initials: 'AK',
+    positionKey: 'careerSetup.employee.position',
+    departmentKey: 'careerSetup.employee.department',
+  },
+  readinessPercent: 87,
+  targetRoleKey: 'careerSetup.roles.teamLead',
+  missingCompetencyCount: 3,
+  recommendedTrainingCount: 2,
+  ladderSubtitleKey: 'careerSetup.ladder.subtitle',
+  careerLadder: [
+    {
+      level: 1,
+      titleKey: 'careerSetup.ladder.fieldEngineer',
+      current: false,
+      achieved: true,
+    },
+    {
+      level: 2,
+      titleKey: 'careerSetup.ladder.seniorFieldEngineer',
+      current: true,
+      achieved: false,
+    },
+    {
+      level: 3,
+      titleKey: 'careerSetup.ladder.teamLead',
+      current: false,
+      achieved: false,
+      target: true,
+    },
+    {
+      level: 4,
+      titleKey: 'careerSetup.ladder.operationsManager',
+      current: false,
+      achieved: false,
+    },
+  ],
+  careerGaps: [
+    { id: 'g1', nameKey: 'careerSetup.gaps.leadership', current: 2, target: 4 },
+    { id: 'g2', nameKey: 'careerSetup.gaps.reporting', current: 3, target: 4 },
+    { id: 'g3', nameKey: 'careerSetup.gaps.teamCoordination', current: 2, target: 4 },
+  ],
+  developmentPlan: {
+    d30: [
+      { id: 'd30-1', labelKey: 'careerSetup.plan.d30.item1' },
+      { id: 'd30-2', labelKey: 'careerSetup.plan.d30.item2' },
+    ],
+    d90: [
+      { id: 'd90-1', labelKey: 'careerSetup.plan.d90.item1' },
+      { id: 'd90-2', labelKey: 'careerSetup.plan.d90.item2' },
+    ],
+    d180: [
+      { id: 'd180-1', labelKey: 'careerSetup.plan.d180.item1' },
+      { id: 'd180-2', labelKey: 'careerSetup.plan.d180.item2' },
+    ],
+  },
+}
+
+export async function fetchDemoCareerOverview(): Promise<DemoCareerOverview> {
+  return demoCareerOverview
+}

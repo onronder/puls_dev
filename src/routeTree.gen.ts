@@ -19,6 +19,7 @@ import { Route as AppPerformansRouteImport } from './routes/_app/performans'
 import { Route as AppMenuRouteImport } from './routes/_app/menu'
 import { Route as AppMasrafKategorileriRouteImport } from './routes/_app/masraf-kategorileri'
 import { Route as AppMasrafRouteImport } from './routes/_app/masraf'
+import { Route as AppKariyerRouteImport } from './routes/_app/kariyer'
 import { Route as AppIzinTanimlariRouteImport } from './routes/_app/izin-tanimlari'
 import { Route as AppIzinRouteImport } from './routes/_app/izin'
 import { Route as AppErpRouteImport } from './routes/_app/erp'
@@ -76,6 +77,11 @@ const AppMasrafRoute = AppMasrafRouteImport.update({
   path: '/masraf',
   getParentRoute: () => AppRoute,
 } as any)
+const AppKariyerRoute = AppKariyerRouteImport.update({
+  id: '/kariyer',
+  path: '/kariyer',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppIzinTanimlariRoute = AppIzinTanimlariRouteImport.update({
   id: '/izin-tanimlari',
   path: '/izin-tanimlari',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/erp': typeof AppErpRoute
   '/izin': typeof AppIzinRoute
   '/izin-tanimlari': typeof AppIzinTanimlariRoute
+  '/kariyer': typeof AppKariyerRoute
   '/masraf': typeof AppMasrafRoute
   '/masraf-kategorileri': typeof AppMasrafKategorileriRoute
   '/menu': typeof AppMenuRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/erp': typeof AppErpRoute
   '/izin': typeof AppIzinRoute
   '/izin-tanimlari': typeof AppIzinTanimlariRoute
+  '/kariyer': typeof AppKariyerRoute
   '/masraf': typeof AppMasrafRoute
   '/masraf-kategorileri': typeof AppMasrafKategorileriRoute
   '/menu': typeof AppMenuRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/_app/erp': typeof AppErpRoute
   '/_app/izin': typeof AppIzinRoute
   '/_app/izin-tanimlari': typeof AppIzinTanimlariRoute
+  '/_app/kariyer': typeof AppKariyerRoute
   '/_app/masraf': typeof AppMasrafRoute
   '/_app/masraf-kategorileri': typeof AppMasrafKategorileriRoute
   '/_app/menu': typeof AppMenuRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/erp'
     | '/izin'
     | '/izin-tanimlari'
+    | '/kariyer'
     | '/masraf'
     | '/masraf-kategorileri'
     | '/menu'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/erp'
     | '/izin'
     | '/izin-tanimlari'
+    | '/kariyer'
     | '/masraf'
     | '/masraf-kategorileri'
     | '/menu'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/_app/erp'
     | '/_app/izin'
     | '/_app/izin-tanimlari'
+    | '/_app/kariyer'
     | '/_app/masraf'
     | '/_app/masraf-kategorileri'
     | '/_app/menu'
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMasrafRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/kariyer': {
+      id: '/_app/kariyer'
+      path: '/kariyer'
+      fullPath: '/kariyer'
+      preLoaderRoute: typeof AppKariyerRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/izin-tanimlari': {
       id: '/_app/izin-tanimlari'
       path: '/izin-tanimlari'
@@ -345,6 +364,7 @@ interface AppRouteChildren {
   AppErpRoute: typeof AppErpRoute
   AppIzinRoute: typeof AppIzinRoute
   AppIzinTanimlariRoute: typeof AppIzinTanimlariRoute
+  AppKariyerRoute: typeof AppKariyerRoute
   AppMasrafRoute: typeof AppMasrafRoute
   AppMasrafKategorileriRoute: typeof AppMasrafKategorileriRoute
   AppMenuRoute: typeof AppMenuRoute
@@ -361,6 +381,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppErpRoute: AppErpRoute,
   AppIzinRoute: AppIzinRoute,
   AppIzinTanimlariRoute: AppIzinTanimlariRoute,
+  AppKariyerRoute: AppKariyerRoute,
   AppMasrafRoute: AppMasrafRoute,
   AppMasrafKategorileriRoute: AppMasrafKategorileriRoute,
   AppMenuRoute: AppMenuRoute,
