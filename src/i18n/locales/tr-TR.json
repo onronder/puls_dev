@@ -65,15 +65,33 @@
     "welcome": "Hoş geldin, {{name}}",
     "noTenant": "Tenant bağlantısı yok — seed-demo.sql çalıştırın.",
     "erpCaniasInactive": "Canias pasif (hazırlık)",
+    "subtitle": "İK operasyonlarının bugünkü özetini buradan takip et.",
+    "meta": {
+      "title": "Ana Sayfa — PULS",
+      "description": "İK operasyon panosu ve tenant özeti."
+    },
     "stats": {
-      "employees": "Çalışan",
+      "employees": "Aktif çalışan",
+      "employeesHint": "{{count}} departman",
       "departments": "Departman",
+      "departmentsHint": "Tanımlı",
+      "positions": "Pozisyon",
+      "positionsHint": "Tanımlı",
       "competencies": "Yetkinlik şablonu",
+      "competenciesHint": "Hazır",
+      "erp": "ERP durumu",
       "dataReadiness": "Veri hazırlığı"
     },
     "sections": {
       "setup": "Kurulum durumu",
-      "overview": "Genel bakış"
+      "overview": "Genel bakış",
+      "workQueue": "İş kuyruğu",
+      "recentActivity": "Son aktiviteler",
+      "quickActions": "Hızlı aksiyonlar"
+    },
+    "workQueue": {
+      "description": "Bugün dikkat etmen gereken görevler.",
+      "itemCount": "{{count}} öğe"
     },
     "setup": {
       "erpTitle": "Canias ERP bağlantısı",
@@ -109,6 +127,46 @@
     "emptySeed": {
       "title": "Demo veri yok",
       "description": "Supabase SQL Editor'da supabase/seed-demo.sql dosyasını çalıştırın (USER_UUID değiştirin)."
+    }
+  },
+  "dashboardSetup": {
+    "queue": {
+      "performancePeriod": {
+        "title": "Performans dönemi açılacak",
+        "meta": "2026 Q2 değerlendirmesi"
+      },
+      "fieldMapping": {
+        "title": "Canias alan eşleştirmesi bekliyor",
+        "meta": "{{mapped}} / {{total}} alan tamamlandı"
+      },
+      "leaveApproval": {
+        "title": "2 izin onayı bekliyor",
+        "meta": "Ayşe K., Murat T."
+      },
+      "expenseApproval": {
+        "title": "2 masraf onayı bekliyor",
+        "meta": "Toplam {{amount}}"
+      }
+    },
+    "erpCard": {
+      "title": "ERP entegrasyon hazırlığı",
+      "description": "Canias bağlantısı, müşteri tarafında API erişimi açıldığında devreye alınacak.",
+      "statusPending": "API erişimi bekleniyor",
+      "fieldMapping": "Alan eşleştirme",
+      "dataReadiness": "Veri hazırlığı",
+      "lastAttempt": "Son deneme",
+      "lastAttemptValue": "Dün, 18:42",
+      "openMapping": "Alan eşleştirmeyi aç",
+      "viewSyncLogs": "Sync loglarını gör"
+    },
+    "recentActivityDescription": "Tenant geneli.",
+    "quickActions": {
+      "leaveTitle": "İzin talebi oluştur",
+      "leaveHint": "Kalan: {{days}} gün",
+      "expenseTitle": "Yeni masraf bildir",
+      "expenseHint": "Aylık limit: {{amount}}",
+      "performanceTitle": "Performans dönemi",
+      "performanceHint": "2026 Q2 hazırla"
     }
   },
   "performans": {

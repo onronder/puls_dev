@@ -1269,3 +1269,117 @@ const demoSettingsOverview: DemoSettingsOverview = {
 export async function fetchDemoSettingsOverview(): Promise<DemoSettingsOverview> {
   return demoSettingsOverview
 }
+
+export type DemoDashboardQueueTone = 'warning' | 'info'
+
+export type DemoDashboardQueueIcon = 'target' | 'plug' | 'calendarCheck' | 'receipt'
+
+export type DemoDashboardQueueItem = {
+  id: string
+  titleKey: string
+  metaKey: string
+  to: '/performans' | '/erp' | '/izin' | '/masraf'
+  tone: DemoDashboardQueueTone
+  icon: DemoDashboardQueueIcon
+}
+
+export type DemoDashboardActivity = {
+  id: string
+  who: string
+  whatKey: string
+  whatParams?: Record<string, string | number>
+  whenKey: string
+}
+
+export type DemoDashboardErpStatus = {
+  statusLabelKey: string
+  mappedFields: number
+  totalFields: number
+  lastAttemptKey: string
+  readiness: number
+  descriptionKey: string
+}
+
+export type DemoDashboardOverview = {
+  positionCount: number
+  queue: DemoDashboardQueueItem[]
+  recentActivities: DemoDashboardActivity[]
+  erpStatus: DemoDashboardErpStatus
+}
+
+const demoDashboardOverview: DemoDashboardOverview = {
+  positionCount: 3,
+  queue: [
+    {
+      id: 'q1',
+      titleKey: 'dashboardSetup.queue.performancePeriod.title',
+      metaKey: 'dashboardSetup.queue.performancePeriod.meta',
+      to: '/performans',
+      tone: 'info',
+      icon: 'target',
+    },
+    {
+      id: 'q2',
+      titleKey: 'dashboardSetup.queue.fieldMapping.title',
+      metaKey: 'dashboardSetup.queue.fieldMapping.meta',
+      to: '/erp',
+      tone: 'warning',
+      icon: 'plug',
+    },
+    {
+      id: 'q3',
+      titleKey: 'dashboardSetup.queue.leaveApproval.title',
+      metaKey: 'dashboardSetup.queue.leaveApproval.meta',
+      to: '/izin',
+      tone: 'warning',
+      icon: 'calendarCheck',
+    },
+    {
+      id: 'q4',
+      titleKey: 'dashboardSetup.queue.expenseApproval.title',
+      metaKey: 'dashboardSetup.queue.expenseApproval.meta',
+      to: '/masraf',
+      tone: 'warning',
+      icon: 'receipt',
+    },
+  ],
+  recentActivities: [
+    {
+      id: 'a1',
+      who: 'Ayşe Kaya',
+      whatKey: 'profileSetup.activities.leaveRequest',
+      whenKey: 'profileSetup.when.twoHoursAgo',
+    },
+    {
+      id: 'a2',
+      who: 'Murat Tan',
+      whatKey: 'profileSetup.activities.expenseReport',
+      whatParams: { amount: 840 },
+      whenKey: 'profileSetup.when.fiveHoursAgo',
+    },
+    {
+      id: 'a3',
+      who: 'Sistem',
+      whatKey: 'profileSetup.activities.erpRetry',
+      whenKey: 'profileSetup.when.yesterday',
+    },
+    {
+      id: 'a4',
+      who: 'Elif Demir',
+      whatKey: 'profileSetup.activities.profileUpdate',
+      whenKey: 'profileSetup.when.yesterday',
+    },
+  ],
+  erpStatus: {
+    statusLabelKey: 'dashboardSetup.erpCard.statusPending',
+    mappedFields: 6,
+    totalFields: 12,
+    lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
+    readiness: 72,
+    descriptionKey: 'dashboardSetup.erpCard.description',
+  },
+}
+
+export async function fetchDemoDashboardOverview(): Promise<DemoDashboardOverview> {
+  return demoDashboardOverview
+}

@@ -65,15 +65,33 @@
     "welcome": "Welcome, {{name}}",
     "noTenant": "No tenant linked — run seed-demo.sql.",
     "erpCaniasInactive": "Canias inactive (preparation)",
+    "subtitle": "Track today's HR operations summary here.",
+    "meta": {
+      "title": "Dashboard — PULS",
+      "description": "HR operations dashboard and tenant overview."
+    },
     "stats": {
-      "employees": "Employees",
+      "employees": "Active employees",
+      "employeesHint": "{{count}} departments",
       "departments": "Departments",
+      "departmentsHint": "Defined",
+      "positions": "Positions",
+      "positionsHint": "Defined",
       "competencies": "Competency templates",
+      "competenciesHint": "Ready",
+      "erp": "ERP status",
       "dataReadiness": "Data readiness"
     },
     "sections": {
       "setup": "Setup status",
-      "overview": "Overview"
+      "overview": "Overview",
+      "workQueue": "Work queue",
+      "recentActivity": "Recent activity",
+      "quickActions": "Quick actions"
+    },
+    "workQueue": {
+      "description": "Tasks that need your attention today.",
+      "itemCount": "{{count}} items"
     },
     "setup": {
       "erpTitle": "Canias ERP connection",
@@ -109,6 +127,46 @@
     "emptySeed": {
       "title": "No demo data",
       "description": "Run supabase/seed-demo.sql in Supabase SQL Editor (replace USER_UUID)."
+    }
+  },
+  "dashboardSetup": {
+    "queue": {
+      "performancePeriod": {
+        "title": "Performance cycle opening soon",
+        "meta": "2026 Q2 review"
+      },
+      "fieldMapping": {
+        "title": "Canias field mapping pending",
+        "meta": "{{mapped}} / {{total}} fields completed"
+      },
+      "leaveApproval": {
+        "title": "2 leave approvals pending",
+        "meta": "Ayşe K., Murat T."
+      },
+      "expenseApproval": {
+        "title": "2 expense approvals pending",
+        "meta": "Total {{amount}}"
+      }
+    },
+    "erpCard": {
+      "title": "ERP integration readiness",
+      "description": "Canias connection will go live when API access is enabled on the customer side.",
+      "statusPending": "Awaiting API access",
+      "fieldMapping": "Field mapping",
+      "dataReadiness": "Data readiness",
+      "lastAttempt": "Last attempt",
+      "lastAttemptValue": "Yesterday, 18:42",
+      "openMapping": "Open field mapping",
+      "viewSyncLogs": "View sync logs"
+    },
+    "recentActivityDescription": "Tenant-wide.",
+    "quickActions": {
+      "leaveTitle": "Create leave request",
+      "leaveHint": "Remaining: {{days}} days",
+      "expenseTitle": "Submit new expense",
+      "expenseHint": "Monthly limit: {{amount}}",
+      "performanceTitle": "Performance cycle",
+      "performanceHint": "Prepare 2026 Q2"
     }
   },
   "performans": {
