@@ -603,3 +603,110 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
 export async function fetchDemoExpenseCategoriesOverview(): Promise<DemoExpenseCategoriesOverview> {
   return demoExpenseCategoriesOverview
 }
+
+export type DemoPerformanceScoreBandTone = 'success' | 'info' | 'neutral' | 'warning' | 'danger'
+
+export type DemoPerformanceCompetencyTemplate = {
+  id: string
+  nameKey: string
+  areas: number
+  updatedAt: string
+}
+
+export type DemoPerformanceKpiCategory = {
+  id: string
+  nameKey: string
+  weight: number
+}
+
+export type DemoPerformanceScoreBand = {
+  id: string
+  labelKey: string
+  min: number
+  max: number
+  tone: DemoPerformanceScoreBandTone
+}
+
+export type DemoPerformanceParametersOverview = {
+  competencyTemplateCount: number
+  kpiCategoryCount: number
+  scoreBandCount: number
+  hasActiveCycle: boolean
+  competencyTemplates: DemoPerformanceCompetencyTemplate[]
+  kpiCategories: DemoPerformanceKpiCategory[]
+  scoreBands: DemoPerformanceScoreBand[]
+}
+
+const demoPerformanceParametersOverview: DemoPerformanceParametersOverview = {
+  competencyTemplateCount: 3,
+  kpiCategoryCount: 4,
+  scoreBandCount: 5,
+  hasActiveCycle: false,
+  competencyTemplates: [
+    {
+      id: 't1',
+      nameKey: 'performanceParamsSetup.templates.fieldEngineer',
+      areas: 6,
+      updatedAt: '2026-04-12',
+    },
+    {
+      id: 't2',
+      nameKey: 'performanceParamsSetup.templates.officeOperations',
+      areas: 5,
+      updatedAt: '2026-04-08',
+    },
+    {
+      id: 't3',
+      nameKey: 'performanceParamsSetup.templates.manager',
+      areas: 7,
+      updatedAt: '2026-03-01',
+    },
+  ],
+  kpiCategories: [
+    { id: 'k1', nameKey: 'performanceParamsSetup.kpi.operational', weight: 35 },
+    { id: 'k2', nameKey: 'performanceParamsSetup.kpi.customer', weight: 25 },
+    { id: 'k3', nameKey: 'performanceParamsSetup.kpi.financial', weight: 20 },
+    { id: 'k4', nameKey: 'performanceParamsSetup.kpi.development', weight: 20 },
+  ],
+  scoreBands: [
+    {
+      id: 'sb1',
+      labelKey: 'performanceParamsSetup.scoreBands.excellent',
+      min: 90,
+      max: 100,
+      tone: 'success',
+    },
+    {
+      id: 'sb2',
+      labelKey: 'performanceParamsSetup.scoreBands.good',
+      min: 75,
+      max: 89,
+      tone: 'info',
+    },
+    {
+      id: 'sb3',
+      labelKey: 'performanceParamsSetup.scoreBands.expected',
+      min: 60,
+      max: 74,
+      tone: 'neutral',
+    },
+    {
+      id: 'sb4',
+      labelKey: 'performanceParamsSetup.scoreBands.development',
+      min: 45,
+      max: 59,
+      tone: 'warning',
+    },
+    {
+      id: 'sb5',
+      labelKey: 'performanceParamsSetup.scoreBands.risk',
+      min: 0,
+      max: 44,
+      tone: 'danger',
+    },
+  ],
+}
+
+export async function fetchDemoPerformanceParametersOverview(): Promise<DemoPerformanceParametersOverview> {
+  return demoPerformanceParametersOverview
+}

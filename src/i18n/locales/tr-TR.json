@@ -48,6 +48,7 @@
     "pozisyonlar": "Pozisyonlar",
     "izinTanimlari": "İzin Tanımları",
     "masrafKategorileri": "Masraf Kategorileri",
+    "performansParametreleri": "Performans Parametreleri",
     "settings": "Ayarlar"
   },
   "persona": {
@@ -567,6 +568,54 @@
         "accountingCode": "770.01"
       },
       "submit": "Kaydet"
+    }
+  },
+  "performanceParamsSetup": {
+    "eyebrow": "Tanım & Kurulum",
+    "title": "Performans Parametreleri",
+    "description": "Yetkinlik şablonları, KPI ağırlıkları ve skor bandlarını yönet.",
+    "meta": {
+      "title": "Performans Parametreleri — PULS",
+      "description": "Yetkinlik şablonları, KPI ağırlıkları ve skor bandları."
+    },
+    "metrics": {
+      "competencyTemplates": "Yetkinlik şablonu",
+      "kpiCategories": "KPI kategorisi",
+      "scoreBands": "Skor bandı",
+      "activeCycle": "Aktif dönem",
+      "noActiveCycle": "Yok"
+    },
+    "sections": {
+      "competencyTemplates": "Yetkinlik şablonları",
+      "kpiWeights": "KPI ağırlıkları",
+      "kpiWeightsHint": "Toplam 100%",
+      "scoreBands": "Skor bandları"
+    },
+    "templateMeta": "{{areas}} yetkinlik alanı · son güncelleme {{date}}",
+    "templates": {
+      "fieldEngineer": "Saha Mühendisi",
+      "officeOperations": "Ofis & Operasyon",
+      "manager": "Yönetici"
+    },
+    "kpi": {
+      "operational": "Operasyonel",
+      "customer": "Müşteri",
+      "financial": "Finansal",
+      "development": "Gelişim"
+    },
+    "kpiWeightAria": "{{name}} ağırlığı yüzde {{weight}}",
+    "kpiWeightLabel": "%{{weight}}",
+    "scoreBands": {
+      "excellent": "Çok iyi",
+      "good": "İyi",
+      "expected": "Beklenen",
+      "development": "Gelişim",
+      "risk": "Risk"
+    },
+    "scoreRange": "{{min}} – {{max}}",
+    "premiumCoefficient": "Prim katsayısı —",
+    "actions": {
+      "edit": "Düzenle"
     }
   },
   "ai": {

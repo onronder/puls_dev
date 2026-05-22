@@ -48,6 +48,7 @@
     "pozisyonlar": "Positions",
     "izinTanimlari": "Leave Definitions",
     "masrafKategorileri": "Expense Categories",
+    "performansParametreleri": "Performance Parameters",
     "settings": "Settings"
   },
   "persona": {
@@ -567,6 +568,54 @@
         "accountingCode": "770.01"
       },
       "submit": "Save"
+    }
+  },
+  "performanceParamsSetup": {
+    "eyebrow": "Setup & Configuration",
+    "title": "Performance Parameters",
+    "description": "Manage competency templates, KPI weights, and score bands.",
+    "meta": {
+      "title": "Performance Parameters — PULS",
+      "description": "Competency templates, KPI weights, and score bands."
+    },
+    "metrics": {
+      "competencyTemplates": "Competency templates",
+      "kpiCategories": "KPI categories",
+      "scoreBands": "Score bands",
+      "activeCycle": "Active cycle",
+      "noActiveCycle": "None"
+    },
+    "sections": {
+      "competencyTemplates": "Competency templates",
+      "kpiWeights": "KPI weights",
+      "kpiWeightsHint": "Total 100%",
+      "scoreBands": "Score bands"
+    },
+    "templateMeta": "{{areas}} competency areas · last updated {{date}}",
+    "templates": {
+      "fieldEngineer": "Field Engineer",
+      "officeOperations": "Office & Operations",
+      "manager": "Manager"
+    },
+    "kpi": {
+      "operational": "Operational",
+      "customer": "Customer",
+      "financial": "Financial",
+      "development": "Development"
+    },
+    "kpiWeightAria": "{{name}} weight {{weight}} percent",
+    "kpiWeightLabel": "{{weight}}%",
+    "scoreBands": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "expected": "Expected",
+      "development": "Development",
+      "risk": "Risk"
+    },
+    "scoreRange": "{{min}} – {{max}}",
+    "premiumCoefficient": "Bonus coefficient —",
+    "actions": {
+      "edit": "Edit"
     }
   },
   "ai": {
