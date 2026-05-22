@@ -337,7 +337,7 @@ function ProfilPage() {
             </Button>
             <Button
               type="button"
-              className="touch-target h-11 flex-1 bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/90"
+              className="touch-target h-11 flex-1 bg-[var(--color-danger)] text-[#071006] hover:bg-[var(--color-danger)]/90"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />
