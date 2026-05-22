@@ -1,42 +1,73 @@
-@import url("https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap");
 @import "tailwindcss";
 
+/* ── PULS brand tokens (MVP dark + Lovable ergonomics) ── */
 @theme {
-  --font-sans: "Familjen Grotesk", system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "Space Mono", ui-monospace, monospace;
 
-  /* Landing + Audit unified palette */
+  /* Background layers */
   --color-bg-base: #090b0a;
+  --color-bg-canvas: #0b120c;
   --color-bg-surface: #111512;
-  --color-bg-card: #151b17;
-  --color-bg-elevated: #1a211c;
+  --color-bg-card: rgba(18, 24, 19, 0.92);
+  --color-bg-elevated: #172017;
 
+  /* Primary accent — neon green, used sparingly */
   --color-primary: #5bd11f;
   --color-primary-bright: #9aff3e;
   --color-primary-muted: #caffb2;
+  --color-primary-soft: rgba(91, 209, 31, 0.13);
+  --color-primary-foreground: #071006;
 
+  /* Typography */
   --color-text-primary: #f3f7f1;
-  --color-text-secondary: #d5ddd2;
+  --color-text-secondary: #cbd6c9;
   --color-text-muted: #a9b4aa;
 
+  /* Borders */
   --color-border: rgba(255, 255, 255, 0.1);
-  --color-border-strong: rgba(91, 209, 31, 0.35);
+  --color-border-strong: rgba(91, 209, 31, 0.28);
 
-  --color-success: #16a34a;
-  --color-warning: #f59e0b;
-  --color-danger: #e8284e;
-  --color-info: #0d9488;
-  --color-ai: #7c3aed;
+  /* Semantic tones — softened, not neon-terminal */
+  --color-success: #4ade80;
+  --color-success-soft: rgba(74, 222, 128, 0.12);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.12);
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(248, 113, 113, 0.12);
+  --color-info: #86efac;
+  --color-info-soft: rgba(91, 209, 31, 0.1);
+  --color-ai: #a78bfa;
+  --color-ai-soft: rgba(167, 139, 250, 0.08);
+
+  /* Tailwind semantic aliases (shadcn-style utilities) */
+  --color-background: var(--color-bg-base);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-bg-card);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-bg-elevated);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-secondary: var(--color-bg-elevated);
+  --color-secondary-foreground: var(--color-text-secondary);
+  --color-muted: var(--color-bg-surface);
+  --color-muted-foreground: var(--color-text-muted);
+  --color-accent: var(--color-primary-soft);
+  --color-accent-foreground: var(--color-primary);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: var(--color-primary-foreground);
+  --color-ring: var(--color-primary);
+  --color-surface-2: var(--color-bg-elevated);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
+  --radius-xl: 1rem;
   --radius-pill: 9999px;
 }
 
 :root {
-  --font-sans: "Familjen Grotesk", system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "Space Mono", ui-monospace, monospace;
 }
 
@@ -56,6 +87,7 @@ body {
   background-color: var(--color-bg-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .font-mono {
@@ -65,4 +97,48 @@ body {
 .touch-target {
   min-height: 44px;
   min-width: 44px;
+}
+
+/* ── Shared surface primitives ── */
+.puls-page {
+  background-color: var(--color-bg-base);
+}
+
+.puls-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+}
+
+.puls-icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.puls-ai-panel {
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--color-ai) 22%, transparent);
+  background: var(--color-ai-soft);
+}
+
+.puls-primary-panel {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.puls-login-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(91, 209, 31, 0.08), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(91, 209, 31, 0.05), transparent 50%),
+    linear-gradient(180deg, var(--color-bg-canvas) 0%, var(--color-bg-base) 100%);
 }

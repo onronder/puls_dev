@@ -82,7 +82,7 @@ function KariyerPage() {
       ) : data ? (
         <div className="mb-5 flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[rgba(13,148,136,0.12)] text-base font-semibold text-[var(--color-primary)]">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-base font-semibold text-[var(--color-primary)]">
               {data.employee.initials}
             </span>
             <div className="min-w-0">
@@ -166,16 +166,16 @@ function KariyerPage() {
                       key={step.level}
                       className={cn(
                         'flex min-h-[52px] items-center gap-3 p-4',
-                        step.current && 'bg-[rgba(13,148,136,0.06)]',
+                        step.current && 'bg-[var(--color-primary-soft)]',
                       )}
                     >
                       <span
                         className={cn(
                           'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums',
                           step.achieved &&
-                            'border-[rgba(22,163,74,0.35)] bg-[rgba(22,163,74,0.12)] text-[var(--color-success)]',
+                            'border-[color-mix(in_srgb,var(--color-success)_35%,transparent)] bg-[var(--color-success-soft)] text-[var(--color-success)]',
                           step.current &&
-                            'border-[var(--color-primary)] bg-[var(--color-primary)] text-[#071006]',
+                            'border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-foreground)]',
                           !step.achieved &&
                             !step.current &&
                             'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-muted)]',
@@ -274,7 +274,7 @@ function KariyerPage() {
                 ))
               : (data?.developmentPlan[planTab] ?? []).map((item) => (
                   <li key={item.id} className="flex min-h-[52px] items-center gap-3 px-4 py-3 text-sm">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
                       <ArrowRight className="h-3.5 w-3.5" />
                     </span>
                     <span className="min-w-0 text-[var(--color-text-primary)]">{t(item.labelKey)}</span>
@@ -298,7 +298,7 @@ function KariyerPage() {
         <Button
           type="button"
           variant="outline"
-          className="touch-target h-11 flex-1 border-[rgba(124,58,237,0.3)] bg-[rgba(124,58,237,0.06)] text-[var(--color-ai)] opacity-90"
+          className="touch-target h-11 flex-1 border-[color-mix(in_srgb,var(--color-ai)_30%,transparent)] bg-[var(--color-ai-soft)] text-[var(--color-ai)] opacity-90"
           disabled
         >
           <Sparkles className="h-4 w-4" />

@@ -41,7 +41,7 @@ export function Segmented<T extends string>({
             className={cn(
               'min-h-[44px] flex-1 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors',
               active
-                ? 'bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)]'
+                ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
             )}
           >

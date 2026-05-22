@@ -35,11 +35,11 @@ export const Route = createFileRoute('/_app/erp')({
 function syncLogTone(level: DemoErpSyncLevel): string {
   switch (level) {
     case 'success':
-      return 'bg-[rgba(22,163,74,0.12)] text-[#86efac]'
+      return 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
     case 'warning':
-      return 'bg-[rgba(245,158,11,0.12)] text-[#fcd34d]'
+      return 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]'
     default:
-      return 'bg-[rgba(13,148,136,0.12)] text-[#5eead4]'
+      return 'bg-[var(--color-primary-soft)] text-[var(--color-info)]'
   }
 }
 

@@ -16,7 +16,7 @@ export function BottomTabNav() {
   const tabs = filterBottomTabs(mobileBottomTabs, activePersona)
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[rgba(17,21,18,0.96)] backdrop-blur-xl md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-surface)_96%,transparent)] backdrop-blur-xl md:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)]">
         {tabs.map((tab) => {
           const Icon = tab.icon
@@ -26,9 +26,9 @@ export function BottomTabNav() {
               <Link
                 to={tab.to}
                 className={cn(
-                  'flex min-h-[52px] touch-target flex-col items-center justify-center gap-1 px-1 py-2 text-xs font-medium',
+                  'mx-1 flex min-h-[52px] touch-target flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-medium transition-colors',
                   active
-                    ? 'text-[var(--color-primary)]'
+                    ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
                     : 'text-[var(--color-text-muted)]',
                 )}
               >

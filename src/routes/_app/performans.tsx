@@ -292,7 +292,7 @@ function PeriodSheet({
                 className={cn(
                   'touch-target h-11 rounded-lg border text-[13px] font-medium transition-colors',
                   scope === option.id
-                    ? 'border-[var(--color-primary)] bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
                     : 'border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)]',
                 )}
               >
@@ -352,7 +352,7 @@ function PeriodSheet({
                   className={cn(
                     'touch-target h-10 rounded-lg border text-[13px] font-medium transition-colors',
                     checked
-                      ? 'border-[var(--color-primary)] bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]'
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
                       : 'border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)]',
                   )}
                 >
@@ -363,7 +363,7 @@ function PeriodSheet({
           </div>
         </FormField>
 
-        <div className="rounded-lg border border-[rgba(13,148,136,0.25)] bg-[rgba(13,148,136,0.08)] p-3 text-[13px] text-[var(--color-primary)]">
+        <div className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-primary-soft)] p-3 text-[13px] text-[var(--color-primary)]">
           <div className="flex items-start gap-2">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
@@ -571,7 +571,7 @@ function PerformansPage() {
 
       {!activeCycle && isManagerView ? (
         <div className="mt-8 rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg-card)] p-8 text-center">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]">
+          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
             <Target className="h-6 w-6" aria-hidden />
           </span>
           <h2 className="mt-3 text-base font-semibold text-[var(--color-text-primary)]">

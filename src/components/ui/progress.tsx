@@ -20,7 +20,7 @@ export function Progress({ value = 0, className }: ProgressProps) {
     >
       <div
         className="h-full rounded-full bg-[var(--color-primary)] transition-all"
-        style={{ width: `${clamped}%` }}
+        style={{ width: `${clamped}%`, opacity: clamped > 0 ? 0.85 : 0 }}
       />
     </div>
   )

@@ -21,9 +21,9 @@ export function PersonaTogglePill() {
           type="button"
           onClick={() => void setActivePersona(persona)}
           className={cn(
-            'touch-target rounded-full px-3 py-1.5 text-xs font-semibold transition-colors md:text-sm',
+            'touch-target rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors md:text-sm',
             activePersona === persona
-              ? 'bg-[var(--color-primary)] text-[#071006]'
+              ? 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)]'
               : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
           )}
         >

@@ -68,7 +68,7 @@ function riskTone(status: DemoContractRiskStatus): StatusTone {
 
 function EmployeeAvatar({ initials }: { initials: string }) {
   return (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(13,148,136,0.12)] text-[11px] font-semibold text-[var(--color-primary)]">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-[11px] font-semibold text-[var(--color-primary)]">
       {initials}
     </span>
   )
@@ -239,7 +239,7 @@ function SozlesmelerPage() {
                           'grid w-full min-w-0 touch-target items-center gap-3 px-4 py-3 text-left transition-colors',
                           CONTRACT_TABLE_GRID_COLS,
                           isSelected
-                            ? 'bg-[rgba(13,148,136,0.06)]'
+                            ? 'bg-[var(--color-primary-soft)]'
                             : 'hover:bg-[var(--color-bg-elevated)]',
                         )}
                       >

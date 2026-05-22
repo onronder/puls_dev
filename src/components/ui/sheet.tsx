@@ -34,7 +34,10 @@ function SheetOverlay({
 }: React.ComponentProps<typeof DrawerPrimitive.Overlay>) {
   return (
     <DrawerPrimitive.Overlay
-      className={cn('fixed inset-0 z-50 bg-black/60', className)}
+      className={cn(
+        'fixed inset-0 z-50 bg-[color-mix(in_srgb,var(--color-bg-base)_72%,black)] backdrop-blur-sm',
+        className,
+      )}
       {...props}
     />
   )
