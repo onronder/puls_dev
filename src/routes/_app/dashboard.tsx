@@ -1,33 +1,183 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Building2, Sparkles, Target, Users } from 'lucide-react'
+import {
+  ArrowRight,
+  Briefcase,
+  Building2,
+  CalendarCheck,
+  Gauge,
+  Layers,
+  Plug,
+  Receipt,
+  Sparkles,
+  Target,
+  Users,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { DataList } from '#/components/puls/DataList'
 import { MetricCard } from '#/components/puls/MetricCard'
-import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
+import { Button } from '#/components/ui/button'
 import { Card, CardContent } from '#/components/ui/card'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
+import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchDemoExpenseOverview, fetchDemoLeaveOverview } from '#/lib/demo/puls-demo-data'
+import {
+  fetchDemoDashboardOverview,
+  fetchDemoExpenseOverview,
+  fetchDemoLeaveOverview,
+  type DemoDashboardActivity,
+  type DemoDashboardQueueIcon,
+  type DemoDashboardQueueItem,
+} from '#/lib/demo/puls-demo-data'
+import { formatCurrency } from '#/lib/format'
 import { fetchDashboardStats } from '#/lib/queries/dashboard'
+import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/dashboard')({
+  head: () => ({
+    meta: [
+      { title: i18n.t('dashboard.meta.title') },
+      {
+        name: 'description',
+        content: i18n.t('dashboard.meta.description'),
+      },
+    ],
+  }),
   component: DashboardPage,
 })
 
-function DashboardPage() {
-  const { t } = useTranslation()
-  const { user, activePersona } = useAuth()
-  const isManagerView = activePersona === 'manager'
+const QUEUE_ICONS: Record<DemoDashboardQueueIcon, LucideIcon> = {
+  target: Target,
+  plug: Plug,
+  calendarCheck: CalendarCheck,
+  receipt: Receipt,
+}
 
-  const { data: stats, isLoading } = useQuery({
+function formatActivityWhat(
+  activity: DemoDashboardActivity,
+  t: ReturnType<typeof useTranslation>['t'],
+  locale: string,
+): string {
+  if (activity.whatKey === 'profileSetup.activities.expenseReport' && activity.whatParams?.amount != null) {
+    return t(activity.whatKey, {
+      amount: formatCurrency(Number(activity.whatParams.amount), locale),
+    })
+  }
+
+  return t(activity.whatKey, activity.whatParams)
+}
+
+function formatQueueMeta(
+  item: DemoDashboardQueueItem,
+  t: ReturnType<typeof useTranslation>['t'],
+  locale: string,
+  erpMapped: number,
+  erpTotal: number,
+): string {
+  if (item.id === 'q2') {
+    return t(item.metaKey, { mapped: erpMapped, total: erpTotal })
+  }
+
+  if (item.id === 'q4') {
+    return t(item.metaKey, { amount: formatCurrency(1740, locale) })
+  }
+
+  return t(item.metaKey)
+}
+
+function QueueIconBadge({
+  tone,
+  icon,
+}: {
+  tone: DemoDashboardQueueItem['tone']
+  icon: DemoDashboardQueueIcon
+}) {
+  const Icon = QUEUE_ICONS[icon]
+
+  return (
+    <span
+      className={cn(
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
+        tone === 'warning'
+          ? 'bg-[rgba(245,158,11,0.12)] text-[var(--color-warning)]'
+          : 'bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]',
+      )}
+    >
+      <Icon className="h-[18px] w-[18px]" aria-hidden />
+    </span>
+  )
+}
+
+function ErpStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+        {label}
+      </dt>
+      <dd className="mt-1 text-[15px] font-semibold tabular-nums text-[var(--color-text-primary)]">
+        {value}
+      </dd>
+    </div>
+  )
+}
+
+function QuickActionCard({
+  to,
+  icon: Icon,
+  title,
+  hint,
+  tone,
+}: {
+  to: '/izin' | '/masraf' | '/performans'
+  icon: LucideIcon
+  title: string
+  hint: string
+  tone: 'primary' | 'info' | 'neutral'
+}) {
+  const toneCls =
+    tone === 'primary'
+      ? 'bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]'
+      : tone === 'info'
+        ? 'bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]'
+        : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]'
+
+  return (
+    <Link
+      to={to}
+      className="flex min-h-[64px] min-w-0 items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 transition-colors hover:bg-[var(--color-bg-elevated)]"
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', toneCls)}>
+          <Icon className="h-[18px] w-[18px]" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-[var(--color-text-primary)]">{title}</div>
+          <div className="truncate text-xs text-[var(--color-text-muted)]">{hint}</div>
+        </div>
+      </div>
+      <ArrowRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" aria-hidden />
+    </Link>
+  )
+}
+
+function DashboardPage() {
+  const { t, i18n: i18nInstance } = useTranslation()
+  const { user } = useAuth()
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats', user?.id],
     queryFn: () => fetchDashboardStats(user!.id),
     enabled: Boolean(user?.id),
+  })
+
+  const { data: demoOverview, isLoading: demoLoading } = useQuery({
+    queryKey: ['demo-dashboard-overview'],
+    queryFn: fetchDemoDashboardOverview,
   })
 
   const { data: leaveDemo } = useQuery({
@@ -40,169 +190,273 @@ function DashboardPage() {
     queryFn: fetchDemoExpenseOverview,
   })
 
-  const baglaScore = stats ? Math.min(100, stats.employeeCount * 18) : 0
-  const kpiProgress = stats ? Math.min(100, stats.competencyCount * 25) : 0
   const dataReadiness = stats?.employeeCount
     ? Math.min(100, 40 + stats.departmentCount * 10 + stats.competencyCount * 8)
-    : 0
+    : demoOverview?.erpStatus.readiness ?? 0
 
-  const erpLabel = stats?.erpConnected
-    ? t('dashboard.erpConnected', { provider: stats.erpProvider ?? 'Canias' })
-    : t('dashboard.erpCaniasInactive')
+  const welcomeName = stats?.displayName?.split(' ')[0] ?? null
+
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18nInstance.language, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date()),
+    [i18nInstance.language],
+  )
+
+  const erpProvider = stats?.erpProvider ?? 'Canias'
+  const isLoading = statsLoading || demoLoading
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
-      <PageHeader
-        title={
-          isLoading
-            ? t('dashboard.title')
-            : stats?.displayName
-              ? t('dashboard.welcome', { name: stats.displayName })
-              : t('dashboard.title')
-        }
-        subtitle={stats?.tenantName ?? t('dashboard.noTenant')}
-        badge={
-          <StatusPill tone={isManagerView ? 'info' : 'neutral'}>
-            {isManagerView ? t('persona.manager') : t('persona.employee')}
-          </StatusPill>
-        }
-      />
-
-      {isManagerView ? (
-        <>
-          <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
-            {isLoading ? (
-              <>
-                <Skeleton className="h-28 min-w-[140px] rounded-xl" />
-                <Skeleton className="h-28 min-w-[140px] rounded-xl" />
-                <Skeleton className="h-28 min-w-[140px] rounded-xl" />
-                <Skeleton className="h-28 min-w-[140px] rounded-xl" />
-              </>
-            ) : (
-              <>
-                <MetricCard
-                  compact
-                  label={t('dashboard.stats.employees')}
-                  value={String(stats?.employeeCount ?? 0)}
-                  icon={Users}
-                />
-                <MetricCard
-                  compact
-                  label={t('dashboard.stats.departments')}
-                  value={String(stats?.departmentCount ?? 0)}
-                  icon={Building2}
-                />
-                <MetricCard
-                  compact
-                  label={t('dashboard.stats.competencies')}
-                  value={String(stats?.competencyCount ?? 0)}
-                  icon={Target}
-                />
-                <MetricCard
-                  compact
-                  label={t('dashboard.stats.dataReadiness')}
-                  value={`${dataReadiness}%`}
-                  hint={erpLabel}
-                />
-              </>
-            )}
-          </div>
-
-          <SectionHeader title={t('dashboard.sections.setup')} />
-          <DataList
-            items={[
-              {
-                id: 'erp',
-                title: t('dashboard.setup.erpTitle'),
-                subtitle: erpLabel,
-                trailing: <StatusPill tone="warning">{t('dashboard.setup.inactive')}</StatusPill>,
-              },
-              {
-                id: 'approvals',
-                title: t('dashboard.setup.approvalsTitle'),
-                subtitle: t('dashboard.setup.approvalsHint'),
-                meta: String((leaveDemo?.pendingCount ?? 0) + (expenseDemo?.pendingCount ?? 0)),
-              },
-            ]}
-          />
-        </>
-      ) : (
-        <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-3">
-          <MetricCard
-            compact
-            label={t('dashboard.employee.leaveBalance')}
-            value={leaveDemo ? `${leaveDemo.heroRemainingAnnual} ${t('common.days')}` : '—'}
-          />
-          <MetricCard
-            compact
-            label={t('dashboard.employee.pendingExpense')}
-            value={expenseDemo ? `₺${expenseDemo.pendingAmount.toLocaleString('tr-TR')}` : '—'}
-          />
-          <MetricCard
-            compact
-            label={t('dashboard.employee.performanceScore')}
-            value="93,6"
-            hint={t('dashboard.employee.performanceHint')}
-          />
+      <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs font-medium text-[var(--color-text-muted)]">
+          <Building2 className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{stats?.tenantName ?? t('dashboard.noTenant')}</span>
+          <span aria-hidden>·</span>
+          <span className="shrink-0">{formattedDate}</span>
         </div>
-      )}
-
-      <SectionHeader title={t('dashboard.sections.overview')} className="mt-8" />
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm font-semibold">{t('dashboard.cards.bagla.title')}</p>
-            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-              {t('dashboard.cards.bagla.description')}
-            </p>
-            {isLoading ? (
-              <Skeleton className="mt-4 h-9 w-16" />
-            ) : (
-              <p className="mt-4 font-mono text-3xl font-bold text-[var(--color-primary)]">
-                {stats?.employeeCount ? `${baglaScore}%` : '—'}
-              </p>
-            )}
-            <Progress className="mt-3" value={baglaScore} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm font-semibold">{t('dashboard.cards.kpi.title')}</p>
-            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-              {isManagerView
-                ? t('dashboard.cards.kpi.managerDescription')
-                : t('dashboard.cards.kpi.employeeDescription')}
-            </p>
-            {isLoading ? (
-              <Skeleton className="mt-4 h-9 w-16" />
-            ) : (
-              <p className="mt-4 font-mono text-3xl font-bold">
-                {stats?.competencyCount ? `${kpiProgress}%` : '—'}
-              </p>
-            )}
-            <Progress className="mt-3" value={kpiProgress} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[var(--color-ai)]" />
-              <p className="text-sm font-semibold">{t('dashboard.cards.ai.title')}</p>
-            </div>
-            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-              {t('dashboard.cards.ai.description')}
-            </p>
-            <StatusPill tone="ai" className="mt-4">
-              {t('ai.teaser.badge')}
-            </StatusPill>
-            <p className="mt-3 text-xs text-[var(--color-text-muted)]">{t('dashboard.cards.ai.hint')}</p>
-          </CardContent>
-        </Card>
+        {isLoading ? (
+          <Skeleton className="mt-2 h-9 w-64 max-w-full" />
+        ) : (
+          <h1 className="text-[26px] font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
+            {welcomeName ? t('dashboard.welcome', { name: welcomeName }) : t('dashboard.title')}
+          </h1>
+        )}
+        <p className="text-sm text-[var(--color-text-muted)]">{t('dashboard.subtitle')}</p>
       </div>
 
-      {!isLoading && stats && stats.employeeCount === 0 ? (
+      <section
+        className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+        aria-label={t('dashboard.stats.employees')}
+      >
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-28 w-full rounded-xl" />
+          ))
+        ) : (
+          <>
+            <MetricCard
+              label={t('dashboard.stats.employees')}
+              value={String(stats?.employeeCount ?? 0)}
+              hint={t('dashboard.stats.employeesHint', {
+                count: stats?.departmentCount ?? 0,
+              })}
+              icon={Users}
+            />
+            <MetricCard
+              label={t('dashboard.stats.departments')}
+              value={String(stats?.departmentCount ?? 0)}
+              hint={t('dashboard.stats.departmentsHint')}
+              icon={Building2}
+            />
+            <MetricCard
+              label={t('dashboard.stats.positions')}
+              value={String(demoOverview?.positionCount ?? 0)}
+              hint={t('dashboard.stats.positionsHint')}
+              icon={Briefcase}
+            />
+            <MetricCard
+              label={t('dashboard.stats.competencies')}
+              value={String(stats?.competencyCount ?? 0)}
+              hint={t('dashboard.stats.competenciesHint')}
+              icon={Layers}
+            />
+            <MetricCard
+              label={t('dashboard.stats.erp')}
+              value={erpProvider}
+              hint={
+                stats?.erpConnected
+                  ? t('dashboard.erpConnected', { provider: erpProvider })
+                  : t('dashboard.erpCaniasInactive')
+              }
+              icon={Plug}
+            />
+            <div className="min-w-0">
+              <MetricCard
+                label={t('dashboard.stats.dataReadiness')}
+                value={`${dataReadiness}%`}
+                icon={Gauge}
+              />
+              <Progress className="mt-2 h-1.5" value={dataReadiness} />
+            </div>
+          </>
+        )}
+      </section>
+
+      {demoOverview ? (
+        <section className="mt-8 grid gap-5 lg:grid-cols-3">
+          <div className="min-w-0 lg:col-span-2">
+            <SectionHeader
+              title={t('dashboard.sections.workQueue')}
+              description={t('dashboard.workQueue.description')}
+              action={
+                <StatusPill tone="warning">
+                  {t('dashboard.workQueue.itemCount', { count: demoOverview.queue.length })}
+                </StatusPill>
+              }
+            />
+            <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+              {demoOverview.queue.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    to={item.to}
+                    className="flex min-h-[64px] w-full min-w-0 items-center gap-3 p-4 text-left transition-colors hover:bg-[var(--color-bg-elevated)]"
+                  >
+                    <QueueIconBadge tone={item.tone} icon={item.icon} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+                        {t(item.titleKey)}
+                      </div>
+                      <div className="truncate text-xs text-[var(--color-text-muted)]">
+                        {formatQueueMeta(
+                          item,
+                          t,
+                          i18nInstance.language,
+                          demoOverview.erpStatus.mappedFields,
+                          demoOverview.erpStatus.totalFields,
+                        )}
+                      </div>
+                    </div>
+                    <ArrowRight
+                      className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(245,158,11,0.12)] text-[var(--color-warning)]">
+                  <Plug className="h-[18px] w-[18px]" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
+                      {t('dashboardSetup.erpCard.title')}
+                    </h2>
+                    <StatusPill tone="warning">
+                      {t(demoOverview.erpStatus.statusLabelKey)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-muted)]">
+                    {t(demoOverview.erpStatus.descriptionKey)}
+                  </p>
+                  <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-5">
+                    <ErpStat
+                      label={t('dashboardSetup.erpCard.fieldMapping')}
+                      value={`${demoOverview.erpStatus.mappedFields} / ${demoOverview.erpStatus.totalFields}`}
+                    />
+                    <ErpStat
+                      label={t('dashboardSetup.erpCard.dataReadiness')}
+                      value={`%${demoOverview.erpStatus.readiness}`}
+                    />
+                    <ErpStat
+                      label={t('dashboardSetup.erpCard.lastAttempt')}
+                      value={t(demoOverview.erpStatus.lastAttemptKey)}
+                    />
+                  </dl>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button type="button" className="touch-target h-10" asChild>
+                      <Link to="/erp">
+                        {t('dashboardSetup.erpCard.openMapping')}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                    <Button type="button" variant="outline" className="touch-target h-10" asChild>
+                      <Link to="/erp">{t('dashboardSetup.erpCard.viewSyncLogs')}</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="min-w-0">
+            <SectionHeader
+              title={t('dashboard.sections.recentActivity')}
+              description={t('dashboardSetup.recentActivityDescription')}
+            />
+            <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+              {demoOverview.recentActivities.map((activity) => (
+                <li key={activity.id} className="flex items-start gap-3 p-3.5">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-elevated)] text-xs font-semibold text-[var(--color-text-secondary)]">
+                    {activity.who.charAt(0)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13.5px] text-[var(--color-text-primary)]">
+                      <span className="font-medium">{activity.who}</span>{' '}
+                      <span className="text-[var(--color-text-muted)]">
+                        {formatActivityWhat(activity, t, i18nInstance.language)}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                      {t(activity.whenKey)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              to="/ai-koc"
+              className="mt-5 flex min-w-0 items-start gap-3 rounded-xl border border-[rgba(124,58,237,0.25)] bg-[rgba(124,58,237,0.06)] p-4 transition-colors hover:bg-[rgba(124,58,237,0.1)]"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,58,237,0.15)] text-[var(--color-ai)]">
+                <Sparkles className="h-[18px] w-[18px]" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[13.5px] font-semibold text-[var(--color-ai)]">
+                    {t('dashboard.cards.ai.title')}
+                  </span>
+                  <StatusPill tone="ai">{t('ai.teaser.badge')}</StatusPill>
+                </div>
+                <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                  {t('ai.teaser.description')}
+                </p>
+              </div>
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mt-8" aria-label={t('dashboard.sections.quickActions')}>
+        <SectionHeader title={t('dashboard.sections.quickActions')} />
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <QuickActionCard
+            to="/izin"
+            icon={CalendarCheck}
+            title={t('dashboardSetup.quickActions.leaveTitle')}
+            hint={t('dashboardSetup.quickActions.leaveHint', {
+              days: leaveDemo?.heroRemainingAnnual ?? 14,
+            })}
+            tone="primary"
+          />
+          <QuickActionCard
+            to="/masraf"
+            icon={Receipt}
+            title={t('dashboardSetup.quickActions.expenseTitle')}
+            hint={t('dashboardSetup.quickActions.expenseHint', {
+              amount: formatCurrency(expenseDemo?.monthlyLimit ?? 15000, i18nInstance.language),
+            })}
+            tone="info"
+          />
+          <QuickActionCard
+            to="/performans"
+            icon={Target}
+            title={t('dashboardSetup.quickActions.performanceTitle')}
+            hint={t('dashboardSetup.quickActions.performanceHint')}
+            tone="neutral"
+          />
+        </div>
+      </section>
+
+      {!statsLoading && stats && stats.employeeCount === 0 ? (
         <Card className="mt-6 border-dashed border-[var(--color-border-strong)]">
           <CardContent className="p-6">
             <p className="font-semibold">{t('dashboard.emptySeed.title')}</p>
