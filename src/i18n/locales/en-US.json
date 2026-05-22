@@ -363,6 +363,10 @@
     "eyebrow": "Setup & Configuration",
     "title": "Departments",
     "description": "Manage organization structure, department managers, and employee distribution.",
+    "meta": {
+      "title": "Departments — PULS",
+      "description": "Organization structure, department managers, and employee distribution."
+    },
     "metrics": {
       "departments": "Departments",
       "activeEmployees": "Active employees",

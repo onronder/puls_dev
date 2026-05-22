@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Building2,
   CalendarDays,
+  GitBranch,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -45,6 +46,7 @@ const menuLinks: MenuLink[] = [
   { id: 'koc', to: '/menu', labelKey: 'nav.koc', icon: Sparkles, soon: true },
   { id: 'erp', to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
   { id: 'sirket-kurulum', to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
+  { id: 'departmanlar', to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
   { id: 'settings', to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
 ]
 

@@ -363,6 +363,10 @@
     "eyebrow": "Tanım & Kurulum",
     "title": "Departmanlar",
     "description": "Organizasyon yapısını, departman yöneticilerini ve çalışan dağılımını yönet.",
+    "meta": {
+      "title": "Departmanlar — PULS",
+      "description": "Organizasyon yapısı, departman yöneticileri ve çalışan dağılımı."
+    },
     "metrics": {
       "departments": "Departman",
       "activeEmployees": "Aktif çalışan",
