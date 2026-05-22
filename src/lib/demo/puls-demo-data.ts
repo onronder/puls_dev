@@ -1383,3 +1383,36 @@ const demoDashboardOverview: DemoDashboardOverview = {
 export async function fetchDemoDashboardOverview(): Promise<DemoDashboardOverview> {
   return demoDashboardOverview
 }
+
+export type DemoPerformanceTemplateDisplay = {
+  areasCount: number
+  updatedKey: string
+}
+
+export type DemoPerformanceOverview = {
+  employeeScopeCount: number
+  evaluatorCount: number
+  pendingReviews: number
+  completedThisWeek: number
+  overdueCount: number
+  defaultCycleName: string
+  templateDisplayByIndex: DemoPerformanceTemplateDisplay[]
+}
+
+const demoPerformanceOverview: DemoPerformanceOverview = {
+  employeeScopeCount: 4,
+  evaluatorCount: 3,
+  pendingReviews: 4,
+  completedThisWeek: 0,
+  overdueCount: 0,
+  defaultCycleName: '2026 Q2',
+  templateDisplayByIndex: [
+    { areasCount: 6, updatedKey: 'performanceSetup.templates.updatedApr12' },
+    { areasCount: 5, updatedKey: 'performanceSetup.templates.updatedApr8' },
+    { areasCount: 7, updatedKey: 'performanceSetup.templates.updatedMar1' },
+  ],
+}
+
+export async function fetchDemoPerformanceOverview(): Promise<DemoPerformanceOverview> {
+  return demoPerformanceOverview
+}

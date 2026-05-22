@@ -212,6 +212,85 @@
     "managerOnlyCreate": "Switch to Manager Mode to create review cycles.",
     "errors": {
       "noTenant": "No tenant found — run seed-demo.sql."
+    },
+    "status": {
+      "active": "Active",
+      "noPeriod": "No cycle opened"
+    },
+    "header": {
+      "activeCycle": "Active cycle: {{name}}",
+      "eyebrow": "Performance"
+    },
+    "validation": {
+      "nameRequired": "Cycle name is required.",
+      "startRequired": "Start date is required.",
+      "endRequired": "End date is required.",
+      "endAfterStart": "End date must be after start date."
+    }
+  },
+  "performanceSetup": {
+    "noPeriodSubtitle": "The 2026 Q2 review cycle has not opened yet.",
+    "cycleRange": "{{start}} → {{end}}",
+    "metrics": {
+      "scope": "Scope",
+      "scopeHint": "Employees",
+      "pending": "Pending",
+      "pendingHint": "Reviews",
+      "completed": "Completed",
+      "completedHint": "This week",
+      "overdue": "Overdue",
+      "overdueHint": "Past due date",
+      "noActiveCycle": "Active cycle",
+      "noActiveCycleHint": "Not started yet",
+      "templates": "Competency templates",
+      "templatesHint": "Defined",
+      "evaluators": "Reviewers",
+      "evaluatorsHint": "Managers"
+    },
+    "emptyPeriod": {
+      "title": "Start performance cycle",
+      "description": "Choose template, period, and reviewer flow to open the 2026 Q2 cycle. Employees will be notified automatically when launched.",
+      "configure": "Configure cycle"
+    },
+    "sheet": {
+      "title": "Create performance cycle",
+      "description": "Review cycle settings and launch.",
+      "template": "Competency template",
+      "scope": "Scope",
+      "method": "Review method",
+      "methodHint": "Multiple options can be selected.",
+      "reminders": "Reminder plan",
+      "previewTitle": "Preview",
+      "previewBody": "{{employees}} employees · {{evaluators}} manager reviewers · 1 template ({{template}})."
+    },
+    "scope": {
+      "all": "All employees",
+      "department": "Department",
+      "position": "Position"
+    },
+    "methods": {
+      "manager": "Manager review",
+      "self": "Self assessment",
+      "calibration": "HR calibration"
+    },
+    "reminders": {
+      "start": "At start",
+      "lastThree": "Last 3 days",
+      "lastDay": "Last day"
+    },
+    "templates": {
+      "areas": "{{count}} competencies · Updated {{updated}}",
+      "ready": "Ready",
+      "updatedApr12": "12 Apr 2026",
+      "updatedApr8": "8 Apr 2026",
+      "updatedMar1": "1 Mar 2026"
+    },
+    "draftCycles": "Draft cycles",
+    "actions": {
+      "cancel": "Cancel",
+      "saveDraft": "Save draft",
+      "launch": "Launch cycle",
+      "newCycle": "New cycle"
     }
   },
   "employees": {
