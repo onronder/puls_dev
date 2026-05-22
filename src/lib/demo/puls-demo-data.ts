@@ -885,3 +885,102 @@ const demoTrainingOverview: DemoTrainingOverview = {
 export async function fetchDemoTrainingOverview(): Promise<DemoTrainingOverview> {
   return demoTrainingOverview
 }
+
+export type DemoJobEvaluationFactorKey = 'knowledge' | 'problem' | 'responsibility' | 'impact'
+
+export type DemoJobEvaluationFactor = {
+  key: DemoJobEvaluationFactorKey
+  labelKey: string
+  maxScore: number
+}
+
+export type DemoJobEvaluationPosition = {
+  id: string
+  positionKey: string
+  bandKey: string
+  total: number
+  factors: Record<DemoJobEvaluationFactorKey, number>
+}
+
+export type DemoJobEvaluationLevelBand = {
+  id: string
+  levelKey: string
+  rangeKey: string
+  noteKey: string
+  tone: 'success' | 'info' | 'neutral'
+}
+
+export type DemoJobEvaluationOverview = {
+  evaluatedPositionCount: number
+  averageScore: number
+  highLevelCount: number
+  missingEvaluationCount: number
+  maxTotalScore: number
+  evaluationFactors: DemoJobEvaluationFactor[]
+  positions: DemoJobEvaluationPosition[]
+  levelBands: DemoJobEvaluationLevelBand[]
+}
+
+const demoJobEvaluationOverview: DemoJobEvaluationOverview = {
+  evaluatedPositionCount: 3,
+  averageScore: 740,
+  highLevelCount: 1,
+  missingEvaluationCount: 0,
+  maxTotalScore: 1000,
+  evaluationFactors: [
+    { key: 'knowledge', labelKey: 'jobEvaluationSetup.factors.knowledge', maxScore: 250 },
+    { key: 'problem', labelKey: 'jobEvaluationSetup.factors.problem', maxScore: 250 },
+    { key: 'responsibility', labelKey: 'jobEvaluationSetup.factors.responsibility', maxScore: 250 },
+    { key: 'impact', labelKey: 'jobEvaluationSetup.factors.impact', maxScore: 250 },
+  ],
+  positions: [
+    {
+      id: 'je1',
+      positionKey: 'jobEvaluationSetup.positions.hrManager',
+      bandKey: 'jobEvaluationSetup.bands.level5',
+      total: 855,
+      factors: { knowledge: 220, problem: 200, responsibility: 240, impact: 195 },
+    },
+    {
+      id: 'je2',
+      positionKey: 'jobEvaluationSetup.positions.fieldEngineer',
+      bandKey: 'jobEvaluationSetup.bands.level4',
+      total: 720,
+      factors: { knowledge: 200, problem: 190, responsibility: 170, impact: 160 },
+    },
+    {
+      id: 'je3',
+      positionKey: 'jobEvaluationSetup.positions.operationsSpecialist',
+      bandKey: 'jobEvaluationSetup.bands.level3',
+      total: 645,
+      factors: { knowledge: 170, problem: 160, responsibility: 160, impact: 155 },
+    },
+  ],
+  levelBands: [
+    {
+      id: 'lb5',
+      levelKey: 'jobEvaluationSetup.bands.level5',
+      rangeKey: 'jobEvaluationSetup.levelRanges.level5',
+      noteKey: 'jobEvaluationSetup.levelNotes.management',
+      tone: 'success',
+    },
+    {
+      id: 'lb4',
+      levelKey: 'jobEvaluationSetup.bands.level4',
+      rangeKey: 'jobEvaluationSetup.levelRanges.level4',
+      noteKey: 'jobEvaluationSetup.levelNotes.seniorExpert',
+      tone: 'info',
+    },
+    {
+      id: 'lb3',
+      levelKey: 'jobEvaluationSetup.bands.level3',
+      rangeKey: 'jobEvaluationSetup.levelRanges.level3',
+      noteKey: 'jobEvaluationSetup.levelNotes.expert',
+      tone: 'neutral',
+    },
+  ],
+}
+
+export async function fetchDemoJobEvaluationOverview(): Promise<DemoJobEvaluationOverview> {
+  return demoJobEvaluationOverview
+}

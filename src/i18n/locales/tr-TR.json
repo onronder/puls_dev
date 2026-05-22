@@ -39,6 +39,7 @@
     "performans": "Performans",
     "kariyer": "Kariyer",
     "egitim": "Eğitim",
+    "isDegerleme": "İş Değerleme",
     "calisanlar": "Çalışanlar",
     "belge": "Sözleşmeler",
     "cuzdan": "Masraf",
@@ -754,6 +755,55 @@
     "schoolTeaser": {
       "title": "Okul™ önerisi",
       "description": "Yetkinlik boşluklarına ve performans verisine göre öğrenme yolu önerileri MVP-2'de gelecek."
+    }
+  },
+  "jobEvaluationSetup": {
+    "eyebrow": "İK Yönetimi",
+    "title": "İş Değerleme",
+    "description": "Pozisyonların seviye, puan ve sorumluluk bandını takip et.",
+    "meta": {
+      "title": "İş Değerleme — PULS",
+      "description": "Pozisyonların seviye, puan ve sorumluluk bandı."
+    },
+    "metrics": {
+      "evaluatedPositions": "Değerlendirilen pozisyon",
+      "averageScore": "Ortalama puan",
+      "averageScoreHint": "/ 1000",
+      "highLevel": "Yüksek seviye",
+      "missingEvaluation": "Eksik değerlendirme"
+    },
+    "sections": {
+      "positionScores": "Pozisyon puanları",
+      "positionScoresHint": "Faktör bazlı kırılım",
+      "levelBands": "Seviye bandları"
+    },
+    "scoreOfMax": "/ {{max}}",
+    "factorScoreAria": "{{factor}} puanı {{score}} / {{max}}",
+    "positions": {
+      "hrManager": "İK Yöneticisi",
+      "fieldEngineer": "Saha Mühendisi",
+      "operationsSpecialist": "Operasyon Uzmanı"
+    },
+    "bands": {
+      "level5": "Seviye 5",
+      "level4": "Seviye 4",
+      "level3": "Seviye 3"
+    },
+    "factors": {
+      "knowledge": "Bilgi",
+      "problem": "Problem çözme",
+      "responsibility": "Sorumluluk",
+      "impact": "Etki"
+    },
+    "levelRanges": {
+      "level5": "800–1000",
+      "level4": "650–799",
+      "level3": "500–649"
+    },
+    "levelNotes": {
+      "management": "Yönetim",
+      "seniorExpert": "Kıdemli uzman",
+      "expert": "Uzman"
     }
   },
   "ai": {

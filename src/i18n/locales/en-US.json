@@ -39,6 +39,7 @@
     "performans": "Performance",
     "kariyer": "Career",
     "egitim": "Training",
+    "isDegerleme": "Job Evaluation",
     "calisanlar": "Employees",
     "belge": "Contracts",
     "cuzdan": "Expenses",
@@ -754,6 +755,55 @@
     "schoolTeaser": {
       "title": "School™ recommendations",
       "description": "Learning path recommendations based on competency gaps and performance data coming in MVP-2."
+    }
+  },
+  "jobEvaluationSetup": {
+    "eyebrow": "HR Management",
+    "title": "Job Evaluation",
+    "description": "Track position level, score, and responsibility band.",
+    "meta": {
+      "title": "Job Evaluation — PULS",
+      "description": "Position level, score, and responsibility band."
+    },
+    "metrics": {
+      "evaluatedPositions": "Evaluated positions",
+      "averageScore": "Average score",
+      "averageScoreHint": "/ 1000",
+      "highLevel": "High level",
+      "missingEvaluation": "Missing evaluation"
+    },
+    "sections": {
+      "positionScores": "Position scores",
+      "positionScoresHint": "Factor breakdown",
+      "levelBands": "Level bands"
+    },
+    "scoreOfMax": "/ {{max}}",
+    "factorScoreAria": "{{factor}} score {{score}} / {{max}}",
+    "positions": {
+      "hrManager": "HR Manager",
+      "fieldEngineer": "Field Engineer",
+      "operationsSpecialist": "Operations Specialist"
+    },
+    "bands": {
+      "level5": "Level 5",
+      "level4": "Level 4",
+      "level3": "Level 3"
+    },
+    "factors": {
+      "knowledge": "Knowledge",
+      "problem": "Problem solving",
+      "responsibility": "Responsibility",
+      "impact": "Impact"
+    },
+    "levelRanges": {
+      "level5": "800–1000",
+      "level4": "650–799",
+      "level3": "500–649"
+    },
+    "levelNotes": {
+      "management": "Management",
+      "seniorExpert": "Senior specialist",
+      "expert": "Specialist"
     }
   },
   "ai": {
