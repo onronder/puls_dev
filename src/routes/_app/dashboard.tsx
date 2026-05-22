@@ -104,8 +104,8 @@ function QueueIconBadge({
       className={cn(
         'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
         tone === 'warning'
-          ? 'bg-[rgba(245,158,11,0.12)] text-[var(--color-warning)]'
-          : 'bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]',
+          ? 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]'
+          : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
       )}
     >
       <Icon className="h-[18px] w-[18px]" aria-hidden />
@@ -141,9 +141,9 @@ function QuickActionCard({
 }) {
   const toneCls =
     tone === 'primary'
-      ? 'bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]'
+      ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
       : tone === 'info'
-        ? 'bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]'
+        ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
         : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]'
 
   return (
@@ -331,7 +331,7 @@ function DashboardPage() {
 
             <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(245,158,11,0.12)] text-[var(--color-warning)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-warning-soft)] text-[var(--color-warning)]">
                   <Plug className="h-[18px] w-[18px]" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -404,9 +404,9 @@ function DashboardPage() {
 
             <Link
               to="/ai-koc"
-              className="mt-5 flex min-w-0 items-start gap-3 rounded-xl border border-[rgba(124,58,237,0.25)] bg-[rgba(124,58,237,0.06)] p-4 transition-colors hover:bg-[rgba(124,58,237,0.1)]"
+              className="mt-5 flex min-w-0 items-start gap-3 rounded-xl border border-[color-mix(in_srgb,var(--color-ai)_25%,transparent)] bg-[var(--color-ai-soft)] p-4 transition-colors hover:bg-[var(--color-ai-soft)]"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,58,237,0.15)] text-[var(--color-ai)]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--color-ai)_15%,transparent)] text-[var(--color-ai)]">
                 <Sparkles className="h-[18px] w-[18px]" aria-hidden />
               </span>
               <div className="min-w-0 flex-1">

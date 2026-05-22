@@ -56,7 +56,7 @@ function CapabilityIcon({ capability }: { capability: DemoAiCoachCapability }) {
   const Icon = CAPABILITY_ICONS[capability.id] ?? Sparkles
 
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,58,237,0.1)] text-[var(--color-ai)]">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ai-soft)] text-[var(--color-ai)]">
       <Icon className="h-4 w-4" />
     </span>
   )
@@ -77,8 +77,8 @@ function ReadinessStatus({
         className={cn(
           'flex h-7 w-7 items-center justify-center rounded-full',
           isDone
-            ? 'bg-[rgba(22,163,74,0.12)] text-[var(--color-success)]'
-            : 'bg-[rgba(245,158,11,0.12)] text-[var(--color-warning)]',
+            ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+            : 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]',
         )}
         aria-hidden
       >
@@ -109,9 +109,9 @@ function AiKocPage() {
         subtitle={t('aiCoachSetup.description')}
       />
 
-      <div className="mb-6 overflow-hidden rounded-xl border border-[rgba(124,58,237,0.25)] bg-[rgba(124,58,237,0.06)] p-5">
+      <div className="mb-6 overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--color-ai)_25%,transparent)] bg-[var(--color-ai-soft)] p-5">
         <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,58,237,0.15)] text-[var(--color-ai)]">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--color-ai)_15%,transparent)] text-[var(--color-ai)]">
             <Sparkles className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -158,7 +158,7 @@ function AiKocPage() {
       <section className="mb-6">
         <SectionHeader title={t('aiCoachSetup.sections.privacy')} />
         <div className="mt-3 flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(13,148,136,0.12)] text-[var(--color-primary)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
             <Shield className="h-[18px] w-[18px]" />
           </span>
           <p className="text-sm leading-relaxed text-[var(--color-text-primary)]">

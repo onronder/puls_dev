@@ -174,9 +174,9 @@ function EgitimPage() {
         </div>
       </section>
 
-      <div className="rounded-xl border border-[rgba(124,58,237,0.25)] bg-[rgba(124,58,237,0.06)] p-4">
+      <div className="rounded-xl border border-[color-mix(in_srgb,var(--color-ai)_25%,transparent)] bg-[var(--color-ai-soft)] p-4">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,58,237,0.15)] text-[var(--color-ai)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--color-ai)_15%,transparent)] text-[var(--color-ai)]">
             <Sparkles className="h-[18px] w-[18px]" />
           </span>
           <div className="min-w-0 flex-1">

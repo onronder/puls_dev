@@ -117,7 +117,7 @@ function ProfilPage() {
         <>
           <div className="mb-6 flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[rgba(13,148,136,0.12)] text-lg font-semibold text-[var(--color-primary)]">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-lg font-semibold text-[var(--color-primary)]">
                 {initials}
               </span>
               <div className="min-w-0">
@@ -218,7 +218,7 @@ function ProfilPage() {
         <Button
           type="button"
           variant="outline"
-          className="touch-target h-11 flex-1 text-[var(--color-danger)] hover:bg-[rgba(232,40,78,0.08)]"
+          className="touch-target h-11 flex-1 text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
           onClick={() => setLogoutSheetOpen(true)}
         >
           <LogOut className="h-4 w-4" />
@@ -337,7 +337,8 @@ function ProfilPage() {
             </Button>
             <Button
               type="button"
-              className="touch-target h-11 flex-1 bg-[var(--color-danger)] text-[#071006] hover:bg-[var(--color-danger)]/90"
+              className="touch-target h-11 flex-1"
+              variant="destructive"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />

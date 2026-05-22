@@ -409,7 +409,7 @@ function CalisanlarPage() {
                     )}
                   >
                     <div className="flex min-w-0 items-center gap-3 lg:col-span-1">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(13,148,136,0.12)] text-xs font-semibold text-[var(--color-primary)]">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-xs font-semibold text-[var(--color-primary)]">
                         {employee.initials}
                       </span>
                       <div className="min-w-0">
@@ -454,7 +454,7 @@ function CalisanlarPage() {
         {selectedEmployee ? (
           <div className="space-y-5">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[rgba(13,148,136,0.12)] text-sm font-semibold text-[var(--color-primary)]">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-sm font-semibold text-[var(--color-primary)]">
                 {selectedEmployee.initials}
               </span>
               <div className="min-w-0">

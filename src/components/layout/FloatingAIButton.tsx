@@ -17,7 +17,7 @@ export function FloatingAIButton() {
           type="button"
           variant="ai"
           size="lg"
-          className="h-14 min-w-[56px] rounded-full px-5 shadow-[0_12px_35px_rgba(124,58,237,0.28)]"
+          className="h-14 min-w-[56px] rounded-full px-5 shadow-[0_8px_24px_color-mix(in_srgb,var(--color-ai)_25%,transparent)]"
           aria-label={t('ai.floatingLabel')}
           onClick={() => setOpen(true)}
         >
@@ -45,7 +45,7 @@ export function FloatingAIButton() {
             <li>{t('ai.teaser.featureCareer')}</li>
             <li>{t('ai.teaser.featurePerformance')}</li>
           </ul>
-          <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+          <p className="text-[11px] leading-relaxed text-[var(--color-text-muted)]">
             {t('ai.teaser.privacy')}
           </p>
         </div>

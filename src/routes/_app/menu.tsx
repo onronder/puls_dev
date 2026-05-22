@@ -243,7 +243,7 @@ function MenuPage() {
       <Button
         type="button"
         variant="outline"
-        className="mt-8 min-h-11 w-full border-border text-[var(--color-danger)] hover:bg-danger-soft"
+        className="mt-8 min-h-11 w-full border-[var(--color-border)] text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
         onClick={() => setLogoutOpen(true)}
       >
         <LogOut className="h-4 w-4" />
@@ -268,7 +268,8 @@ function MenuPage() {
             </Button>
             <Button
               type="button"
-              className="min-h-11 flex-1 bg-[var(--color-danger)] text-[#071006] hover:bg-[var(--color-danger)]/90"
+              variant="destructive"
+              className="min-h-11 flex-1"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />

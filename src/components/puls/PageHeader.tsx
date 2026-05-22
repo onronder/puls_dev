@@ -12,10 +12,17 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, subtitle, badge, actions, className }: PageHeaderProps) {
   return (
-    <header className={cn('mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between', className)}>
+    <header
+      className={cn(
+        'mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
+        className,
+      )}
+    >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h1>
+          <h1 className="text-[26px] font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
+            {title}
+          </h1>
           {badge}
         </div>
         {subtitle ? (

@@ -25,7 +25,7 @@ function AppLayout() {
       <AppHeader />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto pb-24 md:pb-8">
+        <main className="flex-1 overflow-y-auto bg-[var(--color-bg-base)] pb-24 md:pb-8">
           <Outlet />
         </main>
       </div>
