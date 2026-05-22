@@ -212,6 +212,85 @@
     "managerOnlyCreate": "Dönem oluşturmak için Yönetici Modu'na geçin.",
     "errors": {
       "noTenant": "Tenant bulunamadı — seed-demo.sql çalıştırın."
+    },
+    "status": {
+      "active": "Aktif",
+      "noPeriod": "Dönem açılmadı"
+    },
+    "header": {
+      "activeCycle": "Aktif dönem: {{name}}",
+      "eyebrow": "Performans"
+    },
+    "validation": {
+      "nameRequired": "Dönem adı gerekli.",
+      "startRequired": "Başlangıç tarihi gerekli.",
+      "endRequired": "Bitiş tarihi gerekli.",
+      "endAfterStart": "Bitiş tarihi başlangıçtan sonra olmalı."
+    }
+  },
+  "performanceSetup": {
+    "noPeriodSubtitle": "2026 Q2 değerlendirme dönemi henüz açılmadı.",
+    "cycleRange": "{{start}} → {{end}}",
+    "metrics": {
+      "scope": "Kapsam",
+      "scopeHint": "Çalışan",
+      "pending": "Bekleyen",
+      "pendingHint": "Değerlendirme",
+      "completed": "Tamamlanan",
+      "completedHint": "Bu hafta",
+      "overdue": "Geciken",
+      "overdueHint": "Son tarih sonrası",
+      "noActiveCycle": "Aktif dönem",
+      "noActiveCycleHint": "Henüz başlatılmadı",
+      "templates": "Yetkinlik şablonu",
+      "templatesHint": "Tanımlı",
+      "evaluators": "Değerlendiren",
+      "evaluatorsHint": "Yönetici"
+    },
+    "emptyPeriod": {
+      "title": "Performans dönemi başlat",
+      "description": "Şablon, periyot ve değerlendirici akışını seçerek 2026 Q2 dönemini açabilirsin. Başlatıldığında çalışanlar otomatik bilgilendirilir.",
+      "configure": "Dönemi yapılandır"
+    },
+    "sheet": {
+      "title": "Performans dönemi oluştur",
+      "description": "Dönem ayarlarını gözden geçir ve başlat.",
+      "template": "Yetkinlik şablonu",
+      "scope": "Kapsam",
+      "method": "Değerlendirme yöntemi",
+      "methodHint": "Birden fazla seçilebilir.",
+      "reminders": "Hatırlatma planı",
+      "previewTitle": "Önizleme",
+      "previewBody": "{{employees}} çalışan · {{evaluators}} yönetici değerlendirici · 1 şablon ({{template}})."
+    },
+    "scope": {
+      "all": "Tüm çalışanlar",
+      "department": "Departman",
+      "position": "Pozisyon"
+    },
+    "methods": {
+      "manager": "Yönetici değerlendirmesi",
+      "self": "Öz değerlendirme",
+      "calibration": "İK kalibrasyonu"
+    },
+    "reminders": {
+      "start": "Başlangıçta",
+      "lastThree": "Son 3 gün",
+      "lastDay": "Son gün"
+    },
+    "templates": {
+      "areas": "{{count}} yetkinlik · Güncellenme {{updated}}",
+      "ready": "Hazır",
+      "updatedApr12": "12 Nis 2026",
+      "updatedApr8": "08 Nis 2026",
+      "updatedMar1": "01 Mar 2026"
+    },
+    "draftCycles": "Taslak dönemler",
+    "actions": {
+      "cancel": "Vazgeç",
+      "saveDraft": "Taslak kaydet",
+      "launch": "Dönemi başlat",
+      "newCycle": "Yeni dönem"
     }
   },
   "employees": {
