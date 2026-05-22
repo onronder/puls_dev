@@ -1125,3 +1125,73 @@ const demoAiCoachOverview: DemoAiCoachOverview = {
 export async function fetchDemoAiCoachOverview(): Promise<DemoAiCoachOverview> {
   return demoAiCoachOverview
 }
+
+export type DemoProfileActivity = {
+  id: string
+  who: string
+  whatKey: string
+  whatParams?: Record<string, string | number>
+  whenKey: string
+}
+
+export type DemoProfileOverview = {
+  fallbackEmail: string
+  departmentKey: string
+  positionKey: string
+  roleKey: string
+  statusKey: string
+  leaveRemaining: number
+  leaveTotal: number
+  leaveHintKey: string
+  pendingExpenseAmount: number
+  pendingExpenseCount: number
+  performanceCycleKey: string
+  performanceHintKey: string
+  recentActivities: DemoProfileActivity[]
+}
+
+const demoProfileOverview: DemoProfileOverview = {
+  fallbackEmail: 'ik@mertteknik.com',
+  departmentKey: 'profileSetup.fields.departmentValue',
+  positionKey: 'profileSetup.fields.positionValue',
+  roleKey: 'profileSetup.fields.roleValue',
+  statusKey: 'profileSetup.status.active',
+  leaveRemaining: 14,
+  leaveTotal: 20,
+  leaveHintKey: 'profileSetup.selfHr.leaveHint',
+  pendingExpenseAmount: 2340,
+  pendingExpenseCount: 2,
+  performanceCycleKey: 'profileSetup.selfHr.performanceCycle',
+  performanceHintKey: 'profileSetup.selfHr.performanceHint',
+  recentActivities: [
+    {
+      id: 'a1',
+      who: 'Ayşe Kaya',
+      whatKey: 'profileSetup.activities.leaveRequest',
+      whenKey: 'profileSetup.when.twoHoursAgo',
+    },
+    {
+      id: 'a2',
+      who: 'Murat Tan',
+      whatKey: 'profileSetup.activities.expenseReport',
+      whatParams: { amount: 840 },
+      whenKey: 'profileSetup.when.fiveHoursAgo',
+    },
+    {
+      id: 'a3',
+      who: 'Sistem',
+      whatKey: 'profileSetup.activities.erpRetry',
+      whenKey: 'profileSetup.when.yesterday',
+    },
+    {
+      id: 'a4',
+      who: 'Elif Demir',
+      whatKey: 'profileSetup.activities.profileUpdate',
+      whenKey: 'profileSetup.when.yesterday',
+    },
+  ],
+}
+
+export async function fetchDemoProfileOverview(): Promise<DemoProfileOverview> {
+  return demoProfileOverview
+}

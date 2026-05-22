@@ -22,7 +22,8 @@
   },
   "nav": {
     "group": {
-      "main": "Ana"
+      "main": "Ana",
+      "system": "Sistem"
     },
     "dashboard": "Ana Sayfa",
     "menu": "Menü",
@@ -892,6 +893,95 @@
         "daysBefore": "Örn. 7"
       },
       "hint": "Seçili sözleşme için e-posta ve uygulama bildirimi gönderilecek."
+    }
+  },
+  "profileSetup": {
+    "eyebrow": "Sistem",
+    "title": "Profil",
+    "description": "Kişisel bilgilerini, rolünü ve Self-HR özetini görüntüle.",
+    "meta": {
+      "title": "Profil — PULS",
+      "description": "Kişisel bilgiler, rol ve Self-HR özeti."
+    },
+    "status": {
+      "active": "Aktif"
+    },
+    "fields": {
+      "email": "E-posta",
+      "department": "Departman",
+      "position": "Pozisyon",
+      "tenant": "Tenant",
+      "persona": "Persona",
+      "departmentValue": "İK & Finans",
+      "positionValue": "İK Yöneticisi",
+      "roleValue": "İK Yöneticisi"
+    },
+    "sections": {
+      "personalInfo": "Kişisel bilgiler",
+      "selfHr": "Self-HR özeti",
+      "recentActivity": "Son aktiviteler"
+    },
+    "selfHr": {
+      "leaveBalance": "İzin bakiyesi",
+      "leaveHint": "Yıllık izin",
+      "leaveValue": "{{remaining}}/{{total}}",
+      "pendingExpense": "Bekleyen masraf",
+      "pendingExpenseHint": "{{count}} kayıt",
+      "performance": "Performans",
+      "performanceCycle": "2026 Q2",
+      "performanceHint": "Henüz açılmadı"
+    },
+    "activities": {
+      "leaveRequest": "izin talebi oluşturdu",
+      "expenseReport": "masraf bildirdi · {{amount}}",
+      "erpRetry": "Canias bağlantısı yeniden denendi",
+      "profileUpdate": "profil bilgilerini güncelledi"
+    },
+    "when": {
+      "twoHoursAgo": "2 saat önce",
+      "fiveHoursAgo": "5 saat önce",
+      "yesterday": "Dün"
+    },
+    "actions": {
+      "edit": "Bilgileri düzenle",
+      "security": "Güvenlik ayarları",
+      "logout": "Oturumu kapat"
+    },
+    "editSheet": {
+      "title": "Bilgileri düzenle",
+      "description": "Profil düzenleme formu MVP-2'de açılacak.",
+      "mvpBadge": "MVP-2",
+      "submit": "Kaydet",
+      "fields": {
+        "name": "Ad soyad",
+        "email": "E-posta",
+        "department": "Departman"
+      },
+      "placeholders": {
+        "name": "Ad soyad",
+        "email": "ornek@sirket.com",
+        "department": "Departman"
+      }
+    },
+    "securitySheet": {
+      "title": "Güvenlik ayarları",
+      "description": "Şifre ve oturum yönetimi MVP-2'de yapılandırılabilecek.",
+      "mvpBadge": "MVP-2",
+      "submit": "Kaydet",
+      "fields": {
+        "password": "Yeni şifre",
+        "sessions": "Aktif oturumlar"
+      },
+      "placeholders": {
+        "password": "••••••••",
+        "sessions": "Bu cihaz"
+      }
+    },
+    "logoutSheet": {
+      "title": "Oturumu kapat?",
+      "description": "Aktif oturumun sonlandırılacak.",
+      "body": "Devam etmeden önce bekleyen taslakların kaydedildiğinden emin ol.",
+      "confirm": "Oturumu kapat"
     }
   },
   "aiCoachSetup": {

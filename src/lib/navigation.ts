@@ -15,6 +15,7 @@ import {
   Settings,
   SlidersHorizontal,
   Sparkles,
+  User,
   Users,
   Wallet,
   Waypoints,
@@ -72,6 +73,13 @@ export const sidebarGroups: NavGroup[] = [
   {
     titleKey: 'nav.ai',
     items: [{ to: '/ai-koc', labelKey: 'nav.koc', icon: Sparkles }],
+  },
+  {
+    titleKey: 'nav.group.system',
+    items: [
+      { to: '/profil', labelKey: 'nav.profil', icon: User },
+      { to: '/menu', labelKey: 'nav.menu', icon: Menu },
+    ],
   },
   {
     titleKey: 'nav.setup',
