@@ -1308,8 +1308,10 @@
   },
   "settingsSetup": {
     "eyebrow": "Yönetici Ayarları",
+    "eyebrowPersonal": "Kişisel Ayarlar",
     "title": "Ayarlar",
     "description": "Güvenlik, bildirim, dil ve sistem tercihlerini yönet.",
+    "descriptionPersonal": "Hesap, bildirim, dil ve tema tercihlerini yönet.",
     "meta": {
       "title": "Ayarlar — PULS",
       "description": "Güvenlik, bildirim, dil ve sistem tercihleri."

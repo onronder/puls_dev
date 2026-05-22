@@ -15,8 +15,12 @@ import {
   fetchDemoPerformanceParametersOverview,
   type DemoPerformanceScoreBandTone,
 } from '#/lib/demo/puls-demo-data'
+import { requireSetupAdminRoute } from '#/lib/setup-access'
 
 export const Route = createFileRoute('/_app/performans-parametreleri')({
+  beforeLoad: async () => {
+    await requireSetupAdminRoute()
+  },
   head: () => ({
     meta: [
       { title: i18n.t('performanceParamsSetup.meta.title') },

@@ -1308,8 +1308,10 @@
   },
   "settingsSetup": {
     "eyebrow": "Admin settings",
+    "eyebrowPersonal": "Personal settings",
     "title": "Settings",
     "description": "Manage security, notifications, language, and system preferences.",
+    "descriptionPersonal": "Manage account, notifications, language, and theme preferences.",
     "meta": {
       "title": "Settings — PULS",
       "description": "Security, notifications, language, and system preferences."
