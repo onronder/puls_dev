@@ -813,3 +813,75 @@ const demoCareerOverview: DemoCareerOverview = {
 export async function fetchDemoCareerOverview(): Promise<DemoCareerOverview> {
   return demoCareerOverview
 }
+
+export type DemoTrainingStatus = 'suggested' | 'planned' | 'completed'
+
+export type DemoTrainingItem = {
+  id: string
+  titleKey: string
+  employeeName: string
+  competencyKey: string
+  hours: number
+  status: DemoTrainingStatus
+}
+
+export type DemoTrainingOverview = {
+  openNeedCount: number
+  completedCount: number
+  suggestedCount: number
+  averageCompletionPercent: number
+  trainings: DemoTrainingItem[]
+}
+
+const demoTrainingOverview: DemoTrainingOverview = {
+  openNeedCount: 5,
+  completedCount: 8,
+  suggestedCount: 4,
+  averageCompletionPercent: 76,
+  trainings: [
+    {
+      id: 'tr1',
+      titleKey: 'trainingSetup.trainings.leadership101',
+      employeeName: 'Ayşe Kaya',
+      competencyKey: 'trainingSetup.competencies.leadership',
+      status: 'suggested',
+      hours: 6,
+    },
+    {
+      id: 'tr2',
+      titleKey: 'trainingSetup.trainings.reportingKpi',
+      employeeName: 'Ayşe Kaya',
+      competencyKey: 'trainingSetup.competencies.reporting',
+      status: 'planned',
+      hours: 4,
+    },
+    {
+      id: 'tr3',
+      titleKey: 'trainingSetup.trainings.ohsRenewal',
+      employeeName: 'Murat Tan',
+      competencyKey: 'trainingSetup.competencies.ohs',
+      status: 'completed',
+      hours: 8,
+    },
+    {
+      id: 'tr4',
+      titleKey: 'trainingSetup.trainings.excelAdvanced',
+      employeeName: 'Elif Demir',
+      competencyKey: 'trainingSetup.competencies.analysis',
+      status: 'completed',
+      hours: 10,
+    },
+    {
+      id: 'tr5',
+      titleKey: 'trainingSetup.trainings.communication',
+      employeeName: 'Murat Tan',
+      competencyKey: 'trainingSetup.competencies.communication',
+      status: 'suggested',
+      hours: 4,
+    },
+  ],
+}
+
+export async function fetchDemoTrainingOverview(): Promise<DemoTrainingOverview> {
+  return demoTrainingOverview
+}

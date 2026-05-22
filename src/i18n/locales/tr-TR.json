@@ -38,6 +38,7 @@
     "setup": "Tanım & Kurulum",
     "performans": "Performans",
     "kariyer": "Kariyer",
+    "egitim": "Eğitim",
     "calisanlar": "Çalışanlar",
     "belge": "Sözleşmeler",
     "cuzdan": "Masraf",
@@ -702,6 +703,57 @@
       "previewTitle": "Taslak özet",
       "previewHorizon": "30 / 90 / 180 gün hedefleri birleştirilmiş önizleme",
       "previewNote": "Plan kaydedildiğinde yönetici onayına gönderilecek."
+    }
+  },
+  "trainingSetup": {
+    "eyebrow": "İK Yönetimi",
+    "title": "Eğitim",
+    "description": "Yetkinlik boşluklarına göre eğitim ihtiyaçlarını ve önerileri takip et.",
+    "meta": {
+      "title": "Eğitim — PULS",
+      "description": "Yetkinlik boşluklarına göre eğitim ihtiyaçları ve öneriler."
+    },
+    "metrics": {
+      "openNeed": "Açık eğitim ihtiyacı",
+      "completed": "Tamamlanan eğitim",
+      "suggested": "Önerilen eğitim",
+      "averageCompletion": "Ortalama tamamlama",
+      "averageCompletionValue": "%{{percent}}"
+    },
+    "sections": {
+      "list": "Eğitim listesi",
+      "listHint": "Çalışan bazlı ihtiyaç ve öneriler"
+    },
+    "columns": {
+      "title": "Eğitim",
+      "employee": "Çalışan",
+      "competency": "Yetkinlik",
+      "duration": "Süre",
+      "status": "Durum"
+    },
+    "durationHours": "{{hours}} saat",
+    "status": {
+      "suggested": "Önerildi",
+      "planned": "Planlandı",
+      "completed": "Tamamlandı"
+    },
+    "trainings": {
+      "leadership101": "Liderlik 101",
+      "reportingKpi": "Raporlama & KPI",
+      "ohsRenewal": "İSG yenileme",
+      "excelAdvanced": "Excel ileri seviye",
+      "communication": "İletişim becerileri"
+    },
+    "competencies": {
+      "leadership": "Liderlik",
+      "reporting": "Raporlama",
+      "ohs": "İSG",
+      "analysis": "Analiz",
+      "communication": "İletişim"
+    },
+    "schoolTeaser": {
+      "title": "Okul™ önerisi",
+      "description": "Yetkinlik boşluklarına ve performans verisine göre öğrenme yolu önerileri MVP-2'de gelecek."
     }
   },
   "ai": {

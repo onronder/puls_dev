@@ -38,6 +38,7 @@
     "setup": "Setup & Configuration",
     "performans": "Performance",
     "kariyer": "Career",
+    "egitim": "Training",
     "calisanlar": "Employees",
     "belge": "Contracts",
     "cuzdan": "Expenses",
@@ -702,6 +703,57 @@
       "previewTitle": "Draft summary",
       "previewHorizon": "Combined 30 / 90 / 180 day target preview",
       "previewNote": "When saved, the plan will be sent for manager approval."
+    }
+  },
+  "trainingSetup": {
+    "eyebrow": "HR Management",
+    "title": "Training",
+    "description": "Track training needs and recommendations based on competency gaps.",
+    "meta": {
+      "title": "Training — PULS",
+      "description": "Training needs and recommendations based on competency gaps."
+    },
+    "metrics": {
+      "openNeed": "Open training needs",
+      "completed": "Completed training",
+      "suggested": "Suggested training",
+      "averageCompletion": "Average completion",
+      "averageCompletionValue": "{{percent}}%"
+    },
+    "sections": {
+      "list": "Training list",
+      "listHint": "Employee-based needs and recommendations"
+    },
+    "columns": {
+      "title": "Training",
+      "employee": "Employee",
+      "competency": "Competency",
+      "duration": "Duration",
+      "status": "Status"
+    },
+    "durationHours": "{{hours}} hours",
+    "status": {
+      "suggested": "Suggested",
+      "planned": "Planned",
+      "completed": "Completed"
+    },
+    "trainings": {
+      "leadership101": "Leadership 101",
+      "reportingKpi": "Reporting & KPI",
+      "ohsRenewal": "OHS renewal",
+      "excelAdvanced": "Advanced Excel",
+      "communication": "Communication skills"
+    },
+    "competencies": {
+      "leadership": "Leadership",
+      "reporting": "Reporting",
+      "ohs": "OHS",
+      "analysis": "Analysis",
+      "communication": "Communication"
+    },
+    "schoolTeaser": {
+      "title": "School™ recommendations",
+      "description": "Learning path recommendations based on competency gaps and performance data coming in MVP-2."
     }
   },
   "ai": {
