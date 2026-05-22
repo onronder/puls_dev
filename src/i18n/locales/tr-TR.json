@@ -42,6 +42,7 @@
     "isDegerleme": "İş Değerleme",
     "calisanlar": "Çalışanlar",
     "belge": "Sözleşmeler",
+    "sozlesmeler": "Sözleşmeler",
     "cuzdan": "Masraf",
     "kale": "İş Değerleme",
     "erp": "ERP Entegrasyon",
@@ -804,6 +805,93 @@
       "management": "Yönetim",
       "seniorExpert": "Kıdemli uzman",
       "expert": "Uzman"
+    }
+  },
+  "contractsSetup": {
+    "eyebrow": "Çalışan Süreçleri",
+    "title": "Sözleşmeler",
+    "description": "Çalışan sözleşmelerini, bitiş tarihlerini ve imza durumlarını takip et.",
+    "meta": {
+      "title": "Sözleşmeler — PULS",
+      "description": "Çalışan sözleşmeleri, bitiş tarihleri ve imza durumları."
+    },
+    "metrics": {
+      "active": "Aktif sözleşme",
+      "expiringSoon": "Yakında bitecek",
+      "pendingSignature": "İmza bekleyen",
+      "kvkkMissing": "KVKK eksik"
+    },
+    "sections": {
+      "list": "Sözleşme listesi"
+    },
+    "columns": {
+      "employee": "Çalışan",
+      "type": "Tip",
+      "start": "Başlangıç",
+      "end": "Bitiş",
+      "signature": "İmza",
+      "risk": "Risk"
+    },
+    "noEndDate": "—",
+    "types": {
+      "indefinite": "Belirsiz süreli",
+      "fixedTerm": "Belirli süreli",
+      "probation": "Deneme süresi"
+    },
+    "signature": {
+      "signed": "İmzalı",
+      "pending": "Bekliyor"
+    },
+    "risk": {
+      "ok": "Aktif",
+      "expiring": "Yakında bitiyor",
+      "pending": "İmza bekliyor"
+    },
+    "actions": {
+      "upload": "Belge yükle",
+      "viewDetail": "Detayı görüntüle",
+      "setReminder": "Hatırlatıcı kur"
+    },
+    "uploadSheet": {
+      "title": "Belge yükle",
+      "description": "Sözleşme belgesi yükleme akışı MVP-2'de açılacak.",
+      "mvpBadge": "MVP-2",
+      "submit": "Yükle",
+      "fields": {
+        "employee": "Çalışan",
+        "type": "Sözleşme tipi",
+        "file": "Belge"
+      },
+      "placeholders": {
+        "employee": "Çalışan seç",
+        "type": "Tip seç",
+        "file": "PDF veya DOCX"
+      }
+    },
+    "detailSheet": {
+      "title": "Sözleşme özeti",
+      "description": "Metadata düzeyinde önizleme. Belge içeriği gösterilmez.",
+      "fields": {
+        "employee": "Çalışan",
+        "type": "Tip",
+        "start": "Başlangıç",
+        "end": "Bitiş",
+        "signature": "İmza durumu",
+        "risk": "Risk durumu"
+      }
+    },
+    "reminderSheet": {
+      "title": "Hatırlatıcı kur",
+      "description": "Sözleşme bitiş hatırlatıcıları MVP-2'de yapılandırılabilecek.",
+      "mvpBadge": "MVP-2",
+      "submit": "Hatırlatıcı kaydet",
+      "fields": {
+        "daysBefore": "Kaç gün önce"
+      },
+      "placeholders": {
+        "daysBefore": "Örn. 7"
+      },
+      "hint": "Seçili sözleşme için e-posta ve uygulama bildirimi gönderilecek."
     }
   },
   "ai": {

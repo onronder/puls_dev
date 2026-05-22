@@ -42,6 +42,7 @@
     "isDegerleme": "Job Evaluation",
     "calisanlar": "Employees",
     "belge": "Contracts",
+    "sozlesmeler": "Contracts",
     "cuzdan": "Expenses",
     "kale": "Job Evaluation",
     "erp": "ERP Integration",
@@ -804,6 +805,93 @@
       "management": "Management",
       "seniorExpert": "Senior specialist",
       "expert": "Specialist"
+    }
+  },
+  "contractsSetup": {
+    "eyebrow": "Employee Processes",
+    "title": "Contracts",
+    "description": "Track employee contracts, end dates, and signature status.",
+    "meta": {
+      "title": "Contracts — PULS",
+      "description": "Employee contracts, end dates, and signature status."
+    },
+    "metrics": {
+      "active": "Active contracts",
+      "expiringSoon": "Expiring soon",
+      "pendingSignature": "Pending signature",
+      "kvkkMissing": "Missing GDPR consent"
+    },
+    "sections": {
+      "list": "Contract list"
+    },
+    "columns": {
+      "employee": "Employee",
+      "type": "Type",
+      "start": "Start",
+      "end": "End",
+      "signature": "Signature",
+      "risk": "Risk"
+    },
+    "noEndDate": "—",
+    "types": {
+      "indefinite": "Indefinite term",
+      "fixedTerm": "Fixed term",
+      "probation": "Probation period"
+    },
+    "signature": {
+      "signed": "Signed",
+      "pending": "Pending"
+    },
+    "risk": {
+      "ok": "Active",
+      "expiring": "Expiring soon",
+      "pending": "Signature pending"
+    },
+    "actions": {
+      "upload": "Upload document",
+      "viewDetail": "View details",
+      "setReminder": "Set reminder"
+    },
+    "uploadSheet": {
+      "title": "Upload document",
+      "description": "Contract document upload flow will open in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "submit": "Upload",
+      "fields": {
+        "employee": "Employee",
+        "type": "Contract type",
+        "file": "Document"
+      },
+      "placeholders": {
+        "employee": "Select employee",
+        "type": "Select type",
+        "file": "PDF or DOCX"
+      }
+    },
+    "detailSheet": {
+      "title": "Contract summary",
+      "description": "Metadata-level preview. Document content is not shown.",
+      "fields": {
+        "employee": "Employee",
+        "type": "Type",
+        "start": "Start",
+        "end": "End",
+        "signature": "Signature status",
+        "risk": "Risk status"
+      }
+    },
+    "reminderSheet": {
+      "title": "Set reminder",
+      "description": "Contract expiry reminders will be configurable in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "submit": "Save reminder",
+      "fields": {
+        "daysBefore": "Days before"
+      },
+      "placeholders": {
+        "daysBefore": "e.g. 7"
+      },
+      "hint": "Email and in-app notification will be sent for the selected contract."
     }
   },
   "ai": {

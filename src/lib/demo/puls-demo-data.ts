@@ -984,3 +984,79 @@ const demoJobEvaluationOverview: DemoJobEvaluationOverview = {
 export async function fetchDemoJobEvaluationOverview(): Promise<DemoJobEvaluationOverview> {
   return demoJobEvaluationOverview
 }
+
+export type DemoContractSignedStatus = 'signed' | 'pending'
+
+export type DemoContractRiskStatus = 'ok' | 'expiring' | 'pending'
+
+export type DemoContractItem = {
+  id: string
+  employeeName: string
+  initials: string
+  typeKey: string
+  startDate: string
+  endDate: string | null
+  signed: DemoContractSignedStatus
+  risk: DemoContractRiskStatus
+}
+
+export type DemoContractsOverview = {
+  activeContractCount: number
+  expiringSoonCount: number
+  pendingSignatureCount: number
+  kvkkMissingCount: number
+  contracts: DemoContractItem[]
+}
+
+const demoContractsOverview: DemoContractsOverview = {
+  activeContractCount: 4,
+  expiringSoonCount: 1,
+  pendingSignatureCount: 1,
+  kvkkMissingCount: 0,
+  contracts: [
+    {
+      id: 'c1',
+      employeeName: 'Ayşe Kaya',
+      initials: 'AK',
+      typeKey: 'contractsSetup.types.indefinite',
+      startDate: '2024-03-04',
+      endDate: null,
+      signed: 'signed',
+      risk: 'ok',
+    },
+    {
+      id: 'c2',
+      employeeName: 'Murat Tan',
+      initials: 'MT',
+      typeKey: 'contractsSetup.types.fixedTerm',
+      startDate: '2022-09-18',
+      endDate: '2026-07-05',
+      signed: 'signed',
+      risk: 'expiring',
+    },
+    {
+      id: 'c3',
+      employeeName: 'Elif Demir',
+      initials: 'ED',
+      typeKey: 'contractsSetup.types.probation',
+      startDate: '2026-02-01',
+      endDate: '2026-08-01',
+      signed: 'pending',
+      risk: 'pending',
+    },
+    {
+      id: 'c4',
+      employeeName: 'Demo İK Yöneticisi',
+      initials: 'DY',
+      typeKey: 'contractsSetup.types.indefinite',
+      startDate: '2023-01-12',
+      endDate: null,
+      signed: 'signed',
+      risk: 'ok',
+    },
+  ],
+}
+
+export async function fetchDemoContractsOverview(): Promise<DemoContractsOverview> {
+  return demoContractsOverview
+}
