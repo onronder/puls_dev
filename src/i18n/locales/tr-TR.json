@@ -46,6 +46,7 @@
     "sirketKurulum": "Şirket Kurulum",
     "departmanlar": "Departmanlar",
     "pozisyonlar": "Pozisyonlar",
+    "izinTanimlari": "İzin Tanımları",
     "settings": "Ayarlar"
   },
   "persona": {
@@ -445,6 +446,72 @@
         "name": "Örn. Saha Mühendisi",
         "department": "Departman seçimi",
         "template": "Şablon seçimi"
+      },
+      "submit": "Kaydet"
+    }
+  },
+  "leaveTypeSetup": {
+    "eyebrow": "Tanım & Kurulum",
+    "title": "İzin Tanımları",
+    "description": "İzin tiplerini, hakları, belge ve onay kurallarını tanımla.",
+    "meta": {
+      "title": "İzin Tanımları — PULS",
+      "description": "İzin tipleri, haklar, belge ve onay kuralları."
+    },
+    "metrics": {
+      "typeCount": "İzin tipi",
+      "paidCount": "Ücretli",
+      "docRequiredCount": "Belge zorunlu",
+      "approvalFlow": "Onay akışı",
+      "approvalFlowValue": "1 seviye"
+    },
+    "sections": {
+      "list": "İzin tipleri"
+    },
+    "columns": {
+      "label": "İzin tipi",
+      "days": "Gün",
+      "paid": "Ücret",
+      "doc": "Belge",
+      "carryOver": "Devir"
+    },
+    "dayCount": "{{count}} gün",
+    "paid": {
+      "yes": "Ücretli",
+      "no": "Ücretsiz"
+    },
+    "doc": {
+      "required": "Zorunlu",
+      "none": "—"
+    },
+    "carryOver": {
+      "yes": "Var",
+      "none": "—"
+    },
+    "types": {
+      "annual": "Yıllık",
+      "excuse": "Mazeret",
+      "sick": "Hastalık",
+      "unpaid": "Ücretsiz",
+      "administrative": "İdari",
+      "marriage": "Evlilik",
+      "parental": "Doğum/Babalık",
+      "bereavement": "Ölüm"
+    },
+    "actions": {
+      "add": "İzin tipi ekle"
+    },
+    "sheet": {
+      "title": "İzin tipi ekle",
+      "description": "Yeni izin tipi oluşturma MVP-2 kapsamında açılacak.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "label": "İzin tipi adı",
+        "days": "Gün hakkı"
+      },
+      "placeholders": {
+        "label": "Örn. Yıllık",
+        "days": "20"
       },
       "submit": "Kaydet"
     }

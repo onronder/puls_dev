@@ -440,3 +440,95 @@ const demoPositionsOverview: DemoPositionsOverview = {
 export async function fetchDemoPositionsOverview(): Promise<DemoPositionsOverview> {
   return demoPositionsOverview
 }
+
+export type DemoLeaveTypeRule = {
+  id: string
+  labelKey: string
+  days: number
+  paid: boolean
+  doc: boolean
+  carryOver: boolean
+}
+
+export type DemoLeaveTypesOverview = {
+  typeCount: number
+  paidCount: number
+  docRequiredCount: number
+  leaveTypes: DemoLeaveTypeRule[]
+}
+
+const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
+  typeCount: 8,
+  paidCount: 6,
+  docRequiredCount: 2,
+  leaveTypes: [
+    {
+      id: 'yillik',
+      labelKey: 'leaveTypeSetup.types.annual',
+      days: 20,
+      paid: true,
+      doc: false,
+      carryOver: true,
+    },
+    {
+      id: 'mazeret',
+      labelKey: 'leaveTypeSetup.types.excuse',
+      days: 10,
+      paid: true,
+      doc: false,
+      carryOver: false,
+    },
+    {
+      id: 'hastalik',
+      labelKey: 'leaveTypeSetup.types.sick',
+      days: 10,
+      paid: true,
+      doc: true,
+      carryOver: false,
+    },
+    {
+      id: 'ucretsiz',
+      labelKey: 'leaveTypeSetup.types.unpaid',
+      days: 30,
+      paid: false,
+      doc: false,
+      carryOver: false,
+    },
+    {
+      id: 'idari',
+      labelKey: 'leaveTypeSetup.types.administrative',
+      days: 5,
+      paid: true,
+      doc: false,
+      carryOver: false,
+    },
+    {
+      id: 'evlilik',
+      labelKey: 'leaveTypeSetup.types.marriage',
+      days: 3,
+      paid: true,
+      doc: true,
+      carryOver: false,
+    },
+    {
+      id: 'dogum',
+      labelKey: 'leaveTypeSetup.types.parental',
+      days: 16,
+      paid: true,
+      doc: false,
+      carryOver: false,
+    },
+    {
+      id: 'olum',
+      labelKey: 'leaveTypeSetup.types.bereavement',
+      days: 3,
+      paid: true,
+      doc: false,
+      carryOver: false,
+    },
+  ],
+}
+
+export async function fetchDemoLeaveTypesOverview(): Promise<DemoLeaveTypesOverview> {
+  return demoLeaveTypesOverview
+}
