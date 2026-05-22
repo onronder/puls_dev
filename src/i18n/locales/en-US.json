@@ -597,6 +597,17 @@
     "profileFallback": "PULS user",
     "signOut": "Sign out"
   },
+  "menuSetup": {
+    "eyebrow": "My account",
+    "subtitle": "Profile, preferences, and module access in one place.",
+    "statusActive": "Active",
+    "stats": {
+      "employees": "Employees",
+      "departments": "Departments",
+      "positions": "Positions"
+    },
+    "versionFooter": "PULS · v0.1 prototype"
+  },
   "erp": {
     "eyebrow": "Setup & Configuration",
     "title": "ERP Integration",

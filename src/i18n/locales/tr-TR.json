@@ -595,7 +595,18 @@
     "title": "Menü",
     "subtitle": "Profil ve modül kısayolları",
     "profileFallback": "PULS kullanıcısı",
-    "signOut": "Çıkış yap"
+    "signOut": "Oturumu kapat"
+  },
+  "menuSetup": {
+    "eyebrow": "Hesabım",
+    "subtitle": "Profil, tercihler ve modül erişimi tek yerde.",
+    "statusActive": "Aktif",
+    "stats": {
+      "employees": "Çalışan",
+      "departments": "Departman",
+      "positions": "Pozisyon"
+    },
+    "versionFooter": "PULS · v0.1 prototip"
   },
   "erp": {
     "eyebrow": "Tanım & Kurulum",

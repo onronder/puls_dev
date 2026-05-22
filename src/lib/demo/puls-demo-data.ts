@@ -1592,3 +1592,19 @@ const demoEmployeesOverview: DemoEmployeesOverview = {
 export async function fetchDemoEmployeesOverview(): Promise<DemoEmployeesOverview> {
   return demoEmployeesOverview
 }
+
+export type DemoMenuTenantFallback = {
+  employeeCount: number
+  departmentCount: number
+  positionCount: number
+}
+
+const demoMenuTenantFallback: DemoMenuTenantFallback = {
+  employeeCount: 4,
+  departmentCount: 3,
+  positionCount: 3,
+}
+
+export async function fetchDemoMenuTenantFallback(): Promise<DemoMenuTenantFallback> {
+  return demoMenuTenantFallback
+}
