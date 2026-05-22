@@ -46,6 +46,7 @@ export const mobileBottomTabs: NavItem[] = [
   { to: '/menu', labelKey: 'nav.menu', icon: Menu, audience: 'all' },
 ]
 
+/** Desktop sidebar + mobile /menu navigation (excludes setup routes — those live under /ayarlar). */
 export const sidebarGroups: NavGroup[] = [
   {
     titleKey: 'nav.group.main',
@@ -58,7 +59,6 @@ export const sidebarGroups: NavGroup[] = [
       { to: '/calisanlar', labelKey: 'nav.calisanlar', icon: Users, audience: 'manager' },
       { to: '/kariyer', labelKey: 'nav.kariyer', icon: Waypoints },
       { to: '/egitim', labelKey: 'nav.egitim', icon: GraduationCap },
-      { to: '/dashboard', labelKey: 'nav.kpi', icon: Briefcase, soon: true },
       { to: '/is-degerleme', labelKey: 'nav.isDegerleme', icon: Scale },
     ],
   },
@@ -75,28 +75,27 @@ export const sidebarGroups: NavGroup[] = [
     items: [{ to: '/ai-koc', labelKey: 'nav.koc', icon: Sparkles }],
   },
   {
-    titleKey: 'nav.group.system',
-    items: [
-      { to: '/profil', labelKey: 'nav.profil', icon: User },
-      { to: '/ayarlar', labelKey: 'nav.settings', icon: Settings },
-      { to: '/menu', labelKey: 'nav.menu', icon: Menu },
-    ],
+    titleKey: 'nav.adminSettings',
+    items: [{ to: '/ayarlar', labelKey: 'nav.settings', icon: Settings }],
   },
   {
-    titleKey: 'nav.setup',
-    items: [
-      { to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
-      { to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
-      { to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
-      { to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },
-      { to: '/izin-tanimlari', labelKey: 'nav.izinTanimlari', icon: ListChecks },
-      { to: '/masraf-kategorileri', labelKey: 'nav.masrafKategorileri', icon: Receipt },
-      {
-        to: '/performans-parametreleri',
-        labelKey: 'nav.performansParametreleri',
-        icon: SlidersHorizontal,
-      },
-    ],
+    titleKey: 'nav.account',
+    items: [{ to: '/profil', labelKey: 'nav.profil', icon: User }],
+  },
+]
+
+/** Admin setup routes surfaced inside /ayarlar hub (not in desktop sidebar). */
+export const adminSetupNavItems: NavItem[] = [
+  { to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
+  { to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
+  { to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
+  { to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },
+  { to: '/izin-tanimlari', labelKey: 'nav.izinTanimlari', icon: ListChecks },
+  { to: '/masraf-kategorileri', labelKey: 'nav.masrafKategorileri', icon: Receipt },
+  {
+    to: '/performans-parametreleri',
+    labelKey: 'nav.performansParametreleri',
+    icon: SlidersHorizontal,
   },
 ]
 
@@ -128,4 +127,11 @@ export function isNavItemActive(pathname: string, to: string): boolean {
     return pathname === '/dashboard' || pathname === '/'
   }
   return pathname === to || pathname.startsWith(`${to}/`)
+}
+
+/** Returns true when pathname is an admin setup route (for /ayarlar hub highlight). */
+export function isAdminSetupRoute(pathname: string): boolean {
+  return adminSetupNavItems.some(
+    (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
+  )
 }

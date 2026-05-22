@@ -10,7 +10,11 @@
     "loading": "Loading…",
     "days": "days",
     "error": "Something went wrong",
-    "retry": "Try again"
+    "retry": "Try again",
+    "readOnly": "Read-only",
+    "readOnlyAction": "Save",
+    "pilotOutOfScope": "Outside pilot scope",
+    "apiPending": "Will activate when Canias API access is enabled"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -53,7 +57,9 @@
     "izinTanimlari": "Leave Definitions",
     "masrafKategorileri": "Expense Categories",
     "performansParametreleri": "Performance Parameters",
-    "settings": "Settings"
+    "settings": "Settings",
+    "adminSettings": "Admin settings",
+    "account": "Account"
   },
   "persona": {
     "employee": "Employee Mode",
@@ -119,7 +125,7 @@
       "ai": {
         "title": "AI Coach™",
         "description": "Personal assistant coming soon",
-        "hint": "MVP-2 — active chat not enabled yet"
+        "hint": "Coming soon — active chat not enabled yet"
       }
     },
     "erpConnected": "Connected: {{provider}}",
@@ -392,7 +398,7 @@
     },
     "sheet": {
       "title": "New leave request",
-      "description": "Demo adapter — real approval flow will connect via API layer."
+      "description": "Your request enters approval; your manager will be notified."
     },
     "form": {
       "type": "Leave type",
@@ -505,7 +511,7 @@
     },
     "sheet": {
       "title": "New expense claim",
-      "description": "Demo adapter — OCR and finance approval in a later phase."
+      "description": "Your expense report enters the approval flow."
     },
     "form": {
       "category": "Category",
@@ -519,7 +525,7 @@
       "description": "Description",
       "descriptionPlaceholder": "Business purpose and details",
       "receipt": "Receipt",
-      "receiptHint": "OCR MVP-2 — upload area is a placeholder for now.",
+      "receiptHint": "Receipt upload coming soon; enter details manually for now.",
       "receiptPlaceholder": "Take or upload receipt (coming soon)"
     },
     "empty": {
@@ -712,8 +718,8 @@
     },
     "sheet": {
       "title": "Add department",
-      "description": "Creating new departments will be enabled in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Creating new departments will be enabled in Coming soon.",
+      "mvpBadge": "Coming soon",
       "fields": {
         "name": "Department name",
         "manager": "Department manager"
@@ -754,8 +760,8 @@
     },
     "sheet": {
       "title": "Add position",
-      "description": "Creating new positions will be enabled in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Creating new positions will be enabled in Coming soon.",
+      "mvpBadge": "Coming soon",
       "fields": {
         "name": "Position name",
         "department": "Department",
@@ -822,8 +828,8 @@
     },
     "sheet": {
       "title": "Add leave type",
-      "description": "Creating new leave types will be enabled in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Creating new leave types will be enabled in Coming soon.",
+      "mvpBadge": "Coming soon",
       "fields": {
         "label": "Leave type name",
         "days": "Day entitlement"
@@ -872,8 +878,8 @@
     },
     "sheet": {
       "title": "Add category",
-      "description": "Creating new expense categories will be enabled in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Creating new expense categories will be enabled in Coming soon.",
+      "mvpBadge": "Coming soon",
       "fields": {
         "name": "Category name",
         "monthlyLimit": "Monthly limit",
@@ -1014,7 +1020,7 @@
     "sheet": {
       "title": "Development plan draft",
       "description": "Personalized development plan preview for the target role.",
-      "mvpBadge": "MVP-2",
+      "mvpBadge": "Coming soon",
       "submit": "Save plan",
       "previewTitle": "Draft summary",
       "previewHorizon": "Combined 30 / 90 / 180 day target preview",
@@ -1069,7 +1075,7 @@
     },
     "schoolTeaser": {
       "title": "School™ recommendations",
-      "description": "Learning path recommendations based on competency gaps and performance data coming in MVP-2."
+      "description": "Learning path recommendations based on competency gaps and performance data coming in Coming soon."
     }
   },
   "jobEvaluationSetup": {
@@ -1164,12 +1170,13 @@
     "actions": {
       "upload": "Upload document",
       "viewDetail": "View details",
-      "setReminder": "Set reminder"
+      "setReminder": "Set reminder",
+      "uploadUnavailable": "Document upload is outside pilot scope."
     },
     "uploadSheet": {
       "title": "Upload document",
-      "description": "Contract document upload flow will open in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Contract document upload flow will open in Coming soon.",
+      "mvpBadge": "Coming soon",
       "submit": "Upload",
       "fields": {
         "employee": "Employee",
@@ -1196,8 +1203,8 @@
     },
     "reminderSheet": {
       "title": "Set reminder",
-      "description": "Contract expiry reminders will be configurable in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Contract expiry reminders will be configurable in Coming soon.",
+      "mvpBadge": "Coming soon",
       "submit": "Save reminder",
       "fields": {
         "daysBefore": "Days before"
@@ -1258,12 +1265,14 @@
     "actions": {
       "edit": "Edit information",
       "security": "Security settings",
-      "logout": "Sign out"
+      "logout": "Sign out",
+      "editUnavailable": "Profile editing is read-only for now.",
+      "securityUnavailable": "Security settings are read-only for now."
     },
     "editSheet": {
       "title": "Edit information",
-      "description": "Profile editing form will open in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Profile editing form will open in Coming soon.",
+      "mvpBadge": "Coming soon",
       "submit": "Save",
       "fields": {
         "name": "Full name",
@@ -1278,8 +1287,8 @@
     },
     "securitySheet": {
       "title": "Security settings",
-      "description": "Password and session management will be configurable in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Password and session management will be configurable in Coming soon.",
+      "mvpBadge": "Coming soon",
       "submit": "Save",
       "fields": {
         "password": "New password",
@@ -1298,7 +1307,7 @@
     }
   },
   "settingsSetup": {
-    "eyebrow": "System",
+    "eyebrow": "Admin settings",
     "title": "Settings",
     "description": "Manage security, notifications, language, and system preferences.",
     "meta": {
@@ -1307,7 +1316,7 @@
     },
     "sectionsList": "Preferences",
     "sheet": {
-      "mvpBadge": "MVP-2",
+      "mvpBadge": "Coming soon",
       "submit": "Save"
     },
     "sections": {
@@ -1315,50 +1324,53 @@
         "title": "Account & security",
         "summary": "Password, 2FA, session history",
         "action": "Manage",
-        "sheetDescription": "Account and security settings will be configurable in MVP-2.",
+        "sheetDescription": "Account and security settings will be configurable in Coming soon.",
         "sheetBody": "Password change, two-factor authentication, and session history are read-only in this release."
       },
       "tenant": {
         "title": "Tenant settings",
         "summary": "Mert Teknik A.Ş. · Pilot plan",
         "action": "Open",
-        "sheetDescription": "Tenant configuration will expand in MVP-2.",
+        "sheetDescription": "Tenant configuration will expand in Coming soon.",
         "sheetBody": "Plan, license, and tenant-level preferences will be managed here."
       },
       "notifications": {
         "title": "Notification preferences",
         "summary": "Email · In-app",
         "action": "Edit",
-        "sheetDescription": "Notification channels will be customizable in MVP-2.",
+        "sheetDescription": "Notification channels will be customizable in Coming soon.",
         "sheetBody": "Email and in-app notification preferences are shown as a demo summary for now."
       },
       "locale": {
         "title": "Language & region",
         "summary": "tr-TR · Europe/Istanbul",
         "action": "Change",
-        "sheetDescription": "Language and region selection will roll out app-wide in MVP-2.",
+        "sheetDescription": "Language and region selection will roll out app-wide in Coming soon.",
         "sheetBody": "Current language is tr-TR, timezone Europe/Istanbul."
       },
       "theme": {
         "title": "Theme",
         "summary": "System · Light · Dark",
         "action": "Choose",
-        "sheetDescription": "Theme selection will be enabled in MVP-2.",
+        "sheetDescription": "Theme selection will be enabled in Coming soon.",
         "sheetBody": "System, light, and dark theme options are being prepared."
       },
       "roleAccess": {
         "title": "Role & access",
         "summary": "HR Admin · 3 modules full access",
         "action": "Review",
-        "sheetDescription": "Role and access details will be available in MVP-2.",
+        "sheetDescription": "Role and access details will be available in Coming soon.",
         "sheetBody": "Module-level permissions and role assignments will be managed on this screen."
       }
     },
     "auditLog": {
       "title": "Audit log",
       "summary": "{{count}} sensitive operations recorded in the last {{days}} days.",
-      "mvpNote": "Detailed log will be available in MVP-2.",
-      "backToMenu": "Back to menu"
+      "note": "Detailed log list is read-only for now."
+    },
+    "setupHub": {
+      "title": "Setup & definitions",
+      "description": "ERP, company structure, and parameter screens."
     }
   },
   "aiCoachSetup": {
@@ -1371,7 +1383,7 @@
     },
     "hero": {
       "title": "AI Coach",
-      "description": "Opening in MVP-2. Active chat is not available yet; see what it will do and readiness status below."
+      "description": "Opening in Coming soon. Active chat is not available yet; see what it will do and readiness status below."
     },
     "sections": {
       "capabilities": "What it will do",
@@ -1397,11 +1409,11 @@
       }
     },
     "privacy": {
-      "body": "Private AI Coach sessions will not be visible to managers. Access policy and data scope will be finalized in MVP-2."
+      "body": "Private AI Coach sessions will not be visible to managers. Access policy and data scope will be finalized in Coming soon."
     },
     "readiness": {
       "vaultSchema": "Vault schema ready",
-      "toolCallLayer": "Tool-call layer MVP-2",
+      "toolCallLayer": "Tool-call layer Coming soon",
       "erpContext": "ERP context pending",
       "done": "Done",
       "pending": "Pending",
@@ -1414,8 +1426,8 @@
     },
     "notifySheet": {
       "title": "Notify me",
-      "description": "Sign up to be notified when AI Coach opens in MVP-2.",
-      "mvpBadge": "MVP-2",
+      "description": "Sign up to be notified when AI Coach opens in Coming soon.",
+      "mvpBadge": "Coming soon",
       "submit": "Subscribe",
       "fields": {
         "email": "Email"
@@ -1424,6 +1436,10 @@
         "email": "you@company.com"
       },
       "hint": "You will receive email and in-app notification when ready."
+    },
+    "notifyToast": {
+      "title": "Added to notification list",
+      "description": "You will be notified by email when AI Coach launches."
     }
   },
   "ai": {
@@ -1432,7 +1448,7 @@
     "teaser": {
       "title": "AI Coach™ coming soon",
       "description": "Your personal HR assistant will help with leave, expenses, career, and performance.",
-      "badge": "MVP-2",
+      "badge": "Coming soon",
       "featureLeave": "Leave balance and date suggestions",
       "featureExpense": "Expense claims and policy guidance",
       "featureCareer": "Career readiness and development plan",

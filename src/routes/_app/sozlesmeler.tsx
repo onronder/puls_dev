@@ -77,7 +77,6 @@ function EmployeeAvatar({ initials }: { initials: string }) {
 function SozlesmelerPage() {
   const { t, i18n: i18nInstance } = useTranslation()
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
-  const [uploadSheetOpen, setUploadSheetOpen] = useState(false)
   const [detailSheetOpen, setDetailSheetOpen] = useState(false)
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false)
 
@@ -106,10 +105,11 @@ function SozlesmelerPage() {
     <StatusPill tone={riskTone(status)}>{t(`contractsSetup.risk.${status}`)}</StatusPill>
   )
 
-  const openDetailSheet = () => {
-    if (selectedContract) {
-      setDetailSheetOpen(true)
-    }
+  const openDetailSheet = (contractId?: string) => {
+    const id = contractId ?? selectedContract?.id
+    if (!id) return
+    setSelectedContractId(id)
+    setDetailSheetOpen(true)
   }
 
   const openReminderSheet = () => {
@@ -131,7 +131,8 @@ function SozlesmelerPage() {
           <Button
             type="button"
             className="touch-target w-full sm:w-auto"
-            onClick={() => setUploadSheetOpen(true)}
+            disabled
+            title={t('contractsSetup.actions.uploadUnavailable')}
           >
             <Upload className="h-4 w-4" />
             {t('contractsSetup.actions.upload')}
@@ -192,7 +193,7 @@ function SozlesmelerPage() {
                 subtitle: `${t(contract.typeKey)} · ${formatContractDate(contract.startDate, i18nInstance.language)} – ${formatEndDate(contract)}`,
                 leading: <EmployeeAvatar initials={contract.initials} />,
                 trailing: renderRiskPill(contract.risk),
-                onClick: () => setSelectedContractId(contract.id),
+                onClick: () => openDetailSheet(contract.id),
               }))}
             />
           )}
@@ -234,7 +235,7 @@ function SozlesmelerPage() {
                     <li key={contract.id}>
                       <button
                         type="button"
-                        onClick={() => setSelectedContractId(contract.id)}
+                        onClick={() => openDetailSheet(contract.id)}
                         className={cn(
                           'grid w-full min-w-0 touch-target items-center gap-3 px-4 py-3 text-left transition-colors',
                           CONTRACT_TABLE_GRID_COLS,
@@ -270,7 +271,7 @@ function SozlesmelerPage() {
           variant="outline"
           className="touch-target h-11 flex-1"
           disabled={!selectedContract}
-          onClick={openDetailSheet}
+          onClick={() => openDetailSheet()}
         >
           <Eye className="h-4 w-4" />
           {t('contractsSetup.actions.viewDetail')}
@@ -286,53 +287,6 @@ function SozlesmelerPage() {
           {t('contractsSetup.actions.setReminder')}
         </Button>
       </div>
-
-      <SheetShell
-        open={uploadSheetOpen}
-        onOpenChange={setUploadSheetOpen}
-        title={t('contractsSetup.uploadSheet.title')}
-        description={t('contractsSetup.uploadSheet.description')}
-        footer={
-          <div className="flex w-full flex-col gap-3">
-            <StatusPill tone="neutral" className="self-start">
-              {t('contractsSetup.uploadSheet.mvpBadge')}
-            </StatusPill>
-            <Button type="button" className="touch-target w-full" disabled>
-              {t('contractsSetup.uploadSheet.submit')}
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <FormField
-            label={t('contractsSetup.uploadSheet.fields.employee')}
-            htmlFor="contract-employee"
-          >
-            <Input
-              id="contract-employee"
-              className="text-base"
-              placeholder={t('contractsSetup.uploadSheet.placeholders.employee')}
-              disabled
-            />
-          </FormField>
-          <FormField label={t('contractsSetup.uploadSheet.fields.type')} htmlFor="contract-type">
-            <Input
-              id="contract-type"
-              className="text-base"
-              placeholder={t('contractsSetup.uploadSheet.placeholders.type')}
-              disabled
-            />
-          </FormField>
-          <FormField label={t('contractsSetup.uploadSheet.fields.file')} htmlFor="contract-file">
-            <Input
-              id="contract-file"
-              className="text-base"
-              placeholder={t('contractsSetup.uploadSheet.placeholders.file')}
-              disabled
-            />
-          </FormField>
-        </div>
-      </SheetShell>
 
       <SheetShell
         open={detailSheetOpen}
@@ -396,10 +350,10 @@ function SozlesmelerPage() {
         footer={
           <div className="flex w-full flex-col gap-3">
             <StatusPill tone="neutral" className="self-start">
-              {t('contractsSetup.reminderSheet.mvpBadge')}
+              {t('common.soon')}
             </StatusPill>
-            <Button type="button" className="touch-target w-full" disabled>
-              {t('contractsSetup.reminderSheet.submit')}
+            <Button type="button" variant="outline" className="touch-target w-full" disabled>
+              {t('common.readOnlyAction')}
             </Button>
           </div>
         }

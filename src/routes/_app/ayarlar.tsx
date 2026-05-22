@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -13,6 +13,10 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
+import {
+  adminSetupNavItems,
+  type NavItem,
+} from '#/lib/navigation'
 import {
   fetchDemoSettingsOverview,
   type DemoSettingsSection,
@@ -30,6 +34,26 @@ export const Route = createFileRoute('/_app/ayarlar')({
   }),
   component: AyarlarPage,
 })
+
+function SetupNavRow({ item, label }: { item: NavItem; label: string }) {
+  const Icon = item.icon
+  return (
+    <Link
+      to={item.to}
+      className="flex min-h-[64px] min-w-0 items-center gap-3 p-4 transition-colors hover:bg-[var(--color-bg-elevated)]"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]">
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[15px] font-medium text-[var(--color-text-primary)]">
+          {label}
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+    </Link>
+  )
+}
 
 function AyarlarPage() {
   const { t } = useTranslation()
@@ -66,6 +90,20 @@ function AyarlarPage() {
         subtitle={t('settingsSetup.description')}
       />
 
+      <section className="mb-8">
+        <SectionHeader
+          title={t('settingsSetup.setupHub.title')}
+          description={t('settingsSetup.setupHub.description')}
+        />
+        <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          {adminSetupNavItems.map((item) => (
+            <li key={item.to}>
+              <SetupNavRow item={item} label={t(item.labelKey)} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="mb-6">
         <SectionHeader title={t('settingsSetup.sectionsList')} />
         {isLoading ? (
@@ -87,9 +125,7 @@ function AyarlarPage() {
                       {t(section.summaryKey)}
                     </div>
                   </div>
-                  <span className="hidden shrink-0 text-xs font-medium text-[var(--color-primary)] sm:inline">
-                    {t(section.actionKey)}
-                  </span>
+                  <StatusPill tone="neutral">{t('common.readOnly')}</StatusPill>
                   <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
                 </button>
               </li>
@@ -104,7 +140,7 @@ function AyarlarPage() {
             <h2 className="text-sm font-medium text-[var(--color-text-primary)]">
               {t('settingsSetup.auditLog.title')}
             </h2>
-            <StatusPill tone="neutral">{t('settingsSetup.sheet.mvpBadge')}</StatusPill>
+            <StatusPill tone="neutral">{t('common.readOnly')}</StatusPill>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
             {t('settingsSetup.auditLog.summary', {
@@ -113,11 +149,8 @@ function AyarlarPage() {
             })}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-            {t('settingsSetup.auditLog.mvpNote')}
+            {t('settingsSetup.auditLog.note')}
           </p>
-          <Button type="button" variant="outline" className="touch-target mt-4 h-10" asChild>
-            <Link to="/menu">{t('settingsSetup.auditLog.backToMenu')}</Link>
-          </Button>
         </section>
       ) : null}
 
@@ -128,19 +161,17 @@ function AyarlarPage() {
         description={selectedSection ? t(selectedSection.sheetDescriptionKey) : undefined}
         footer={
           selectedSection ? (
-            <div className="flex w-full flex-col gap-3">
-              <StatusPill tone="neutral" className="self-start">
-                {t('settingsSetup.sheet.mvpBadge')}
-              </StatusPill>
-              <Button type="button" className="touch-target w-full" disabled>
-                {t('settingsSetup.sheet.submit')}
-              </Button>
-            </div>
+            <Button type="button" variant="outline" className="touch-target w-full" disabled>
+              {t('common.readOnlyAction')}
+            </Button>
           ) : undefined
         }
       >
         {selectedSection ? (
           <div className="space-y-4">
+            <StatusPill tone="neutral" className="self-start">
+              {t('common.readOnly')}
+            </StatusPill>
             <FormField
               label={t(selectedSection.titleKey)}
               htmlFor={`settings-${selectedSection.id}-summary`}
