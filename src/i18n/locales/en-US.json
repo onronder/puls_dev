@@ -362,7 +362,7 @@
     }
   },
   "leave": {
-    "title": "Leave · Time Off™",
+    "title": "Leave",
     "subtitle": "Balance, history, and new leave request",
     "hero": {
       "remainingAnnual": "Remaining annual leave",
@@ -387,7 +387,8 @@
     },
     "actions": {
       "new": "New leave request",
-      "submit": "Submit for approval"
+      "submit": "Submit for approval",
+      "submitting": "Submitting…"
     },
     "sheet": {
       "title": "New leave request",
@@ -411,6 +412,64 @@
     },
     "toast": {
       "submitted": "Leave request submitted (demo)."
+    }
+  },
+  "leaveSetup": {
+    "eyebrow": "Employee Processes",
+    "subtitle": "Track your balance, create requests, and manage approvals.",
+    "tabs": {
+      "mine": "My leave",
+      "approvals": "Pending approvals",
+      "calendar": "Calendar",
+      "ariaLabel": "Leave tabs"
+    },
+    "metrics": {
+      "used": "{{count}} used",
+      "pendingHint": "in approval process"
+    },
+    "sections": {
+      "upcoming": "Upcoming leave",
+      "upcomingDesc": "Next 30 days.",
+      "approvals": "Pending approval requests",
+      "approvalsDesc": "{{count}} request(s) awaiting approval.",
+      "history": "Leave history"
+    },
+    "calendar": {
+      "title": "Calendar view coming soon",
+      "description": "Team calendar, conflict alerts, and month/week views are in progress."
+    },
+    "empty": {
+      "upcoming": "No upcoming leave.",
+      "history": "No leave records yet.",
+      "approvals": "No pending approval requests."
+    },
+    "error": {
+      "loadFailed": "Could not load leave data."
+    },
+    "form": {
+      "halfDay": "Half day",
+      "delegateHint": "Person who will cover your work while you are away.",
+      "totalDays": "Total {{count}} days",
+      "totalDaysHint": "Excludes weekends and public holidays.",
+      "approver": "Approver",
+      "approverHint": "The request will be sent to this person.",
+      "document": "Attachment",
+      "documentHint": "PDF or image · optional",
+      "documentTeaser": "Choose file or drag and drop",
+      "startRequired": "Start date is required.",
+      "endRequired": "End date is required.",
+      "endBeforeStart": "End date cannot be before start date.",
+      "summaryTitle": "Request summary",
+      "summaryBody": "{{days}} days · {{type}} · Balance after {{balance}} days.",
+      "summaryNegative": "Request exceeds available balance."
+    },
+    "approval": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "demoApproveTitle": "Approval simulation (demo)",
+      "demoApproveDesc": "{{name}} — real approval flow will connect via API layer.",
+      "demoRejectTitle": "Rejection simulation (demo)",
+      "demoRejectDesc": "{{name}} — no record was changed."
     }
   },
   "expense": {

@@ -19,6 +19,27 @@ export type DemoLeaveRequest = {
   approverName?: string
 }
 
+export type DemoUpcomingLeave = {
+  id: string
+  whoName: string
+  isSelf?: boolean
+  typeLabel: string
+  startDate: string
+  endDate: string
+  businessDays: number
+  status: LeaveStatus
+}
+
+export type DemoLeaveApproval = {
+  id: string
+  employeeName: string
+  initials: string
+  typeLabel: string
+  startDate: string
+  endDate: string
+  businessDays: number
+}
+
 export type DemoExpenseClaim = {
   id: string
   title: string
@@ -36,8 +57,11 @@ export type DemoLeaveOverview = {
   balances: DemoLeaveBalance[]
   pendingCount: number
   requests: DemoLeaveRequest[]
+  upcoming: DemoUpcomingLeave[]
+  pendingApprovals: DemoLeaveApproval[]
   leaveTypes: { id: string; label: string }[]
   delegates: { id: string; name: string }[]
+  approvers: { id: string; name: string }[]
 }
 
 export type DemoExpenseOverview = {
@@ -84,17 +108,18 @@ const demoLeaveOverview: DemoLeaveOverview = {
     {
       id: 'lr-1',
       typeLabel: 'Yıllık İzin',
-      startDate: '2026-07-14',
-      endDate: '2026-07-18',
-      businessDays: 5,
+      startDate: '2026-05-12',
+      endDate: '2026-05-14',
+      businessDays: 3,
       delegateName: 'Özge Büyüksahin',
-      status: 'pending',
+      status: 'approved',
+      approverName: 'Demo İK Yöneticisi',
     },
     {
       id: 'lr-2',
       typeLabel: 'Mazeret İzni',
-      startDate: '2026-05-02',
-      endDate: '2026-05-02',
+      startDate: '2026-04-28',
+      endDate: '2026-04-28',
       businessDays: 1,
       status: 'approved',
       approverName: 'Mehmet Kaya',
@@ -102,35 +127,89 @@ const demoLeaveOverview: DemoLeaveOverview = {
     {
       id: 'lr-3',
       typeLabel: 'Yıllık İzin',
-      startDate: '2026-03-10',
-      endDate: '2026-03-14',
+      startDate: '2026-06-02',
+      endDate: '2026-06-06',
       businessDays: 5,
-      status: 'approved',
-      approverName: 'Demo İK Yöneticisi',
+      status: 'pending',
     },
     {
       id: 'lr-4',
-      typeLabel: 'Mazeret İzni',
-      startDate: '2026-06-20',
-      endDate: '2026-06-21',
-      businessDays: 2,
+      typeLabel: 'Yıllık İzin',
+      startDate: '2026-03-20',
+      endDate: '2026-03-22',
+      businessDays: 3,
+      status: 'rejected',
+      approverName: 'Demo İK Yöneticisi',
+    },
+  ],
+  upcoming: [
+    {
+      id: 'ul-1',
+      whoName: 'Sen',
+      isSelf: true,
+      typeLabel: 'Yıllık izin',
+      startDate: '2026-06-02',
+      endDate: '2026-06-06',
+      businessDays: 5,
       status: 'pending',
+    },
+    {
+      id: 'ul-2',
+      whoName: 'Ayşe K.',
+      typeLabel: 'Mazeret',
+      startDate: '2026-05-25',
+      endDate: '2026-05-25',
+      businessDays: 1,
+      status: 'approved',
+    },
+    {
+      id: 'ul-3',
+      whoName: 'Murat T.',
+      typeLabel: 'Yıllık',
+      startDate: '2026-06-10',
+      endDate: '2026-06-12',
+      businessDays: 3,
+      status: 'approved',
+    },
+  ],
+  pendingApprovals: [
+    {
+      id: 'pa-1',
+      employeeName: 'Ayşe Kaya',
+      initials: 'AK',
+      typeLabel: 'Yıllık',
+      startDate: '2026-06-02',
+      endDate: '2026-06-06',
+      businessDays: 5,
+    },
+    {
+      id: 'pa-2',
+      employeeName: 'Murat Tan',
+      initials: 'MT',
+      typeLabel: 'Mazeret',
+      startDate: '2026-05-28',
+      endDate: '2026-05-28',
+      businessDays: 1,
     },
   ],
   leaveTypes: [
-    { id: 'annual', label: 'Yıllık İzin' },
-    { id: 'excuse', label: 'Mazeret İzni' },
-    { id: 'sick', label: 'Hastalık İzni' },
-    { id: 'birth', label: 'Doğum İzni' },
-    { id: 'marriage', label: 'Evlilik İzni' },
-    { id: 'bereavement', label: 'Ölüm İzni' },
-    { id: 'unpaid', label: 'Ücretsiz İzin' },
-    { id: 'comp', label: 'Telafi İzni' },
+    { id: 'annual', label: 'Yıllık' },
+    { id: 'excuse', label: 'Mazeret' },
+    { id: 'sick', label: 'Hastalık' },
+    { id: 'unpaid', label: 'Ücretsiz' },
+    { id: 'administrative', label: 'İdari' },
+    { id: 'marriage', label: 'Evlilik' },
+    { id: 'birth', label: 'Doğum/Babalık' },
+    { id: 'bereavement', label: 'Ölüm' },
   ],
   delegates: [
     { id: 'ozge', name: 'Özge Büyüksahin' },
     { id: 'ayse', name: 'Ayşe Demir' },
     { id: 'mehmet', name: 'Mehmet Kaya' },
+  ],
+  approvers: [
+    { id: 'hr-manager', name: 'Demo İK Yöneticisi' },
+    { id: 'murat', name: 'Murat Tan' },
   ],
 }
 
