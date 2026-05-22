@@ -37,7 +37,7 @@ import {
   type DemoExpenseClaim,
   type DemoExpenseOverview,
 } from '#/lib/demo/puls-demo-data'
-import { parseDecimalAmount } from '#/lib/format'
+import { formatCurrency, parseDecimalAmount } from '#/lib/format'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/masraf')({
@@ -74,6 +74,10 @@ function expenseStatusTone(status: ExpenseStatus): StatusTone {
     default:
       return 'neutral'
   }
+}
+
+function formatClaimAmount(amount: number, locale: string, currency = 'TRY'): string {
+  return formatCurrency(amount, locale, currency)
 }
 
 function formatExpenseDate(isoDate: string, locale: string): string {
@@ -322,7 +326,7 @@ function RecentTab({ claims, locale, t }: RecentTabProps) {
               </div>
               <div className="flex w-[110px] shrink-0 flex-col items-end gap-1">
                 <div className="text-[14px] font-semibold tabular text-foreground">
-                  {formatTry(claim.amount, locale)}
+                  {formatClaimAmount(claim.amount, locale, claim.currency)}
                 </div>
                 <StatusPill tone={expenseStatusTone(claim.status)}>
                   {t(`expense.status.${claim.status}`)}
@@ -382,7 +386,7 @@ function ApprovalsTab({ approvals, locale, t }: ApprovalsTabProps) {
               </div>
               <div className="shrink-0 text-right">
                 <div className="text-[14px] font-semibold tabular text-foreground">
-                  {formatTry(approval.amount, locale)}
+                  {formatClaimAmount(approval.amount, locale, approval.currency ?? 'TRY')}
                 </div>
               </div>
               <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
