@@ -47,6 +47,7 @@ const menuLinks: MenuLink[] = [
   { id: 'izin', to: '/izin', labelKey: 'nav.tatil', icon: CalendarDays },
   { id: 'masraf', to: '/masraf', labelKey: 'nav.cuzdan', icon: Wallet },
   { id: 'calisanlar', to: '/calisanlar', labelKey: 'nav.calisanlar', icon: Users, audience: 'manager' },
+  { id: 'kariyer', to: '/kariyer', labelKey: 'nav.kariyer', icon: Waypoints },
   { id: 'koc', to: '/menu', labelKey: 'nav.koc', icon: Sparkles, soon: true },
   { id: 'erp', to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
   { id: 'sirket-kurulum', to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },

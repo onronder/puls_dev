@@ -618,6 +618,92 @@
       "edit": "Düzenle"
     }
   },
+  "careerSetup": {
+    "eyebrow": "İK Yönetimi",
+    "title": "Kariyer",
+    "description": "Çalışan gelişim yolunu, seviye hedeflerini ve yetkinlik boşluklarını takip et.",
+    "meta": {
+      "title": "Kariyer — PULS",
+      "description": "Çalışan gelişim yolu, seviye hedefleri ve yetkinlik boşlukları."
+    },
+    "employee": {
+      "position": "Saha Mühendisi",
+      "department": "Mühendislik"
+    },
+    "targetRolePill": "Hedef: {{role}}",
+    "metrics": {
+      "readiness": "Hazırlık",
+      "readinessValue": "%{{percent}}",
+      "readinessHint": "Hedef role yakınlık",
+      "targetRole": "Hedef rol",
+      "missingCompetencies": "Eksik yetkinlik",
+      "recommendedTraining": "Önerilen eğitim"
+    },
+    "roles": {
+      "teamLead": "Takım Lideri"
+    },
+    "sections": {
+      "ladder": "Kariyer ladder",
+      "gaps": "Yetkinlik boşlukları",
+      "gapsHint": "Hedef seviyeye göre eksik alanlar",
+      "plan": "Gelişim planı",
+      "planHint": "Zaman ufukları"
+    },
+    "ladder": {
+      "subtitle": "Saha Mühendisi → Operasyon Müdürü",
+      "fieldEngineer": "Saha Mühendisi",
+      "seniorFieldEngineer": "Kıdemli Saha Mühendisi",
+      "teamLead": "Takım Lideri",
+      "operationsManager": "Operasyon Müdürü",
+      "statusAchieved": "Tamamlandı",
+      "statusCurrent": "Mevcut seviye",
+      "statusTarget": "Hedef seviye",
+      "statusNext": "Sonraki adım",
+      "pillTarget": "Hedef",
+      "pillYou": "Sen"
+    },
+    "gaps": {
+      "leadership": "Liderlik",
+      "reporting": "Raporlama",
+      "teamCoordination": "Ekip koordinasyonu",
+      "developmentArea": "Gelişim alanı",
+      "progressAria": "{{name}} seviyesi {{current}} / {{target}}"
+    },
+    "plan": {
+      "tabsAria": "Gelişim planı zaman ufukları",
+      "tabs": {
+        "d30": "30 gün",
+        "d90": "90 gün",
+        "d180": "6 ay"
+      },
+      "d30": {
+        "item1": "Liderlik temelleri e-eğitimi",
+        "item2": "Haftalık 1:1'lere katılım"
+      },
+      "d90": {
+        "item1": "İlk pilot saha ekibini koordine et",
+        "item2": "Aylık operasyon raporunu hazırla"
+      },
+      "d180": {
+        "item1": "Mentorluk programı tamamla",
+        "item2": "Takım Lideri yetkinlik değerlendirmesi"
+      }
+    },
+    "actions": {
+      "createPlan": "Gelişim planı oluştur",
+      "viewTraining": "Eğitim önerilerini gör",
+      "aiCoach": "AI Coach'a sor · Yakında"
+    },
+    "sheet": {
+      "title": "Gelişim planı taslağı",
+      "description": "Hedef role yönelik kişiselleştirilmiş gelişim planı önizlemesi.",
+      "mvpBadge": "MVP-2",
+      "submit": "Planı kaydet",
+      "previewTitle": "Taslak özet",
+      "previewHorizon": "30 / 90 / 180 gün hedefleri birleştirilmiş önizleme",
+      "previewNote": "Plan kaydedildiğinde yönetici onayına gönderilecek."
+    }
+  },
   "ai": {
     "floatingLabel": "AI Koç",
     "placeholder": "Bir şey sor veya anlat…",
