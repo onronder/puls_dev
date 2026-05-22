@@ -984,6 +984,70 @@
       "confirm": "Oturumu kapat"
     }
   },
+  "settingsSetup": {
+    "eyebrow": "Sistem",
+    "title": "Ayarlar",
+    "description": "Güvenlik, bildirim, dil ve sistem tercihlerini yönet.",
+    "meta": {
+      "title": "Ayarlar — PULS",
+      "description": "Güvenlik, bildirim, dil ve sistem tercihleri."
+    },
+    "sectionsList": "Tercihler",
+    "sheet": {
+      "mvpBadge": "MVP-2",
+      "submit": "Kaydet"
+    },
+    "sections": {
+      "accountSecurity": {
+        "title": "Hesap & güvenlik",
+        "summary": "Şifre, 2FA, oturum geçmişi",
+        "action": "Yönet",
+        "sheetDescription": "Hesap ve güvenlik ayarları MVP-2'de yapılandırılabilecek.",
+        "sheetBody": "Şifre değiştirme, iki faktörlü doğrulama ve oturum geçmişi bu sürümde salt okunurdur."
+      },
+      "tenant": {
+        "title": "Tenant ayarları",
+        "summary": "Mert Teknik A.Ş. · Pilot paket",
+        "action": "Aç",
+        "sheetDescription": "Tenant yapılandırması MVP-2'de genişletilecek.",
+        "sheetBody": "Paket, lisans ve tenant düzeyi tercihler burada yönetilecek."
+      },
+      "notifications": {
+        "title": "Bildirim tercihleri",
+        "summary": "E-posta · Uygulama içi",
+        "action": "Düzenle",
+        "sheetDescription": "Bildirim kanalları MVP-2'de özelleştirilebilecek.",
+        "sheetBody": "E-posta ve uygulama içi bildirim tercihleri şu an demo özet olarak gösterilir."
+      },
+      "locale": {
+        "title": "Dil ve bölge",
+        "summary": "tr-TR · Europe/Istanbul",
+        "action": "Değiştir",
+        "sheetDescription": "Dil ve bölge seçimi MVP-2'de uygulama genelinde açılacak.",
+        "sheetBody": "Mevcut dil tr-TR, saat dilimi Europe/Istanbul olarak ayarlı."
+      },
+      "theme": {
+        "title": "Tema",
+        "summary": "Sistem · Açık · Koyu",
+        "action": "Seç",
+        "sheetDescription": "Tema seçimi MVP-2'de etkinleştirilecek.",
+        "sheetBody": "Sistem, açık ve koyu tema seçenekleri hazırlanıyor."
+      },
+      "roleAccess": {
+        "title": "Rol & erişim",
+        "summary": "İK Admin · 3 modül tam yetki",
+        "action": "İncele",
+        "sheetDescription": "Rol ve erişim detayları MVP-2'de görüntülenecek.",
+        "sheetBody": "Modül bazlı yetkiler ve rol atamaları bu ekranda yönetilecek."
+      }
+    },
+    "auditLog": {
+      "title": "Audit log",
+      "summary": "Son {{days}} günde {{count}} hassas işlem kaydı bulunuyor.",
+      "mvpNote": "Detaylı log MVP-2'de görüntülenecek.",
+      "backToMenu": "Menüye dön"
+    }
+  },
   "aiCoachSetup": {
     "eyebrow": "Yapay Zeka",
     "title": "AI Koç",

@@ -69,7 +69,7 @@ const menuLinks: MenuLink[] = [
     labelKey: 'nav.performansParametreleri',
     icon: SlidersHorizontal,
   },
-  { id: 'settings', to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
+  { id: 'settings', to: '/ayarlar', labelKey: 'nav.settings', icon: Settings },
 ]
 
 function MenuPage() {

@@ -78,6 +78,7 @@ export const sidebarGroups: NavGroup[] = [
     titleKey: 'nav.group.system',
     items: [
       { to: '/profil', labelKey: 'nav.profil', icon: User },
+      { to: '/ayarlar', labelKey: 'nav.settings', icon: Settings },
       { to: '/menu', labelKey: 'nav.menu', icon: Menu },
     ],
   },
@@ -95,7 +96,6 @@ export const sidebarGroups: NavGroup[] = [
         labelKey: 'nav.performansParametreleri',
         icon: SlidersHorizontal,
       },
-      { to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
     ],
   },
 ]

@@ -1195,3 +1195,77 @@ const demoProfileOverview: DemoProfileOverview = {
 export async function fetchDemoProfileOverview(): Promise<DemoProfileOverview> {
   return demoProfileOverview
 }
+
+export type DemoSettingsSection = {
+  id: string
+  titleKey: string
+  summaryKey: string
+  actionKey: string
+  sheetDescriptionKey: string
+  sheetBodyKey: string
+}
+
+export type DemoSettingsOverview = {
+  auditLogDays: number
+  auditLogSensitiveCount: number
+  sections: DemoSettingsSection[]
+}
+
+const demoSettingsOverview: DemoSettingsOverview = {
+  auditLogDays: 30,
+  auditLogSensitiveCount: 14,
+  sections: [
+    {
+      id: 'accountSecurity',
+      titleKey: 'settingsSetup.sections.accountSecurity.title',
+      summaryKey: 'settingsSetup.sections.accountSecurity.summary',
+      actionKey: 'settingsSetup.sections.accountSecurity.action',
+      sheetDescriptionKey: 'settingsSetup.sections.accountSecurity.sheetDescription',
+      sheetBodyKey: 'settingsSetup.sections.accountSecurity.sheetBody',
+    },
+    {
+      id: 'tenant',
+      titleKey: 'settingsSetup.sections.tenant.title',
+      summaryKey: 'settingsSetup.sections.tenant.summary',
+      actionKey: 'settingsSetup.sections.tenant.action',
+      sheetDescriptionKey: 'settingsSetup.sections.tenant.sheetDescription',
+      sheetBodyKey: 'settingsSetup.sections.tenant.sheetBody',
+    },
+    {
+      id: 'notifications',
+      titleKey: 'settingsSetup.sections.notifications.title',
+      summaryKey: 'settingsSetup.sections.notifications.summary',
+      actionKey: 'settingsSetup.sections.notifications.action',
+      sheetDescriptionKey: 'settingsSetup.sections.notifications.sheetDescription',
+      sheetBodyKey: 'settingsSetup.sections.notifications.sheetBody',
+    },
+    {
+      id: 'locale',
+      titleKey: 'settingsSetup.sections.locale.title',
+      summaryKey: 'settingsSetup.sections.locale.summary',
+      actionKey: 'settingsSetup.sections.locale.action',
+      sheetDescriptionKey: 'settingsSetup.sections.locale.sheetDescription',
+      sheetBodyKey: 'settingsSetup.sections.locale.sheetBody',
+    },
+    {
+      id: 'theme',
+      titleKey: 'settingsSetup.sections.theme.title',
+      summaryKey: 'settingsSetup.sections.theme.summary',
+      actionKey: 'settingsSetup.sections.theme.action',
+      sheetDescriptionKey: 'settingsSetup.sections.theme.sheetDescription',
+      sheetBodyKey: 'settingsSetup.sections.theme.sheetBody',
+    },
+    {
+      id: 'roleAccess',
+      titleKey: 'settingsSetup.sections.roleAccess.title',
+      summaryKey: 'settingsSetup.sections.roleAccess.summary',
+      actionKey: 'settingsSetup.sections.roleAccess.action',
+      sheetDescriptionKey: 'settingsSetup.sections.roleAccess.sheetDescription',
+      sheetBodyKey: 'settingsSetup.sections.roleAccess.sheetBody',
+    },
+  ],
+}
+
+export async function fetchDemoSettingsOverview(): Promise<DemoSettingsOverview> {
+  return demoSettingsOverview
+}
