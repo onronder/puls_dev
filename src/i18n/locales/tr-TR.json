@@ -362,7 +362,7 @@
     }
   },
   "leave": {
-    "title": "İzin · Tatil™",
+    "title": "İzin",
     "subtitle": "Bakiye, geçmiş ve yeni izin talebi",
     "hero": {
       "remainingAnnual": "Kalan yıllık izin",
@@ -387,7 +387,8 @@
     },
     "actions": {
       "new": "Yeni izin talebi",
-      "submit": "Onaya gönder"
+      "submit": "Onaya gönder",
+      "submitting": "Gönderiliyor…"
     },
     "sheet": {
       "title": "Yeni izin talebi",
@@ -411,6 +412,64 @@
     },
     "toast": {
       "submitted": "İzin talebi onaya gönderildi (demo)."
+    }
+  },
+  "leaveSetup": {
+    "eyebrow": "Çalışan Süreçleri",
+    "subtitle": "Bakiyeni takip et, yeni talep oluştur ve onayları yönet.",
+    "tabs": {
+      "mine": "Benim izinlerim",
+      "approvals": "Onay bekleyenler",
+      "calendar": "Takvim",
+      "ariaLabel": "İzin sekmeleri"
+    },
+    "metrics": {
+      "used": "{{count}} kullanıldı",
+      "pendingHint": "onay sürecinde"
+    },
+    "sections": {
+      "upcoming": "Yaklaşan izinler",
+      "upcomingDesc": "Önümüzdeki 30 gün.",
+      "approvals": "Onay bekleyen talepler",
+      "approvalsDesc": "{{count}} talep onayını bekliyor.",
+      "history": "İzin geçmişi"
+    },
+    "calendar": {
+      "title": "Takvim görünümü yakında",
+      "description": "Ekip takvimi, çakışma uyarıları ve ay/hafta görünümü hazırlanıyor."
+    },
+    "empty": {
+      "upcoming": "Yaklaşan izin kaydı yok.",
+      "history": "Henüz izin kaydı yok.",
+      "approvals": "Onay bekleyen talep yok."
+    },
+    "error": {
+      "loadFailed": "İzin verileri yüklenemedi."
+    },
+    "form": {
+      "halfDay": "Yarım gün",
+      "delegateHint": "İzin süresince işlerini yürütecek kişi.",
+      "totalDays": "Toplam {{count}} gün",
+      "totalDaysHint": "Resmi tatil ve hafta sonu hariç hesaplanır.",
+      "approver": "Onaycı",
+      "approverHint": "Talep bu kişiye iletilir.",
+      "document": "Belge",
+      "documentHint": "PDF veya görsel · opsiyonel",
+      "documentTeaser": "Dosya seç veya sürükle bırak",
+      "startRequired": "Başlangıç tarihi gerekli.",
+      "endRequired": "Bitiş tarihi gerekli.",
+      "endBeforeStart": "Bitiş, başlangıçtan önce olamaz.",
+      "summaryTitle": "Talep özeti",
+      "summaryBody": "{{days}} gün · {{type}} · Bakiye sonrası {{balance}} gün.",
+      "summaryNegative": "Talep mevcut bakiyeyi aşıyor."
+    },
+    "approval": {
+      "approve": "Onayla",
+      "reject": "Reddet",
+      "demoApproveTitle": "Onay simülasyonu (demo)",
+      "demoApproveDesc": "{{name}} — gerçek onay akışı API katmanında bağlanacak.",
+      "demoRejectTitle": "Red simülasyonu (demo)",
+      "demoRejectDesc": "{{name}} — kayıt değiştirilmedi."
     }
   },
   "expense": {
