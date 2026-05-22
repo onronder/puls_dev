@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  Receipt,
   Settings,
   Sparkles,
   Users,
@@ -51,6 +52,7 @@ const menuLinks: MenuLink[] = [
   { id: 'departmanlar', to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
   { id: 'pozisyonlar', to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },
   { id: 'izin-tanimlari', to: '/izin-tanimlari', labelKey: 'nav.izinTanimlari', icon: ListChecks },
+  { id: 'masraf-kategorileri', to: '/masraf-kategorileri', labelKey: 'nav.masrafKategorileri', icon: Receipt },
   { id: 'settings', to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
 ]
 

@@ -47,6 +47,7 @@
     "departmanlar": "Departmanlar",
     "pozisyonlar": "Pozisyonlar",
     "izinTanimlari": "İzin Tanımları",
+    "masrafKategorileri": "Masraf Kategorileri",
     "settings": "Ayarlar"
   },
   "persona": {
@@ -512,6 +513,58 @@
       "placeholders": {
         "label": "Örn. Yıllık",
         "days": "20"
+      },
+      "submit": "Kaydet"
+    }
+  },
+  "expenseCategorySetup": {
+    "eyebrow": "Tanım & Kurulum",
+    "title": "Masraf Kategorileri",
+    "description": "Harcama kategorilerini, limitleri ve belge zorunluluklarını yönet.",
+    "meta": {
+      "title": "Masraf Kategorileri — PULS",
+      "description": "Harcama kategorileri, limitler ve belge zorunlulukları."
+    },
+    "metrics": {
+      "categoryCount": "Kategori",
+      "totalMonthlyLimit": "Aylık toplam limit",
+      "docThreshold": "Belge eşiği",
+      "approvalLevels": "Onay seviyesi"
+    },
+    "sections": {
+      "list": "Kategori listesi"
+    },
+    "columns": {
+      "name": "Kategori",
+      "monthlyLimit": "Aylık limit",
+      "docThreshold": "Belge eşiği",
+      "accountingCode": "Muhasebe kodu"
+    },
+    "docThresholdAbove": "{{amount}} üzeri",
+    "categories": {
+      "travel": "Seyahat",
+      "meals": "Yemek",
+      "lodging": "Konaklama",
+      "software": "Yazılım",
+      "transport": "Ulaşım",
+      "other": "Diğer"
+    },
+    "actions": {
+      "add": "Kategori ekle"
+    },
+    "sheet": {
+      "title": "Kategori ekle",
+      "description": "Yeni masraf kategorisi oluşturma MVP-2 kapsamında açılacak.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "name": "Kategori adı",
+        "monthlyLimit": "Aylık limit",
+        "accountingCode": "Muhasebe kodu"
+      },
+      "placeholders": {
+        "name": "Örn. Seyahat",
+        "monthlyLimit": "15.000",
+        "accountingCode": "770.01"
       },
       "submit": "Kaydet"
     }
