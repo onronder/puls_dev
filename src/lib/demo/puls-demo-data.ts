@@ -64,16 +64,35 @@ export type DemoLeaveOverview = {
   approvers: { id: string; name: string }[]
 }
 
+export type DemoExpenseCategoryLimit = {
+  id: string
+  name: string
+  limit: number
+  monthSpent: number
+}
+
+export type DemoExpenseApproval = {
+  id: string
+  employeeName: string
+  initials: string
+  title: string
+  category: string
+  amount: number
+  expenseDate: string
+}
+
 export type DemoExpenseOverview = {
   approvedThisMonth: number
   monthlyLimit: number
   pendingAmount: number
   pendingCount: number
   yearTotal: number
-  topCategoryShare: string
+  topCategory: { name: string; pct: number }
   monthlyAverage: number
   claims: DemoExpenseClaim[]
   categories: { id: string; label: string }[]
+  categoryLimits: DemoExpenseCategoryLimit[]
+  pendingApprovals: DemoExpenseApproval[]
 }
 
 const demoLeaveOverview: DemoLeaveOverview = {
@@ -219,72 +238,90 @@ const demoExpenseOverview: DemoExpenseOverview = {
   pendingAmount: 2340,
   pendingCount: 2,
   yearTotal: 34200,
-  topCategoryShare: 'Seyahat %41',
+  topCategory: { name: 'Seyahat', pct: 41 },
   monthlyAverage: 4900,
   claims: [
     {
       id: 'ex-1',
-      title: 'İstanbul–Ankara uçak',
+      title: 'Ankara müşteri ziyareti',
       category: 'Seyahat',
-      amount: 1890,
+      amount: 1840,
       currency: 'TRY',
-      expenseDate: '2026-05-10',
-      status: 'pending',
+      expenseDate: '2026-05-08',
+      status: 'approved',
     },
     {
       id: 'ex-2',
-      title: 'İş yemeği',
+      title: 'Ekip akşam yemeği',
       category: 'Yemek',
-      amount: 450,
+      amount: 620,
       currency: 'TRY',
-      expenseDate: '2026-05-08',
-      status: 'pending',
+      expenseDate: '2026-05-06',
+      status: 'approved',
     },
     {
       id: 'ex-3',
-      title: 'Konaklama',
-      category: 'Konaklama',
-      amount: 3200,
+      title: 'Figma yıllık',
+      category: 'Yazılım',
+      amount: 1500,
       currency: 'TRY',
-      expenseDate: '2026-04-22',
-      status: 'approved',
+      expenseDate: '2026-05-03',
+      status: 'pending',
     },
     {
       id: 'ex-4',
-      title: 'Taksi',
+      title: 'Taksi · havaalanı',
       category: 'Ulaşım',
-      amount: 280,
+      amount: 240,
       currency: 'TRY',
-      expenseDate: '2026-04-18',
-      status: 'approved',
+      expenseDate: '2026-05-01',
+      status: 'pending',
     },
     {
       id: 'ex-5',
-      title: 'Eğitim materyali',
-      category: 'Eğitim',
-      amount: 890,
+      title: 'Otel · İzmir',
+      category: 'Konaklama',
+      amount: 3200,
       currency: 'TRY',
-      expenseDate: '2026-03-05',
+      expenseDate: '2026-04-28',
       status: 'approved',
-    },
-    {
-      id: 'ex-6',
-      title: 'Temsil gideri',
-      category: 'Temsil',
-      amount: 1200,
-      currency: 'TRY',
-      expenseDate: '2026-02-14',
-      status: 'rejected',
     },
   ],
   categories: [
     { id: 'travel', label: 'Seyahat' },
-    { id: 'lodging', label: 'Konaklama' },
     { id: 'food', label: 'Yemek' },
-    { id: 'entertainment', label: 'Temsil' },
-    { id: 'training', label: 'Eğitim' },
-    { id: 'office', label: 'Ofis' },
+    { id: 'lodging', label: 'Konaklama' },
+    { id: 'software', label: 'Yazılım' },
     { id: 'transport', label: 'Ulaşım' },
+    { id: 'other', label: 'Diğer' },
+  ],
+  categoryLimits: [
+    { id: 'travel', name: 'Seyahat', limit: 5000, monthSpent: 3400 },
+    { id: 'food', name: 'Yemek', limit: 2000, monthSpent: 820 },
+    { id: 'lodging', name: 'Konaklama', limit: 6000, monthSpent: 3200 },
+    { id: 'software', name: 'Yazılım', limit: 3000, monthSpent: 1500 },
+    { id: 'transport', name: 'Ulaşım', limit: 1500, monthSpent: 720 },
+    { id: 'other', name: 'Diğer', limit: 1000, monthSpent: 0 },
+  ],
+  pendingApprovals: [
+    {
+      id: 'pe-1',
+      employeeName: 'Ayşe Kaya',
+      initials: 'AK',
+      title: 'Figma yıllık',
+      category: 'Yazılım',
+      amount: 1500,
+      expenseDate: '2026-05-03',
+    },
+    {
+      id: 'pe-2',
+      employeeName: 'Murat Tan',
+      initials: 'MT',
+      title: 'Taksi · havaalanı',
+      category: 'Ulaşım',
+      amount: 240,
+      expenseDate: '2026-05-01',
+    },
   ],
 }
 

@@ -473,7 +473,7 @@
     }
   },
   "expense": {
-    "title": "Masraf · Cüzdan™",
+    "title": "Masraf",
     "subtitle": "Masraf özeti ve yeni bildirim",
     "hero": {
       "approvedThisMonth": "Bu ay onaylanan",
@@ -500,7 +500,8 @@
     },
     "actions": {
       "new": "Yeni masraf",
-      "submit": "Onaya gönder"
+      "submit": "Bildir",
+      "submitting": "Gönderiliyor…"
     },
     "sheet": {
       "title": "Yeni masraf bildirimi",
@@ -526,6 +527,68 @@
     },
     "toast": {
       "submitted": "Masraf bildirimi onaya gönderildi (demo)."
+    }
+  },
+  "expenseSetup": {
+    "eyebrow": "Çalışan Süreçleri",
+    "subtitle": "Aylık limit, bekleyen kalemler ve kategoriler tek ekranda.",
+    "limitUsed": "%{{pct}} kullanıldı",
+    "metrics": {
+      "pendingHint": "{{count}} kalem",
+      "yearHint": "Onaylanan",
+      "topCategoryHint": "%{{pct}} pay",
+      "monthlyAvgHint": "Son 6 ay"
+    },
+    "tabs": {
+      "mine": "Benim masraflarım",
+      "approvals": "Onay bekleyenler",
+      "categories": "Kategoriler",
+      "ariaLabel": "Masraf sekmeleri"
+    },
+    "sections": {
+      "recent": "Son masraflar",
+      "approvals": "Onay bekleyen masraflar",
+      "categoryLimits": "Kategori limitleri",
+      "categoryLimitsDesc": "Bu ay kullanım oranı."
+    },
+    "empty": {
+      "recent": "Henüz masraf kaydı yok.",
+      "approvals": "Onay bekleyen masraf yok."
+    },
+    "error": {
+      "loadFailed": "Masraf verileri yüklenemedi."
+    },
+    "approval": {
+      "approve": "Onayla",
+      "reject": "Reddet",
+      "demoApproveTitle": "Onay simülasyonu (demo)",
+      "demoApproveDesc": "{{title}} — gerçek onay akışı API katmanında bağlanacak.",
+      "demoRejectTitle": "Red simülasyonu (demo)",
+      "demoRejectDesc": "{{title}} — kayıt değiştirilmedi."
+    },
+    "form": {
+      "ocrTitle": "Fiş okuma (OCR)",
+      "ocrSoon": "Yakında",
+      "ocrDesc": "Fişin fotoğrafından kategori ve tutarı otomatik dolduracağız.",
+      "currency": "Para birimi",
+      "vatIncluded": "KDV dahil",
+      "vatIncludedHint": "Tutar KDV'yi içeriyorsa açık bırak.",
+      "categoryRequired": "Kategori seçilmeli.",
+      "amountRequired": "Tutar gerekli.",
+      "amountPositive": "Tutar 0'dan büyük olmalı.",
+      "dateRequired": "Tarih gerekli.",
+      "document": "Fiş / belge",
+      "documentHint": "JPG, PNG veya PDF · opsiyonel",
+      "documentTeaser": "Belge yükle",
+      "policyTitle": "Politika kontrolü",
+      "policyPending": "Zorunlu alanları doldurduktan sonra politika kontrolü görüntülenecek.",
+      "policyCategoryLimit": "Kategori limiti · {{category}}",
+      "policyReceiptRequired": "Fiş zorunluluğu (₺2.000 üzeri)",
+      "policyCurrency": "Para birimi · TRY tercih edilir",
+      "policyDate": "Tarih · {{date}}",
+      "policyWarningTitle": "Politika uyarısı",
+      "policyWarningDesc": "₺2.000 üzeri kalemler için fiş zorunlu ve ek onay gerekir.",
+      "policyOk": "Kalem mevcut harcama politikasıyla uyumlu görünüyor."
     }
   },
   "menu": {

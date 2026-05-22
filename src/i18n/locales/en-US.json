@@ -473,7 +473,7 @@
     }
   },
   "expense": {
-    "title": "Expense · Wallet™",
+    "title": "Expense",
     "subtitle": "Expense summary and new claim",
     "hero": {
       "approvedThisMonth": "Approved this month",
@@ -500,7 +500,8 @@
     },
     "actions": {
       "new": "New expense",
-      "submit": "Submit for approval"
+      "submit": "Submit",
+      "submitting": "Submitting…"
     },
     "sheet": {
       "title": "New expense claim",
@@ -526,6 +527,68 @@
     },
     "toast": {
       "submitted": "Expense claim submitted (demo)."
+    }
+  },
+  "expenseSetup": {
+    "eyebrow": "Employee Processes",
+    "subtitle": "Monthly limit, pending items, and categories in one view.",
+    "limitUsed": "{{pct}}% used",
+    "metrics": {
+      "pendingHint": "{{count}} item(s)",
+      "yearHint": "Approved",
+      "topCategoryHint": "{{pct}}% share",
+      "monthlyAvgHint": "Last 6 months"
+    },
+    "tabs": {
+      "mine": "My expenses",
+      "approvals": "Pending approvals",
+      "categories": "Categories",
+      "ariaLabel": "Expense tabs"
+    },
+    "sections": {
+      "recent": "Recent expenses",
+      "approvals": "Pending expense approvals",
+      "categoryLimits": "Category limits",
+      "categoryLimitsDesc": "This month's usage ratio."
+    },
+    "empty": {
+      "recent": "No expense records yet.",
+      "approvals": "No pending expense approvals."
+    },
+    "error": {
+      "loadFailed": "Could not load expense data."
+    },
+    "approval": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "demoApproveTitle": "Approval simulation (demo)",
+      "demoApproveDesc": "{{title}} — real approval flow will connect via API layer.",
+      "demoRejectTitle": "Rejection simulation (demo)",
+      "demoRejectDesc": "{{title}} — no record was changed."
+    },
+    "form": {
+      "ocrTitle": "Receipt scanning (OCR)",
+      "ocrSoon": "Coming soon",
+      "ocrDesc": "We will auto-fill category and amount from receipt photos.",
+      "currency": "Currency",
+      "vatIncluded": "VAT included",
+      "vatIncludedHint": "Leave checked if the amount includes VAT.",
+      "categoryRequired": "Category is required.",
+      "amountRequired": "Amount is required.",
+      "amountPositive": "Amount must be greater than zero.",
+      "dateRequired": "Date is required.",
+      "document": "Receipt / attachment",
+      "documentHint": "JPG, PNG, or PDF · optional",
+      "documentTeaser": "Upload document",
+      "policyTitle": "Policy check",
+      "policyPending": "Fill required fields to see the policy check.",
+      "policyCategoryLimit": "Category limit · {{category}}",
+      "policyReceiptRequired": "Receipt required (over ₺2,000)",
+      "policyCurrency": "Currency · TRY preferred",
+      "policyDate": "Date · {{date}}",
+      "policyWarningTitle": "Policy warning",
+      "policyWarningDesc": "Items over ₺2,000 require a receipt and additional approval.",
+      "policyOk": "This item appears compliant with the expense policy."
     }
   },
   "menu": {

@@ -18,11 +18,34 @@ export function countBusinessDays(startDate: string, endDate: string): number {
   return count
 }
 
-/** Parse decimal input accepting comma or dot separators. */
+/** Parse decimal input accepting TR/EU comma formats and plain dot decimals. */
 export function parseDecimalAmount(raw: string): number {
-  const normalized = raw.trim().replace(/\s/g, '').replace(',', '.')
-  if (!normalized) return NaN
-  return Number(normalized)
+  const trimmed = raw.trim().replace(/\s/g, '')
+  if (!trimmed) return NaN
+
+  const hasComma = trimmed.includes(',')
+  const hasDot = trimmed.includes('.')
+
+  if (hasComma && hasDot) {
+    if (trimmed.lastIndexOf(',') > trimmed.lastIndexOf('.')) {
+      return Number(trimmed.replace(/\./g, '').replace(',', '.'))
+    }
+    return Number(trimmed.replace(/,/g, ''))
+  }
+
+  if (hasComma) {
+    return Number(trimmed.replace(',', '.'))
+  }
+
+  if (hasDot) {
+    const parts = trimmed.split('.')
+    if (parts.length === 2 && parts[1].length <= 2) {
+      return Number(trimmed)
+    }
+    return Number(trimmed.replace(/\./g, ''))
+  }
+
+  return Number(trimmed)
 }
 
 export function formatCurrency(amount: number, locale = 'tr-TR', currency = 'TRY'): string {
