@@ -29,6 +29,7 @@ import { Route as AppEgitimRouteImport } from './routes/_app/egitim'
 import { Route as AppDepartmanlarRouteImport } from './routes/_app/departmanlar'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCalisanlarRouteImport } from './routes/_app/calisanlar'
+import { Route as AppAiKocRouteImport } from './routes/_app/ai-koc'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -130,10 +131,16 @@ const AppCalisanlarRoute = AppCalisanlarRouteImport.update({
   path: '/calisanlar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiKocRoute = AppAiKocRouteImport.update({
+  id: '/ai-koc',
+  path: '/ai-koc',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/ai-koc': typeof AppAiKocRoute
   '/calisanlar': typeof AppCalisanlarRoute
   '/dashboard': typeof AppDashboardRoute
   '/departmanlar': typeof AppDepartmanlarRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/ai-koc': typeof AppAiKocRoute
   '/calisanlar': typeof AppCalisanlarRoute
   '/dashboard': typeof AppDashboardRoute
   '/departmanlar': typeof AppDepartmanlarRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/ai-koc': typeof AppAiKocRoute
   '/_app/calisanlar': typeof AppCalisanlarRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/departmanlar': typeof AppDepartmanlarRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/ai-koc'
     | '/calisanlar'
     | '/dashboard'
     | '/departmanlar'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/ai-koc'
     | '/calisanlar'
     | '/dashboard'
     | '/departmanlar'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/ai-koc'
     | '/_app/calisanlar'
     | '/_app/dashboard'
     | '/_app/departmanlar'
@@ -411,10 +423,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCalisanlarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai-koc': {
+      id: '/_app/ai-koc'
+      path: '/ai-koc'
+      fullPath: '/ai-koc'
+      preLoaderRoute: typeof AppAiKocRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAiKocRoute: typeof AppAiKocRoute
   AppCalisanlarRoute: typeof AppCalisanlarRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDepartmanlarRoute: typeof AppDepartmanlarRoute
@@ -435,6 +455,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAiKocRoute: AppAiKocRoute,
   AppCalisanlarRoute: AppCalisanlarRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDepartmanlarRoute: AppDepartmanlarRoute,

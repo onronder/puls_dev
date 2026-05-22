@@ -1060,3 +1060,68 @@ const demoContractsOverview: DemoContractsOverview = {
 export async function fetchDemoContractsOverview(): Promise<DemoContractsOverview> {
   return demoContractsOverview
 }
+
+export type DemoAiCoachReadinessStatus = 'done' | 'pending'
+
+export type DemoAiCoachCapability = {
+  id: string
+  titleKey: string
+  descKey: string
+}
+
+export type DemoAiCoachReadinessItem = {
+  id: string
+  labelKey: string
+  status: DemoAiCoachReadinessStatus
+}
+
+export type DemoAiCoachOverview = {
+  capabilities: DemoAiCoachCapability[]
+  readiness: DemoAiCoachReadinessItem[]
+}
+
+const demoAiCoachOverview: DemoAiCoachOverview = {
+  capabilities: [
+    {
+      id: 'a1',
+      titleKey: 'aiCoachSetup.capabilities.leavePlan.title',
+      descKey: 'aiCoachSetup.capabilities.leavePlan.desc',
+    },
+    {
+      id: 'a2',
+      titleKey: 'aiCoachSetup.capabilities.expensePolicy.title',
+      descKey: 'aiCoachSetup.capabilities.expensePolicy.desc',
+    },
+    {
+      id: 'a3',
+      titleKey: 'aiCoachSetup.capabilities.performanceReminders.title',
+      descKey: 'aiCoachSetup.capabilities.performanceReminders.desc',
+    },
+    {
+      id: 'a4',
+      titleKey: 'aiCoachSetup.capabilities.careerDevelopment.title',
+      descKey: 'aiCoachSetup.capabilities.careerDevelopment.desc',
+    },
+  ],
+  readiness: [
+    {
+      id: 'r1',
+      labelKey: 'aiCoachSetup.readiness.vaultSchema',
+      status: 'done',
+    },
+    {
+      id: 'r2',
+      labelKey: 'aiCoachSetup.readiness.toolCallLayer',
+      status: 'pending',
+    },
+    {
+      id: 'r3',
+      labelKey: 'aiCoachSetup.readiness.erpContext',
+      status: 'pending',
+    },
+  ],
+}
+
+export async function fetchDemoAiCoachOverview(): Promise<DemoAiCoachOverview> {
+  return demoAiCoachOverview
+}

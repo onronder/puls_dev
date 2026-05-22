@@ -894,6 +894,71 @@
       "hint": "Email and in-app notification will be sent for the selected contract."
     }
   },
+  "aiCoachSetup": {
+    "eyebrow": "Artificial Intelligence",
+    "title": "AI Coach",
+    "description": "PULS AI Coach will soon help with performance, leave, expenses, and policy questions.",
+    "meta": {
+      "title": "AI Coach — PULS",
+      "description": "PULS AI Coach will soon help with performance, leave, expenses, and policy questions."
+    },
+    "hero": {
+      "title": "AI Coach",
+      "description": "Opening in MVP-2. Active chat is not available yet; see what it will do and readiness status below."
+    },
+    "sections": {
+      "capabilities": "What it will do",
+      "privacy": "Privacy",
+      "readiness": "Readiness"
+    },
+    "capabilities": {
+      "leavePlan": {
+        "title": "Leave planning suggestions",
+        "desc": "Suggests optimal dates based on your balance and team calendar."
+      },
+      "expensePolicy": {
+        "title": "Expense policy guidance",
+        "desc": "Explains which category an expense falls under and its limit."
+      },
+      "performanceReminders": {
+        "title": "Performance cycle reminders",
+        "desc": "Notifications for opening, mid-cycle review, and closing."
+      },
+      "careerDevelopment": {
+        "title": "Career development suggestions",
+        "desc": "Recommends training and goals based on competency gaps."
+      }
+    },
+    "privacy": {
+      "body": "Private AI Coach sessions will not be visible to managers. Access policy and data scope will be finalized in MVP-2."
+    },
+    "readiness": {
+      "vaultSchema": "Vault schema ready",
+      "toolCallLayer": "Tool-call layer MVP-2",
+      "erpContext": "ERP context pending",
+      "done": "Done",
+      "pending": "Pending",
+      "doneAria": "Completed",
+      "pendingAria": "Pending"
+    },
+    "actions": {
+      "notifyMe": "Notify me",
+      "backToDashboard": "Back to dashboard"
+    },
+    "notifySheet": {
+      "title": "Notify me",
+      "description": "Sign up to be notified when AI Coach opens in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "submit": "Subscribe",
+      "fields": {
+        "email": "Email"
+      },
+      "placeholders": {
+        "email": "you@company.com"
+      },
+      "hint": "You will receive email and in-app notification when ready."
+    }
+  },
   "ai": {
     "floatingLabel": "AI Coach",
     "placeholder": "Ask or tell something…",
