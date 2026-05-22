@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Building2, Plus, UserCheck, Users } from 'lucide-react'
+import { Building2, Plus, UserCheck, UserMinus, Users } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -14,15 +14,17 @@ import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
+import i18n from '#/i18n'
 import { fetchDemoDepartmentsOverview } from '#/lib/demo/puls-demo-data'
+import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/departmanlar')({
   head: () => ({
     meta: [
-      { title: 'Departmanlar — PULS' },
+      { title: i18n.t('departments.meta.title') },
       {
         name: 'description',
-        content: 'Organizasyon yapısı, departman yöneticileri ve çalışan dağılımı.',
+        content: i18n.t('departments.meta.description'),
       },
     ],
   }),
@@ -30,6 +32,7 @@ export const Route = createFileRoute('/_app/departmanlar')({
 })
 
 const DEPARTMENT_SKELETON_COUNT = 3
+const DEPARTMENT_TABLE_GRID_COLS = 'grid-cols-[1fr_1fr_100px_100px]'
 
 function DepartmanlarPage() {
   const { t } = useTranslation()
@@ -88,7 +91,7 @@ function DepartmanlarPage() {
             compact
             label={t('departments.metrics.emptyManagers')}
             value={String(data.emptyManagers)}
-            icon={UserCheck}
+            icon={UserMinus}
           />
         </div>
       ) : null}
@@ -118,7 +121,12 @@ function DepartmanlarPage() {
         </div>
 
         <div className="mt-3 hidden overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] md:block">
-          <div className="grid grid-cols-[1fr_1fr_100px_100px] gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+          <div
+            className={cn(
+              'grid gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]',
+              DEPARTMENT_TABLE_GRID_COLS,
+            )}
+          >
             <div>{t('departments.columns.name')}</div>
             <div>{t('departments.columns.manager')}</div>
             <div className="text-right">{t('departments.columns.count')}</div>
@@ -129,7 +137,10 @@ function DepartmanlarPage() {
               ? Array.from({ length: DEPARTMENT_SKELETON_COUNT }, (_, index) => (
                   <li
                     key={index}
-                    className="grid grid-cols-[1fr_1fr_100px_100px] items-center gap-3 px-4 py-3"
+                    className={cn(
+                      'grid items-center gap-3 px-4 py-3',
+                      DEPARTMENT_TABLE_GRID_COLS,
+                    )}
                   >
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-4 w-28" />
@@ -140,7 +151,10 @@ function DepartmanlarPage() {
               : (data?.departments ?? []).map((department) => (
                   <li
                     key={department.id}
-                    className="grid grid-cols-[1fr_1fr_100px_100px] items-center gap-3 px-4 py-3"
+                    className={cn(
+                      'grid items-center gap-3 px-4 py-3',
+                      DEPARTMENT_TABLE_GRID_COLS,
+                    )}
                   >
                     <div className="text-sm font-medium">{department.name}</div>
                     <div className="text-sm text-[var(--color-text-secondary)]">{department.manager}</div>
