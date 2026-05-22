@@ -273,7 +273,7 @@ function MineTab({ upcoming, requests, locale, t }: MineTabProps) {
               return (
                 <li key={item.id} className="flex min-h-16 items-center gap-3 p-4">
                   <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md border border-border bg-surface-2 text-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {badge.month}
                     </span>
                     <span className="text-[14px] font-semibold tabular text-foreground">
