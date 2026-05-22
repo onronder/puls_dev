@@ -54,7 +54,7 @@ const menuLinks: MenuLink[] = [
   { id: 'kariyer', to: '/kariyer', labelKey: 'nav.kariyer', icon: Waypoints },
   { id: 'egitim', to: '/egitim', labelKey: 'nav.egitim', icon: GraduationCap },
   { id: 'is-degerleme', to: '/is-degerleme', labelKey: 'nav.isDegerleme', icon: Scale },
-  { id: 'koc', to: '/menu', labelKey: 'nav.koc', icon: Sparkles, soon: true },
+  { id: 'koc', to: '/ai-koc', labelKey: 'nav.koc', icon: Sparkles },
   { id: 'erp', to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
   { id: 'sirket-kurulum', to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
   { id: 'departmanlar', to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },

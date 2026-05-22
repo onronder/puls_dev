@@ -71,7 +71,7 @@ export const sidebarGroups: NavGroup[] = [
   },
   {
     titleKey: 'nav.ai',
-    items: [{ to: '/menu', labelKey: 'nav.koc', icon: Sparkles, soon: true }],
+    items: [{ to: '/ai-koc', labelKey: 'nav.koc', icon: Sparkles }],
   },
   {
     titleKey: 'nav.setup',

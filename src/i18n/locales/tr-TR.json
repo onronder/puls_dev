@@ -894,6 +894,71 @@
       "hint": "Seçili sözleşme için e-posta ve uygulama bildirimi gönderilecek."
     }
   },
+  "aiCoachSetup": {
+    "eyebrow": "Yapay Zeka",
+    "title": "AI Koç",
+    "description": "PULS AI Coach yakında performans, izin, masraf ve politika sorularında yardımcı olacak.",
+    "meta": {
+      "title": "AI Koç — PULS",
+      "description": "PULS AI Coach yakında performans, izin, masraf ve politika sorularında yardımcı olacak."
+    },
+    "hero": {
+      "title": "AI Coach",
+      "description": "MVP-2'de açılacak. Aktif chat henüz yok; aşağıda neler yapacağını ve hazırlık durumunu görebilirsin."
+    },
+    "sections": {
+      "capabilities": "Neler yapacak",
+      "privacy": "Gizlilik",
+      "readiness": "Hazırlık"
+    },
+    "capabilities": {
+      "leavePlan": {
+        "title": "İzin planı önerisi",
+        "desc": "Bakiyene ve takım takvimine göre optimum tarih önerir."
+      },
+      "expensePolicy": {
+        "title": "Masraf politika açıklaması",
+        "desc": "Bir harcamanın hangi kategoriye düştüğünü ve limitini açıklar."
+      },
+      "performanceReminders": {
+        "title": "Performans dönem hatırlatmaları",
+        "desc": "Açılış, ara değerlendirme ve kapanış için bildirimler."
+      },
+      "careerDevelopment": {
+        "title": "Kariyer gelişim önerileri",
+        "desc": "Yetkinlik boşluklarına göre eğitim ve hedef önerir."
+      }
+    },
+    "privacy": {
+      "body": "Kişisel görüşmeler yöneticilere açık olmayacak. Erişim politikası ve veri kapsamı MVP-2'de netleşecek."
+    },
+    "readiness": {
+      "vaultSchema": "Vault şeması hazır",
+      "toolCallLayer": "Tool-call katmanı MVP-2",
+      "erpContext": "ERP bağlamı bekleniyor",
+      "done": "Tamam",
+      "pending": "Bekliyor",
+      "doneAria": "Tamamlandı",
+      "pendingAria": "Beklemede"
+    },
+    "actions": {
+      "notifyMe": "Beni bilgilendir",
+      "backToDashboard": "Dashboard'a dön"
+    },
+    "notifySheet": {
+      "title": "Beni bilgilendir",
+      "description": "AI Koç MVP-2'de açıldığında bildirim almak için kaydol.",
+      "mvpBadge": "MVP-2",
+      "submit": "Kaydol",
+      "fields": {
+        "email": "E-posta"
+      },
+      "placeholders": {
+        "email": "ornek@sirket.com"
+      },
+      "hint": "Hazır olduğunda e-posta ve uygulama bildirimi gönderilecek."
+    }
+  },
   "ai": {
     "floatingLabel": "AI Koç",
     "placeholder": "Bir şey sor veya anlat…",
