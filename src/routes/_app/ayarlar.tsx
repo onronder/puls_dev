@@ -21,7 +21,7 @@ import {
   fetchDemoSettingsOverview,
   type DemoSettingsSection,
 } from '#/lib/demo/puls-demo-data'
-import { filterSettingsSectionsForRole, isSetupAdmin } from '#/lib/setup-access'
+import { canShowSetupHub, filterSettingsSectionsForRole } from '#/lib/setup-access'
 import i18n from '#/i18n'
 
 export const Route = createFileRoute('/_app/ayarlar')({
@@ -59,9 +59,9 @@ function SetupNavRow({ item, label }: { item: NavItem; label: string }) {
 
 function AyarlarPage() {
   const { t } = useTranslation()
-  const { personaRole } = useAuth()
+  const { personaRole, activePersona } = useAuth()
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
-  const showSetupHub = isSetupAdmin(personaRole)
+  const showSetupHub = canShowSetupHub(personaRole, activePersona)
 
   const { data, isLoading } = useQuery({
     queryKey: ['demo-settings-overview'],
@@ -69,8 +69,9 @@ function AyarlarPage() {
   })
 
   const visibleSections = useMemo(
-    () => (data ? filterSettingsSectionsForRole(data.sections, personaRole) : []),
-    [data, personaRole],
+    () =>
+      data ? filterSettingsSectionsForRole(data.sections, personaRole, activePersona) : [],
+    [data, personaRole, activePersona],
   )
 
   const selectedSection = useMemo(

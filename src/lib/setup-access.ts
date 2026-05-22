@@ -1,5 +1,6 @@
 import { redirect } from '@tanstack/react-router'
 
+import type { ActivePersona } from '#/lib/auth'
 import { adminSetupNavItems } from '#/lib/navigation'
 import { resolvePersonaForUser } from '#/lib/persona'
 import { supabase, type PersonaRole } from '#/lib/supabase'
@@ -23,6 +24,14 @@ export function isSetupAdmin(personaRole: PersonaRole | null | undefined): boole
   return personaRole === 'hr_admin' || personaRole === 'superadmin'
 }
 
+/** UI visibility for Kurulum & Tanımlar — admin role plus Yönetici Modu only. */
+export function canShowSetupHub(
+  personaRole: PersonaRole | null | undefined,
+  activePersona: ActivePersona,
+): boolean {
+  return isSetupAdmin(personaRole) && activePersona === 'manager'
+}
+
 export function isSetupRoutePath(pathname: string): boolean {
   return SETUP_ROUTE_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
@@ -42,8 +51,9 @@ export function canAccessSetupRoute(
 export function filterSettingsSectionsForRole<T extends { id: string }>(
   sections: T[],
   personaRole: PersonaRole | null | undefined,
+  activePersona: ActivePersona,
 ): T[] {
-  if (isSetupAdmin(personaRole)) {
+  if (canShowSetupHub(personaRole, activePersona)) {
     return sections
   }
   return sections.filter((section) =>
