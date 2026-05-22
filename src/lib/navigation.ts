@@ -73,6 +73,7 @@ export const sidebarGroups: NavGroup[] = [
       { to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
       { to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
       { to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
+      { to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },
       { to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
     ],
   },
