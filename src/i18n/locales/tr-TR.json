@@ -513,7 +513,7 @@
       "title": "Başlık",
       "titlePlaceholder": "Örn. İstanbul–Ankara uçak",
       "defaultTitle": "Yeni masraf",
-      "amount": "Tutar (TRY)",
+      "amount": "Tutar",
       "amountError": "Geçerli bir tutar girin.",
       "date": "Tarih",
       "description": "Açıklama",
