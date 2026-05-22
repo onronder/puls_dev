@@ -169,7 +169,7 @@ function PozisyonlarPage() {
         footer={
           <div className="flex w-full flex-col gap-3">
             <StatusPill tone="neutral" className="self-start">
-              {t('positions.sheet.mvpBadge')}
+              {t('common.soon')}
             </StatusPill>
             <Button type="button" className="touch-target w-full" disabled>
               {t('positions.sheet.submit')}

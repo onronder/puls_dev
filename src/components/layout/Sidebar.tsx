@@ -5,6 +5,7 @@ import { StatusPill } from '#/components/puls/StatusPill'
 import { useAuth } from '#/lib/auth'
 import {
   filterSidebarGroups,
+  isAdminSetupRoute,
   isNavItemActive,
   sidebarGroups,
 } from '#/lib/navigation'
@@ -27,7 +28,9 @@ export function Sidebar() {
             <ul className="space-y-1">
               {group.items.map((item) => {
                 const Icon = item.icon
-                const active = isNavItemActive(pathname, item.to)
+                const active =
+                  isNavItemActive(pathname, item.to) ||
+                  (item.to === '/ayarlar' && isAdminSetupRoute(pathname))
                 const disabledSoon = item.soon
 
                 return (

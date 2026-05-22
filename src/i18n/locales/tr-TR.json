@@ -10,7 +10,11 @@
     "loading": "Yükleniyor…",
     "days": "gün",
     "error": "Bir hata oluştu",
-    "retry": "Tekrar dene"
+    "retry": "Tekrar dene",
+    "readOnly": "Salt okunur",
+    "readOnlyAction": "Kaydet",
+    "pilotOutOfScope": "Pilot kapsamı dışında",
+    "apiPending": "Canias API erişimi açılınca etkinleşecek"
   },
   "auth": {
     "loginTitle": "Giriş Yap",
@@ -53,7 +57,9 @@
     "izinTanimlari": "İzin Tanımları",
     "masrafKategorileri": "Masraf Kategorileri",
     "performansParametreleri": "Performans Parametreleri",
-    "settings": "Ayarlar"
+    "settings": "Ayarlar",
+    "adminSettings": "Yönetici Ayarları",
+    "account": "Hesap"
   },
   "persona": {
     "employee": "Çalışan Modu",
@@ -119,7 +125,7 @@
       "ai": {
         "title": "AI Koç™",
         "description": "Kişisel asistan yakında",
-        "hint": "MVP-2 — aktif sohbet henüz açık değil"
+        "hint": "Yakında — aktif sohbet henüz açık değil"
       }
     },
     "erpConnected": "Bağlı: {{provider}}",
@@ -392,7 +398,7 @@
     },
     "sheet": {
       "title": "Yeni izin talebi",
-      "description": "Demo adapter — gerçek onay akışı API katmanında bağlanacak."
+      "description": "Talebin onay sürecine alınır; yöneticin bilgilendirilir."
     },
     "form": {
       "type": "İzin türü",
@@ -404,7 +410,7 @@
       "description": "Açıklama",
       "descriptionPlaceholder": "İsteğe bağlı açıklama",
       "balanceAfter": "Bakiye sonrası",
-      "balanceAfterHint": "Hafta sonu/tatil kuralı Faz 2'de hesaplanacak.",
+      "balanceAfterHint": "Hafta sonu/tatil kuralı Canias API erişimi açılınca hesaplanacak.",
       "dateError": "Geçerli bir tarih aralığı seçin."
     },
     "empty": {
@@ -505,7 +511,7 @@
     },
     "sheet": {
       "title": "Yeni masraf bildirimi",
-      "description": "Demo adapter — OCR ve finans onayı sonraki fazda."
+      "description": "Masraf bildirimin onay sürecine alınır."
     },
     "form": {
       "category": "Kategori",
@@ -519,7 +525,7 @@
       "description": "Açıklama",
       "descriptionPlaceholder": "İş amacı ve detay",
       "receipt": "Fiş / belge",
-      "receiptHint": "OCR MVP-2 — şimdilik yükleme alanı placeholder.",
+      "receiptHint": "Fiş yükleme yakında; şimdilik manuel giriş yapabilirsin.",
       "receiptPlaceholder": "Fiş fotoğrafla veya yükle (yakında)"
     },
     "empty": {
@@ -712,8 +718,8 @@
     },
     "sheet": {
       "title": "Departman ekle",
-      "description": "Yeni departman oluşturma MVP-2 kapsamında açılacak.",
-      "mvpBadge": "MVP-2",
+      "description": "Yeni departman oluşturma Yakında kapsamında açılacak.",
+      "mvpBadge": "Yakında",
       "fields": {
         "name": "Departman adı",
         "manager": "Departman yöneticisi"
@@ -754,8 +760,8 @@
     },
     "sheet": {
       "title": "Pozisyon ekle",
-      "description": "Yeni pozisyon oluşturma MVP-2 kapsamında açılacak.",
-      "mvpBadge": "MVP-2",
+      "description": "Yeni pozisyon oluşturma Yakında kapsamında açılacak.",
+      "mvpBadge": "Yakında",
       "fields": {
         "name": "Pozisyon adı",
         "department": "Departman",
@@ -822,8 +828,8 @@
     },
     "sheet": {
       "title": "İzin tipi ekle",
-      "description": "Yeni izin tipi oluşturma MVP-2 kapsamında açılacak.",
-      "mvpBadge": "MVP-2",
+      "description": "Yeni izin tipi oluşturma Yakında kapsamında açılacak.",
+      "mvpBadge": "Yakında",
       "fields": {
         "label": "İzin tipi adı",
         "days": "Gün hakkı"
@@ -872,8 +878,8 @@
     },
     "sheet": {
       "title": "Kategori ekle",
-      "description": "Yeni masraf kategorisi oluşturma MVP-2 kapsamında açılacak.",
-      "mvpBadge": "MVP-2",
+      "description": "Yeni masraf kategorisi oluşturma Yakında kapsamında açılacak.",
+      "mvpBadge": "Yakında",
       "fields": {
         "name": "Kategori adı",
         "monthlyLimit": "Aylık limit",
@@ -1014,7 +1020,7 @@
     "sheet": {
       "title": "Gelişim planı taslağı",
       "description": "Hedef role yönelik kişiselleştirilmiş gelişim planı önizlemesi.",
-      "mvpBadge": "MVP-2",
+      "mvpBadge": "Yakında",
       "submit": "Planı kaydet",
       "previewTitle": "Taslak özet",
       "previewHorizon": "30 / 90 / 180 gün hedefleri birleştirilmiş önizleme",
@@ -1069,7 +1075,7 @@
     },
     "schoolTeaser": {
       "title": "Okul™ önerisi",
-      "description": "Yetkinlik boşluklarına ve performans verisine göre öğrenme yolu önerileri MVP-2'de gelecek."
+      "description": "Yetkinlik boşluklarına ve performans verisine göre öğrenme yolu önerileri Yakında'de gelecek."
     }
   },
   "jobEvaluationSetup": {
@@ -1164,12 +1170,13 @@
     "actions": {
       "upload": "Belge yükle",
       "viewDetail": "Detayı görüntüle",
-      "setReminder": "Hatırlatıcı kur"
+      "setReminder": "Hatırlatıcı kur",
+      "uploadUnavailable": "Belge yükleme pilot kapsamı dışında."
     },
     "uploadSheet": {
       "title": "Belge yükle",
-      "description": "Sözleşme belgesi yükleme akışı MVP-2'de açılacak.",
-      "mvpBadge": "MVP-2",
+      "description": "Sözleşme belgesi yükleme akışı Yakında'de açılacak.",
+      "mvpBadge": "Yakında",
       "submit": "Yükle",
       "fields": {
         "employee": "Çalışan",
@@ -1196,8 +1203,8 @@
     },
     "reminderSheet": {
       "title": "Hatırlatıcı kur",
-      "description": "Sözleşme bitiş hatırlatıcıları MVP-2'de yapılandırılabilecek.",
-      "mvpBadge": "MVP-2",
+      "description": "Sözleşme bitiş hatırlatıcıları Yakında'de yapılandırılabilecek.",
+      "mvpBadge": "Yakında",
       "submit": "Hatırlatıcı kaydet",
       "fields": {
         "daysBefore": "Kaç gün önce"
@@ -1258,12 +1265,14 @@
     "actions": {
       "edit": "Bilgileri düzenle",
       "security": "Güvenlik ayarları",
-      "logout": "Oturumu kapat"
+      "logout": "Oturumu kapat",
+      "editUnavailable": "Profil düzenleme şu an salt okunur.",
+      "securityUnavailable": "Güvenlik ayarları şu an salt okunur."
     },
     "editSheet": {
       "title": "Bilgileri düzenle",
-      "description": "Profil düzenleme formu MVP-2'de açılacak.",
-      "mvpBadge": "MVP-2",
+      "description": "Profil düzenleme formu Yakında'de açılacak.",
+      "mvpBadge": "Yakında",
       "submit": "Kaydet",
       "fields": {
         "name": "Ad soyad",
@@ -1278,8 +1287,8 @@
     },
     "securitySheet": {
       "title": "Güvenlik ayarları",
-      "description": "Şifre ve oturum yönetimi MVP-2'de yapılandırılabilecek.",
-      "mvpBadge": "MVP-2",
+      "description": "Şifre ve oturum yönetimi Yakında'de yapılandırılabilecek.",
+      "mvpBadge": "Yakında",
       "submit": "Kaydet",
       "fields": {
         "password": "Yeni şifre",
@@ -1298,7 +1307,7 @@
     }
   },
   "settingsSetup": {
-    "eyebrow": "Sistem",
+    "eyebrow": "Yönetici Ayarları",
     "title": "Ayarlar",
     "description": "Güvenlik, bildirim, dil ve sistem tercihlerini yönet.",
     "meta": {
@@ -1307,7 +1316,7 @@
     },
     "sectionsList": "Tercihler",
     "sheet": {
-      "mvpBadge": "MVP-2",
+      "mvpBadge": "Yakında",
       "submit": "Kaydet"
     },
     "sections": {
@@ -1315,50 +1324,53 @@
         "title": "Hesap & güvenlik",
         "summary": "Şifre, 2FA, oturum geçmişi",
         "action": "Yönet",
-        "sheetDescription": "Hesap ve güvenlik ayarları MVP-2'de yapılandırılabilecek.",
+        "sheetDescription": "Hesap ve güvenlik ayarları Yakında'de yapılandırılabilecek.",
         "sheetBody": "Şifre değiştirme, iki faktörlü doğrulama ve oturum geçmişi bu sürümde salt okunurdur."
       },
       "tenant": {
         "title": "Tenant ayarları",
         "summary": "Mert Teknik A.Ş. · Pilot paket",
         "action": "Aç",
-        "sheetDescription": "Tenant yapılandırması MVP-2'de genişletilecek.",
+        "sheetDescription": "Tenant yapılandırması Yakında'de genişletilecek.",
         "sheetBody": "Paket, lisans ve tenant düzeyi tercihler burada yönetilecek."
       },
       "notifications": {
         "title": "Bildirim tercihleri",
         "summary": "E-posta · Uygulama içi",
         "action": "Düzenle",
-        "sheetDescription": "Bildirim kanalları MVP-2'de özelleştirilebilecek.",
+        "sheetDescription": "Bildirim kanalları Yakında'de özelleştirilebilecek.",
         "sheetBody": "E-posta ve uygulama içi bildirim tercihleri şu an demo özet olarak gösterilir."
       },
       "locale": {
         "title": "Dil ve bölge",
         "summary": "tr-TR · Europe/Istanbul",
         "action": "Değiştir",
-        "sheetDescription": "Dil ve bölge seçimi MVP-2'de uygulama genelinde açılacak.",
+        "sheetDescription": "Dil ve bölge seçimi Yakında'de uygulama genelinde açılacak.",
         "sheetBody": "Mevcut dil tr-TR, saat dilimi Europe/Istanbul olarak ayarlı."
       },
       "theme": {
         "title": "Tema",
         "summary": "Sistem · Açık · Koyu",
         "action": "Seç",
-        "sheetDescription": "Tema seçimi MVP-2'de etkinleştirilecek.",
+        "sheetDescription": "Tema seçimi Yakında'de etkinleştirilecek.",
         "sheetBody": "Sistem, açık ve koyu tema seçenekleri hazırlanıyor."
       },
       "roleAccess": {
         "title": "Rol & erişim",
         "summary": "İK Admin · 3 modül tam yetki",
         "action": "İncele",
-        "sheetDescription": "Rol ve erişim detayları MVP-2'de görüntülenecek.",
+        "sheetDescription": "Rol ve erişim detayları Yakında'de görüntülenecek.",
         "sheetBody": "Modül bazlı yetkiler ve rol atamaları bu ekranda yönetilecek."
       }
     },
     "auditLog": {
       "title": "Audit log",
       "summary": "Son {{days}} günde {{count}} hassas işlem kaydı bulunuyor.",
-      "mvpNote": "Detaylı log MVP-2'de görüntülenecek.",
-      "backToMenu": "Menüye dön"
+      "note": "Detaylı kayıt listesi henüz salt okunur."
+    },
+    "setupHub": {
+      "title": "Kurulum & tanımlar",
+      "description": "ERP, şirket yapısı ve parametre ekranları."
     }
   },
   "aiCoachSetup": {
@@ -1371,7 +1383,7 @@
     },
     "hero": {
       "title": "AI Coach",
-      "description": "MVP-2'de açılacak. Aktif chat henüz yok; aşağıda neler yapacağını ve hazırlık durumunu görebilirsin."
+      "description": "Yakında'de açılacak. Aktif chat henüz yok; aşağıda neler yapacağını ve hazırlık durumunu görebilirsin."
     },
     "sections": {
       "capabilities": "Neler yapacak",
@@ -1397,11 +1409,11 @@
       }
     },
     "privacy": {
-      "body": "Kişisel görüşmeler yöneticilere açık olmayacak. Erişim politikası ve veri kapsamı MVP-2'de netleşecek."
+      "body": "Kişisel görüşmeler yöneticilere açık olmayacak. Erişim politikası ve veri kapsamı Yakında'de netleşecek."
     },
     "readiness": {
       "vaultSchema": "Vault şeması hazır",
-      "toolCallLayer": "Tool-call katmanı MVP-2",
+      "toolCallLayer": "Tool-call katmanı Yakında",
       "erpContext": "ERP bağlamı bekleniyor",
       "done": "Tamam",
       "pending": "Bekliyor",
@@ -1414,8 +1426,8 @@
     },
     "notifySheet": {
       "title": "Beni bilgilendir",
-      "description": "AI Koç MVP-2'de açıldığında bildirim almak için kaydol.",
-      "mvpBadge": "MVP-2",
+      "description": "AI Koç Yakında'de açıldığında bildirim almak için kaydol.",
+      "mvpBadge": "Yakında",
       "submit": "Kaydol",
       "fields": {
         "email": "E-posta"
@@ -1424,6 +1436,10 @@
         "email": "ornek@sirket.com"
       },
       "hint": "Hazır olduğunda e-posta ve uygulama bildirimi gönderilecek."
+    },
+    "notifyToast": {
+      "title": "Bildirim listesine eklendi",
+      "description": "AI Koç açıldığında e-posta ile bilgilendirileceksin."
     }
   },
   "ai": {
@@ -1432,7 +1448,7 @@
     "teaser": {
       "title": "AI Koç™ yakında",
       "description": "Kişisel İK asistanınız izin, masraf, kariyer ve performans konularında yardımcı olacak.",
-      "badge": "MVP-2",
+      "badge": "Yakında",
       "featureLeave": "İzin bakiyesi ve uygun tarih önerisi",
       "featureExpense": "Masraf bildirimi ve politika rehberi",
       "featureCareer": "Kariyer hazırlığı ve gelişim planı",

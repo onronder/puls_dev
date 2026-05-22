@@ -13,16 +13,13 @@ import {
   Target,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
-import { FormField } from '#/components/puls/FormField'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
-import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import {
@@ -91,7 +88,6 @@ function ReadinessStatus({
 
 function AiKocPage() {
   const { t } = useTranslation()
-  const [notifySheetOpen, setNotifySheetOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['demo-ai-coach-overview'],
@@ -201,7 +197,11 @@ function AiKocPage() {
           type="button"
           variant="ai"
           className="touch-target h-11 flex-1"
-          onClick={() => setNotifySheetOpen(true)}
+          onClick={() =>
+            toast.info(t('aiCoachSetup.notifyToast.title'), {
+              description: t('aiCoachSetup.notifyToast.description'),
+            })
+          }
         >
           <Bell className="h-4 w-4" />
           {t('aiCoachSetup.actions.notifyMe')}
@@ -213,38 +213,6 @@ function AiKocPage() {
           </Link>
         </Button>
       </div>
-
-      <SheetShell
-        open={notifySheetOpen}
-        onOpenChange={setNotifySheetOpen}
-        title={t('aiCoachSetup.notifySheet.title')}
-        description={t('aiCoachSetup.notifySheet.description')}
-        footer={
-          <div className="flex w-full flex-col gap-3">
-            <StatusPill tone="ai" className="self-start">
-              {t('aiCoachSetup.notifySheet.mvpBadge')}
-            </StatusPill>
-            <Button type="button" className="touch-target w-full" disabled>
-              {t('aiCoachSetup.notifySheet.submit')}
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <FormField label={t('aiCoachSetup.notifySheet.fields.email')} htmlFor="ai-notify-email">
-            <Input
-              id="ai-notify-email"
-              type="email"
-              className="text-base"
-              placeholder={t('aiCoachSetup.notifySheet.placeholders.email')}
-              disabled
-            />
-          </FormField>
-          <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
-            {t('aiCoachSetup.notifySheet.hint')}
-          </p>
-        </div>
-      </SheetShell>
     </div>
   )
 }

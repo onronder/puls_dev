@@ -176,7 +176,7 @@ function DepartmanlarPage() {
         footer={
           <div className="flex w-full flex-col gap-3">
             <StatusPill tone="neutral" className="self-start">
-              {t('departments.sheet.mvpBadge')}
+              {t('common.soon')}
             </StatusPill>
             <Button type="button" className="touch-target w-full" disabled>
               {t('departments.sheet.submit')}

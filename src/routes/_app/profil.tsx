@@ -4,14 +4,12 @@ import { CalendarCheck, LogOut, Pencil, Shield, Target, Wallet } from 'lucide-re
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
@@ -63,8 +61,6 @@ function formatActivityWhat(
 function ProfilPage() {
   const { t, i18n: i18nInstance } = useTranslation()
   const { user, activePersona, signOut } = useAuth()
-  const [editSheetOpen, setEditSheetOpen] = useState(false)
-  const [securitySheetOpen, setSecuritySheetOpen] = useState(false)
   const [logoutSheetOpen, setLogoutSheetOpen] = useState(false)
 
   const { data: stats } = useQuery({
@@ -134,7 +130,8 @@ function ProfilPage() {
               type="button"
               variant="outline"
               className="touch-target h-11 shrink-0"
-              onClick={() => setEditSheetOpen(true)}
+              disabled
+              title={t('profileSetup.actions.editUnavailable')}
             >
               <Pencil className="h-4 w-4" />
               {t('profileSetup.actions.edit')}
@@ -210,7 +207,8 @@ function ProfilPage() {
           type="button"
           variant="outline"
           className="touch-target h-11 flex-1"
-          onClick={() => setSecuritySheetOpen(true)}
+          disabled
+          title={t('profileSetup.actions.securityUnavailable')}
         >
           <Shield className="h-4 w-4" />
           {t('profileSetup.actions.security')}
@@ -225,100 +223,6 @@ function ProfilPage() {
           {t('profileSetup.actions.logout')}
         </Button>
       </div>
-
-      <SheetShell
-        open={editSheetOpen}
-        onOpenChange={setEditSheetOpen}
-        title={t('profileSetup.editSheet.title')}
-        description={t('profileSetup.editSheet.description')}
-        footer={
-          <div className="flex w-full flex-col gap-3">
-            <StatusPill tone="neutral" className="self-start">
-              {t('profileSetup.editSheet.mvpBadge')}
-            </StatusPill>
-            <Button type="button" className="touch-target w-full" disabled>
-              {t('profileSetup.editSheet.submit')}
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <FormField label={t('profileSetup.editSheet.fields.name')} htmlFor="profile-edit-name">
-            <Input
-              id="profile-edit-name"
-              className="text-base"
-              defaultValue={displayName}
-              placeholder={t('profileSetup.editSheet.placeholders.name')}
-              disabled
-            />
-          </FormField>
-          <FormField label={t('profileSetup.editSheet.fields.email')} htmlFor="profile-edit-email">
-            <Input
-              id="profile-edit-email"
-              type="email"
-              className="text-base"
-              defaultValue={email}
-              placeholder={t('profileSetup.editSheet.placeholders.email')}
-              disabled
-            />
-          </FormField>
-          <FormField
-            label={t('profileSetup.editSheet.fields.department')}
-            htmlFor="profile-edit-department"
-          >
-            <Input
-              id="profile-edit-department"
-              className="text-base"
-              defaultValue={profile ? t(profile.departmentKey) : ''}
-              placeholder={t('profileSetup.editSheet.placeholders.department')}
-              disabled
-            />
-          </FormField>
-        </div>
-      </SheetShell>
-
-      <SheetShell
-        open={securitySheetOpen}
-        onOpenChange={setSecuritySheetOpen}
-        title={t('profileSetup.securitySheet.title')}
-        description={t('profileSetup.securitySheet.description')}
-        footer={
-          <div className="flex w-full flex-col gap-3">
-            <StatusPill tone="neutral" className="self-start">
-              {t('profileSetup.securitySheet.mvpBadge')}
-            </StatusPill>
-            <Button type="button" className="touch-target w-full" disabled>
-              {t('profileSetup.securitySheet.submit')}
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <FormField
-            label={t('profileSetup.securitySheet.fields.password')}
-            htmlFor="profile-security-password"
-          >
-            <Input
-              id="profile-security-password"
-              type="password"
-              className="text-base"
-              placeholder={t('profileSetup.securitySheet.placeholders.password')}
-              disabled
-            />
-          </FormField>
-          <FormField
-            label={t('profileSetup.securitySheet.fields.sessions')}
-            htmlFor="profile-security-sessions"
-          >
-            <Input
-              id="profile-security-sessions"
-              className="text-base"
-              placeholder={t('profileSetup.securitySheet.placeholders.sessions')}
-              disabled
-            />
-          </FormField>
-        </div>
-      </SheetShell>
 
       <SheetShell
         open={logoutSheetOpen}

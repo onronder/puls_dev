@@ -226,7 +226,7 @@ function IzinTanimlariPage() {
         footer={
           <div className="flex w-full flex-col gap-3">
             <StatusPill tone="neutral" className="self-start">
-              {t('leaveTypeSetup.sheet.mvpBadge')}
+              {t('common.soon')}
             </StatusPill>
             <Button type="button" className="touch-target w-full" disabled>
               {t('leaveTypeSetup.sheet.submit')}
