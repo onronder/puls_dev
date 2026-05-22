@@ -11,6 +11,7 @@ import {
   ListChecks,
   Menu,
   Receipt,
+  Scale,
   Settings,
   SlidersHorizontal,
   Sparkles,
@@ -57,7 +58,7 @@ export const sidebarGroups: NavGroup[] = [
       { to: '/kariyer', labelKey: 'nav.kariyer', icon: Waypoints },
       { to: '/egitim', labelKey: 'nav.egitim', icon: GraduationCap },
       { to: '/dashboard', labelKey: 'nav.kpi', icon: Briefcase, soon: true },
-      { to: '/dashboard', labelKey: 'nav.kale', icon: FileText, soon: true },
+      { to: '/is-degerleme', labelKey: 'nav.isDegerleme', icon: Scale },
     ],
   },
   {

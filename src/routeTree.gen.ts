@@ -22,6 +22,7 @@ import { Route as AppMasrafRouteImport } from './routes/_app/masraf'
 import { Route as AppKariyerRouteImport } from './routes/_app/kariyer'
 import { Route as AppIzinTanimlariRouteImport } from './routes/_app/izin-tanimlari'
 import { Route as AppIzinRouteImport } from './routes/_app/izin'
+import { Route as AppIsDegerlemeRouteImport } from './routes/_app/is-degerleme'
 import { Route as AppErpRouteImport } from './routes/_app/erp'
 import { Route as AppEgitimRouteImport } from './routes/_app/egitim'
 import { Route as AppDepartmanlarRouteImport } from './routes/_app/departmanlar'
@@ -93,6 +94,11 @@ const AppIzinRoute = AppIzinRouteImport.update({
   path: '/izin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppIsDegerlemeRoute = AppIsDegerlemeRouteImport.update({
+  id: '/is-degerleme',
+  path: '/is-degerleme',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppErpRoute = AppErpRouteImport.update({
   id: '/erp',
   path: '/erp',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/departmanlar': typeof AppDepartmanlarRoute
   '/egitim': typeof AppEgitimRoute
   '/erp': typeof AppErpRoute
+  '/is-degerleme': typeof AppIsDegerlemeRoute
   '/izin': typeof AppIzinRoute
   '/izin-tanimlari': typeof AppIzinTanimlariRoute
   '/kariyer': typeof AppKariyerRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/departmanlar': typeof AppDepartmanlarRoute
   '/egitim': typeof AppEgitimRoute
   '/erp': typeof AppErpRoute
+  '/is-degerleme': typeof AppIsDegerlemeRoute
   '/izin': typeof AppIzinRoute
   '/izin-tanimlari': typeof AppIzinTanimlariRoute
   '/kariyer': typeof AppKariyerRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/_app/departmanlar': typeof AppDepartmanlarRoute
   '/_app/egitim': typeof AppEgitimRoute
   '/_app/erp': typeof AppErpRoute
+  '/_app/is-degerleme': typeof AppIsDegerlemeRoute
   '/_app/izin': typeof AppIzinRoute
   '/_app/izin-tanimlari': typeof AppIzinTanimlariRoute
   '/_app/kariyer': typeof AppKariyerRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/departmanlar'
     | '/egitim'
     | '/erp'
+    | '/is-degerleme'
     | '/izin'
     | '/izin-tanimlari'
     | '/kariyer'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/departmanlar'
     | '/egitim'
     | '/erp'
+    | '/is-degerleme'
     | '/izin'
     | '/izin-tanimlari'
     | '/kariyer'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/_app/departmanlar'
     | '/_app/egitim'
     | '/_app/erp'
+    | '/_app/is-degerleme'
     | '/_app/izin'
     | '/_app/izin-tanimlari'
     | '/_app/kariyer'
@@ -338,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIzinRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/is-degerleme': {
+      id: '/_app/is-degerleme'
+      path: '/is-degerleme'
+      fullPath: '/is-degerleme'
+      preLoaderRoute: typeof AppIsDegerlemeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/erp': {
       id: '/_app/erp'
       path: '/erp'
@@ -382,6 +401,7 @@ interface AppRouteChildren {
   AppDepartmanlarRoute: typeof AppDepartmanlarRoute
   AppEgitimRoute: typeof AppEgitimRoute
   AppErpRoute: typeof AppErpRoute
+  AppIsDegerlemeRoute: typeof AppIsDegerlemeRoute
   AppIzinRoute: typeof AppIzinRoute
   AppIzinTanimlariRoute: typeof AppIzinTanimlariRoute
   AppKariyerRoute: typeof AppKariyerRoute
@@ -400,6 +420,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDepartmanlarRoute: AppDepartmanlarRoute,
   AppEgitimRoute: AppEgitimRoute,
   AppErpRoute: AppErpRoute,
+  AppIsDegerlemeRoute: AppIsDegerlemeRoute,
   AppIzinRoute: AppIzinRoute,
   AppIzinTanimlariRoute: AppIzinTanimlariRoute,
   AppKariyerRoute: AppKariyerRoute,
