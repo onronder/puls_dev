@@ -316,6 +316,49 @@
       "title": "Manager mode required",
       "description": "Switch to manager mode using the persona toggle in the header.",
       "back": "Back to dashboard"
+    },
+    "status": {
+      "active": "Active",
+      "onleave": "On leave",
+      "inactive": "Inactive"
+    }
+  },
+  "employeesSetup": {
+    "eyebrow": "HR Management",
+    "summary": "{{employees}} employees · {{departments}} departments",
+    "searchLabel": "Search employees",
+    "searchPlaceholder": "Search employees…",
+    "filters": {
+      "department": "Department",
+      "position": "Position",
+      "status": "Status",
+      "all": "{{label}}: All"
+    },
+    "columns": {
+      "employee": "Employee",
+      "department": "Department",
+      "position": "Position",
+      "status": "Status"
+    },
+    "emptyFilter": {
+      "title": "No matching employees",
+      "description": "Reset filters and try again.",
+      "reset": "Reset filters"
+    },
+    "detail": {
+      "description": "Employee details",
+      "department": "Department",
+      "position": "Position",
+      "manager": "Manager",
+      "email": "Email",
+      "joined": "Start date",
+      "leaveBalance": "Leave balance",
+      "leaveAnnual": "Annual",
+      "leaveValue": "{{remaining}} / {{total}} days",
+      "performanceScope": "Performance scope",
+      "performancePending": "2026 Q2 cycle has not opened yet. Will be included automatically when opened.",
+      "recentActivity": "Recent activity",
+      "noActivity": "No activity yet."
     }
   },
   "leave": {
