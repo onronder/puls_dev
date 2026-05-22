@@ -532,3 +532,74 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
 export async function fetchDemoLeaveTypesOverview(): Promise<DemoLeaveTypesOverview> {
   return demoLeaveTypesOverview
 }
+
+export type DemoExpenseCategoryRule = {
+  id: string
+  nameKey: string
+  monthly: number
+  docThreshold: number
+  code: string
+}
+
+export type DemoExpenseCategoriesOverview = {
+  categoryCount: number
+  totalMonthlyLimit: number
+  docThresholdMetric: number
+  approvalLevels: number
+  categories: DemoExpenseCategoryRule[]
+}
+
+const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
+  categoryCount: 6,
+  totalMonthlyLimit: 55000,
+  docThresholdMetric: 2000,
+  approvalLevels: 2,
+  categories: [
+    {
+      id: 'ec1',
+      nameKey: 'expenseCategorySetup.categories.travel',
+      monthly: 15000,
+      docThreshold: 2000,
+      code: '770.01',
+    },
+    {
+      id: 'ec2',
+      nameKey: 'expenseCategorySetup.categories.meals',
+      monthly: 5000,
+      docThreshold: 500,
+      code: '770.02',
+    },
+    {
+      id: 'ec3',
+      nameKey: 'expenseCategorySetup.categories.lodging',
+      monthly: 20000,
+      docThreshold: 2000,
+      code: '770.03',
+    },
+    {
+      id: 'ec4',
+      nameKey: 'expenseCategorySetup.categories.software',
+      monthly: 10000,
+      docThreshold: 1000,
+      code: '770.04',
+    },
+    {
+      id: 'ec5',
+      nameKey: 'expenseCategorySetup.categories.transport',
+      monthly: 3000,
+      docThreshold: 500,
+      code: '770.05',
+    },
+    {
+      id: 'ec6',
+      nameKey: 'expenseCategorySetup.categories.other',
+      monthly: 2000,
+      docThreshold: 500,
+      code: '770.99',
+    },
+  ],
+}
+
+export async function fetchDemoExpenseCategoriesOverview(): Promise<DemoExpenseCategoriesOverview> {
+  return demoExpenseCategoriesOverview
+}

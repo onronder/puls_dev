@@ -47,6 +47,7 @@
     "departmanlar": "Departments",
     "pozisyonlar": "Positions",
     "izinTanimlari": "Leave Definitions",
+    "masrafKategorileri": "Expense Categories",
     "settings": "Settings"
   },
   "persona": {
@@ -512,6 +513,58 @@
       "placeholders": {
         "label": "e.g. Annual",
         "days": "20"
+      },
+      "submit": "Save"
+    }
+  },
+  "expenseCategorySetup": {
+    "eyebrow": "Setup & Configuration",
+    "title": "Expense Categories",
+    "description": "Manage expense categories, limits, and document requirements.",
+    "meta": {
+      "title": "Expense Categories — PULS",
+      "description": "Expense categories, limits, and document requirements."
+    },
+    "metrics": {
+      "categoryCount": "Categories",
+      "totalMonthlyLimit": "Total monthly limit",
+      "docThreshold": "Document threshold",
+      "approvalLevels": "Approval levels"
+    },
+    "sections": {
+      "list": "Category list"
+    },
+    "columns": {
+      "name": "Category",
+      "monthlyLimit": "Monthly limit",
+      "docThreshold": "Document threshold",
+      "accountingCode": "Accounting code"
+    },
+    "docThresholdAbove": "Above {{amount}}",
+    "categories": {
+      "travel": "Travel",
+      "meals": "Meals",
+      "lodging": "Lodging",
+      "software": "Software",
+      "transport": "Transport",
+      "other": "Other"
+    },
+    "actions": {
+      "add": "Add category"
+    },
+    "sheet": {
+      "title": "Add category",
+      "description": "Creating new expense categories will be enabled in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "name": "Category name",
+        "monthlyLimit": "Monthly limit",
+        "accountingCode": "Accounting code"
+      },
+      "placeholders": {
+        "name": "e.g. Travel",
+        "monthlyLimit": "15,000",
+        "accountingCode": "770.01"
       },
       "submit": "Save"
     }
