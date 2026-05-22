@@ -79,6 +79,7 @@ export type DemoExpenseApproval = {
   category: string
   amount: number
   expenseDate: string
+  currency?: string
 }
 
 export type DemoExpenseOverview = {

@@ -513,7 +513,7 @@
       "title": "Title",
       "titlePlaceholder": "e.g. Istanbul–Ankara flight",
       "defaultTitle": "New expense",
-      "amount": "Amount (TRY)",
+      "amount": "Amount",
       "amountError": "Enter a valid amount.",
       "date": "Date",
       "description": "Description",
