@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSirketKurulumRouteImport } from './routes/_app/sirket-kurulum'
 import { Route as AppPozisyonlarRouteImport } from './routes/_app/pozisyonlar'
+import { Route as AppPerformansParametreleriRouteImport } from './routes/_app/performans-parametreleri'
 import { Route as AppPerformansRouteImport } from './routes/_app/performans'
 import { Route as AppMenuRouteImport } from './routes/_app/menu'
 import { Route as AppMasrafKategorileriRouteImport } from './routes/_app/masraf-kategorileri'
@@ -49,6 +50,12 @@ const AppPozisyonlarRoute = AppPozisyonlarRouteImport.update({
   path: '/pozisyonlar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPerformansParametreleriRoute =
+  AppPerformansParametreleriRouteImport.update({
+    id: '/performans-parametreleri',
+    path: '/performans-parametreleri',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppPerformansRoute = AppPerformansRouteImport.update({
   id: '/performans',
   path: '/performans',
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/masraf-kategorileri': typeof AppMasrafKategorileriRoute
   '/menu': typeof AppMenuRoute
   '/performans': typeof AppPerformansRoute
+  '/performans-parametreleri': typeof AppPerformansParametreleriRoute
   '/pozisyonlar': typeof AppPozisyonlarRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
 }
@@ -129,6 +137,7 @@ export interface FileRoutesByTo {
   '/masraf-kategorileri': typeof AppMasrafKategorileriRoute
   '/menu': typeof AppMenuRoute
   '/performans': typeof AppPerformansRoute
+  '/performans-parametreleri': typeof AppPerformansParametreleriRoute
   '/pozisyonlar': typeof AppPozisyonlarRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
 }
@@ -147,6 +156,7 @@ export interface FileRoutesById {
   '/_app/masraf-kategorileri': typeof AppMasrafKategorileriRoute
   '/_app/menu': typeof AppMenuRoute
   '/_app/performans': typeof AppPerformansRoute
+  '/_app/performans-parametreleri': typeof AppPerformansParametreleriRoute
   '/_app/pozisyonlar': typeof AppPozisyonlarRoute
   '/_app/sirket-kurulum': typeof AppSirketKurulumRoute
 }
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/masraf-kategorileri'
     | '/menu'
     | '/performans'
+    | '/performans-parametreleri'
     | '/pozisyonlar'
     | '/sirket-kurulum'
   fileRoutesByTo: FileRoutesByTo
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/masraf-kategorileri'
     | '/menu'
     | '/performans'
+    | '/performans-parametreleri'
     | '/pozisyonlar'
     | '/sirket-kurulum'
   id:
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
     | '/_app/masraf-kategorileri'
     | '/_app/menu'
     | '/_app/performans'
+    | '/_app/performans-parametreleri'
     | '/_app/pozisyonlar'
     | '/_app/sirket-kurulum'
   fileRoutesById: FileRoutesById
@@ -243,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/pozisyonlar'
       fullPath: '/pozisyonlar'
       preLoaderRoute: typeof AppPozisyonlarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/performans-parametreleri': {
+      id: '/_app/performans-parametreleri'
+      path: '/performans-parametreleri'
+      fullPath: '/performans-parametreleri'
+      preLoaderRoute: typeof AppPerformansParametreleriRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/performans': {
@@ -329,6 +349,7 @@ interface AppRouteChildren {
   AppMasrafKategorileriRoute: typeof AppMasrafKategorileriRoute
   AppMenuRoute: typeof AppMenuRoute
   AppPerformansRoute: typeof AppPerformansRoute
+  AppPerformansParametreleriRoute: typeof AppPerformansParametreleriRoute
   AppPozisyonlarRoute: typeof AppPozisyonlarRoute
   AppSirketKurulumRoute: typeof AppSirketKurulumRoute
 }
@@ -344,6 +365,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMasrafKategorileriRoute: AppMasrafKategorileriRoute,
   AppMenuRoute: AppMenuRoute,
   AppPerformansRoute: AppPerformansRoute,
+  AppPerformansParametreleriRoute: AppPerformansParametreleriRoute,
   AppPozisyonlarRoute: AppPozisyonlarRoute,
   AppSirketKurulumRoute: AppSirketKurulumRoute,
 }

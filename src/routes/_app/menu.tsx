@@ -10,6 +10,7 @@ import {
   LogOut,
   Receipt,
   Settings,
+  SlidersHorizontal,
   Sparkles,
   Users,
   Wallet,
@@ -53,6 +54,12 @@ const menuLinks: MenuLink[] = [
   { id: 'pozisyonlar', to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },
   { id: 'izin-tanimlari', to: '/izin-tanimlari', labelKey: 'nav.izinTanimlari', icon: ListChecks },
   { id: 'masraf-kategorileri', to: '/masraf-kategorileri', labelKey: 'nav.masrafKategorileri', icon: Receipt },
+  {
+    id: 'performans-parametreleri',
+    to: '/performans-parametreleri',
+    labelKey: 'nav.performansParametreleri',
+    icon: SlidersHorizontal,
+  },
   { id: 'settings', to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
 ]
 
