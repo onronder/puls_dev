@@ -45,6 +45,7 @@
     "erp": "ERP Integration",
     "sirketKurulum": "Company Setup",
     "departmanlar": "Departments",
+    "pozisyonlar": "Positions",
     "settings": "Settings"
   },
   "persona": {
@@ -400,6 +401,50 @@
       "placeholders": {
         "name": "e.g. Engineering",
         "manager": "Select manager"
+      },
+      "submit": "Save"
+    }
+  },
+  "positions": {
+    "eyebrow": "Setup & Configuration",
+    "title": "Positions",
+    "description": "Track positions, department links, and competency templates.",
+    "meta": {
+      "title": "Positions — PULS",
+      "description": "Positions, department links, and competency templates."
+    },
+    "metrics": {
+      "positions": "Positions",
+      "openPositions": "Open positions",
+      "templateLinked": "Templates linked",
+      "evaluationComplete": "Job evaluations complete"
+    },
+    "sections": {
+      "list": "Position list"
+    },
+    "columns": {
+      "name": "Position",
+      "department": "Department",
+      "template": "Template",
+      "evaluation": "Job evaluation"
+    },
+    "evaluationScore": "{{score}} pts",
+    "actions": {
+      "add": "Add position"
+    },
+    "sheet": {
+      "title": "Add position",
+      "description": "Creating new positions will be enabled in MVP-2.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "name": "Position name",
+        "department": "Department",
+        "template": "Competency template"
+      },
+      "placeholders": {
+        "name": "e.g. Field Engineer",
+        "department": "Select department",
+        "template": "Select template"
       },
       "submit": "Save"
     }

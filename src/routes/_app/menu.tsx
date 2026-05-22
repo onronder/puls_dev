@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
+  Briefcase,
   Building2,
   CalendarDays,
   GitBranch,
@@ -47,6 +48,7 @@ const menuLinks: MenuLink[] = [
   { id: 'erp', to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
   { id: 'sirket-kurulum', to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
   { id: 'departmanlar', to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
+  { id: 'pozisyonlar', to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },
   { id: 'settings', to: '/menu', labelKey: 'nav.settings', icon: Settings, soon: true },
 ]
 

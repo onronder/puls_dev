@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSirketKurulumRouteImport } from './routes/_app/sirket-kurulum'
+import { Route as AppPozisyonlarRouteImport } from './routes/_app/pozisyonlar'
 import { Route as AppPerformansRouteImport } from './routes/_app/performans'
 import { Route as AppMenuRouteImport } from './routes/_app/menu'
 import { Route as AppMasrafRouteImport } from './routes/_app/masraf'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppSirketKurulumRoute = AppSirketKurulumRouteImport.update({
   id: '/sirket-kurulum',
   path: '/sirket-kurulum',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPozisyonlarRoute = AppPozisyonlarRouteImport.update({
+  id: '/pozisyonlar',
+  path: '/pozisyonlar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPerformansRoute = AppPerformansRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/masraf': typeof AppMasrafRoute
   '/menu': typeof AppMenuRoute
   '/performans': typeof AppPerformansRoute
+  '/pozisyonlar': typeof AppPozisyonlarRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
 }
 export interface FileRoutesByTo {
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/masraf': typeof AppMasrafRoute
   '/menu': typeof AppMenuRoute
   '/performans': typeof AppPerformansRoute
+  '/pozisyonlar': typeof AppPozisyonlarRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
 }
 export interface FileRoutesById {
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/_app/masraf': typeof AppMasrafRoute
   '/_app/menu': typeof AppMenuRoute
   '/_app/performans': typeof AppPerformansRoute
+  '/_app/pozisyonlar': typeof AppPozisyonlarRoute
   '/_app/sirket-kurulum': typeof AppSirketKurulumRoute
 }
 export interface FileRouteTypes {
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/masraf'
     | '/menu'
     | '/performans'
+    | '/pozisyonlar'
     | '/sirket-kurulum'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/masraf'
     | '/menu'
     | '/performans'
+    | '/pozisyonlar'
     | '/sirket-kurulum'
   id:
     | '__root__'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/_app/masraf'
     | '/_app/menu'
     | '/_app/performans'
+    | '/_app/pozisyonlar'
     | '/_app/sirket-kurulum'
   fileRoutesById: FileRoutesById
 }
@@ -200,6 +212,13 @@ declare module '@tanstack/react-router' {
       path: '/sirket-kurulum'
       fullPath: '/sirket-kurulum'
       preLoaderRoute: typeof AppSirketKurulumRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pozisyonlar': {
+      id: '/_app/pozisyonlar'
+      path: '/pozisyonlar'
+      fullPath: '/pozisyonlar'
+      preLoaderRoute: typeof AppPozisyonlarRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/performans': {
@@ -270,6 +289,7 @@ interface AppRouteChildren {
   AppMasrafRoute: typeof AppMasrafRoute
   AppMenuRoute: typeof AppMenuRoute
   AppPerformansRoute: typeof AppPerformansRoute
+  AppPozisyonlarRoute: typeof AppPozisyonlarRoute
   AppSirketKurulumRoute: typeof AppSirketKurulumRoute
 }
 
@@ -282,6 +302,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMasrafRoute: AppMasrafRoute,
   AppMenuRoute: AppMenuRoute,
   AppPerformansRoute: AppPerformansRoute,
+  AppPozisyonlarRoute: AppPozisyonlarRoute,
   AppSirketKurulumRoute: AppSirketKurulumRoute,
 }
 

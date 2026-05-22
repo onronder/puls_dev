@@ -45,6 +45,7 @@
     "erp": "ERP Entegrasyon",
     "sirketKurulum": "Şirket Kurulum",
     "departmanlar": "Departmanlar",
+    "pozisyonlar": "Pozisyonlar",
     "settings": "Ayarlar"
   },
   "persona": {
@@ -400,6 +401,50 @@
       "placeholders": {
         "name": "Örn. Mühendislik",
         "manager": "Yönetici seçimi"
+      },
+      "submit": "Kaydet"
+    }
+  },
+  "positions": {
+    "eyebrow": "Tanım & Kurulum",
+    "title": "Pozisyonlar",
+    "description": "Pozisyonları, departman bağlantılarını ve yetkinlik şablonlarını takip et.",
+    "meta": {
+      "title": "Pozisyonlar — PULS",
+      "description": "Pozisyonlar, departman bağlantıları ve yetkinlik şablonları."
+    },
+    "metrics": {
+      "positions": "Pozisyon",
+      "openPositions": "Açık pozisyon",
+      "templateLinked": "Şablon bağlı",
+      "evaluationComplete": "İş değerleme tamam"
+    },
+    "sections": {
+      "list": "Pozisyon listesi"
+    },
+    "columns": {
+      "name": "Pozisyon",
+      "department": "Departman",
+      "template": "Şablon",
+      "evaluation": "İş değerleme"
+    },
+    "evaluationScore": "{{score}} puan",
+    "actions": {
+      "add": "Pozisyon ekle"
+    },
+    "sheet": {
+      "title": "Pozisyon ekle",
+      "description": "Yeni pozisyon oluşturma MVP-2 kapsamında açılacak.",
+      "mvpBadge": "MVP-2",
+      "fields": {
+        "name": "Pozisyon adı",
+        "department": "Departman",
+        "template": "Yetkinlik şablonu"
+      },
+      "placeholders": {
+        "name": "Örn. Saha Mühendisi",
+        "department": "Departman seçimi",
+        "template": "Şablon seçimi"
       },
       "submit": "Kaydet"
     }

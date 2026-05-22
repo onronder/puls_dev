@@ -386,3 +386,57 @@ const demoDepartmentsOverview: DemoDepartmentsOverview = {
 export async function fetchDemoDepartmentsOverview(): Promise<DemoDepartmentsOverview> {
   return demoDepartmentsOverview
 }
+
+export type DemoPosition = {
+  id: string
+  name: string
+  department: string
+  template: string
+  evaluation: number
+  open: number
+}
+
+export type DemoPositionsOverview = {
+  positionCount: number
+  openPositions: number
+  templateLinked: number
+  evaluationComplete: number
+  positions: DemoPosition[]
+}
+
+const demoPositionsOverview: DemoPositionsOverview = {
+  positionCount: 3,
+  openPositions: 0,
+  templateLinked: 3,
+  evaluationComplete: 3,
+  positions: [
+    {
+      id: 'p1',
+      name: 'İK Yöneticisi',
+      department: 'İK & Finans',
+      template: 'Yönetici',
+      evaluation: 855,
+      open: 0,
+    },
+    {
+      id: 'p2',
+      name: 'Saha Mühendisi',
+      department: 'Mühendislik',
+      template: 'Saha Mühendisi',
+      evaluation: 720,
+      open: 0,
+    },
+    {
+      id: 'p3',
+      name: 'Operasyon Uzmanı',
+      department: 'Operasyon',
+      template: 'Ofis & Operasyon',
+      evaluation: 645,
+      open: 0,
+    },
+  ],
+}
+
+export async function fetchDemoPositionsOverview(): Promise<DemoPositionsOverview> {
+  return demoPositionsOverview
+}
