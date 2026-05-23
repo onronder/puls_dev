@@ -56,6 +56,20 @@ async function fetchTenantName(tenantId: string): Promise<string | null> {
   return data.trade_name ?? data.name ?? data.legal_name ?? null
 }
 
+async function resolveCoreTenantId(publicTenantId: string): Promise<string | null> {
+  const { data, error } = await pulsCore()
+    .from('tenants')
+    .select('id')
+    .eq('legacy_public_tenant_id', publicTenantId)
+    .maybeSingle()
+
+  if (error) {
+    throw fromSupabaseError(error, 'resolveCoreTenantId', 'puls_core', 'tenants')
+  }
+
+  return (data?.id as string | undefined) ?? null
+}
+
 export async function resolveTenantContext(userId: string): Promise<TenantContext> {
   const empty: TenantContext = {
     tenantId: null,
@@ -98,14 +112,17 @@ export async function resolveTenantContext(userId: string): Promise<TenantContex
     throw fromSupabaseError(membershipError, 'resolveTenantContext', 'public', 'user_tenants')
   }
 
-  const tenantId = (membership?.tenant_id as string | undefined) ?? null
-  if (!tenantId) return empty
+  const publicTenantId = (membership?.tenant_id as string | undefined) ?? null
+  if (!publicTenantId) return empty
+
+  const coreTenantId = await resolveCoreTenantId(publicTenantId)
+  if (!coreTenantId) return empty
 
   const { data: roleRow, error: roleError } = await supabase
     .from('user_roles')
     .select('role')
     .eq('user_id', userId)
-    .eq('tenant_id', tenantId)
+    .eq('tenant_id', publicTenantId)
     .maybeSingle()
 
   if (roleError) {
@@ -113,8 +130,8 @@ export async function resolveTenantContext(userId: string): Promise<TenantContex
   }
 
   return {
-    tenantId,
-    tenantName: await fetchTenantName(tenantId),
+    tenantId: coreTenantId,
+    tenantName: await fetchTenantName(coreTenantId),
     employeeId: null,
     employeeName: null,
     personaRole: mapLovableRole(roleRow?.role as string | undefined),

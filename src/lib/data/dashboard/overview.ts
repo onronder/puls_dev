@@ -67,11 +67,17 @@ function emptyDashboardPageData(): DashboardPageData {
 }
 
 function isDashboardEmpty(data: DashboardPageData): boolean {
-  return (
-    data.stats.employeeCount === 0 &&
-    data.stats.departmentCount === 0 &&
-    data.overview.queue.length === 0
-  )
+  const { stats, overview } = data
+  const hasRealData =
+    stats.employeeCount > 0 ||
+    stats.departmentCount > 0 ||
+    stats.positionCount > 0 ||
+    stats.competencyCount > 0 ||
+    stats.erpConnected ||
+    overview.erpStatus.mappedFields > 0 ||
+    stats.dataReadinessPct > 0
+
+  return !hasRealData
 }
 
 async function fetchRealDashboardOverview(userId: string): Promise<DashboardPageData> {

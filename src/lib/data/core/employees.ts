@@ -117,7 +117,7 @@ async function fetchRealEmployeeList(userId: string): Promise<EmployeeListItem[]
     .from('employees')
     .select(
       `
-      anonymous_id,
+      id,
       full_name,
       email,
       job_title,
@@ -139,7 +139,7 @@ async function fetchRealEmployeeList(userId: string): Promise<EmployeeListItem[]
     const position = row.positions as { name?: string } | null
 
     return {
-      id: row.anonymous_id as string,
+      id: row.id as string,
       fullName: (row.full_name as string | null) ?? '',
       email: (row.email as string | null) ?? null,
       jobTitle: (row.job_title as string | null) ?? null,
