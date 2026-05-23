@@ -16,7 +16,8 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import { fetchDemoPositionsOverview } from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchPositionsOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/pozisyonlar')({
@@ -45,11 +46,13 @@ const POSITION_TABLE_GRID_COLS = 'grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minma
 
 function PozisyonlarPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-positions-overview'],
-    queryFn: fetchDemoPositionsOverview,
+    queryKey: ['positions-overview', user?.id],
+    queryFn: () => fetchPositionsOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   return (

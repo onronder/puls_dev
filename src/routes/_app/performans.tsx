@@ -24,16 +24,16 @@ import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchDemoPerformanceOverview } from '#/lib/demo/puls-demo-data'
 import {
-  createPerformansCycle,
+  createPerformanceCycle,
   fetchCompetencyTemplates,
-  fetchPerformansCycles,
-  updateCycleStatus,
+  fetchPerformanceCycles,
+  fetchPerformanceOverview,
+  updatePerformanceCycle,
   type CompetencyTemplate,
   type CreateCycleInput,
   type PerformansCycle,
-} from '#/lib/queries/performans'
+} from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/performans')({
@@ -397,18 +397,21 @@ function PerformansPage() {
   const [submitMode, setSubmitMode] = useState<'draft' | 'launch' | null>(null)
 
   const { data: templates, isLoading: templatesLoading } = useQuery({
-    queryKey: ['performans-competencies'],
-    queryFn: fetchCompetencyTemplates,
+    queryKey: ['performance-competencies', user?.id],
+    queryFn: () => fetchCompetencyTemplates(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const { data: cycles, isLoading: cyclesLoading } = useQuery({
-    queryKey: ['performans-cycles'],
-    queryFn: fetchPerformansCycles,
+    queryKey: ['performance-cycles', user?.id],
+    queryFn: () => fetchPerformanceCycles(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const { data: demoOverview } = useQuery({
-    queryKey: ['demo-performance-overview'],
-    queryFn: fetchDemoPerformanceOverview,
+    queryKey: ['performance-overview', user?.id],
+    queryFn: () => fetchPerformanceOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const activeCycle = useMemo(
@@ -422,18 +425,16 @@ function PerformansPage() {
   )
 
   const createMutation = useMutation({
-    mutationFn: (input: CreateCycleInput) => createPerformansCycle(user!.id, input),
+    mutationFn: (input: CreateCycleInput) => createPerformanceCycle(user!.id, input),
     onSuccess: (result) => {
       setSubmitMode(null)
       if (result.error) {
-        setFormError(
-          result.error === 'no_tenant' ? t('performans.errors.noTenant') : result.error,
-        )
+        setFormError(result.error)
         return
       }
       setFormError(null)
       setSheetOpen(false)
-      void queryClient.invalidateQueries({ queryKey: ['performans-cycles'] })
+      void queryClient.invalidateQueries({ queryKey: ['performance-cycles'] })
     },
     onError: () => {
       setSubmitMode(null)
@@ -442,9 +443,10 @@ function PerformansPage() {
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: PerformansCycle['status'] }) =>
-      updateCycleStatus(id, status),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['performans-cycles'] })
+      updatePerformanceCycle(id, { status }),
+    onSuccess: (result) => {
+      if (result.error) return
+      void queryClient.invalidateQueries({ queryKey: ['performance-cycles'] })
     },
   })
 

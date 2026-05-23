@@ -18,10 +18,8 @@ import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
-import {
-  fetchDemoErpOverview,
-  type DemoErpSyncLevel,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchErpOverview, type ErpOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/erp')({
@@ -38,6 +36,8 @@ function ErpRoute() {
     </SetupRouteGuard>
   )
 }
+
+type DemoErpSyncLevel = ErpOverview['syncLogs'][number]['level']
 
 function syncLogTone(level: DemoErpSyncLevel): string {
   switch (level) {
@@ -59,9 +59,11 @@ function SyncLogIcon({ level }: { level: DemoErpSyncLevel }) {
 
 function ErpPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-erp-overview'],
-    queryFn: fetchDemoErpOverview,
+    queryKey: ['erp-overview', user?.id],
+    queryFn: () => fetchErpOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   return (

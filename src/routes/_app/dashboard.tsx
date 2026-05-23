@@ -17,6 +17,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState } from '#/components/puls/EmptyState'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
@@ -26,17 +27,13 @@ import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import {
-  fetchDemoDashboardOverview,
-  fetchDemoExpenseOverview,
-  fetchDemoLeaveOverview,
-  type DemoDashboardActivity,
-  type DemoDashboardQueueIcon,
-  type DemoDashboardQueueItem,
-} from '#/lib/demo/puls-demo-data'
+import { fetchDashboardOverview, type DashboardPageData } from '#/lib/data'
 import { formatCurrency } from '#/lib/format'
-import { fetchDashboardStats } from '#/lib/queries/dashboard'
 import { cn } from '#/lib/utils'
+
+type DemoDashboardActivity = DashboardPageData['overview']['recentActivities'][number]
+type DemoDashboardQueueItem = DashboardPageData['overview']['queue'][number]
+type DemoDashboardQueueIcon = DemoDashboardQueueItem['icon']
 
 export const Route = createFileRoute('/_app/dashboard')({
   head: () => ({
@@ -169,30 +166,18 @@ function DashboardPage() {
   const { t, i18n: i18nInstance } = useTranslation()
   const { user } = useAuth()
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['dashboard-stats', user?.id],
-    queryFn: () => fetchDashboardStats(user!.id),
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['dashboard-overview', user?.id],
+    queryFn: () => fetchDashboardOverview(user!.id),
     enabled: Boolean(user?.id),
   })
 
-  const { data: demoOverview, isLoading: demoLoading } = useQuery({
-    queryKey: ['demo-dashboard-overview'],
-    queryFn: fetchDemoDashboardOverview,
-  })
+  const stats = data?.stats
+  const demoOverview = data?.overview
+  const leaveDemo = data?.leaveSummary
+  const expenseDemo = data?.expenseSummary
 
-  const { data: leaveDemo } = useQuery({
-    queryKey: ['demo-leave-overview'],
-    queryFn: fetchDemoLeaveOverview,
-  })
-
-  const { data: expenseDemo } = useQuery({
-    queryKey: ['demo-expense-overview'],
-    queryFn: fetchDemoExpenseOverview,
-  })
-
-  const dataReadiness = stats?.employeeCount
-    ? Math.min(100, 40 + stats.departmentCount * 10 + stats.competencyCount * 8)
-    : demoOverview?.erpStatus.readiness ?? 0
+  const dataReadiness = stats?.dataReadinessPct ?? demoOverview?.erpStatus.readiness ?? 0
 
   const welcomeName = stats?.displayName?.split(' ')[0] ?? null
 
@@ -207,7 +192,6 @@ function DashboardPage() {
   )
 
   const erpProvider = stats?.erpProvider ?? 'Canias'
-  const isLoading = statsLoading || demoLoading
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -227,6 +211,21 @@ function DashboardPage() {
         )}
         <p className="text-sm text-[var(--color-text-muted)]">{t('dashboard.subtitle')}</p>
       </div>
+
+      {isError ? (
+        <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          <EmptyState
+            icon={Gauge}
+            title={t('common.error')}
+            description={t('dashboard.error.loadFailed', { defaultValue: t('common.error') })}
+            action={
+              <Button type="button" variant="outline" className="touch-target" onClick={() => void refetch()}>
+                {t('common.retry')}
+              </Button>
+            }
+          />
+        </div>
+      ) : null}
 
       <section
         className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
@@ -456,7 +455,7 @@ function DashboardPage() {
         </div>
       </section>
 
-      {!statsLoading && stats && stats.employeeCount === 0 ? (
+      {!isLoading && stats && stats.employeeCount === 0 ? (
         <Card className="mt-6 border-dashed border-[var(--color-border-strong)]">
           <CardContent className="p-6">
             <p className="font-semibold">{t('dashboard.emptySeed.title')}</p>

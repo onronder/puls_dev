@@ -22,11 +22,8 @@ import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import {
-  fetchDemoAiCoachOverview,
-  type DemoAiCoachCapability,
-  type DemoAiCoachReadinessStatus,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchAiCoachOverview, type AiCoachOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/ai-koc')({
@@ -49,7 +46,7 @@ const CAPABILITY_ICONS: Record<string, LucideIcon> = {
   a4: GraduationCap,
 }
 
-function CapabilityIcon({ capability }: { capability: DemoAiCoachCapability }) {
+function CapabilityIcon({ capability }: { capability: AiCoachOverview['capabilities'][number] }) {
   const Icon = CAPABILITY_ICONS[capability.id] ?? Sparkles
 
   return (
@@ -63,7 +60,7 @@ function ReadinessStatus({
   status,
   label,
 }: {
-  status: DemoAiCoachReadinessStatus
+  status: AiCoachOverview['readiness'][number]['status']
   label: string
 }) {
   const isDone = status === 'done'
@@ -88,10 +85,12 @@ function ReadinessStatus({
 
 function AiKocPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-ai-coach-overview'],
-    queryFn: fetchDemoAiCoachOverview,
+    queryKey: ['ai-coach-overview', user?.id],
+    queryFn: () => fetchAiCoachOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   return (

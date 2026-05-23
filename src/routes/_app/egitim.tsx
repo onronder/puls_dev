@@ -10,10 +10,8 @@ import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import {
-  fetchDemoTrainingOverview,
-  type DemoTrainingStatus,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchTrainingOverview, type TrainingOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/egitim')({
@@ -33,7 +31,7 @@ const TRAINING_SKELETON_COUNT = 5
 const TRAINING_TABLE_GRID_COLS =
   'grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_72px_minmax(0,96px)]'
 
-function trainingStatusTone(status: DemoTrainingStatus): StatusTone {
+function trainingStatusTone(status: TrainingOverview['trainings'][number]['status']): StatusTone {
   if (status === 'completed') return 'success'
   if (status === 'planned') return 'info'
   return 'warning'
@@ -41,13 +39,15 @@ function trainingStatusTone(status: DemoTrainingStatus): StatusTone {
 
 function EgitimPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-training-overview'],
-    queryFn: fetchDemoTrainingOverview,
+    queryKey: ['training-overview', user?.id],
+    queryFn: () => fetchTrainingOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
-  const renderStatusPill = (status: DemoTrainingStatus) => (
+  const renderStatusPill = (status: TrainingOverview['trainings'][number]['status']) => (
     <StatusPill tone={trainingStatusTone(status)}>{t(`trainingSetup.status.${status}`)}</StatusPill>
   )
 

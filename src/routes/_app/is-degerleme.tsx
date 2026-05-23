@@ -10,7 +10,8 @@ import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import { fetchDemoJobEvaluationOverview } from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchJobEvaluationOverview } from '#/lib/data'
 
 export const Route = createFileRoute('/_app/is-degerleme')({
   head: () => ({
@@ -31,10 +32,12 @@ const FACTOR_ROW_GRID =
 
 function IsDegerlemePage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-job-evaluation-overview'],
-    queryFn: fetchDemoJobEvaluationOverview,
+    queryKey: ['job-evaluation-overview', user?.id],
+    queryFn: () => fetchJobEvaluationOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   return (

@@ -29,16 +29,14 @@ import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Textarea } from '#/components/ui/textarea'
 import i18n from '#/i18n'
-import {
-  fetchDemoExpenseOverview,
-  formatTry,
-  type DemoExpenseApproval,
-  type DemoExpenseCategoryLimit,
-  type DemoExpenseClaim,
-  type DemoExpenseOverview,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchExpenseOverview, type ExpenseOverview } from '#/lib/data'
 import { formatCurrency, parseDecimalAmount } from '#/lib/format'
 import { cn } from '#/lib/utils'
+
+function formatTry(amount: number, locale = 'tr-TR'): string {
+  return formatCurrency(amount, locale)
+}
 
 export const Route = createFileRoute('/_app/masraf')({
   head: () => ({
@@ -52,7 +50,7 @@ export const Route = createFileRoute('/_app/masraf')({
 
 type ExpenseTab = 'mine' | 'approvals' | 'cats'
 
-type ExpenseStatus = DemoExpenseClaim['status']
+type ExpenseStatus = ExpenseOverview['claims'][number]['status']
 
 type FormErrors = {
   category?: string
@@ -112,13 +110,15 @@ function validateExpenseForm(
 
 function MasrafPage() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const [tab, setTab] = useState<ExpenseTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [localClaims, setLocalClaims] = useState<DemoExpenseClaim[]>([])
+  const [localClaims, setLocalClaims] = useState<ExpenseOverview['claims'][number][]>([])
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['demo-expense-overview'],
-    queryFn: fetchDemoExpenseOverview,
+    queryKey: ['expense-overview', user?.id],
+    queryFn: () => fetchExpenseOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const allClaims = useMemo(
@@ -298,7 +298,7 @@ function LimitCard({ approved, limit, usedPct, locale, t }: LimitCardProps) {
 }
 
 type RecentTabProps = {
-  claims: DemoExpenseClaim[]
+  claims: ExpenseOverview['claims']
   locale: string
   t: ReturnType<typeof useTranslation>['t']
 }
@@ -341,7 +341,7 @@ function RecentTab({ claims, locale, t }: RecentTabProps) {
 }
 
 type ApprovalsTabProps = {
-  approvals: DemoExpenseApproval[]
+  approvals: ExpenseOverview['pendingApprovals']
   locale: string
   t: ReturnType<typeof useTranslation>['t']
 }
@@ -419,7 +419,7 @@ function ApprovalsTab({ approvals, locale, t }: ApprovalsTabProps) {
 }
 
 type CategoriesTabProps = {
-  limits: DemoExpenseCategoryLimit[]
+  limits: ExpenseOverview['categoryLimits']
   locale: string
   t: ReturnType<typeof useTranslation>['t']
 }
@@ -464,9 +464,9 @@ function CategoriesTab({ limits, locale, t }: CategoriesTabProps) {
 type ExpenseFormSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  data: DemoExpenseOverview | undefined
+  data: ExpenseOverview | undefined
   locale: string
-  onSubmitted: (claim: DemoExpenseClaim) => void
+  onSubmitted: (claim: ExpenseOverview['claims'][number]) => void
   t: ReturnType<typeof useTranslation>['t']
 }
 
