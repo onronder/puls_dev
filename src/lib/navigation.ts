@@ -135,3 +135,14 @@ export function isAdminSetupRoute(pathname: string): boolean {
     (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
   )
 }
+
+/** Sidebar/menu settings group label by active persona. */
+export function resolveSettingsGroupTitleKey(
+  titleKey: string,
+  activePersona: ActivePersona,
+): string {
+  if (titleKey === 'nav.adminSettings' && activePersona === 'employee') {
+    return 'nav.personalSettings'
+  }
+  return titleKey
+}

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, Building2, CheckCircle2, Clock, Plug } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -28,8 +29,16 @@ export const Route = createFileRoute('/_app/sirket-kurulum')({
       },
     ],
   }),
-  component: SirketKurulumPage,
+  component: SirketKurulumRoute,
 })
+
+function SirketKurulumRoute() {
+  return (
+    <SetupRouteGuard>
+      <SirketKurulumPage />
+    </SetupRouteGuard>
+  )
+}
 
 type InfoRowProps = {
   label: string

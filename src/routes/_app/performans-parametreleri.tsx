@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, Layers, SlidersHorizontal, Target } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -30,8 +31,16 @@ export const Route = createFileRoute('/_app/performans-parametreleri')({
       },
     ],
   }),
-  component: PerformansParametreleriPage,
+  component: PerformansParametreleriRoute,
 })
+
+function PerformansParametreleriRoute() {
+  return (
+    <SetupRouteGuard>
+      <PerformansParametreleriPage />
+    </SetupRouteGuard>
+  )
+}
 
 const TEMPLATE_SKELETON_COUNT = 3
 const SCORE_BAND_SKELETON_COUNT = 5

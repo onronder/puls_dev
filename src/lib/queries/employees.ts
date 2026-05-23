@@ -15,7 +15,7 @@ export type EmployeeListItem = {
 export type EmployeeListStats = {
   employeeCount: number
   departmentCount: number
-  positionCount: number
+  positionCount: number | null
 }
 
 async function resolveTenantId(userId: string): Promise<string | null> {
@@ -68,7 +68,7 @@ export async function fetchEmployeeList(userId: string): Promise<EmployeeListIte
 export async function fetchEmployeeListStats(userId: string): Promise<EmployeeListStats> {
   const tenantId = await resolveTenantId(userId)
   if (!tenantId) {
-    return { employeeCount: 0, departmentCount: 0, positionCount: 0 }
+    return { employeeCount: 0, departmentCount: 0, positionCount: null }
   }
 
   const [employees, departments, positions] = await Promise.all([
@@ -88,9 +88,15 @@ export async function fetchEmployeeListStats(userId: string): Promise<EmployeeLi
       .eq('is_active', true),
   ])
 
+  let positionCount: number | null = positions.count ?? 0
+  if (positions.error) {
+    console.warn('fetchEmployeeListStats positions:', positions.error.message)
+    positionCount = null
+  }
+
   return {
     employeeCount: employees.count ?? 0,
     departmentCount: departments.count ?? 0,
-    positionCount: positions.count ?? 0,
+    positionCount,
   }
 }

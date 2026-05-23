@@ -1,29 +1,46 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { z } from 'zod'
 
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '#/components/ui/card'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import { useAuth } from '#/lib/auth'
-import { supabase } from '#/lib/supabase'
+import { parseRedirectForNavigate } from '#/lib/safe-redirect'
+
+const loginSearchSchema = z.object({
+  redirect: z.string().optional(),
+})
 
 export const Route = createFileRoute('/login')({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession()
-    if (data.session) {
-      throw redirect({ to: '/dashboard' })
-    }
-  },
+  validateSearch: loginSearchSchema,
   component: LoginPage,
 })
+
+function AuthenticatedRedirect({ redirect }: { redirect?: string }) {
+  const navigate = useNavigate()
+  const { session, isLoading } = useAuth()
+
+  useEffect(() => {
+    if (!isLoading && session) {
+      const target = parseRedirectForNavigate(redirect)
+      void navigate(
+        target.search ? { to: target.to, search: target.search } : { to: target.to },
+      )
+    }
+  }, [isLoading, session, redirect, navigate])
+
+  return null
+}
 
 function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { signIn } = useAuth()
+  const { redirect } = Route.useSearch()
+  const { signIn, session, isLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +56,14 @@ function LoginPage() {
       setError(result.error)
       return
     }
-    void navigate({ to: '/dashboard' })
+    const target = parseRedirectForNavigate(redirect)
+    void navigate(
+      target.search ? { to: target.to, search: target.search } : { to: target.to },
+    )
+  }
+
+  if (!isLoading && session) {
+    return <AuthenticatedRedirect redirect={redirect} />
   }
 
   return (

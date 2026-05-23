@@ -7,6 +7,7 @@ import {
   filterSidebarGroups,
   isAdminSetupRoute,
   isNavItemActive,
+  resolveSettingsGroupTitleKey,
   sidebarGroups,
 } from '#/lib/navigation'
 import { cn } from '#/lib/utils'
@@ -16,12 +17,6 @@ export function Sidebar() {
   const { activePersona } = useAuth()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const groups = filterSidebarGroups(sidebarGroups, activePersona)
-  const getGroupTitleKey = (titleKey: string) => {
-    if (titleKey === 'nav.adminSettings' && activePersona === 'employee') {
-      return 'nav.personalSettings'
-    }
-    return titleKey
-  }
 
   return (
     <aside className="hidden w-64 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg-surface)] md:flex md:flex-col">
@@ -29,7 +24,7 @@ export function Sidebar() {
         {groups.map((group) => (
           <div key={group.titleKey} className="mb-6">
             <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-              {t(getGroupTitleKey(group.titleKey))}
+              {t(resolveSettingsGroupTitleKey(group.titleKey, activePersona))}
             </p>
             <ul className="space-y-1">
               {group.items.map((item) => {

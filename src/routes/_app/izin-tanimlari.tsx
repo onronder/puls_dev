@@ -4,6 +4,7 @@ import { CalendarDays, Check, FileCheck2, Plus, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DataList } from '#/components/puls/DataList'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -35,8 +36,16 @@ export const Route = createFileRoute('/_app/izin-tanimlari')({
       },
     ],
   }),
-  component: IzinTanimlariPage,
+  component: IzinTanimlariRoute,
 })
+
+function IzinTanimlariRoute() {
+  return (
+    <SetupRouteGuard>
+      <IzinTanimlariPage />
+    </SetupRouteGuard>
+  )
+}
 
 const LEAVE_TYPE_SKELETON_COUNT = 4
 const LEAVE_TYPE_TABLE_GRID_COLS =
@@ -233,7 +242,7 @@ function IzinTanimlariPage() {
               {t('common.soon')}
             </StatusPill>
             <Button type="button" className="touch-target w-full" disabled>
-              {t('leaveTypeSetup.sheet.submit')}
+              {t('common.readOnlyAction')}
             </Button>
           </div>
         }

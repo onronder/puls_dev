@@ -3,6 +3,7 @@ import { redirect } from '@tanstack/react-router'
 import type { ActivePersona } from '#/lib/auth'
 import { adminSetupNavItems } from '#/lib/navigation'
 import { resolvePersonaForUser } from '#/lib/persona'
+import { readActivePersona } from '#/lib/persona-storage'
 import { supabase, type PersonaRole } from '#/lib/supabase'
 
 /** Platform setup screens — admin / İK admin / patron only. */
@@ -40,12 +41,13 @@ export function isSetupRoutePath(pathname: string): boolean {
 
 export function canAccessSetupRoute(
   personaRole: PersonaRole | null | undefined,
+  activePersona: ActivePersona,
   pathname: string,
 ): boolean {
   if (!isSetupRoutePath(pathname)) {
     return true
   }
-  return isSetupAdmin(personaRole)
+  return canShowSetupHub(personaRole, activePersona)
 }
 
 export function filterSettingsSectionsForRole<T extends { id: string }>(
@@ -74,5 +76,12 @@ export async function requireSetupAdminRoute(): Promise<void> {
 
   if (!isSetupAdmin(personaRole)) {
     throw redirect({ to: '/ayarlar' })
+  }
+
+  if (typeof window !== 'undefined') {
+    const activePersona = readActivePersona(userId, personaRole)
+    if (!canShowSetupHub(personaRole, activePersona)) {
+      throw redirect({ to: '/ayarlar' })
+    }
   }
 }

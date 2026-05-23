@@ -13,6 +13,7 @@
     "retry": "Try again",
     "readOnly": "Read-only",
     "readOnlyAction": "Save",
+    "previewAdded": "Added to preview.",
     "pilotOutOfScope": "Outside pilot scope",
     "apiPending": "Will activate when Canias API access is enabled"
   },
@@ -418,7 +419,7 @@
       "history": "No leave records yet."
     },
     "toast": {
-      "submitted": "Leave request submitted (demo)."
+      "submitted": "Leave request added to preview."
     }
   },
   "leaveSetup": {
@@ -533,7 +534,7 @@
       "list": "No expense records yet."
     },
     "toast": {
-      "submitted": "Expense claim submitted (demo)."
+      "submitted": "Expense claim added to preview."
     }
   },
   "expenseSetup": {
@@ -719,8 +720,8 @@
     },
     "sheet": {
       "title": "Add department",
-      "description": "Creating new departments will be enabled in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Creating new departments will be enabled after the pilot.",
+      "mvpBadge": "Read-only",
       "fields": {
         "name": "Department name",
         "manager": "Department manager"
@@ -761,8 +762,8 @@
     },
     "sheet": {
       "title": "Add position",
-      "description": "Creating new positions will be enabled in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Creating new positions will be enabled after the pilot.",
+      "mvpBadge": "Read-only",
       "fields": {
         "name": "Position name",
         "department": "Department",
@@ -829,8 +830,8 @@
     },
     "sheet": {
       "title": "Add leave type",
-      "description": "Creating new leave types will be enabled in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Creating new leave types will be enabled after the pilot.",
+      "mvpBadge": "Read-only",
       "fields": {
         "label": "Leave type name",
         "days": "Day entitlement"
@@ -879,8 +880,8 @@
     },
     "sheet": {
       "title": "Add category",
-      "description": "Creating new expense categories will be enabled in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Creating new expense categories will be enabled after the pilot.",
+      "mvpBadge": "Read-only",
       "fields": {
         "name": "Category name",
         "monthlyLimit": "Monthly limit",
@@ -1021,7 +1022,7 @@
     "sheet": {
       "title": "Development plan draft",
       "description": "Personalized development plan preview for the target role.",
-      "mvpBadge": "Coming soon",
+      "mvpBadge": "Read-only",
       "submit": "Save plan",
       "previewTitle": "Draft summary",
       "previewHorizon": "Combined 30 / 90 / 180 day target preview",
@@ -1076,7 +1077,7 @@
     },
     "schoolTeaser": {
       "title": "School™ recommendations",
-      "description": "Learning path recommendations based on competency gaps and performance data coming in Coming soon."
+      "description": "Learning path recommendations based on competency gaps and performance data will arrive after the pilot."
     }
   },
   "jobEvaluationSetup": {
@@ -1176,8 +1177,8 @@
     },
     "uploadSheet": {
       "title": "Upload document",
-      "description": "Contract document upload flow will open in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Contract document upload will open after the pilot.",
+      "mvpBadge": "Read-only",
       "submit": "Upload",
       "fields": {
         "employee": "Employee",
@@ -1204,8 +1205,8 @@
     },
     "reminderSheet": {
       "title": "Set reminder",
-      "description": "Contract expiry reminders will be configurable in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Contract expiry reminders will be configurable after the pilot.",
+      "mvpBadge": "Read-only",
       "submit": "Save reminder",
       "fields": {
         "daysBefore": "Days before"
@@ -1272,8 +1273,8 @@
     },
     "editSheet": {
       "title": "Edit information",
-      "description": "Profile editing form will open in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Profile editing is read-only in this release.",
+      "mvpBadge": "Read-only",
       "submit": "Save",
       "fields": {
         "name": "Full name",
@@ -1288,8 +1289,8 @@
     },
     "securitySheet": {
       "title": "Security settings",
-      "description": "Password and session management will be configurable in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Password and session management will be configurable after the pilot.",
+      "mvpBadge": "Read-only",
       "submit": "Save",
       "fields": {
         "password": "New password",
@@ -1319,7 +1320,7 @@
     },
     "sectionsList": "Preferences",
     "sheet": {
-      "mvpBadge": "Coming soon",
+      "mvpBadge": "Read-only",
       "submit": "Save"
     },
     "sections": {
@@ -1327,42 +1328,42 @@
         "title": "Account & security",
         "summary": "Password, 2FA, session history",
         "action": "Manage",
-        "sheetDescription": "Account and security settings will be configurable in Coming soon.",
+        "sheetDescription": "Account and security settings are read-only in this release.",
         "sheetBody": "Password change, two-factor authentication, and session history are read-only in this release."
       },
       "tenant": {
         "title": "Tenant settings",
         "summary": "Mert Teknik A.Ş. · Pilot plan",
         "action": "Open",
-        "sheetDescription": "Tenant configuration will expand in Coming soon.",
+        "sheetDescription": "Tenant configuration will expand after the pilot.",
         "sheetBody": "Plan, license, and tenant-level preferences will be managed here."
       },
       "notifications": {
         "title": "Notification preferences",
         "summary": "Email · In-app",
         "action": "Edit",
-        "sheetDescription": "Notification channels will be customizable in Coming soon.",
+        "sheetDescription": "Notification channels will be customizable after the pilot.",
         "sheetBody": "Email and in-app notification preferences are shown as a demo summary for now."
       },
       "locale": {
         "title": "Language & region",
         "summary": "tr-TR · Europe/Istanbul",
         "action": "Change",
-        "sheetDescription": "Language and region selection will roll out app-wide in Coming soon.",
+        "sheetDescription": "Language and region selection will roll out app-wide after the pilot.",
         "sheetBody": "Current language is tr-TR, timezone Europe/Istanbul."
       },
       "theme": {
         "title": "Theme",
         "summary": "System · Light · Dark",
         "action": "Choose",
-        "sheetDescription": "Theme selection will be enabled in Coming soon.",
+        "sheetDescription": "Theme selection will be enabled after the pilot.",
         "sheetBody": "System, light, and dark theme options are being prepared."
       },
       "roleAccess": {
         "title": "Role & access",
         "summary": "HR Admin · 3 modules full access",
         "action": "Review",
-        "sheetDescription": "Role and access details will be available in Coming soon.",
+        "sheetDescription": "Role and access details are read-only in this release.",
         "sheetBody": "Module-level permissions and role assignments will be managed on this screen."
       }
     },
@@ -1386,7 +1387,7 @@
     },
     "hero": {
       "title": "AI Coach",
-      "description": "Opening in Coming soon. Active chat is not available yet; see what it will do and readiness status below."
+      "description": "Opening after the pilot. Active chat is not available yet; see what it will do and readiness status below."
     },
     "sections": {
       "capabilities": "What it will do",
@@ -1412,7 +1413,7 @@
       }
     },
     "privacy": {
-      "body": "Private AI Coach sessions will not be visible to managers. Access policy and data scope will be finalized in Coming soon."
+      "body": "Private AI Coach sessions will not be visible to managers. Access policy and data scope will be finalized after the pilot."
     },
     "readiness": {
       "vaultSchema": "Vault schema ready",
@@ -1429,8 +1430,8 @@
     },
     "notifySheet": {
       "title": "Notify me",
-      "description": "Sign up to be notified when AI Coach opens in Coming soon.",
-      "mvpBadge": "Coming soon",
+      "description": "Sign up to be notified when AI Coach opens after the pilot.",
+      "mvpBadge": "Read-only",
       "submit": "Subscribe",
       "fields": {
         "email": "Email"

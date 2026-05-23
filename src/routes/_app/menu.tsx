@@ -13,6 +13,7 @@ import { useAuth } from '#/lib/auth'
 import { fetchDemoMenuTenantFallback } from '#/lib/demo/puls-demo-data'
 import {
   filterSidebarGroups,
+  resolveSettingsGroupTitleKey,
   sidebarGroups,
   type NavItem,
 } from '#/lib/navigation'
@@ -129,13 +130,14 @@ function MenuPage() {
   )
 
   const resolvedStats = useMemo(() => {
-    const employees = tenantStats?.employeeCount ?? dashboardStats?.employeeCount ?? 0
-    const departments = tenantStats?.departmentCount ?? dashboardStats?.departmentCount ?? 0
-    const positions = tenantStats?.positionCount ?? 0
-
-    if (employees === 0 && departments === 0 && positions === 0 && demoFallback) {
-      return demoFallback
-    }
+    const employees =
+      tenantStats?.employeeCount ?? dashboardStats?.employeeCount ?? demoFallback?.employeeCount ?? 0
+    const departments =
+      tenantStats?.departmentCount ??
+      dashboardStats?.departmentCount ??
+      demoFallback?.departmentCount ??
+      0
+    const positions = tenantStats?.positionCount ?? demoFallback?.positionCount ?? 0
 
     return { employeeCount: employees, departmentCount: departments, positionCount: positions }
   }, [tenantStats, dashboardStats, demoFallback])
@@ -227,7 +229,7 @@ function MenuPage() {
         {menuGroups.map((group) => (
           <section key={group.titleKey}>
             <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t(group.titleKey)}
+              {t(resolveSettingsGroupTitleKey(group.titleKey, activePersona))}
             </div>
             <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
               {group.items.map((item) => (
