@@ -108,6 +108,8 @@ CREATE TABLE IF NOT EXISTS puls_workflow.leave_types (
   requires_document BOOLEAN NOT NULL DEFAULT FALSE,
   requires_approval BOOLEAN NOT NULL DEFAULT TRUE,
   show_in_calendar BOOLEAN NOT NULL DEFAULT TRUE,
+  carry_over_allowed BOOLEAN NOT NULL DEFAULT FALSE,
+  max_carry_over_days NUMERIC(8, 2) NULL,
   approval_policy_id UUID NULL REFERENCES puls_workflow.approval_policies(id) ON DELETE SET NULL,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -139,10 +141,12 @@ CREATE TABLE IF NOT EXISTS puls_workflow.leave_balances (
   period_year INTEGER NOT NULL,
   source puls_workflow.balance_source NOT NULL DEFAULT 'puls',
   entitlement_days NUMERIC(8, 2) NOT NULL DEFAULT 0,
+  carried_over_days NUMERIC(8, 2) NOT NULL DEFAULT 0,
+  adjustment_days NUMERIC(8, 2) NOT NULL DEFAULT 0,
   used_days NUMERIC(8, 2) NOT NULL DEFAULT 0,
   pending_days NUMERIC(8, 2) NOT NULL DEFAULT 0,
   remaining_days NUMERIC(8, 2) GENERATED ALWAYS AS (
-    entitlement_days - used_days - pending_days
+    entitlement_days + carried_over_days + adjustment_days - used_days - pending_days
   ) STORED,
   as_of_date DATE NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -771,6 +775,13 @@ CREATE POLICY puls_workflow_leave_documents_insert ON puls_workflow.leave_docume
   WITH CHECK (
     tenant_id = puls_core.current_tenant_id()
     AND uploaded_by_employee_id = puls_core.current_employee_id()
+    AND EXISTS (
+      SELECT 1
+      FROM puls_workflow.leave_requests lr
+      WHERE lr.id = leave_documents.leave_request_id
+        AND lr.tenant_id = leave_documents.tenant_id
+        AND lr.employee_id = puls_core.current_employee_id()
+    )
   );
 
 DROP POLICY IF EXISTS puls_workflow_leave_documents_update ON puls_workflow.leave_documents;
@@ -809,6 +820,13 @@ CREATE POLICY puls_workflow_expense_receipts_insert ON puls_workflow.expense_rec
   WITH CHECK (
     tenant_id = puls_core.current_tenant_id()
     AND uploaded_by_employee_id = puls_core.current_employee_id()
+    AND EXISTS (
+      SELECT 1
+      FROM puls_workflow.expense_claims ec
+      WHERE ec.id = expense_receipts.expense_claim_id
+        AND ec.tenant_id = expense_receipts.tenant_id
+        AND ec.employee_id = puls_core.current_employee_id()
+    )
   );
 
 DROP POLICY IF EXISTS puls_workflow_expense_receipts_update ON puls_workflow.expense_receipts;
@@ -824,9 +842,16 @@ CREATE POLICY puls_workflow_approval_requests_select ON puls_workflow.approval_r
   USING (
     tenant_id = puls_core.current_tenant_id()
     AND (
-      puls_core.is_manager_or_admin()
+      puls_core.is_admin()
       OR requester_employee_id = puls_core.current_employee_id()
       OR approver_employee_id = puls_core.current_employee_id()
+      OR EXISTS (
+        SELECT 1
+        FROM puls_core.employees e
+        WHERE e.id = approval_requests.requester_employee_id
+          AND e.manager_employee_id = puls_core.current_employee_id()
+          AND e.tenant_id = puls_core.current_tenant_id()
+      )
     )
   );
 
@@ -975,22 +1000,24 @@ BEGIN
   -- Leave types (8)
   INSERT INTO puls_workflow.leave_types (
     tenant_id, code, name, is_paid, default_entitlement_days,
-    requires_document, approval_policy_id
+    requires_document, carry_over_allowed, max_carry_over_days, approval_policy_id
   )
   VALUES
-    (v_tenant_id, 'annual', 'Yıllık İzin', TRUE, 20, FALSE, v_leave_policy),
-    (v_tenant_id, 'sick', 'Hastalık İzni', TRUE, 10, TRUE, v_leave_policy),
-    (v_tenant_id, 'excuse', 'Mazeret İzni', TRUE, 10, FALSE, v_leave_policy),
-    (v_tenant_id, 'maternity', 'Doğum İzni', TRUE, NULL, TRUE, v_leave_policy),
-    (v_tenant_id, 'marriage', 'Evlilik İzni', TRUE, 3, FALSE, v_leave_policy),
-    (v_tenant_id, 'bereavement', 'Ölüm İzni', TRUE, 3, FALSE, v_leave_policy),
-    (v_tenant_id, 'unpaid', 'Ücretsiz İzin', FALSE, NULL, FALSE, v_leave_policy),
-    (v_tenant_id, 'compensatory', 'Telafi İzni', TRUE, NULL, FALSE, v_leave_policy)
+    (v_tenant_id, 'annual', 'Yıllık İzin', TRUE, 20, FALSE, TRUE, 5, v_leave_policy),
+    (v_tenant_id, 'sick', 'Hastalık İzni', TRUE, 10, TRUE, FALSE, NULL, v_leave_policy),
+    (v_tenant_id, 'excuse', 'Mazeret İzni', TRUE, 10, FALSE, FALSE, NULL, v_leave_policy),
+    (v_tenant_id, 'maternity', 'Doğum İzni', TRUE, NULL, TRUE, FALSE, NULL, v_leave_policy),
+    (v_tenant_id, 'marriage', 'Evlilik İzni', TRUE, 3, FALSE, FALSE, NULL, v_leave_policy),
+    (v_tenant_id, 'bereavement', 'Ölüm İzni', TRUE, 3, FALSE, FALSE, NULL, v_leave_policy),
+    (v_tenant_id, 'unpaid', 'Ücretsiz İzin', FALSE, NULL, FALSE, FALSE, NULL, v_leave_policy),
+    (v_tenant_id, 'compensatory', 'Telafi İzni', TRUE, NULL, FALSE, FALSE, NULL, v_leave_policy)
   ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     is_paid = EXCLUDED.is_paid,
     default_entitlement_days = EXCLUDED.default_entitlement_days,
     requires_document = EXCLUDED.requires_document,
+    carry_over_allowed = EXCLUDED.carry_over_allowed,
+    max_carry_over_days = EXCLUDED.max_carry_over_days,
     approval_policy_id = EXCLUDED.approval_policy_id,
     updated_at = NOW();
 
@@ -1028,26 +1055,32 @@ BEGIN
 
   -- Leave balances 2026
   INSERT INTO puls_workflow.leave_balances (
-    tenant_id, employee_id, leave_type_id, period_year, entitlement_days, used_days, pending_days
+    tenant_id, employee_id, leave_type_id, period_year,
+    entitlement_days, carried_over_days, adjustment_days, used_days, pending_days
   )
-  SELECT v_tenant_id, e.id, v_leave_type_annual, 2026, 20, 6, 0
+  SELECT v_tenant_id, e.id, v_leave_type_annual, 2026, 20, 0, 0, 6, 0
   FROM puls_core.employees e
   WHERE e.tenant_id = v_tenant_id
     AND e.id IN (v_demo_ik, v_emp_4403, v_emp_4404, v_emp_4405)
   ON CONFLICT (tenant_id, employee_id, leave_type_id, period_year) DO UPDATE SET
     entitlement_days = EXCLUDED.entitlement_days,
+    carried_over_days = EXCLUDED.carried_over_days,
+    adjustment_days = EXCLUDED.adjustment_days,
     used_days = EXCLUDED.used_days,
     pending_days = EXCLUDED.pending_days,
     updated_at = NOW();
 
   INSERT INTO puls_workflow.leave_balances (
-    tenant_id, employee_id, leave_type_id, period_year, entitlement_days, used_days, pending_days
+    tenant_id, employee_id, leave_type_id, period_year,
+    entitlement_days, carried_over_days, adjustment_days, used_days, pending_days
   )
   VALUES
-    (v_tenant_id, v_demo_ik, v_leave_type_sick, 2026, 10, 0, 0),
-    (v_tenant_id, v_demo_ik, v_leave_type_excuse, 2026, 10, 3, 0)
+    (v_tenant_id, v_demo_ik, v_leave_type_sick, 2026, 10, 0, 0, 0, 0),
+    (v_tenant_id, v_demo_ik, v_leave_type_excuse, 2026, 10, 0, 0, 3, 0)
   ON CONFLICT (tenant_id, employee_id, leave_type_id, period_year) DO UPDATE SET
     entitlement_days = EXCLUDED.entitlement_days,
+    carried_over_days = EXCLUDED.carried_over_days,
+    adjustment_days = EXCLUDED.adjustment_days,
     used_days = EXCLUDED.used_days,
     pending_days = EXCLUDED.pending_days,
     updated_at = NOW();
