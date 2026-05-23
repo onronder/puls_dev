@@ -12,10 +12,11 @@ import { Button } from '#/components/ui/button'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
+import { useAuth } from '#/lib/auth'
 import {
-  fetchDemoPerformanceParametersOverview,
-  type DemoPerformanceScoreBandTone,
-} from '#/lib/demo/puls-demo-data'
+  fetchPerformanceParametersOverview,
+  type PerformanceParametersOverview,
+} from '#/lib/data'
 
 export const Route = createFileRoute('/_app/performans-parametreleri')({
   head: () => ({
@@ -41,7 +42,7 @@ function PerformansParametreleriRoute() {
 const TEMPLATE_SKELETON_COUNT = 3
 const SCORE_BAND_SKELETON_COUNT = 5
 
-function toStatusTone(tone: DemoPerformanceScoreBandTone): StatusTone {
+function toStatusTone(tone: PerformanceParametersOverview['scoreBands'][number]['tone']): StatusTone {
   return tone
 }
 
@@ -55,10 +56,12 @@ function formatUpdatedDate(isoDate: string, locale: string): string {
 
 function PerformansParametreleriPage() {
   const { t, i18n: i18nInstance } = useTranslation()
+  const { user } = useAuth()
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-performance-parameters-overview'],
-    queryFn: fetchDemoPerformanceParametersOverview,
+    queryKey: ['performance-parameters-overview', user?.id],
+    queryFn: () => fetchPerformanceParametersOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const activeCycleLabel = data?.hasActiveCycle

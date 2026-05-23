@@ -16,7 +16,8 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import { fetchDemoDepartmentsOverview } from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchDepartmentsOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/departmanlar')({
@@ -45,11 +46,13 @@ const DEPARTMENT_TABLE_GRID_COLS = 'grid-cols-[1fr_1fr_100px_100px]'
 
 function DepartmanlarPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-departments-overview'],
-    queryFn: fetchDemoDepartmentsOverview,
+    queryKey: ['departments-overview', user?.id],
+    queryFn: () => fetchDepartmentsOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   return (

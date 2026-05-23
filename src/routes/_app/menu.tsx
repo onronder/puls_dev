@@ -10,15 +10,13 @@ import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchDemoMenuTenantFallback } from '#/lib/demo/puls-demo-data'
+import { fetchMenuOverview } from '#/lib/data'
 import {
   filterSidebarGroups,
   resolveSettingsGroupTitleKey,
   sidebarGroups,
   type NavItem,
 } from '#/lib/navigation'
-import { fetchDashboardStats } from '#/lib/queries/dashboard'
-import { fetchEmployeeListStats } from '#/lib/queries/employees'
 
 export const Route = createFileRoute('/_app/menu')({
   head: () => ({
@@ -101,21 +99,10 @@ function MenuPage() {
   const { user, activePersona, signOut } = useAuth()
   const [logoutOpen, setLogoutOpen] = useState(false)
 
-  const { data: dashboardStats, isLoading: dashboardLoading } = useQuery({
-    queryKey: ['dashboard-stats', user?.id],
-    queryFn: () => fetchDashboardStats(user!.id),
+  const { data: menuOverview, isLoading: menuLoading } = useQuery({
+    queryKey: ['menu-overview', user?.id],
+    queryFn: () => fetchMenuOverview(user!.id),
     enabled: Boolean(user?.id),
-  })
-
-  const { data: tenantStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['employee-list-stats', user?.id],
-    queryFn: () => fetchEmployeeListStats(user!.id),
-    enabled: Boolean(user?.id),
-  })
-
-  const { data: demoFallback } = useQuery({
-    queryKey: ['demo-menu-tenant-fallback'],
-    queryFn: fetchDemoMenuTenantFallback,
   })
 
   const menuGroups = useMemo(
@@ -129,23 +116,19 @@ function MenuPage() {
     [activePersona],
   )
 
-  const resolvedStats = useMemo(() => {
-    const employees =
-      tenantStats?.employeeCount ?? dashboardStats?.employeeCount ?? demoFallback?.employeeCount ?? 0
-    const departments =
-      tenantStats?.departmentCount ??
-      dashboardStats?.departmentCount ??
-      demoFallback?.departmentCount ??
-      0
-    const positions = tenantStats?.positionCount ?? demoFallback?.positionCount ?? 0
+  const resolvedStats = useMemo(
+    () => ({
+      employeeCount: menuOverview?.employeeCount ?? 0,
+      departmentCount: menuOverview?.departmentCount ?? 0,
+      positionCount: menuOverview?.positionCount ?? 0,
+    }),
+    [menuOverview],
+  )
 
-    return { employeeCount: employees, departmentCount: departments, positionCount: positions }
-  }, [tenantStats, dashboardStats, demoFallback])
-
-  const displayName = dashboardStats?.displayName ?? t('menu.profileFallback')
-  const tenantName = dashboardStats?.tenantName ?? t('dashboard.noTenant')
-  const initials = getInitials(dashboardStats?.displayName)
-  const statsReady = !dashboardLoading && !statsLoading
+  const displayName = menuOverview?.displayName ?? t('menu.profileFallback')
+  const tenantName = menuOverview?.tenantName ?? t('dashboard.noTenant')
+  const initials = getInitials(menuOverview?.displayName)
+  const statsReady = !menuLoading
 
   function handleLogout() {
     setLogoutOpen(false)
@@ -166,7 +149,7 @@ function MenuPage() {
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex items-center gap-4 p-5">
-          {dashboardLoading ? (
+          {menuLoading ? (
             <Skeleton className="h-14 w-14 shrink-0 rounded-full" />
           ) : (
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
@@ -174,7 +157,7 @@ function MenuPage() {
             </span>
           )}
           <div className="min-w-0 flex-1">
-            {dashboardLoading ? (
+            {menuLoading ? (
               <>
                 <Skeleton className="mb-2 h-5 w-40" />
                 <Skeleton className="h-4 w-32" />

@@ -22,10 +22,8 @@ import { Button } from '#/components/ui/button'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import {
-  fetchDemoCareerOverview,
-  type DemoDevelopmentPlanHorizon,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchCareerOverview, type CareerOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/kariyer')({
@@ -41,16 +39,20 @@ export const Route = createFileRoute('/_app/kariyer')({
   component: KariyerPage,
 })
 
-const PLAN_HORIZONS: DemoDevelopmentPlanHorizon[] = ['d30', 'd90', 'd180']
+type DevelopmentPlanHorizon = keyof CareerOverview['developmentPlan']
+
+const PLAN_HORIZONS: DevelopmentPlanHorizon[] = ['d30', 'd90', 'd180']
 
 function KariyerPage() {
   const { t } = useTranslation()
-  const [planTab, setPlanTab] = useState<DemoDevelopmentPlanHorizon>('d30')
+  const { user } = useAuth()
+  const [planTab, setPlanTab] = useState<DevelopmentPlanHorizon>('d30')
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-career-overview'],
-    queryFn: fetchDemoCareerOverview,
+    queryKey: ['career-overview', user?.id],
+    queryFn: () => fetchCareerOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const planTabOptions = useMemo(

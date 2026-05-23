@@ -9,10 +9,8 @@ import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Skeleton } from '#/components/ui/skeleton'
-import {
-  fetchDemoCompanySetup,
-  type DemoCompanySetupChecklistStatus,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchCompanySetupOverview, type CompanySetupOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/sirket-kurulum')({
@@ -35,6 +33,8 @@ function SirketKurulumRoute() {
     </SetupRouteGuard>
   )
 }
+
+type DemoCompanySetupChecklistStatus = CompanySetupOverview['checklist'][number]['status']
 
 type InfoRowProps = {
   label: string
@@ -72,9 +72,11 @@ const CHECKLIST_SKELETON_COUNT = 4
 
 function SirketKurulumPage() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-company-setup'],
-    queryFn: fetchDemoCompanySetup,
+    queryKey: ['company-setup-overview', user?.id],
+    queryFn: () => fetchCompanySetupOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const languageLabel = data ? formatLocaleLanguage(data.language, i18n.language) : ''

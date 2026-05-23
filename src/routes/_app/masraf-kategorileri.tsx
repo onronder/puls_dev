@@ -16,10 +16,9 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import {
-  fetchDemoExpenseCategoriesOverview,
-  formatTry,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchExpenseCategoriesOverview } from '#/lib/data'
+import { formatCurrency } from '#/lib/format'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/masraf-kategorileri')({
@@ -49,15 +48,19 @@ const CATEGORY_TABLE_GRID_COLS =
 
 function MasrafKategorileriPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-expense-categories-overview'],
-    queryFn: fetchDemoExpenseCategoriesOverview,
+    queryKey: ['expense-categories-overview', user?.id],
+    queryFn: () => fetchExpenseCategoriesOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   function formatDocThreshold(amount: number): string {
-    return t('expenseCategorySetup.docThresholdAbove', { amount: formatTry(amount) })
+    return t('expenseCategorySetup.docThresholdAbove', {
+      amount: formatCurrency(amount, 'tr-TR'),
+    })
   }
 
   return (
@@ -95,13 +98,13 @@ function MasrafKategorileriPage() {
           <MetricCard
             compact
             label={t('expenseCategorySetup.metrics.totalMonthlyLimit')}
-            value={formatTry(data.totalMonthlyLimit)}
+            value={formatCurrency(data.totalMonthlyLimit, 'tr-TR')}
             icon={Wallet}
           />
           <MetricCard
             compact
             label={t('expenseCategorySetup.metrics.docThreshold')}
-            value={formatTry(data.docThresholdMetric)}
+            value={formatCurrency(data.docThresholdMetric, 'tr-TR')}
             icon={FileCheck2}
           />
           <MetricCard
@@ -127,7 +130,7 @@ function MasrafKategorileriPage() {
               items={(data?.categories ?? []).map((category) => ({
                 id: category.id,
                 title: t(category.nameKey),
-                subtitle: formatTry(category.monthly),
+                subtitle: formatCurrency(category.monthly, 'tr-TR'),
                 meta: category.code,
                 trailing: (
                   <span className="text-xs tabular-nums text-[var(--color-text-muted)]">
@@ -170,7 +173,7 @@ function MasrafKategorileriPage() {
                     className={cn('grid items-center gap-3 px-4 py-3', CATEGORY_TABLE_GRID_COLS)}
                   >
                     <div className="truncate text-sm font-medium">{t(category.nameKey)}</div>
-                    <div className="text-right text-sm tabular-nums">{formatTry(category.monthly)}</div>
+                    <div className="text-right text-sm tabular-nums">{formatCurrency(category.monthly, 'tr-TR')}</div>
                     <div className="text-right text-sm tabular-nums">
                       {formatDocThreshold(category.docThreshold)}
                     </div>

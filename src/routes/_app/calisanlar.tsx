@@ -24,15 +24,13 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
-  fetchDemoEmployeesOverview,
-  type DemoEmployeeStatus,
-  type DemoEmployeesOverview,
-} from '#/lib/demo/puls-demo-data'
-import {
   fetchEmployeeList,
   fetchEmployeeListStats,
+  fetchEmployeesOverview,
+  type DemoEmployeeStatus,
   type EmployeeListItem,
-} from '#/lib/queries/employees'
+  type EmployeesOverview,
+} from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/calisanlar')({
@@ -83,7 +81,7 @@ function formatHireDate(isoDate: string, locale: string): string {
 
 function enrichEmployee(
   employee: EmployeeListItem,
-  demo: DemoEmployeesOverview,
+  demo: EmployeesOverview,
   locale: string,
 ): EnrichedEmployee {
   const emailKey = employee.email?.toLowerCase() ?? ''
@@ -205,9 +203,9 @@ function CalisanlarPage() {
   })
 
   const { data: demoOverview } = useQuery({
-    queryKey: ['demo-employees-overview'],
-    queryFn: fetchDemoEmployeesOverview,
-    enabled: activePersona === 'manager',
+    queryKey: ['employees-overview', user?.id],
+    queryFn: () => fetchEmployeesOverview(user!.id),
+    enabled: Boolean(user?.id) && activePersona === 'manager',
   })
 
   const enrichedEmployees = useMemo(() => {

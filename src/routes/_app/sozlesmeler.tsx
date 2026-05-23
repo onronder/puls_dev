@@ -23,12 +23,8 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import {
-  fetchDemoContractsOverview,
-  type DemoContractItem,
-  type DemoContractRiskStatus,
-  type DemoContractSignedStatus,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchContractsOverview, type ContractsOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/sozlesmeler')({
@@ -56,11 +52,11 @@ function formatContractDate(isoDate: string, locale: string): string {
   }).format(new Date(`${isoDate}T12:00:00`))
 }
 
-function signatureTone(status: DemoContractSignedStatus): StatusTone {
+function signatureTone(status: ContractsOverview['contracts'][number]['signed']): StatusTone {
   return status === 'signed' ? 'success' : 'warning'
 }
 
-function riskTone(status: DemoContractRiskStatus): StatusTone {
+function riskTone(status: ContractsOverview['contracts'][number]['risk']): StatusTone {
   if (status === 'ok') return 'success'
   if (status === 'expiring') return 'warning'
   return 'info'
@@ -76,13 +72,15 @@ function EmployeeAvatar({ initials }: { initials: string }) {
 
 function SozlesmelerPage() {
   const { t, i18n: i18nInstance } = useTranslation()
+  const { user } = useAuth()
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [detailSheetOpen, setDetailSheetOpen] = useState(false)
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-contracts-overview'],
-    queryFn: fetchDemoContractsOverview,
+    queryKey: ['contracts-overview', user?.id],
+    queryFn: () => fetchContractsOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const selectedContract = useMemo(() => {
@@ -92,16 +90,16 @@ function SozlesmelerPage() {
     )
   }, [data, selectedContractId])
 
-  const formatEndDate = (contract: DemoContractItem) =>
+  const formatEndDate = (contract: ContractsOverview['contracts'][number]) =>
     contract.endDate
       ? formatContractDate(contract.endDate, i18nInstance.language)
       : t('contractsSetup.noEndDate')
 
-  const renderSignaturePill = (status: DemoContractSignedStatus) => (
+  const renderSignaturePill = (status: ContractsOverview['contracts'][number]['signed']) => (
     <StatusPill tone={signatureTone(status)}>{t(`contractsSetup.signature.${status}`)}</StatusPill>
   )
 
-  const renderRiskPill = (status: DemoContractRiskStatus) => (
+  const renderRiskPill = (status: ContractsOverview['contracts'][number]['risk']) => (
     <StatusPill tone={riskTone(status)}>{t(`contractsSetup.risk.${status}`)}</StatusPill>
   )
 

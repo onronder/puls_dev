@@ -29,14 +29,8 @@ import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Textarea } from '#/components/ui/textarea'
 import i18n from '#/i18n'
-import {
-  fetchDemoLeaveOverview,
-  type DemoLeaveApproval,
-  type DemoLeaveOverview,
-  type DemoLeaveRequest,
-  type DemoUpcomingLeave,
-  type LeaveStatus,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchLeaveOverview, type LeaveOverview, type LeaveStatus } from '#/lib/data'
 import { countBusinessDays } from '#/lib/format'
 import { cn } from '#/lib/utils'
 
@@ -110,13 +104,15 @@ function validateLeaveForm(
 
 function IzinPage() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const [tab, setTab] = useState<LeaveTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [localRequests, setLocalRequests] = useState<DemoLeaveRequest[]>([])
+  const [localRequests, setLocalRequests] = useState<LeaveOverview['requests'][number][]>([])
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['demo-leave-overview'],
-    queryFn: fetchDemoLeaveOverview,
+    queryKey: ['leave-overview', user?.id],
+    queryFn: () => fetchLeaveOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const allRequests = useMemo(
@@ -248,8 +244,8 @@ function IzinPage() {
 }
 
 type MineTabProps = {
-  upcoming: DemoUpcomingLeave[]
-  requests: DemoLeaveRequest[]
+  upcoming: LeaveOverview['upcoming']
+  requests: LeaveOverview['requests']
   locale: string
   t: ReturnType<typeof useTranslation>['t']
 }
@@ -336,7 +332,7 @@ function MineTab({ upcoming, requests, locale, t }: MineTabProps) {
 }
 
 type ApprovalsTabProps = {
-  approvals: DemoLeaveApproval[]
+  approvals: LeaveOverview['pendingApprovals']
   locale: string
   t: ReturnType<typeof useTranslation>['t']
 }
@@ -448,8 +444,8 @@ function BalanceCard({ label, used, total, usedLabel, daysUnit }: BalanceCardPro
 type LeaveFormSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  data: DemoLeaveOverview | undefined
-  onSubmitted: (request: DemoLeaveRequest) => void
+  data: LeaveOverview | undefined
+  onSubmitted: (request: LeaveOverview['requests'][number]) => void
   t: ReturnType<typeof useTranslation>['t']
 }
 

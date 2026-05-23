@@ -13,12 +13,8 @@ import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import {
-  fetchDemoProfileOverview,
-  type DemoProfileActivity,
-} from '#/lib/demo/puls-demo-data'
+import { fetchProfileOverview, type ProfileOverview } from '#/lib/data'
 import { formatCurrency } from '#/lib/format'
-import { fetchDashboardStats } from '#/lib/queries/dashboard'
 
 export const Route = createFileRoute('/_app/profil')({
   head: () => ({
@@ -45,7 +41,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 function formatActivityWhat(
-  activity: DemoProfileActivity,
+  activity: ProfileOverview['recentActivities'][number],
   t: ReturnType<typeof useTranslation>['t'],
   locale: string,
 ): string {
@@ -63,19 +59,15 @@ function ProfilPage() {
   const { user, activePersona, signOut } = useAuth()
   const [logoutSheetOpen, setLogoutSheetOpen] = useState(false)
 
-  const { data: stats } = useQuery({
-    queryKey: ['dashboard-stats', user?.id],
-    queryFn: () => fetchDashboardStats(user!.id),
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['profile-overview', user?.id],
+    queryFn: () => fetchProfileOverview(user!.id),
     enabled: Boolean(user?.id),
   })
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ['demo-profile-overview'],
-    queryFn: fetchDemoProfileOverview,
-  })
-
-  const displayName = stats?.displayName ?? t('menu.profileFallback')
-  const tenantName = stats?.tenantName ?? t('dashboard.noTenant')
+  const displayName =
+    (user?.user_metadata?.full_name as string | undefined) ?? t('menu.profileFallback')
+  const tenantName = t('dashboard.noTenant')
   const email = user?.email ?? profile?.fallbackEmail ?? '—'
   const personaLabel =
     activePersona === 'manager' ? t('persona.manager') : t('persona.employee')

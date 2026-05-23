@@ -16,10 +16,8 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
-import {
-  fetchDemoLeaveTypesOverview,
-  type DemoLeaveTypeRule,
-} from '#/lib/demo/puls-demo-data'
+import { useAuth } from '#/lib/auth'
+import { fetchLeaveTypesOverview, type LeaveTypesOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/izin-tanimlari')({
@@ -48,7 +46,7 @@ const LEAVE_TYPE_TABLE_GRID_COLS =
   'grid-cols-[minmax(0,1.1fr)_56px_minmax(0,88px)_minmax(0,88px)_72px]'
 
 type LeaveTypeCellsProps = {
-  rule: DemoLeaveTypeRule
+  rule: LeaveTypesOverview['leaveTypes'][number]
 }
 
 function PaidCell({ rule }: LeaveTypeCellsProps) {
@@ -92,11 +90,13 @@ function MobileRuleTrailing({ rule }: LeaveTypeCellsProps) {
 
 function IzinTanimlariPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-leave-types-overview'],
-    queryFn: fetchDemoLeaveTypesOverview,
+    queryKey: ['leave-types-overview', user?.id],
+    queryFn: () => fetchLeaveTypesOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   return (

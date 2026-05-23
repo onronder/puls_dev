@@ -17,10 +17,7 @@ import {
   adminSetupNavItems,
   type NavItem,
 } from '#/lib/navigation'
-import {
-  fetchDemoSettingsOverview,
-  type DemoSettingsSection,
-} from '#/lib/demo/puls-demo-data'
+import { fetchSettingsOverview, type SettingsOverview } from '#/lib/data'
 import { canShowSetupHub, filterSettingsSectionsForRole } from '#/lib/setup-access'
 import i18n from '#/i18n'
 
@@ -59,13 +56,14 @@ function SetupNavRow({ item, label }: { item: NavItem; label: string }) {
 
 function AyarlarPage() {
   const { t } = useTranslation()
-  const { personaRole, activePersona } = useAuth()
+  const { user, personaRole, activePersona } = useAuth()
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
   const showSetupHub = canShowSetupHub(personaRole, activePersona)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['demo-settings-overview'],
-    queryFn: fetchDemoSettingsOverview,
+    queryKey: ['settings-overview', user?.id],
+    queryFn: () => fetchSettingsOverview(user!.id),
+    enabled: Boolean(user?.id),
   })
 
   const visibleSections = useMemo(
@@ -79,7 +77,7 @@ function AyarlarPage() {
     [visibleSections, selectedSectionId],
   )
 
-  const openSectionSheet = (section: DemoSettingsSection) => {
+  const openSectionSheet = (section: SettingsOverview['sections'][number]) => {
     setSelectedSectionId(section.id)
   }
 
