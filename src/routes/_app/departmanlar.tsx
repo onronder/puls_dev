@@ -17,13 +17,9 @@ import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { fetchDemoDepartmentsOverview } from '#/lib/demo/puls-demo-data'
-import { requireSetupAdminRoute } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/departmanlar')({
-  beforeLoad: async () => {
-    await requireSetupAdminRoute()
-  },
   head: () => ({
     meta: [
       { title: i18n.t('departments.meta.title') },

@@ -7,6 +7,12 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: 'jsdom',
+      environmentOptions: {
+        jsdom: {
+          url: 'http://localhost:3000',
+        },
+      },
+      setupFiles: ['src/test/setup.ts'],
       exclude: ['**/node_modules/**', '**/e2e/**', '**/.output/**'],
     },
   }),

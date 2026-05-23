@@ -15,7 +15,7 @@
     "format": "prettier --check .",
     "check-i18n": "node scripts/check-i18n.mjs",
     "audit:supabase": "node scripts/audit-supabase-schema.mjs",
-    "test": "vitest run",
+    "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
     "cap:sync": "pnpm run build && node scripts/write-capacitor-shell.mjs && pnpm exec cap sync",
     "cap:add": "pnpm exec cap add ios && pnpm exec cap add android",

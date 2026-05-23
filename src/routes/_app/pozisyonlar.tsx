@@ -17,13 +17,9 @@ import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { fetchDemoPositionsOverview } from '#/lib/demo/puls-demo-data'
-import { requireSetupAdminRoute } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/pozisyonlar')({
-  beforeLoad: async () => {
-    await requireSetupAdminRoute()
-  },
   head: () => ({
     meta: [
       { title: i18n.t('positions.meta.title') },

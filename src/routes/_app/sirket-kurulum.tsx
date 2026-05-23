@@ -13,13 +13,9 @@ import {
   fetchDemoCompanySetup,
   type DemoCompanySetupChecklistStatus,
 } from '#/lib/demo/puls-demo-data'
-import { requireSetupAdminRoute } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/sirket-kurulum')({
-  beforeLoad: async () => {
-    await requireSetupAdminRoute()
-  },
   head: () => ({
     meta: [
       { title: 'Şirket Kurulum — PULS' },

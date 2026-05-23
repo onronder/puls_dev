@@ -12,19 +12,21 @@ describe('readActivePersona', () => {
   it('returns employee for non-dual roles regardless of storage', () => {
     writeActivePersona(USER_ID, 'manager')
     expect(readActivePersona(USER_ID, 'employee')).toBe('employee')
-    expect(readActivePersona(USER_ID, 'superadmin')).toBe('employee')
   })
 
   it('defaults dual role users to manager when nothing stored', () => {
     expect(readActivePersona(USER_ID, 'hr_admin')).toBe('manager')
+    expect(readActivePersona(USER_ID, 'superadmin')).toBe('manager')
   })
 
   it('restores persisted persona for dual role users', () => {
     writeActivePersona(USER_ID, 'employee')
     expect(readActivePersona(USER_ID, 'hr_admin')).toBe('employee')
+    expect(readActivePersona(USER_ID, 'superadmin')).toBe('employee')
 
     writeActivePersona(USER_ID, 'manager')
     expect(readActivePersona(USER_ID, 'hr_admin')).toBe('manager')
+    expect(readActivePersona(USER_ID, 'superadmin')).toBe('manager')
   })
 })
 

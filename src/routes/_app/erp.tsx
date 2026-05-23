@@ -22,13 +22,9 @@ import {
   fetchDemoErpOverview,
   type DemoErpSyncLevel,
 } from '#/lib/demo/puls-demo-data'
-import { requireSetupAdminRoute } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/erp')({
-  beforeLoad: async () => {
-    await requireSetupAdminRoute()
-  },
   head: () => ({
     meta: [{ title: 'ERP Entegrasyon — PULS' }],
   }),
