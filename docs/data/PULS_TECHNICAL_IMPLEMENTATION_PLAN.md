@@ -99,6 +99,23 @@ Tavsiye:
 
 > Yeni DB'ye gecilecekse schema ayrimini simdi yap. Mevcut Lovable DB uzerinde devam edilecekse backward-compatible migration ile ilerle, ama frontend adapter'lari gelecekteki schema ayrimini saklayacak sekilde yaz.
 
+### 4.1 Netlestirilmis Kararlar
+
+Cursor analiz turu ve urun konumlandirmasi sonrasi bu plan icin asagidaki kararlar artik varsayilan kabul edilir:
+
+- Production hedefi temiz PULS namespace/schema modelidir; yeni implementasyon `puls_core`, `puls_workflow`, `puls_performance`, `puls_integration`, `puls_calc`, `puls_audit`, `puls_vault` ayrimini esas alir.
+- Mevcut Lovable/public tablolar gecis uyumlulugu icin korunabilir; yeni production tablolar icin public schema'ya yeni is yukleri yigilmamalidir.
+- `performans_*` public tablo adlari gecmis migration uyumlulugudur; yeni hedef model `puls_performance.*` olmalidir. Frontend data adapter bu isimlendirme farkini route'lardan saklamalidir.
+- Employee, department, position ve performance icin ERP write-back varsayilan kapali olmalidir.
+- Izin ve masraf write-back V1 foundation kapsaminda kapali baslar; sonraki fazda tenant bazli config ile acilabilir.
+- Izin bakiyesi tenant bazli source-of-truth karari tasir: ERP resmi bakiye veriyorsa okunur, vermiyorsa PULS hesaplar.
+- Employee master ilk pilotta read/cache gibi davranir; PULS'ten ERP'ye master data yazimi yapilmaz.
+- `positions.salary_min` / `positions.salary_max` mevcut eski migration borcudur; yeni schema'da varsayilan alan olarak uretilmemeli ve UI/data adapter tarafindan kullanilmamalidir.
+- `finance` ve `legal_compliance` ayrintili rolleri foundation PR'inda zorunlu degildir; ilk scope `employee`, `manager`, `hr_admin`, `superadmin` uzerinden kurulabilir.
+- `/haklar-uyum` bu data fazinin kapsamina dahil degildir; route, matrix ve migration hedefi degildir.
+- Production demo fallback varsayilan kapali olmalidir. Ilk flag adi `VITE_PULS_DEMO_MODE` olarak kullanilabilir; ileride tenant-level `demo_mode` ile genisletilebilir.
+- Canonical route path'leri uygulamadaki mevcut path'lerdir: `/departmanlar`, `/pozisyonlar`, `/izin-tanimlari`, `/masraf-kategorileri`, `/performans-parametreleri`, `/erp`, `/sirket-kurulum`.
+
 ## 5. Canonical Table Plan
 
 ### 5.1 Core
@@ -642,28 +659,37 @@ API key ve credentials:
 - Railway environment secret veya Supabase Vault/secret reference kullanilir.
 - UI sadece masked reference gosterir.
 
-## 10. Migration ve PR Sirasi
+## 10. Implementasyon Prompt ve PR Sirasi
 
 Devasa PR acilmamali. Onerilen sira:
 
-### PR 1: Field Ownership Matrix
+### 00-data-contract-and-matrix
 
 Cikti:
 
+- `PULS_DATA_SOURCE_CALCULATION_OWNERSHIP_CONTRACT.md`
+- `PULS_TECHNICAL_IMPLEMENTATION_PLAN.md`
 - `docs/data/PULS_FIELD_OWNERSHIP_MATRIX.csv`
 - route/field/source/calculation owner/sensitivity/write-back matrix
 
-Kod degisimi yok veya minimum.
+Durum: tamamlandi. Kod/migration degisimi yoktur.
 
-### PR 2: Schema Foundation
+### 01-db-schema-foundation
 
 Cikti:
 
-- schema/prefix karari
+- `puls_core`, `puls_integration`, `puls_audit` schema foundation
 - core canonical tablolar
 - integration tablolar
 - audit helper functions
 - sensitive column exclusion
+
+Kapsam disi:
+
+- leave/expense/performance workflow tablolar
+- seed data
+- frontend route degisiklikleri
+- ERP connector endpoint implementasyonu
 
 Test:
 
@@ -671,7 +697,7 @@ Test:
 - RLS smoke
 - forbidden column search
 
-### PR 3: Leave + Expense Schema
+### 02-db-workflow-leave-expense
 
 Cikti:
 
@@ -680,7 +706,7 @@ Cikti:
 - approval minimal model
 - seed demo data
 
-### PR 4: Performance + Contracts + Summary
+### 03-db-performance-contracts-summary
 
 Cikti:
 
@@ -689,7 +715,7 @@ Cikti:
 - calculation views
 - setup readiness view
 
-### PR 5: Data Adapter Layer
+### 04-frontend-data-adapters
 
 Cikti:
 
@@ -697,7 +723,7 @@ Cikti:
 - route'larin demo adapter'dan real adapter'a gecisi
 - feature flag'li demo mode
 
-### PR 6: Dashboard + Org Real Data
+### 05-dashboard-org-real-data
 
 Cikti:
 
@@ -705,7 +731,7 @@ Cikti:
 - employees/departments/positions pages real data
 - setup readiness real computed
 
-### PR 7: Leave + Expense Real Workflow
+### 06-leave-expense-real-workflow
 
 Cikti:
 
@@ -715,7 +741,7 @@ Cikti:
 - backend final validation
 - audit log
 
-### PR 8: ERP Connector MVP
+### 07-erp-connector-mvp
 
 Cikti:
 
@@ -725,7 +751,7 @@ Cikti:
 - sync batches/staging
 - canonical upsert for employee/org data
 
-### PR 9: QA Hardening
+### 08-qa-hardening
 
 Cikti:
 
@@ -822,54 +848,32 @@ Not: `salary` kelimesi `privacy.ts` gibi eski utility dosyalarinda varsa ayrica 
 - monitoring.
 - manual rollback.
 
-## 13. Open Decisions
+## 13. Kararlar ve Acik Noktalar
 
-Bu kararlar implementasyondan once netlesmeli:
+### 13.1 Net Kararlar
 
-1. Yeni Supabase project mi, mevcut Lovable project ustune mi?
-2. Canias ilk entegrasyon endpoint listesi nedir?
-3. Izin bakiyesi resmi source-of-truth kim olacak?
-4. Izin onayi ERP'ye write-back olacak mi?
-5. Masraf onayi muhasebe/ERP'ye write-back olacak mi?
-6. Employee master PULS'te manuel editlenebilecek mi, yoksa read-only mi?
-7. AI Koc V1'de tamamen disabled mi kalacak?
-8. Salary alanlari yeni schema'dan tamamen cikacak mi, yoksa hidden future schema'da mi kalacak?
-9. Finans ve hukuk rolleri V1 RLS'e dahil edilecek mi?
+- Temiz PULS namespace/schema modeli hedeflenir.
+- Yeni production tablolar public schema'ya eklenmez; public/Lovable uyumu adapter ve gecis katmaniyla korunur.
+- `puls_performance.*` yeni hedef isimlendirmedir; public `performans_*` gecmis uyumluluk kabul edilir.
+- Employee, department, position ve performance icin write-back yoktur.
+- Izin ve masraf write-back kapali baslar; ileride tenant bazli acilabilir.
+- AI Koc V1 data fazinda backend/tool-call olarak aktif degildir.
+- Yeni schema'da pay/salary kolonlari uretilmez.
+- Foundation RLS rolleri: `employee`, `manager`, `hr_admin`, `superadmin`.
+- `/haklar-uyum` bu fazin kapsami disindadir.
 
-## 14. Cursor Agent Ana Prompt Taslagi
+### 13.2 Hala Dis Kaynak Gerektiren Noktalar
 
-Asagidaki prompt PR 1 icin kullanilabilir:
+- Canias MVP endpoint listesi ve alan adlari musteri/sandbox erisimiyle netlesecek.
+- Izin bakiyesi her tenant icin ERP source-of-truth mu PULS calculation mi olacak, tenant config olarak belirlenecek.
+- Masraf/muhasebe write-back musteri ERP yetenegine gore ayri entegrasyon fazinda kararlastirilacak.
+- Finans ve hukuk rollerinin ayrintili RLS kapsami sonraki fazda acilacak.
 
-```text
-PULS veri entegrasyon fazina basliyoruz. Bu PR'da kod/migration yazma; once field ownership matrix uret.
+## 14. Siradaki Prompt
 
-Kaynak dokumanlar:
-- CodexAnalysis/data-contract/PULS_DATA_SOURCE_CALCULATION_OWNERSHIP_CONTRACT.md
-- CodexAnalysis/data-contract/PULS_TECHNICAL_IMPLEMENTATION_PLAN.md
-- docs/V1 Dokumanlar/Puls_Veri_Sozlugu_v1.0.xlsx
-- docs/specs/06-metrik-ve-demo-data-katalogu.csv
-- mevcut route dosyalari src/routes/_app/*.tsx
+`00-data-contract-and-matrix` tamamlandigi icin siradaki gercek implementasyon promptu `01-db-schema-foundation` olmalidir.
 
-Hedef:
-docs/data/PULS_FIELD_OWNERSHIP_MATRIX.csv olustur.
-
-Kolonlar:
-route, screen_block, ui_label, technical_field, data_class, source_of_truth,
-canonical_table, external_source, calculation_owner, calculation_formula,
-persistence_strategy, sensitivity_level, rls_scope, demo_fallback,
-write_back_required, notes
-
-Kurallar:
-- PULS ERP/HR replacement degildir.
-- PULS raw ERP data lake kurmaz.
-- MVP'de salary, TCKN, IBAN, health/family data alma.
-- UI metrikleri PULS calculation layer'da sahiplenilir.
-- ERP resmi external master / transaction kaynagi olabilir.
-- Demo fallback production davranisi olarak yazilmasin; sadece dev/demo flag.
-
-Bu PR sadece dokuman/CSV uretmeli.
-Test olarak CSV kolonlari eksiksiz mi, salary/TCKN/IBAN hassas alanlari MVP source olarak isaretlenmemis mi kontrol et.
-```
+Bu prompt sadece schema foundation, core/integration/audit tablolar, RLS helper'lari ve hassas alan dislama kontrollerini kapsamalidir. Leave, expense, performance, contracts, data adapter ve ERP connector implementasyonu sonraki promptlara birakilmalidir.
 
 ## 15. Basari Kriteri
 
@@ -882,4 +886,3 @@ Bu implementasyon fazi basarili sayilir eger:
 - RLS self/team/all scope'u test ediliyorsa.
 - ERP sync hatalari kullaniciya ve admin'e anlasilir sekilde gorunuyorsa.
 - AI Koc aktif degilken sahte chat/tool-call beklentisi yaratilmiyorsa.
-
