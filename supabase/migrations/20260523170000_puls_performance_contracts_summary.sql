@@ -194,6 +194,36 @@ CREATE TABLE IF NOT EXISTS puls_performance.training_needs (
   CHECK (priority >= 1 AND priority <= 5)
 );
 
+CREATE TABLE IF NOT EXISTS puls_performance.kpi_category_weights (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES puls_core.tenants(id) ON DELETE CASCADE,
+  category_code TEXT NOT NULL,
+  category_name TEXT NOT NULL,
+  weight_pct NUMERIC(8, 2) NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (weight_pct >= 0 AND weight_pct <= 100),
+  UNIQUE (tenant_id, category_code)
+);
+
+CREATE TABLE IF NOT EXISTS puls_performance.score_bands (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES puls_core.tenants(id) ON DELETE CASCADE,
+  band puls_performance.score_band NOT NULL,
+  label TEXT NOT NULL,
+  min_score NUMERIC(8, 2) NOT NULL,
+  max_score NUMERIC(8, 2) NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (min_score >= 0 AND max_score <= 100),
+  CHECK (max_score >= min_score),
+  UNIQUE (tenant_id, band)
+);
+
 -- ---------------------------------------------------------------------------
 -- puls_workflow contract metadata tables
 -- ---------------------------------------------------------------------------
@@ -259,8 +289,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_puls_performance_kpis_external
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_puls_performance_comp_eval_unique
   ON puls_performance.competency_evaluations
-  NULLS NOT DISTINCT
-  (tenant_id, employee_id, cycle_id, competency_template_id, evaluator_employee_id);
+  (tenant_id, employee_id, cycle_id, competency_template_id, evaluator_employee_id)
+  NULLS NOT DISTINCT;
 
 CREATE INDEX IF NOT EXISTS idx_puls_performance_scores_employee_cycle
   ON puls_performance.performance_scores (tenant_id, employee_id, cycle_id);
@@ -270,6 +300,12 @@ CREATE INDEX IF NOT EXISTS idx_puls_performance_career_profiles_tenant
 
 CREATE INDEX IF NOT EXISTS idx_puls_performance_training_needs_tenant
   ON puls_performance.training_needs (tenant_id, employee_id);
+
+CREATE INDEX IF NOT EXISTS idx_puls_performance_kpi_category_weights_tenant
+  ON puls_performance.kpi_category_weights (tenant_id, is_active);
+
+CREATE INDEX IF NOT EXISTS idx_puls_performance_score_bands_tenant
+  ON puls_performance.score_bands (tenant_id, is_active);
 
 CREATE INDEX IF NOT EXISTS idx_puls_workflow_contracts_tenant_employee
   ON puls_workflow.contracts (tenant_id, employee_id);
@@ -400,6 +436,16 @@ CREATE TRIGGER puls_performance_training_needs_set_updated_at
   BEFORE UPDATE ON puls_performance.training_needs
   FOR EACH ROW EXECUTE FUNCTION puls_core.set_updated_at();
 
+DROP TRIGGER IF EXISTS puls_performance_kpi_category_weights_set_updated_at ON puls_performance.kpi_category_weights;
+CREATE TRIGGER puls_performance_kpi_category_weights_set_updated_at
+  BEFORE UPDATE ON puls_performance.kpi_category_weights
+  FOR EACH ROW EXECUTE FUNCTION puls_core.set_updated_at();
+
+DROP TRIGGER IF EXISTS puls_performance_score_bands_set_updated_at ON puls_performance.score_bands;
+CREATE TRIGGER puls_performance_score_bands_set_updated_at
+  BEFORE UPDATE ON puls_performance.score_bands
+  FOR EACH ROW EXECUTE FUNCTION puls_core.set_updated_at();
+
 DROP TRIGGER IF EXISTS puls_workflow_contracts_set_updated_at ON puls_workflow.contracts;
 CREATE TRIGGER puls_workflow_contracts_set_updated_at
   BEFORE UPDATE ON puls_workflow.contracts
@@ -421,6 +467,8 @@ ALTER TABLE puls_performance.competency_evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE puls_performance.performance_scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE puls_performance.career_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE puls_performance.training_needs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puls_performance.kpi_category_weights ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puls_performance.score_bands ENABLE ROW LEVEL SECURITY;
 ALTER TABLE puls_workflow.contracts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE puls_workflow.contract_files ENABLE ROW LEVEL SECURITY;
 
@@ -458,7 +506,41 @@ CREATE POLICY puls_performance_competency_templates_update ON puls_performance.c
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
   WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
 
--- Performance data: shared SELECT pattern macro via per-table policies
+-- Performance config: kpi_category_weights
+DROP POLICY IF EXISTS puls_performance_kpi_category_weights_select ON puls_performance.kpi_category_weights;
+CREATE POLICY puls_performance_kpi_category_weights_select ON puls_performance.kpi_category_weights
+  FOR SELECT TO authenticated
+  USING (tenant_id = puls_core.current_tenant_id());
+
+DROP POLICY IF EXISTS puls_performance_kpi_category_weights_insert ON puls_performance.kpi_category_weights;
+CREATE POLICY puls_performance_kpi_category_weights_insert ON puls_performance.kpi_category_weights
+  FOR INSERT TO authenticated
+  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+
+DROP POLICY IF EXISTS puls_performance_kpi_category_weights_update ON puls_performance.kpi_category_weights;
+CREATE POLICY puls_performance_kpi_category_weights_update ON puls_performance.kpi_category_weights
+  FOR UPDATE TO authenticated
+  USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
+  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+
+-- Performance config: score_bands
+DROP POLICY IF EXISTS puls_performance_score_bands_select ON puls_performance.score_bands;
+CREATE POLICY puls_performance_score_bands_select ON puls_performance.score_bands
+  FOR SELECT TO authenticated
+  USING (tenant_id = puls_core.current_tenant_id());
+
+DROP POLICY IF EXISTS puls_performance_score_bands_insert ON puls_performance.score_bands;
+CREATE POLICY puls_performance_score_bands_insert ON puls_performance.score_bands
+  FOR INSERT TO authenticated
+  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+
+DROP POLICY IF EXISTS puls_performance_score_bands_update ON puls_performance.score_bands;
+CREATE POLICY puls_performance_score_bands_update ON puls_performance.score_bands
+  FOR UPDATE TO authenticated
+  USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
+  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+
+-- Performance data: shared SELECT pattern via per-table policies
 DROP POLICY IF EXISTS puls_performance_kpis_select ON puls_performance.performance_kpis;
 CREATE POLICY puls_performance_kpis_select ON puls_performance.performance_kpis
   FOR SELECT TO authenticated
@@ -480,13 +562,39 @@ CREATE POLICY puls_performance_kpis_select ON puls_performance.performance_kpis
 DROP POLICY IF EXISTS puls_performance_kpis_insert ON puls_performance.performance_kpis;
 CREATE POLICY puls_performance_kpis_insert ON puls_performance.performance_kpis
   FOR INSERT TO authenticated
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = performance_kpis.employee_id
+        AND e.tenant_id = performance_kpis.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.performance_cycles pc
+      WHERE pc.id = performance_kpis.cycle_id
+        AND pc.tenant_id = performance_kpis.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_kpis_update ON puls_performance.performance_kpis;
 CREATE POLICY puls_performance_kpis_update ON puls_performance.performance_kpis
   FOR UPDATE TO authenticated
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = performance_kpis.employee_id
+        AND e.tenant_id = performance_kpis.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.performance_cycles pc
+      WHERE pc.id = performance_kpis.cycle_id
+        AND pc.tenant_id = performance_kpis.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_competency_evaluations_select ON puls_performance.competency_evaluations;
 CREATE POLICY puls_performance_competency_evaluations_select ON puls_performance.competency_evaluations
@@ -509,13 +617,65 @@ CREATE POLICY puls_performance_competency_evaluations_select ON puls_performance
 DROP POLICY IF EXISTS puls_performance_competency_evaluations_insert ON puls_performance.competency_evaluations;
 CREATE POLICY puls_performance_competency_evaluations_insert ON puls_performance.competency_evaluations
   FOR INSERT TO authenticated
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = competency_evaluations.employee_id
+        AND e.tenant_id = competency_evaluations.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.performance_cycles pc
+      WHERE pc.id = competency_evaluations.cycle_id
+        AND pc.tenant_id = competency_evaluations.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.competency_templates ct
+      WHERE ct.id = competency_evaluations.competency_template_id
+        AND ct.tenant_id = competency_evaluations.tenant_id
+    )
+    AND (
+      competency_evaluations.evaluator_employee_id IS NULL
+      OR EXISTS (
+        SELECT 1 FROM puls_core.employees ev
+        WHERE ev.id = competency_evaluations.evaluator_employee_id
+          AND ev.tenant_id = competency_evaluations.tenant_id
+      )
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_competency_evaluations_update ON puls_performance.competency_evaluations;
 CREATE POLICY puls_performance_competency_evaluations_update ON puls_performance.competency_evaluations
   FOR UPDATE TO authenticated
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = competency_evaluations.employee_id
+        AND e.tenant_id = competency_evaluations.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.performance_cycles pc
+      WHERE pc.id = competency_evaluations.cycle_id
+        AND pc.tenant_id = competency_evaluations.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.competency_templates ct
+      WHERE ct.id = competency_evaluations.competency_template_id
+        AND ct.tenant_id = competency_evaluations.tenant_id
+    )
+    AND (
+      competency_evaluations.evaluator_employee_id IS NULL
+      OR EXISTS (
+        SELECT 1 FROM puls_core.employees ev
+        WHERE ev.id = competency_evaluations.evaluator_employee_id
+          AND ev.tenant_id = competency_evaluations.tenant_id
+      )
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_scores_select ON puls_performance.performance_scores;
 CREATE POLICY puls_performance_scores_select ON puls_performance.performance_scores
@@ -538,13 +698,39 @@ CREATE POLICY puls_performance_scores_select ON puls_performance.performance_sco
 DROP POLICY IF EXISTS puls_performance_scores_insert ON puls_performance.performance_scores;
 CREATE POLICY puls_performance_scores_insert ON puls_performance.performance_scores
   FOR INSERT TO authenticated
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = performance_scores.employee_id
+        AND e.tenant_id = performance_scores.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.performance_cycles pc
+      WHERE pc.id = performance_scores.cycle_id
+        AND pc.tenant_id = performance_scores.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_scores_update ON puls_performance.performance_scores;
 CREATE POLICY puls_performance_scores_update ON puls_performance.performance_scores
   FOR UPDATE TO authenticated
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = performance_scores.employee_id
+        AND e.tenant_id = performance_scores.tenant_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM puls_performance.performance_cycles pc
+      WHERE pc.id = performance_scores.cycle_id
+        AND pc.tenant_id = performance_scores.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_career_profiles_select ON puls_performance.career_profiles;
 CREATE POLICY puls_performance_career_profiles_select ON puls_performance.career_profiles
@@ -567,13 +753,29 @@ CREATE POLICY puls_performance_career_profiles_select ON puls_performance.career
 DROP POLICY IF EXISTS puls_performance_career_profiles_insert ON puls_performance.career_profiles;
 CREATE POLICY puls_performance_career_profiles_insert ON puls_performance.career_profiles
   FOR INSERT TO authenticated
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = career_profiles.employee_id
+        AND e.tenant_id = career_profiles.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_career_profiles_update ON puls_performance.career_profiles;
 CREATE POLICY puls_performance_career_profiles_update ON puls_performance.career_profiles
   FOR UPDATE TO authenticated
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = career_profiles.employee_id
+        AND e.tenant_id = career_profiles.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_training_needs_select ON puls_performance.training_needs;
 CREATE POLICY puls_performance_training_needs_select ON puls_performance.training_needs
@@ -596,13 +798,29 @@ CREATE POLICY puls_performance_training_needs_select ON puls_performance.trainin
 DROP POLICY IF EXISTS puls_performance_training_needs_insert ON puls_performance.training_needs;
 CREATE POLICY puls_performance_training_needs_insert ON puls_performance.training_needs
   FOR INSERT TO authenticated
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = training_needs.employee_id
+        AND e.tenant_id = training_needs.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_performance_training_needs_update ON puls_performance.training_needs;
 CREATE POLICY puls_performance_training_needs_update ON puls_performance.training_needs
   FOR UPDATE TO authenticated
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = training_needs.employee_id
+        AND e.tenant_id = training_needs.tenant_id
+    )
+  );
 
 -- Contracts V1: self + admin only (no manager broad visibility)
 DROP POLICY IF EXISTS puls_workflow_contracts_select ON puls_workflow.contracts;
@@ -619,13 +837,29 @@ CREATE POLICY puls_workflow_contracts_select ON puls_workflow.contracts
 DROP POLICY IF EXISTS puls_workflow_contracts_insert ON puls_workflow.contracts;
 CREATE POLICY puls_workflow_contracts_insert ON puls_workflow.contracts
   FOR INSERT TO authenticated
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = contracts.employee_id
+        AND e.tenant_id = contracts.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_workflow_contracts_update ON puls_workflow.contracts;
 CREATE POLICY puls_workflow_contracts_update ON puls_workflow.contracts
   FOR UPDATE TO authenticated
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_core.employees e
+      WHERE e.id = contracts.employee_id
+        AND e.tenant_id = contracts.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_workflow_contract_files_select ON puls_workflow.contract_files;
 CREATE POLICY puls_workflow_contract_files_select ON puls_workflow.contract_files
@@ -647,13 +881,29 @@ CREATE POLICY puls_workflow_contract_files_select ON puls_workflow.contract_file
 DROP POLICY IF EXISTS puls_workflow_contract_files_insert ON puls_workflow.contract_files;
 CREATE POLICY puls_workflow_contract_files_insert ON puls_workflow.contract_files
   FOR INSERT TO authenticated
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_workflow.contracts c
+      WHERE c.id = contract_files.contract_id
+        AND c.tenant_id = contract_files.tenant_id
+    )
+  );
 
 DROP POLICY IF EXISTS puls_workflow_contract_files_update ON puls_workflow.contract_files;
 CREATE POLICY puls_workflow_contract_files_update ON puls_workflow.contract_files
   FOR UPDATE TO authenticated
   USING (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id())
-  WITH CHECK (puls_core.is_admin() AND tenant_id = puls_core.current_tenant_id());
+  WITH CHECK (
+    puls_core.is_admin()
+    AND tenant_id = puls_core.current_tenant_id()
+    AND EXISTS (
+      SELECT 1 FROM puls_workflow.contracts c
+      WHERE c.id = contract_files.contract_id
+        AND c.tenant_id = contract_files.tenant_id
+    )
+  );
 
 -- ---------------------------------------------------------------------------
 -- puls_calc views (security_invoker = true; aggregates role-scoped by RLS)
@@ -1318,6 +1568,36 @@ BEGIN
   WHERE tenant_id = v_tenant_id AND name = 'Stratejik Düşünme';
   SELECT id INTO v_tpl_iletisim FROM puls_performance.competency_templates
   WHERE tenant_id = v_tenant_id AND name = 'İletişim';
+
+  INSERT INTO puls_performance.kpi_category_weights (
+    tenant_id, category_code, category_name, weight_pct, sort_order
+  )
+  VALUES
+    (v_tenant_id, 'strategic_hr', 'Stratejik IK', 35, 1),
+    (v_tenant_id, 'operations', 'Operasyon', 30, 2),
+    (v_tenant_id, 'training', 'Eğitim', 20, 3),
+    (v_tenant_id, 'engagement', 'Memnuniyet', 15, 4)
+  ON CONFLICT (tenant_id, category_code) DO UPDATE SET
+    category_name = EXCLUDED.category_name,
+    weight_pct = EXCLUDED.weight_pct,
+    sort_order = EXCLUDED.sort_order,
+    updated_at = NOW();
+
+  INSERT INTO puls_performance.score_bands (
+    tenant_id, band, label, min_score, max_score, sort_order
+  )
+  VALUES
+    (v_tenant_id, 'very_good', 'Çok İyi', 90, 100, 1),
+    (v_tenant_id, 'good', 'İyi', 75, 89.99, 2),
+    (v_tenant_id, 'expected', 'Beklenen', 60, 74.99, 3),
+    (v_tenant_id, 'development', 'Gelişim', 40, 59.99, 4),
+    (v_tenant_id, 'risk', 'Risk', 0, 39.99, 5)
+  ON CONFLICT (tenant_id, band) DO UPDATE SET
+    label = EXCLUDED.label,
+    min_score = EXCLUDED.min_score,
+    max_score = EXCLUDED.max_score,
+    sort_order = EXCLUDED.sort_order,
+    updated_at = NOW();
 
   IF v_cycle_id IS NOT NULL THEN
     INSERT INTO puls_performance.performance_scores (
