@@ -4,6 +4,7 @@ import { FileCheck2, Plus, Receipt, Wallet, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DataList } from '#/components/puls/DataList'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -35,8 +36,16 @@ export const Route = createFileRoute('/_app/masraf-kategorileri')({
       },
     ],
   }),
-  component: MasrafKategorileriPage,
+  component: MasrafKategorileriRoute,
 })
+
+function MasrafKategorileriRoute() {
+  return (
+    <SetupRouteGuard>
+      <MasrafKategorileriPage />
+    </SetupRouteGuard>
+  )
+}
 
 const CATEGORY_SKELETON_COUNT = 4
 const CATEGORY_TABLE_GRID_COLS =
@@ -187,7 +196,7 @@ function MasrafKategorileriPage() {
               {t('common.soon')}
             </StatusPill>
             <Button type="button" className="touch-target w-full" disabled>
-              {t('expenseCategorySetup.sheet.submit')}
+              {t('common.readOnlyAction')}
             </Button>
           </div>
         }

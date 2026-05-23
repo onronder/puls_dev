@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  canAccessSetupRoute,
   canShowSetupHub,
   filterSettingsSectionsForRole,
   isSetupAdmin,
@@ -41,6 +42,18 @@ describe('canShowSetupHub', () => {
     expect(canShowSetupHub('manager', 'employee')).toBe(false)
     expect(canShowSetupHub('employee', 'employee')).toBe(false)
     expect(canShowSetupHub('employee', 'manager')).toBe(false)
+  })
+})
+
+describe('canAccessSetupRoute', () => {
+  it('allows setup routes only for admin in manager mode', () => {
+    expect(canAccessSetupRoute('hr_admin', 'manager', '/erp')).toBe(true)
+    expect(canAccessSetupRoute('hr_admin', 'employee', '/erp')).toBe(false)
+    expect(canAccessSetupRoute('manager', 'manager', '/erp')).toBe(false)
+  })
+
+  it('allows non-setup paths for everyone', () => {
+    expect(canAccessSetupRoute('employee', 'employee', '/izin')).toBe(true)
   })
 })
 

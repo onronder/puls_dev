@@ -252,7 +252,7 @@ function MasrafPage() {
         locale={i18n.language}
         onSubmitted={(claim) => {
           setLocalClaims((prev) => [claim, ...prev])
-          toast.success(t('expense.toast.submitted'))
+          toast.info(t('expense.toast.submitted'))
         }}
         t={t}
       />

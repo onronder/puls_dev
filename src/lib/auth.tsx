@@ -14,6 +14,7 @@ import {
   logPersonaSwitch,
   resolvePersonaForUser,
 } from '#/lib/persona'
+import { readActivePersona, writeActivePersona } from '#/lib/persona-storage'
 import type { PersonaRole } from '#/lib/supabase'
 import { supabase } from '#/lib/supabase'
 
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadPersona = useCallback(async (userId: string) => {
     const { personaRole } = await resolvePersonaForUser(userId)
     setPersonaRole(personaRole)
-    setActivePersonaState(isDualPersonaRole(personaRole) ? 'manager' : 'employee')
+    setActivePersonaState(readActivePersona(userId, personaRole))
   }, [])
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setActivePersonaState(persona)
 
       if (session?.user) {
+        writeActivePersona(session.user.id, persona)
         const { tenantId } = await resolvePersonaForUser(session.user.id)
         await logPersonaSwitch({
           userId: session.user.id,

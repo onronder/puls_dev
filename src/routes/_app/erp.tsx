@@ -2,7 +2,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   Info,
   Link2,
@@ -10,8 +9,8 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 
+import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -33,8 +32,16 @@ export const Route = createFileRoute('/_app/erp')({
   head: () => ({
     meta: [{ title: 'ERP Entegrasyon — PULS' }],
   }),
-  component: ErpPage,
+  component: ErpRoute,
 })
+
+function ErpRoute() {
+  return (
+    <SetupRouteGuard>
+      <ErpPage />
+    </SetupRouteGuard>
+  )
+}
 
 function syncLogTone(level: DemoErpSyncLevel): string {
   switch (level) {
@@ -60,18 +67,6 @@ function ErpPage() {
     queryKey: ['demo-erp-overview'],
     queryFn: fetchDemoErpOverview,
   })
-
-  function handleMapFields() {
-    toast.info(t('erp.toast.apiPendingTitle'), {
-      description: t('erp.toast.mapDescription'),
-    })
-  }
-
-  function handleTestConnection() {
-    toast.info(t('erp.toast.apiPendingTitle'), {
-      description: t('erp.toast.testDescription'),
-    })
-  }
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -119,21 +114,16 @@ function ErpPage() {
       ) : null}
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <Button type="button" className="touch-target w-full sm:w-auto" onClick={handleMapFields}>
+        <Button type="button" className="touch-target w-full sm:w-auto" disabled>
           <Link2 className="h-4 w-4" />
           {t('erp.actions.mapFields')}
-          <ArrowRight className="h-3.5 w-3.5" />
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          className="touch-target w-full sm:w-auto"
-          onClick={handleTestConnection}
-        >
+        <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
           <RefreshCw className="h-4 w-4" />
           {t('erp.actions.testConnection')}
         </Button>
       </div>
+      <p className="mt-2 text-xs text-[var(--color-text-muted)]">{t('common.apiPending')}</p>
 
       <section className="mt-8">
         <SectionHeader

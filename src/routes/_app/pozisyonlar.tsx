@@ -4,6 +4,7 @@ import { Briefcase, ClipboardList, FileCheck2, Plus, Scale } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DataList } from '#/components/puls/DataList'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -32,8 +33,16 @@ export const Route = createFileRoute('/_app/pozisyonlar')({
       },
     ],
   }),
-  component: PozisyonlarPage,
+  component: PozisyonlarRoute,
 })
+
+function PozisyonlarRoute() {
+  return (
+    <SetupRouteGuard>
+      <PozisyonlarPage />
+    </SetupRouteGuard>
+  )
+}
 
 const POSITION_SKELETON_COUNT = 3
 const POSITION_TABLE_GRID_COLS = 'grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_88px]'
@@ -176,7 +185,7 @@ function PozisyonlarPage() {
               {t('common.soon')}
             </StatusPill>
             <Button type="button" className="touch-target w-full" disabled>
-              {t('positions.sheet.submit')}
+              {t('common.readOnlyAction')}
             </Button>
           </div>
         }

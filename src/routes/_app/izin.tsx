@@ -239,7 +239,7 @@ function IzinPage() {
         data={data}
         onSubmitted={(request) => {
           setLocalRequests((prev) => [request, ...prev])
-          toast.success(t('leave.toast.submitted'))
+          toast.info(t('leave.toast.submitted'))
         }}
         t={t}
       />

@@ -13,6 +13,7 @@
     "retry": "Tekrar dene",
     "readOnly": "Salt okunur",
     "readOnlyAction": "Kaydet",
+    "previewAdded": "Önizlemeye eklendi.",
     "pilotOutOfScope": "Pilot kapsamı dışında",
     "apiPending": "Canias API erişimi açılınca etkinleşecek"
   },
@@ -418,7 +419,7 @@
       "history": "Henüz izin kaydı yok."
     },
     "toast": {
-      "submitted": "İzin talebi onaya gönderildi (demo)."
+      "submitted": "İzin talebi önizlemeye eklendi."
     }
   },
   "leaveSetup": {
@@ -533,7 +534,7 @@
       "list": "Henüz masraf kaydı yok."
     },
     "toast": {
-      "submitted": "Masraf bildirimi onaya gönderildi (demo)."
+      "submitted": "Masraf bildirimi önizlemeye eklendi."
     }
   },
   "expenseSetup": {
@@ -719,8 +720,8 @@
     },
     "sheet": {
       "title": "Departman ekle",
-      "description": "Yeni departman oluşturma Yakında kapsamında açılacak.",
-      "mvpBadge": "Yakında",
+      "description": "Yeni departman oluşturma pilot sonrası açılacak.",
+      "mvpBadge": "Salt okunur",
       "fields": {
         "name": "Departman adı",
         "manager": "Departman yöneticisi"
@@ -761,8 +762,8 @@
     },
     "sheet": {
       "title": "Pozisyon ekle",
-      "description": "Yeni pozisyon oluşturma Yakında kapsamında açılacak.",
-      "mvpBadge": "Yakında",
+      "description": "Yeni pozisyon oluşturma pilot sonrası açılacak.",
+      "mvpBadge": "Salt okunur",
       "fields": {
         "name": "Pozisyon adı",
         "department": "Departman",
@@ -829,8 +830,8 @@
     },
     "sheet": {
       "title": "İzin tipi ekle",
-      "description": "Yeni izin tipi oluşturma Yakında kapsamında açılacak.",
-      "mvpBadge": "Yakında",
+      "description": "Yeni izin tipi oluşturma pilot sonrası açılacak.",
+      "mvpBadge": "Salt okunur",
       "fields": {
         "label": "İzin tipi adı",
         "days": "Gün hakkı"
@@ -879,8 +880,8 @@
     },
     "sheet": {
       "title": "Kategori ekle",
-      "description": "Yeni masraf kategorisi oluşturma Yakında kapsamında açılacak.",
-      "mvpBadge": "Yakında",
+      "description": "Yeni masraf kategorisi oluşturma pilot sonrası açılacak.",
+      "mvpBadge": "Salt okunur",
       "fields": {
         "name": "Kategori adı",
         "monthlyLimit": "Aylık limit",
@@ -1021,7 +1022,7 @@
     "sheet": {
       "title": "Gelişim planı taslağı",
       "description": "Hedef role yönelik kişiselleştirilmiş gelişim planı önizlemesi.",
-      "mvpBadge": "Yakında",
+      "mvpBadge": "Salt okunur",
       "submit": "Planı kaydet",
       "previewTitle": "Taslak özet",
       "previewHorizon": "30 / 90 / 180 gün hedefleri birleştirilmiş önizleme",
@@ -1076,7 +1077,7 @@
     },
     "schoolTeaser": {
       "title": "Okul™ önerisi",
-      "description": "Yetkinlik boşluklarına ve performans verisine göre öğrenme yolu önerileri Yakında'de gelecek."
+      "description": "Yetkinlik boşluklarına ve performans verisine göre öğrenme yolu önerileri pilot sonrası gelecek."
     }
   },
   "jobEvaluationSetup": {
@@ -1176,8 +1177,8 @@
     },
     "uploadSheet": {
       "title": "Belge yükle",
-      "description": "Sözleşme belgesi yükleme akışı Yakında'de açılacak.",
-      "mvpBadge": "Yakında",
+      "description": "Sözleşme belgesi yükleme akışı pilot sonrası açılacak.",
+      "mvpBadge": "Salt okunur",
       "submit": "Yükle",
       "fields": {
         "employee": "Çalışan",
@@ -1204,8 +1205,8 @@
     },
     "reminderSheet": {
       "title": "Hatırlatıcı kur",
-      "description": "Sözleşme bitiş hatırlatıcıları Yakında'de yapılandırılabilecek.",
-      "mvpBadge": "Yakında",
+      "description": "Sözleşme bitiş hatırlatıcıları pilot sonrası yapılandırılabilecek.",
+      "mvpBadge": "Salt okunur",
       "submit": "Hatırlatıcı kaydet",
       "fields": {
         "daysBefore": "Kaç gün önce"
@@ -1272,8 +1273,8 @@
     },
     "editSheet": {
       "title": "Bilgileri düzenle",
-      "description": "Profil düzenleme formu Yakında'de açılacak.",
-      "mvpBadge": "Yakında",
+      "description": "Profil düzenleme formu bu sürümde salt okunur.",
+      "mvpBadge": "Salt okunur",
       "submit": "Kaydet",
       "fields": {
         "name": "Ad soyad",
@@ -1288,8 +1289,8 @@
     },
     "securitySheet": {
       "title": "Güvenlik ayarları",
-      "description": "Şifre ve oturum yönetimi Yakında'de yapılandırılabilecek.",
-      "mvpBadge": "Yakında",
+      "description": "Şifre ve oturum yönetimi pilot sonrası yapılandırılabilecek.",
+      "mvpBadge": "Salt okunur",
       "submit": "Kaydet",
       "fields": {
         "password": "Yeni şifre",
@@ -1319,7 +1320,7 @@
     },
     "sectionsList": "Tercihler",
     "sheet": {
-      "mvpBadge": "Yakında",
+      "mvpBadge": "Salt okunur",
       "submit": "Kaydet"
     },
     "sections": {
@@ -1327,42 +1328,42 @@
         "title": "Hesap & güvenlik",
         "summary": "Şifre, 2FA, oturum geçmişi",
         "action": "Yönet",
-        "sheetDescription": "Hesap ve güvenlik ayarları Yakında'de yapılandırılabilecek.",
+        "sheetDescription": "Hesap ve güvenlik ayarları bu sürümde salt okunur.",
         "sheetBody": "Şifre değiştirme, iki faktörlü doğrulama ve oturum geçmişi bu sürümde salt okunurdur."
       },
       "tenant": {
         "title": "Tenant ayarları",
         "summary": "Mert Teknik A.Ş. · Pilot paket",
         "action": "Aç",
-        "sheetDescription": "Tenant yapılandırması Yakında'de genişletilecek.",
+        "sheetDescription": "Tenant yapılandırması pilot sonrası genişletilecek.",
         "sheetBody": "Paket, lisans ve tenant düzeyi tercihler burada yönetilecek."
       },
       "notifications": {
         "title": "Bildirim tercihleri",
         "summary": "E-posta · Uygulama içi",
         "action": "Düzenle",
-        "sheetDescription": "Bildirim kanalları Yakında'de özelleştirilebilecek.",
+        "sheetDescription": "Bildirim kanalları pilot sonrası özelleştirilebilecek.",
         "sheetBody": "E-posta ve uygulama içi bildirim tercihleri şu an demo özet olarak gösterilir."
       },
       "locale": {
         "title": "Dil ve bölge",
         "summary": "tr-TR · Europe/Istanbul",
         "action": "Değiştir",
-        "sheetDescription": "Dil ve bölge seçimi Yakında'de uygulama genelinde açılacak.",
+        "sheetDescription": "Dil ve bölge seçimi pilot sonrası uygulama genelinde açılacak.",
         "sheetBody": "Mevcut dil tr-TR, saat dilimi Europe/Istanbul olarak ayarlı."
       },
       "theme": {
         "title": "Tema",
         "summary": "Sistem · Açık · Koyu",
         "action": "Seç",
-        "sheetDescription": "Tema seçimi Yakında'de etkinleştirilecek.",
+        "sheetDescription": "Tema seçimi pilot sonrası etkinleştirilecek.",
         "sheetBody": "Sistem, açık ve koyu tema seçenekleri hazırlanıyor."
       },
       "roleAccess": {
         "title": "Rol & erişim",
         "summary": "İK Admin · 3 modül tam yetki",
         "action": "İncele",
-        "sheetDescription": "Rol ve erişim detayları Yakında'de görüntülenecek.",
+        "sheetDescription": "Rol ve erişim detayları bu sürümde salt okunur.",
         "sheetBody": "Modül bazlı yetkiler ve rol atamaları bu ekranda yönetilecek."
       }
     },
@@ -1386,7 +1387,7 @@
     },
     "hero": {
       "title": "AI Coach",
-      "description": "Yakında'de açılacak. Aktif chat henüz yok; aşağıda neler yapacağını ve hazırlık durumunu görebilirsin."
+      "description": "Pilot sonrası açılacak. Aktif sohbet henüz yok; aşağıda neler yapacağını ve hazırlık durumunu görebilirsin."
     },
     "sections": {
       "capabilities": "Neler yapacak",
@@ -1412,7 +1413,7 @@
       }
     },
     "privacy": {
-      "body": "Kişisel görüşmeler yöneticilere açık olmayacak. Erişim politikası ve veri kapsamı Yakında'de netleşecek."
+      "body": "Kişisel görüşmeler yöneticilere açık olmayacak. Erişim politikası ve veri kapsamı pilot sonrası netleşecek."
     },
     "readiness": {
       "vaultSchema": "Vault şeması hazır",
@@ -1429,8 +1430,8 @@
     },
     "notifySheet": {
       "title": "Beni bilgilendir",
-      "description": "AI Koç Yakında'de açıldığında bildirim almak için kaydol.",
-      "mvpBadge": "Yakında",
+      "description": "AI Koç pilot sonrası açıldığında bildirim almak için kaydol.",
+      "mvpBadge": "Salt okunur",
       "submit": "Kaydol",
       "fields": {
         "email": "E-posta"

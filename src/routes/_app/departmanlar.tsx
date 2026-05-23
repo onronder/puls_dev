@@ -4,6 +4,7 @@ import { Building2, Plus, UserCheck, UserMinus, Users } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DataList } from '#/components/puls/DataList'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -32,8 +33,16 @@ export const Route = createFileRoute('/_app/departmanlar')({
       },
     ],
   }),
-  component: DepartmanlarPage,
+  component: DepartmanlarRoute,
 })
+
+function DepartmanlarRoute() {
+  return (
+    <SetupRouteGuard>
+      <DepartmanlarPage />
+    </SetupRouteGuard>
+  )
+}
 
 const DEPARTMENT_SKELETON_COUNT = 3
 const DEPARTMENT_TABLE_GRID_COLS = 'grid-cols-[1fr_1fr_100px_100px]'
@@ -183,7 +192,7 @@ function DepartmanlarPage() {
               {t('common.soon')}
             </StatusPill>
             <Button type="button" className="touch-target w-full" disabled>
-              {t('departments.sheet.submit')}
+              {t('common.readOnlyAction')}
             </Button>
           </div>
         }
