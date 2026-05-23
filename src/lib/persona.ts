@@ -8,7 +8,7 @@ export function mapPersonaRole(role: PersonaRole | null | undefined): PersonaRol
 }
 
 export function isDualPersonaRole(role: PersonaRole | null | undefined): boolean {
-  return role === 'manager' || role === 'hr_admin'
+  return role === 'manager' || role === 'hr_admin' || role === 'superadmin'
 }
 
 /** Resolve persona from Puls employees row, else Lovable user_roles. */

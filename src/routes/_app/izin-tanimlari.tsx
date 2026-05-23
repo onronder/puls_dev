@@ -20,13 +20,9 @@ import {
   fetchDemoLeaveTypesOverview,
   type DemoLeaveTypeRule,
 } from '#/lib/demo/puls-demo-data'
-import { requireSetupAdminRoute } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/izin-tanimlari')({
-  beforeLoad: async () => {
-    await requireSetupAdminRoute()
-  },
   head: () => ({
     meta: [
       { title: i18n.t('leaveTypeSetup.meta.title') },
