@@ -19,6 +19,7 @@ Bu klasor, UI migration sonrasinda production veri katmanina gecis icin alan baz
 ## Mevcut Kararlar
 
 - Ilk gercek implementasyon adimi `01-db-schema-foundation` olarak ele alinacak; `PULS_FIELD_OWNERSHIP_MATRIX.csv` dokumantasyon fazi olarak tamamlanmistir.
+- Schema foundation migration: `supabase/migrations/20260523143000_puls_schema_foundation.sql` (`puls_core`, `puls_integration`, `puls_audit`).
 - Yeni production veri modeli icin temiz PULS namespace/schema hedeflenir: `puls_core`, `puls_workflow`, `puls_performance`, `puls_integration`, `puls_calc`, `puls_audit`, `puls_vault`.
 - Mevcut Lovable/public tablolar migration gecmisi olarak korunur; yeni hedef model adapter katmani ile soyutlanir.
 - Varsayilan sync yonu `ERP -> PULS` read-oriented akistir; write-back kapali baslar ve tenant bazli karar ister.
