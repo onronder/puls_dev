@@ -39,3 +39,6 @@
 -- 13) Hotfix 3: assigned approver (yonetici@mertteknik.demo) reads parent leave/expense via RLS
 --     approval_requests visible AND leave_requests/expense_claims parent detail visible
 --     Onay bekleyenler tab count > 0; pending-only (decided approvals need future history policy)
+
+-- 14) 07 org authority: assigned approver reads requester full_name via can_read_employee RLS
+--     After 20260524143000, approval tab shows requester name (not em dash)

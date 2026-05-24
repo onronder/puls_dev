@@ -42,11 +42,22 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.employees (anonymous_id, tenant_id, user_id, email, full_name, job_title, department_id, position_id, persona_role, hire_date) VALUES
+    ('44444444-4444-4444-4444-444444444402', v_tenant_id, NULL, 'gm@mertteknik.demo', 'Demo Genel Müdür', 'Genel Müdür', '22222222-2222-2222-2222-222222222201', '33333333-3333-3333-3333-333333333301', 'manager', '2010-01-15'),
     ('44444444-4444-4444-4444-444444444401', v_tenant_id, v_user_id, 'demo@mertteknik.local', 'Demo İK Yöneticisi', 'İK Müdürü', '22222222-2222-2222-2222-222222222202', '33333333-3333-3333-3333-333333333302', 'hr_admin', '2012-03-01'),
     ('44444444-4444-4444-4444-444444444403', v_tenant_id, NULL, 'calisan@mertteknik.demo', 'Demo Çalışan', 'Üretim Uzmanı', '22222222-2222-2222-2222-222222222203', '33333333-3333-3333-3333-333333333303', 'employee', '2020-06-01'),
     ('44444444-4444-4444-4444-444444444404', v_tenant_id, NULL, 'yonetici@mertteknik.demo', 'Demo Yönetici', 'Üretim Şefi', '22222222-2222-2222-2222-222222222203', '33333333-3333-3333-3333-333333333303', 'manager', '2015-09-10'),
     ('44444444-4444-4444-4444-444444444405', v_tenant_id, NULL, 'ik2@mertteknik.demo', 'Demo İK Uzmanı', 'İK Uzmanı', '22222222-2222-2222-2222-222222222202', '33333333-3333-3333-3333-333333333302', 'employee', '2018-11-20')
   ON CONFLICT (anonymous_id) DO NOTHING;
+
+  -- Wire department managers after employees exist (FK: manager_employee_id → public.employees)
+  UPDATE public.departments SET manager_employee_id = '44444444-4444-4444-4444-444444444402'::uuid
+  WHERE id = '22222222-2222-2222-2222-222222222201'::uuid AND tenant_id = v_tenant_id;
+
+  UPDATE public.departments SET manager_employee_id = '44444444-4444-4444-4444-444444444401'::uuid
+  WHERE id = '22222222-2222-2222-2222-222222222202'::uuid AND tenant_id = v_tenant_id;
+
+  UPDATE public.departments SET manager_employee_id = '44444444-4444-4444-4444-444444444404'::uuid
+  WHERE id = '22222222-2222-2222-2222-222222222203'::uuid AND tenant_id = v_tenant_id;
 
   IF NOT EXISTS (SELECT 1 FROM public.user_tenants WHERE user_id = v_user_id AND tenant_id = v_tenant_id) THEN
     INSERT INTO public.user_tenants (user_id, tenant_id, is_default) VALUES (v_user_id, v_tenant_id, TRUE);
