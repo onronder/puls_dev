@@ -32,3 +32,6 @@
 
 -- 11) Hotfix: approval overview for requester shows zero self-approval rows
 --     (approver_employee_id = me AND requester_employee_id != me)
+
+-- 12) Hotfix 2: after 20260524130000, workflow create RPC inserts audit_logs with puls_core.tenant_id
+--     Confirm: create_leave_request / create_expense_claim succeed, audit row present, full rollback on failure
