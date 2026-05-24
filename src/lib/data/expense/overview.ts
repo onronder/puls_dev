@@ -77,24 +77,16 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       .eq('tenant_id', ctx.tenantId)
       .eq('is_active', true)
       .order('name', { ascending: true }),
-    ctx.personaRole === 'manager' || ctx.personaRole === 'hr_admin' || ctx.personaRole === 'superadmin'
-      ? (() => {
-          let query = pulsWorkflow()
-            .from('approval_requests')
-            .select('id, expense_claim_id, requester_employee_id')
-            .eq('tenant_id', ctx.tenantId)
-            .eq('module', 'expense')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false })
-            .limit(10)
-
-          if (ctx.personaRole === 'manager') {
-            query = query.eq('approver_employee_id', ctx.employeeId)
-          }
-
-          return query
-        })()
-      : Promise.resolve({ data: [], error: null }),
+    pulsWorkflow()
+      .from('approval_requests')
+      .select('id, expense_claim_id, requester_employee_id')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('module', 'expense')
+      .eq('status', 'pending')
+      .eq('approver_employee_id', ctx.employeeId)
+      .neq('requester_employee_id', ctx.employeeId)
+      .order('created_at', { ascending: false })
+      .limit(10),
   ])
 
   if (overviewRow.error) {

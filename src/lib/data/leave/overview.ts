@@ -94,8 +94,8 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
         end_date,
         business_days,
         status,
-        delegate:delegate_employee_id ( full_name ),
-        leave_types ( name )
+        delegate_employee_id,
+        leave_type_id
       `,
       )
       .eq('tenant_id', ctx.tenantId)
@@ -108,24 +108,16 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
       .eq('tenant_id', ctx.tenantId)
       .eq('is_active', true)
       .order('name', { ascending: true }),
-    ctx.personaRole === 'manager' || ctx.personaRole === 'hr_admin' || ctx.personaRole === 'superadmin'
-      ? (() => {
-          let query = pulsWorkflow()
-            .from('approval_requests')
-            .select('id, leave_request_id, requester_employee_id')
-            .eq('tenant_id', ctx.tenantId)
-            .eq('module', 'leave')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: true })
-            .limit(10)
-
-          if (ctx.personaRole === 'manager') {
-            query = query.eq('approver_employee_id', ctx.employeeId)
-          }
-
-          return query
-        })()
-      : Promise.resolve({ data: [], error: null }),
+    pulsWorkflow()
+      .from('approval_requests')
+      .select('id, leave_request_id, requester_employee_id')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('module', 'leave')
+      .eq('status', 'pending')
+      .eq('approver_employee_id', ctx.employeeId)
+      .neq('requester_employee_id', ctx.employeeId)
+      .order('created_at', { ascending: true })
+      .limit(10),
   ])
 
   if (overviewRow.error) {
@@ -150,6 +142,13 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
   }
 
   const approvalRows = teamPendingRow.data ?? []
+  const historyRows = requestsRow.data ?? []
+  const historyDelegateIds = uniqueNonNullIds(
+    historyRows.map((row) => row.delegate_employee_id as string | null),
+  )
+  const historyLeaveTypeIds = uniqueNonNullIds(
+    historyRows.map((row) => row.leave_type_id as string | null),
+  )
   const leaveRequestIds = uniqueNonNullIds(
     approvalRows.map((row) => row.leave_request_id as string | null),
   )
@@ -157,7 +156,8 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
     approvalRows.map((row) => row.requester_employee_id as string | null),
   )
 
-  const [leaveRequestRows, requesterNameMap] = await Promise.all([
+  const [historyDelegateNameMap, leaveRequestRows, requesterNameMap] = await Promise.all([
+    fetchNamesByIds('employees', ctx.tenantId, historyDelegateIds),
     leaveRequestIds.length > 0
       ? pulsWorkflow()
           .from('leave_requests')
@@ -177,9 +177,10 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
     )
   }
 
-  const leaveTypeIds = uniqueNonNullIds(
-    (leaveRequestRows.data ?? []).map((row) => row.leave_type_id as string | null),
-  )
+  const leaveTypeIds = uniqueNonNullIds([
+    ...historyLeaveTypeIds,
+    ...(leaveRequestRows.data ?? []).map((row) => row.leave_type_id as string | null),
+  ])
 
   const leaveTypeNameMap =
     leaveTypeIds.length > 0
@@ -232,37 +233,30 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
     })
   }
 
-  const requests: DemoLeaveRequest[] = (requestsRow.data ?? []).map((row) => {
-    const leaveType = row.leave_types as { name?: string } | null
-    const delegate = row.delegate as { full_name?: string } | null
-    return {
+  const requests: DemoLeaveRequest[] = historyRows.map((row) => ({
+    id: row.id as string,
+    typeLabel: leaveTypeNameMap.get(row.leave_type_id as string) ?? '—',
+    startDate: row.start_date as string,
+    endDate: row.end_date as string,
+    businessDays: Number(row.business_days ?? 0),
+    delegateName: historyDelegateNameMap.get(row.delegate_employee_id as string) ?? undefined,
+    status: row.status as LeaveStatus,
+  }))
+
+  const today = new Date().toISOString().slice(0, 10)
+  const upcoming: DemoUpcomingLeave[] = historyRows
+    .filter((row) => (row.start_date as string) >= today && row.status !== 'rejected')
+    .slice(0, 5)
+    .map((row) => ({
       id: row.id as string,
-      typeLabel: leaveType?.name ?? '—',
+      whoName: ctx.employeeName ?? 'Sen',
+      isSelf: true,
+      typeLabel: leaveTypeNameMap.get(row.leave_type_id as string) ?? '—',
       startDate: row.start_date as string,
       endDate: row.end_date as string,
       businessDays: Number(row.business_days ?? 0),
-      delegateName: delegate?.full_name ?? undefined,
       status: row.status as LeaveStatus,
-    }
-  })
-
-  const today = new Date().toISOString().slice(0, 10)
-  const upcoming: DemoUpcomingLeave[] = (requestsRow.data ?? [])
-    .filter((row) => (row.start_date as string) >= today && row.status !== 'rejected')
-    .slice(0, 5)
-    .map((row) => {
-      const leaveType = row.leave_types as { name?: string } | null
-      return {
-        id: row.id as string,
-        whoName: ctx.employeeName ?? 'Sen',
-        isSelf: true,
-        typeLabel: leaveType?.name ?? '—',
-        startDate: row.start_date as string,
-        endDate: row.end_date as string,
-        businessDays: Number(row.business_days ?? 0),
-        status: row.status as LeaveStatus,
-      }
-    })
+    }))
 
   const pendingApprovals: DemoLeaveApproval[] = approvalRows.flatMap((row) => {
     const leaveRequest = leaveRequestById.get(row.leave_request_id as string)

@@ -26,3 +26,9 @@
 -- 8) Cross-year leave (Dec 30 – Jan 2) → PULS_CROSS_YEAR_LEAVE
 
 -- 9) Balance year: create leave with start_date in next calendar year locks that year's balance row
+
+-- 10) Hotfix: hr_admin with manager_employee_id IS NULL creates leave/expense
+--     → resolve_approver picks tenant manager persona (approver != requester)
+
+-- 11) Hotfix: approval overview for requester shows zero self-approval rows
+--     (approver_employee_id = me AND requester_employee_id != me)
