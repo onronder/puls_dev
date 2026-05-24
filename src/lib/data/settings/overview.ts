@@ -1,7 +1,6 @@
 import { fetchDemoSettingsOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoSettingsOverview } from '#/lib/demo/puls-demo-data'
-import { fromSupabaseError } from '#/lib/data/errors'
-import { pulsAudit, pulsCalc, resolveTenantContext } from '#/lib/data/client'
+import { resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData } from '#/lib/data/result'
 
 export type SettingsOverview = DemoSettingsOverview
@@ -68,34 +67,6 @@ function emptySettingsOverview(): SettingsOverview {
 async function fetchRealSettingsOverview(userId: string): Promise<SettingsOverview> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) return emptySettingsOverview()
-
-  const since = new Date()
-  since.setDate(since.getDate() - 30)
-
-  const [readinessRow, auditCount] = await Promise.all([
-    pulsCalc()
-      .from('setup_readiness_summary')
-      .select('overall_readiness_pct')
-      .eq('tenant_id', ctx.tenantId)
-      .maybeSingle(),
-    pulsAudit()
-      .from('audit_logs')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', ctx.tenantId)
-      .gte('occurred_at', since.toISOString()),
-  ])
-
-  if (readinessRow.error) {
-    throw fromSupabaseError(
-      readinessRow.error,
-      'fetchSettingsOverview',
-      'puls_calc',
-      'setup_readiness_summary',
-    )
-  }
-  if (auditCount.error) {
-    throw fromSupabaseError(auditCount.error, 'fetchSettingsOverview', 'puls_audit', 'audit_logs')
-  }
 
   return {
     auditLogDays: 30,

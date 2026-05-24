@@ -29,6 +29,13 @@ export const Route = createFileRoute('/_app/profil')({
   component: ProfilPage,
 })
 
+function displayMaybeKey(
+  value: string,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  return value.includes('.') ? t(value) : value
+}
+
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-[minmax(0,110px)_minmax(0,1fr)] items-center gap-3 px-4 py-3 sm:grid-cols-[minmax(0,160px)_minmax(0,1fr)]">
@@ -134,8 +141,8 @@ function ProfilPage() {
             <SectionHeader title={t('profileSetup.sections.personalInfo')} />
             <dl className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
               <InfoRow label={t('profileSetup.fields.email')} value={email} />
-              <InfoRow label={t('profileSetup.fields.department')} value={t(profile.departmentKey)} />
-              <InfoRow label={t('profileSetup.fields.position')} value={t(profile.positionKey)} />
+              <InfoRow label={t('profileSetup.fields.department')} value={displayMaybeKey(profile.departmentKey, t)} />
+              <InfoRow label={t('profileSetup.fields.position')} value={displayMaybeKey(profile.positionKey, t)} />
               <InfoRow label={t('profileSetup.fields.tenant')} value={tenantName} />
               <InfoRow label={t('profileSetup.fields.persona')} value={personaLabel} />
             </dl>
@@ -163,7 +170,7 @@ function ProfilPage() {
               />
               <MetricCard
                 label={t('profileSetup.selfHr.performance')}
-                value={t(profile.performanceCycleKey)}
+                value={displayMaybeKey(profile.performanceCycleKey, t)}
                 icon={Target}
                 hint={t(profile.performanceHintKey)}
               />

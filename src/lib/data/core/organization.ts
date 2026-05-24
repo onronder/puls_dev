@@ -5,6 +5,13 @@ import {
 import type { DemoDepartmentsOverview, DemoPositionsOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, resolveTenantContext } from '#/lib/data/client'
+import {
+  computeOpenHeadcount,
+  countActiveEmployeesByDepartment,
+  countActiveEmployeesByPosition,
+  fetchNamesByIds,
+  uniqueNonNullIds,
+} from '#/lib/data/core/lookups'
 import { resolveAdapterData } from '#/lib/data/result'
 
 export type DepartmentsOverview = DemoDepartmentsOverview
@@ -58,33 +65,21 @@ async function fetchRealDepartmentsOverview(userId: string): Promise<Departments
     throw fromSupabaseError(deptError, 'fetchDepartmentsOverview', 'puls_core', 'departments')
   }
 
-  const employeeCounts = await pulsCore()
-    .from('employees')
-    .select('department_id')
-    .eq('tenant_id', ctx.tenantId)
-    .eq('employment_status', 'active')
+  const managerIds = uniqueNonNullIds(
+    (departments ?? []).map((row) => row.manager_employee_id as string | null),
+  )
 
-  if (employeeCounts.error) {
-    throw fromSupabaseError(
-      employeeCounts.error,
-      'fetchDepartmentsOverview',
-      'puls_core',
-      'employees',
-    )
-  }
-
-  const countByDept = new Map<string, number>()
-  for (const row of employeeCounts.data ?? []) {
-    const deptId = row.department_id as string | null
-    if (!deptId) continue
-    countByDept.set(deptId, (countByDept.get(deptId) ?? 0) + 1)
-  }
+  const [countByDept, managerNameMap] = await Promise.all([
+    countActiveEmployeesByDepartment(ctx.tenantId),
+    fetchNamesByIds('employees', ctx.tenantId, managerIds),
+  ])
 
   const mappedDepartments = (departments ?? []).map((row) => {
+    const managerId = row.manager_employee_id as string | null
     return {
       id: row.id as string,
       name: row.name as string,
-      manager: row.manager_employee_id ? '—' : '—',
+      manager: managerId ? (managerNameMap.get(managerId) ?? '—') : '—',
       count: countByDept.get(row.id as string) ?? 0,
       status: 'active' as const,
     }
@@ -115,14 +110,7 @@ async function fetchRealPositionsOverview(userId: string): Promise<PositionsOver
         .maybeSingle(),
       pulsCore()
         .from('positions')
-        .select(
-          `
-          id,
-          name,
-          norm_headcount,
-          department:departments ( name )
-        `,
-        )
+        .select('id, name, norm_headcount, department_id')
         .eq('tenant_id', ctx.tenantId)
         .eq('is_active', true)
         .order('name', { ascending: true }),
@@ -135,22 +123,35 @@ async function fetchRealPositionsOverview(userId: string): Promise<PositionsOver
     throw fromSupabaseError(posError, 'fetchPositionsOverview', 'puls_core', 'positions')
   }
 
+  const departmentIds = uniqueNonNullIds(
+    (positions ?? []).map((row) => row.department_id as string | null),
+  )
+
+  const [countByPosition, departmentNameMap] = await Promise.all([
+    countActiveEmployeesByPosition(ctx.tenantId),
+    fetchNamesByIds('departments', ctx.tenantId, departmentIds),
+  ])
+
   const mappedPositions = (positions ?? []).map((row) => {
-    const department = row.department as { name?: string } | null
+    const positionId = row.id as string
+    const departmentId = row.department_id as string | null
+    const normHeadcount = Number(row.norm_headcount ?? 0)
+    const filledCount = countByPosition.get(positionId) ?? 0
+
     return {
-      id: row.id as string,
+      id: positionId,
       name: row.name as string,
-      department: department?.name ?? '—',
+      department: departmentId ? (departmentNameMap.get(departmentId) ?? '—') : '—',
       template: '—',
       evaluation: 0,
-      open: Math.max(0, Number(row.norm_headcount ?? 0)),
+      open: computeOpenHeadcount(normHeadcount, filledCount),
     }
   })
 
   return {
     positionCount: Number(orgOverview?.position_total_count ?? mappedPositions.length),
     openPositions: Number(orgOverview?.open_position_count ?? 0),
-    templateLinked: mappedPositions.length,
+    templateLinked: 0,
     evaluationComplete: 0,
     positions: mappedPositions,
   }
