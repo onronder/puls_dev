@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   Check,
@@ -12,7 +12,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -30,7 +30,13 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { Textarea } from '#/components/ui/textarea'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchExpenseOverview, type ExpenseOverview } from '#/lib/data'
+import {
+  createExpenseClaim,
+  decideApprovalRequest,
+  fetchExpenseOverview,
+  isDataAdapterError,
+  type ExpenseOverview,
+} from '#/lib/data'
 import { formatCurrency, parseDecimalAmount } from '#/lib/format'
 import { cn } from '#/lib/utils'
 
@@ -60,10 +66,28 @@ type FormErrors = {
 
 const POLICY_RECEIPT_THRESHOLD = 2000
 
+function toastAdapterError(
+  error: unknown,
+  t: ReturnType<typeof useTranslation>['t'],
+  fallbackKey: string,
+) {
+  if (isDataAdapterError(error) && error.i18nKey) {
+    toast.error(t(error.i18nKey))
+    return
+  }
+  toast.error(t(fallbackKey))
+}
+
+function invalidateExpenseQueries(queryClient: ReturnType<typeof useQueryClient>, userId: string) {
+  void queryClient.invalidateQueries({ queryKey: ['expense-overview', userId] })
+  void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', userId] })
+}
+
 function expenseStatusTone(status: ExpenseStatus): StatusTone {
   switch (status) {
     case 'approved':
     case 'paid':
+    case 'exported':
       return 'success'
     case 'pending':
       return 'warning'
@@ -111,20 +135,15 @@ function validateExpenseForm(
 function MasrafPage() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [tab, setTab] = useState<ExpenseTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [localClaims, setLocalClaims] = useState<ExpenseOverview['claims'][number][]>([])
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['expense-overview', user?.id],
     queryFn: () => fetchExpenseOverview(user!.id),
     enabled: Boolean(user?.id),
   })
-
-  const allClaims = useMemo(
-    () => [...localClaims, ...(data?.claims ?? [])],
-    [localClaims, data?.claims],
-  )
 
   const usedPct = data ? Math.round((data.approvedThisMonth / data.monthlyLimit) * 100) : 0
 
@@ -220,7 +239,7 @@ function MasrafPage() {
               options={[
                 {
                   value: 'mine',
-                  label: `${t('expenseSetup.tabs.mine')} (${allClaims.length})`,
+                  label: `${t('expenseSetup.tabs.mine')} (${data.claims.length})`,
                 },
                 {
                   value: 'approvals',
@@ -232,11 +251,17 @@ function MasrafPage() {
           </div>
 
           {tab === 'mine' ? (
-            <RecentTab claims={allClaims} locale={i18n.language} t={t} />
+            <RecentTab claims={data.claims} locale={i18n.language} t={t} />
           ) : null}
 
           {tab === 'approvals' ? (
-            <ApprovalsTab approvals={data.pendingApprovals} locale={i18n.language} t={t} />
+            <ApprovalsTab
+              approvals={data.pendingApprovals}
+              locale={i18n.language}
+              t={t}
+              userId={user?.id}
+              queryClient={queryClient}
+            />
           ) : null}
 
           {tab === 'cats' ? (
@@ -250,10 +275,8 @@ function MasrafPage() {
         onOpenChange={setSheetOpen}
         data={data}
         locale={i18n.language}
-        onSubmitted={(claim) => {
-          setLocalClaims((prev) => [claim, ...prev])
-          toast.info(t('expense.toast.submitted'))
-        }}
+        userId={user?.id}
+        queryClient={queryClient}
         t={t}
       />
     </div>
@@ -344,20 +367,34 @@ type ApprovalsTabProps = {
   approvals: ExpenseOverview['pendingApprovals']
   locale: string
   t: ReturnType<typeof useTranslation>['t']
+  userId: string | undefined
+  queryClient: ReturnType<typeof useQueryClient>
 }
 
-function ApprovalsTab({ approvals, locale, t }: ApprovalsTabProps) {
-  function handleDemoApprove(title: string) {
-    toast.info(t('expenseSetup.approval.demoApproveTitle'), {
-      description: t('expenseSetup.approval.demoApproveDesc', { title }),
-    })
-  }
-
-  function handleDemoReject(title: string) {
-    toast.info(t('expenseSetup.approval.demoRejectTitle'), {
-      description: t('expenseSetup.approval.demoRejectDesc', { title }),
-    })
-  }
+function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTabProps) {
+  const decideMutation = useMutation({
+    mutationFn: (payload: { approvalRequestId: string; decision: 'approved' | 'rejected' }) => {
+      if (!userId) throw new Error('missing user')
+      return decideApprovalRequest(userId, payload)
+    },
+    onSuccess: (_result, variables) => {
+      if (userId) invalidateExpenseQueries(queryClient, userId)
+      const approval = approvals.find((item) => item.id === variables.approvalRequestId)
+      const title = approval?.title ?? '—'
+      if (variables.decision === 'approved') {
+        toast.success(t('expenseSetup.approval.approvedTitle'), {
+          description: t('expenseSetup.approval.approvedDesc', { title }),
+        })
+      } else {
+        toast.success(t('expenseSetup.approval.rejectedTitle'), {
+          description: t('expenseSetup.approval.rejectedDesc', { title }),
+        })
+      }
+    },
+    onError: (error) => {
+      toastAdapterError(error, t, 'approval.error.forbidden')
+    },
+  })
 
   return (
     <section className="mt-6">
@@ -395,7 +432,13 @@ function ApprovalsTab({ approvals, locale, t }: ApprovalsTabProps) {
                   variant="outline"
                   size="sm"
                   className="min-h-11 flex-1 sm:flex-none"
-                  onClick={() => handleDemoReject(approval.title)}
+                  disabled={decideMutation.isPending}
+                  onClick={() =>
+                    decideMutation.mutate({
+                      approvalRequestId: approval.id,
+                      decision: 'rejected',
+                    })
+                  }
                 >
                   <X className="h-3.5 w-3.5" />
                   {t('expenseSetup.approval.reject')}
@@ -404,7 +447,13 @@ function ApprovalsTab({ approvals, locale, t }: ApprovalsTabProps) {
                   type="button"
                   size="sm"
                   className="min-h-11 flex-1 sm:flex-none"
-                  onClick={() => handleDemoApprove(approval.title)}
+                  disabled={decideMutation.isPending}
+                  onClick={() =>
+                    decideMutation.mutate({
+                      approvalRequestId: approval.id,
+                      decision: 'approved',
+                    })
+                  }
                 >
                   <Check className="h-3.5 w-3.5" />
                   {t('expenseSetup.approval.approve')}
@@ -466,7 +515,8 @@ type ExpenseFormSheetProps = {
   onOpenChange: (open: boolean) => void
   data: ExpenseOverview | undefined
   locale: string
-  onSubmitted: (claim: ExpenseOverview['claims'][number]) => void
+  userId: string | undefined
+  queryClient: ReturnType<typeof useQueryClient>
   t: ReturnType<typeof useTranslation>['t']
 }
 
@@ -475,7 +525,8 @@ function ExpenseFormSheet({
   onOpenChange,
   data,
   locale,
-  onSubmitted,
+  userId,
+  queryClient,
   t,
 }: ExpenseFormSheetProps) {
   const [category, setCategory] = useState('')
@@ -484,8 +535,22 @@ function ExpenseFormSheet({
   const [vatIncluded, setVatIncluded] = useState(true)
   const [expenseDate, setExpenseDate] = useState('')
   const [note, setNote] = useState('')
-  const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
+
+  const createMutation = useMutation({
+    mutationFn: (payload: Parameters<typeof createExpenseClaim>[1]) => {
+      if (!userId) throw new Error('missing user')
+      return createExpenseClaim(userId, payload)
+    },
+    onSuccess: () => {
+      if (userId) invalidateExpenseQueries(queryClient, userId)
+      toast.success(t('expense.toast.submitted'))
+      handleOpenChange(false)
+    },
+    onError: (error) => {
+      toastAdapterError(error, t, 'expense.error.submitFailed')
+    },
+  })
 
   const amountNum = parseDecimalAmount(amount)
   const overPolicy = Number.isFinite(amountNum) && amountNum > POLICY_RECEIPT_THRESHOLD
@@ -523,21 +588,18 @@ function ExpenseFormSheet({
       return
     }
 
-    setSubmitting(true)
-    window.setTimeout(() => {
-      setSubmitting(false)
-      onSubmitted({
-        id: `local-${Date.now()}`,
-        title: note.trim() || t('expense.form.defaultTitle'),
-        category: categoryLabel,
-        amount: parsedAmount,
-        currency,
-        expenseDate,
-        status: 'pending',
-      })
-      handleOpenChange(false)
-    }, 700)
+    createMutation.mutate({
+      categoryId: category,
+      title: note.trim() || null,
+      amount: parsedAmount,
+      currency,
+      vatIncluded,
+      expenseDate,
+      description: note.trim() || null,
+    })
   }
+
+  const isSubmitting = createMutation.isPending
 
   return (
     <SheetShell
@@ -560,9 +622,9 @@ function ExpenseFormSheet({
             type="submit"
             form="new-expense-form"
             className="min-h-11 flex-1"
-            disabled={submitting || !data}
+            disabled={isSubmitting || !data}
           >
-            {submitting ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t('expense.actions.submitting')}

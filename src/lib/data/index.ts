@@ -16,8 +16,11 @@ export {
 export {
   DataAdapterError,
   adapterError,
+  fromRpcError,
   fromSupabaseError,
   isDataAdapterError,
+  mapRpcErrorToI18nKey,
+  parseRpcErrorCode,
   type DataAdapterErrorFields,
 } from '#/lib/data/errors'
 
@@ -94,7 +97,26 @@ export {
   type LeaveStatus,
 } from '#/lib/data/leave/overview'
 
+export {
+  createLeaveRequest,
+  type CreateLeaveRequestPayload,
+  type CreateLeaveRequestResult,
+} from '#/lib/data/leave/requests'
+
 export { fetchExpenseOverview, type ExpenseOverview } from '#/lib/data/expense/overview'
+
+export {
+  createExpenseClaim,
+  type CreateExpenseClaimPayload,
+  type CreateExpenseClaimResult,
+} from '#/lib/data/expense/claims'
+
+export {
+  decideApprovalRequest,
+  type ApprovalDecision,
+  type DecideApprovalRequestPayload,
+  type DecideApprovalRequestResult,
+} from '#/lib/data/workflow/approvals'
 
 export {
   fetchPerformanceOverview,

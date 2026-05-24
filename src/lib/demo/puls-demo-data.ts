@@ -47,7 +47,7 @@ export type DemoExpenseClaim = {
   amount: number
   currency: string
   expenseDate: string
-  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'paid'
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'paid' | 'exported'
 }
 
 export type DemoLeaveOverview = {
