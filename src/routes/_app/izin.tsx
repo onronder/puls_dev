@@ -377,14 +377,22 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
       if (!userId) throw new Error('missing user')
       return decideApprovalRequest(userId, payload)
     },
-    onSuccess: (_result, variables) => {
+    onSuccess: (result, variables) => {
       if (userId) invalidateLeaveQueries(queryClient, userId)
       const approval = approvals.find((item) => item.id === variables.approvalRequestId)
       const name = approval?.employeeName ?? '—'
       if (variables.decision === 'approved') {
-        toast.success(t('leaveSetup.approval.approvedTitle'), {
-          description: t('leaveSetup.approval.approvedDesc', { name }),
-        })
+        if (result.final) {
+          toast.success(t('leaveSetup.approval.approvedTitle'), {
+            description: t('leaveSetup.approval.approvedDesc', { name }),
+          })
+        } else {
+          toast.success(t('approval.toast.stepApproved'), {
+            description: t('approval.toast.forwarded', {
+              step: result.currentStepOrder ?? '—',
+            }),
+          })
+        }
       } else {
         toast.success(t('leaveSetup.approval.rejectedTitle'), {
           description: t('leaveSetup.approval.rejectedDesc', { name }),

@@ -435,6 +435,8 @@
       "invalidLeaveType": "Leave type not found or inactive.",
       "invalidDelegate": "Delegate employee not found.",
       "noApprover": "No approver could be resolved.",
+      "policyStepUnresolved": "No approver could be resolved for the approval policy step.",
+      "policyNotFound": "The configured approval policy was not found or is inactive.",
       "submitFailed": "Could not submit leave request."
     }
   },
@@ -563,6 +565,8 @@
       "invalidCurrency": "Invalid currency.",
       "futureDate": "Expense date cannot be in the future.",
       "noApprover": "No approver could be resolved.",
+      "policyStepUnresolved": "No approver could be resolved for the approval policy step.",
+      "policyNotFound": "The configured approval policy was not found or is inactive.",
       "submitFailed": "Could not submit expense claim."
     }
   },
@@ -629,13 +633,20 @@
     }
   },
   "approval": {
+    "toast": {
+      "stepApproved": "Step approved",
+      "forwarded": "Forwarded to step {{step}} for the next approval."
+    },
     "error": {
       "notFound": "Approval record not found.",
       "alreadyDecided": "This approval has already been decided.",
       "forbidden": "You are not authorized to decide this approval.",
       "selfApproval": "You cannot approve your own request.",
       "invalidDecision": "Invalid approval decision.",
-      "authRequired": "Session or employee record not found."
+      "authRequired": "Session or employee record not found.",
+      "policyStepUnresolved": "No approver could be resolved for the next policy step.",
+      "policyNotFound": "The approval policy was not found or is inactive.",
+      "policyChainInvalid": "Approval chain state is invalid."
     }
   },
   "menu": {
@@ -829,7 +840,8 @@
       "paidCount": "Paid",
       "docRequiredCount": "Document required",
       "approvalFlow": "Approval flow",
-      "approvalFlowValue": "1 level"
+      "approvalFlowValue": "{{count}} level",
+      "approvalFlowValue_other": "{{count}} levels"
     },
     "sections": {
       "list": "Leave types"
@@ -894,7 +906,9 @@
       "categoryCount": "Categories",
       "totalMonthlyLimit": "Total monthly limit",
       "docThreshold": "Document threshold",
-      "approvalLevels": "Approval levels"
+      "approvalLevels": "Approval levels",
+      "approvalLevelsValue": "{{count}} level",
+      "approvalLevelsValue_other": "{{count}} levels"
     },
     "sections": {
       "list": "Category list"

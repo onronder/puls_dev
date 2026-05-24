@@ -23,6 +23,7 @@ function emptyLeaveTypesOverview(): LeaveTypesOverview {
     typeCount: 0,
     paidCount: 0,
     docRequiredCount: 0,
+    maxApprovalStepCount: 0,
     leaveTypes: [],
   }
 }
@@ -34,7 +35,7 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
   const { data, error } = await pulsWorkflow()
     .from('leave_types')
     .select(
-      'id, code, name, default_entitlement_days, is_paid, requires_document, carry_over_allowed',
+      'id, code, name, default_entitlement_days, is_paid, requires_document, carry_over_allowed, approval_policy_id, approval_policies(name)',
     )
     .eq('tenant_id', ctx.tenantId)
     .eq('is_active', true)
@@ -44,8 +45,49 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
     throw fromSupabaseError(error, 'fetchLeaveTypesOverview', 'puls_workflow', 'leave_types')
   }
 
+  const policyIds = [
+    ...new Set(
+      (data ?? [])
+        .map((row) => row.approval_policy_id as string | null)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+
+  const requiredStepCountByPolicy = new Map<string, number>()
+  if (policyIds.length > 0) {
+    const { data: steps, error: stepsError } = await pulsWorkflow()
+      .from('approval_policy_steps')
+      .select('policy_id, is_required')
+      .eq('tenant_id', ctx.tenantId)
+      .in('policy_id', policyIds)
+
+    if (stepsError) {
+      throw fromSupabaseError(
+        stepsError,
+        'fetchLeaveTypesOverview',
+        'puls_workflow',
+        'approval_policy_steps',
+      )
+    }
+
+    for (const step of steps ?? []) {
+      if (!step.is_required) continue
+      const policyId = step.policy_id as string
+      requiredStepCountByPolicy.set(
+        policyId,
+        (requiredStepCountByPolicy.get(policyId) ?? 0) + 1,
+      )
+    }
+  }
+
   const leaveTypes = (data ?? []).map((row) => {
     const code = row.code as string
+    const policyId = (row.approval_policy_id as string | null) ?? null
+    const policyJoin = row.approval_policies as { name: string } | { name: string }[] | null
+    const policyName = Array.isArray(policyJoin)
+      ? policyJoin[0]?.name
+      : policyJoin?.name
+
     return {
       id: row.id as string,
       labelKey: LEAVE_TYPE_LABEL_KEYS[code] ?? code,
@@ -53,13 +95,20 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
       paid: Boolean(row.is_paid),
       doc: Boolean(row.requires_document),
       carryOver: Boolean(row.carry_over_allowed),
+      approvalPolicyId: policyId,
+      approvalPolicyName: policyName ?? null,
+      approvalStepCount: policyId ? (requiredStepCountByPolicy.get(policyId) ?? 0) : 1,
     }
   })
+
+  const maxApprovalStepCount =
+    leaveTypes.length > 0 ? Math.max(...leaveTypes.map((row) => row.approvalStepCount)) : 0
 
   return {
     typeCount: leaveTypes.length,
     paidCount: leaveTypes.filter((row) => row.paid).length,
     docRequiredCount: leaveTypes.filter((row) => row.doc).length,
+    maxApprovalStepCount,
     leaveTypes,
   }
 }

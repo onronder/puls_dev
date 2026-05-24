@@ -146,7 +146,9 @@ function IzinTanimlariPage() {
           <MetricCard
             compact
             label={t('leaveTypeSetup.metrics.approvalFlow')}
-            value={t('leaveTypeSetup.metrics.approvalFlowValue')}
+            value={t('leaveTypeSetup.metrics.approvalFlowValue', {
+              count: data.maxApprovalStepCount,
+            })}
             icon={Workflow}
           />
         </div>

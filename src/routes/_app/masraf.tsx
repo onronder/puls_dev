@@ -380,14 +380,22 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
       if (!userId) throw new Error('missing user')
       return decideApprovalRequest(userId, payload)
     },
-    onSuccess: (_result, variables) => {
+    onSuccess: (result, variables) => {
       if (userId) invalidateExpenseQueries(queryClient, userId)
       const approval = approvals.find((item) => item.id === variables.approvalRequestId)
       const title = approval?.title ?? '—'
       if (variables.decision === 'approved') {
-        toast.success(t('expenseSetup.approval.approvedTitle'), {
-          description: t('expenseSetup.approval.approvedDesc', { title }),
-        })
+        if (result.final) {
+          toast.success(t('expenseSetup.approval.approvedTitle'), {
+            description: t('expenseSetup.approval.approvedDesc', { title }),
+          })
+        } else {
+          toast.success(t('approval.toast.stepApproved'), {
+            description: t('approval.toast.forwarded', {
+              step: result.currentStepOrder ?? '—',
+            }),
+          })
+        }
       } else {
         toast.success(t('expenseSetup.approval.rejectedTitle'), {
           description: t('expenseSetup.approval.rejectedDesc', { title }),

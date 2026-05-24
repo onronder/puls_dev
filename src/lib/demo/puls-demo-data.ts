@@ -565,12 +565,16 @@ export type DemoLeaveTypeRule = {
   paid: boolean
   doc: boolean
   carryOver: boolean
+  approvalPolicyId?: string | null
+  approvalPolicyName?: string | null
+  approvalStepCount: number
 }
 
 export type DemoLeaveTypesOverview = {
   typeCount: number
   paidCount: number
   docRequiredCount: number
+  maxApprovalStepCount: number
   leaveTypes: DemoLeaveTypeRule[]
 }
 
@@ -578,6 +582,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
   typeCount: 8,
   paidCount: 6,
   docRequiredCount: 2,
+  maxApprovalStepCount: 1,
   leaveTypes: [
     {
       id: 'yillik',
@@ -586,6 +591,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: true,
       doc: false,
       carryOver: true,
+      approvalStepCount: 1,
     },
     {
       id: 'mazeret',
@@ -594,6 +600,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: true,
       doc: false,
       carryOver: false,
+      approvalStepCount: 1,
     },
     {
       id: 'hastalik',
@@ -602,6 +609,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: true,
       doc: true,
       carryOver: false,
+      approvalStepCount: 1,
     },
     {
       id: 'ucretsiz',
@@ -610,6 +618,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: false,
       doc: false,
       carryOver: false,
+      approvalStepCount: 1,
     },
     {
       id: 'idari',
@@ -618,6 +627,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: true,
       doc: false,
       carryOver: false,
+      approvalStepCount: 1,
     },
     {
       id: 'evlilik',
@@ -626,6 +636,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: true,
       doc: true,
       carryOver: false,
+      approvalStepCount: 1,
     },
     {
       id: 'dogum',
@@ -634,6 +645,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: true,
       doc: false,
       carryOver: false,
+      approvalStepCount: 1,
     },
     {
       id: 'olum',
@@ -642,6 +654,7 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       paid: true,
       doc: false,
       carryOver: false,
+      approvalStepCount: 1,
     },
   ],
 }
@@ -656,13 +669,16 @@ export type DemoExpenseCategoryRule = {
   monthly: number
   docThreshold: number
   code: string
+  approvalPolicyId?: string | null
+  approvalPolicyName?: string | null
+  approvalStepCount: number
 }
 
 export type DemoExpenseCategoriesOverview = {
   categoryCount: number
   totalMonthlyLimit: number
   docThresholdMetric: number
-  approvalLevels: number
+  maxApprovalStepCount: number
   categories: DemoExpenseCategoryRule[]
 }
 
@@ -670,7 +686,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
   categoryCount: 6,
   totalMonthlyLimit: 55000,
   docThresholdMetric: 2000,
-  approvalLevels: 2,
+  maxApprovalStepCount: 1,
   categories: [
     {
       id: 'ec1',
@@ -678,6 +694,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       monthly: 15000,
       docThreshold: 2000,
       code: '770.01',
+      approvalStepCount: 1,
     },
     {
       id: 'ec2',
@@ -685,6 +702,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       monthly: 5000,
       docThreshold: 500,
       code: '770.02',
+      approvalStepCount: 1,
     },
     {
       id: 'ec3',
@@ -692,6 +710,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       monthly: 20000,
       docThreshold: 2000,
       code: '770.03',
+      approvalStepCount: 1,
     },
     {
       id: 'ec4',
@@ -699,6 +718,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       monthly: 10000,
       docThreshold: 1000,
       code: '770.04',
+      approvalStepCount: 1,
     },
     {
       id: 'ec5',
@@ -706,6 +726,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       monthly: 3000,
       docThreshold: 500,
       code: '770.05',
+      approvalStepCount: 1,
     },
     {
       id: 'ec6',
@@ -713,6 +734,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       monthly: 2000,
       docThreshold: 500,
       code: '770.99',
+      approvalStepCount: 1,
     },
   ],
 }

@@ -54,6 +54,10 @@ const RPC_ERROR_I18N: Record<string, string> = {
   PULS_APPROVAL_FORBIDDEN: 'approval.error.forbidden',
   PULS_SELF_APPROVAL: 'approval.error.selfApproval',
   PULS_INVALID_DECISION: 'approval.error.invalidDecision',
+  PULS_POLICY_STEP_UNRESOLVED: 'approval.error.policyStepUnresolved',
+  PULS_POLICY_NOT_FOUND: 'approval.error.policyNotFound',
+  PULS_POLICY_STEP_NOT_FOUND: 'approval.error.policyChainInvalid',
+  PULS_APPROVAL_CHAIN_INVALID: 'approval.error.policyChainInvalid',
 }
 
 const OPERATION_AWARE_RPC_ERROR_I18N: Record<
@@ -69,6 +73,26 @@ const OPERATION_AWARE_RPC_ERROR_I18N: Record<
     createLeaveRequest: 'leave.error.noApprover',
     createExpenseClaim: 'expense.error.noApprover',
     decideApprovalRequest: 'approval.error.forbidden',
+  },
+  PULS_POLICY_STEP_UNRESOLVED: {
+    createLeaveRequest: 'leave.error.policyStepUnresolved',
+    createExpenseClaim: 'expense.error.policyStepUnresolved',
+    decideApprovalRequest: 'approval.error.policyStepUnresolved',
+  },
+  PULS_POLICY_NOT_FOUND: {
+    createLeaveRequest: 'leave.error.policyNotFound',
+    createExpenseClaim: 'expense.error.policyNotFound',
+    decideApprovalRequest: 'approval.error.policyNotFound',
+  },
+  PULS_POLICY_STEP_NOT_FOUND: {
+    createLeaveRequest: 'leave.error.policyNotFound',
+    createExpenseClaim: 'expense.error.policyNotFound',
+    decideApprovalRequest: 'approval.error.policyChainInvalid',
+  },
+  PULS_APPROVAL_CHAIN_INVALID: {
+    createLeaveRequest: 'leave.error.submitFailed',
+    createExpenseClaim: 'expense.error.submitFailed',
+    decideApprovalRequest: 'approval.error.policyChainInvalid',
   },
 }
 
