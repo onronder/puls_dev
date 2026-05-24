@@ -72,6 +72,10 @@ END $$;
 -- 6) Non-null missing/inactive policy → PULS_POLICY_NOT_FOUND
 -- Point leave type to random UUID or deactivate policy → create fails cleanly.
 
+-- 6b) Cross-module policy binding → PULS_POLICY_NOT_FOUND
+-- Bind leave_types.approval_policy_id to an expense-module policy (or vice versa).
+-- create_leave_request / create_expense_claim must fail; engine must not silently run.
+
 -- ---------------------------------------------------------------------------
 -- 7) Required step unresolved → no partial finalization
 -- Policy step with unresolvable specific_employee → PULS_POLICY_STEP_UNRESOLVED at create/decide.

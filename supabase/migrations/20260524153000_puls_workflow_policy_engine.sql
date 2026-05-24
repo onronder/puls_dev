@@ -72,9 +72,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_puls_workflow_approval_requests_expense_st
 -- Internal helpers
 -- ---------------------------------------------------------------------------
 
+DROP FUNCTION IF EXISTS puls_workflow.find_first_required_policy_step(UUID, UUID);
+DROP FUNCTION IF EXISTS puls_workflow.find_next_required_policy_step(UUID, UUID, INTEGER);
+
 CREATE OR REPLACE FUNCTION puls_workflow.find_first_required_policy_step(
   p_tenant_id UUID,
-  p_policy_id UUID
+  p_policy_id UUID,
+  p_module TEXT
 )
 RETURNS INTEGER
 LANGUAGE plpgsql
@@ -91,6 +95,7 @@ BEGIN
     WHERE p.id = p_policy_id
       AND p.tenant_id = p_tenant_id
       AND p.is_active = TRUE
+      AND p.module = p_module::puls_workflow.approval_module
   ) THEN
     RAISE EXCEPTION 'PULS_POLICY_NOT_FOUND: Approval policy not found or inactive.'
       USING ERRCODE = 'P0001';
@@ -99,9 +104,14 @@ BEGIN
   SELECT MIN(s.step_order)
   INTO v_first_step
   FROM puls_workflow.approval_policy_steps s
+  JOIN puls_workflow.approval_policies p
+    ON p.id = s.policy_id
+   AND p.tenant_id = p_tenant_id
   WHERE s.policy_id = p_policy_id
     AND s.tenant_id = p_tenant_id
-    AND s.is_required = TRUE;
+    AND s.is_required = TRUE
+    AND p.is_active = TRUE
+    AND p.module = p_module::puls_workflow.approval_module;
 
   IF v_first_step IS NULL THEN
     RAISE EXCEPTION 'PULS_POLICY_STEP_NOT_FOUND: Approval policy has no required steps.'
@@ -135,6 +145,7 @@ BEGIN
     WHERE p.id = p_policy_id
       AND p.tenant_id = p_tenant_id
       AND p.is_active = TRUE
+      AND p.module = p_module::puls_workflow.approval_module
   ) THEN
     RAISE EXCEPTION 'PULS_POLICY_NOT_FOUND: Approval policy not found or inactive.'
       USING ERRCODE = 'P0001';
@@ -149,7 +160,8 @@ BEGIN
   WHERE s.policy_id = p_policy_id
     AND s.tenant_id = p_tenant_id
     AND s.step_order = p_step_order
-    AND p.is_active = TRUE;
+    AND p.is_active = TRUE
+    AND p.module = p_module::puls_workflow.approval_module;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'PULS_POLICY_STEP_NOT_FOUND: Required policy step not found.'
@@ -188,7 +200,8 @@ $$;
 CREATE OR REPLACE FUNCTION puls_workflow.find_next_required_policy_step(
   p_tenant_id UUID,
   p_policy_id UUID,
-  p_after_step_order INTEGER
+  p_after_step_order INTEGER,
+  p_module TEXT
 )
 RETURNS INTEGER
 LANGUAGE plpgsql
@@ -205,6 +218,7 @@ BEGIN
     WHERE p.id = p_policy_id
       AND p.tenant_id = p_tenant_id
       AND p.is_active = TRUE
+      AND p.module = p_module::puls_workflow.approval_module
   ) THEN
     RAISE EXCEPTION 'PULS_POLICY_NOT_FOUND: Approval policy not found or inactive.'
       USING ERRCODE = 'P0001';
@@ -220,7 +234,8 @@ BEGIN
     AND s.tenant_id = p_tenant_id
     AND s.is_required = TRUE
     AND s.step_order > p_after_step_order
-    AND p.is_active = TRUE;
+    AND p.is_active = TRUE
+    AND p.module = p_module::puls_workflow.approval_module;
 
   RETURN v_next_step;
 END;
@@ -342,17 +357,17 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION puls_workflow.find_first_required_policy_step(UUID, UUID) FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_workflow.find_first_required_policy_step(UUID, UUID) FROM authenticated;
-REVOKE ALL ON FUNCTION puls_workflow.find_first_required_policy_step(UUID, UUID) FROM anon;
+REVOKE ALL ON FUNCTION puls_workflow.find_first_required_policy_step(UUID, UUID, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION puls_workflow.find_first_required_policy_step(UUID, UUID, TEXT) FROM authenticated;
+REVOKE ALL ON FUNCTION puls_workflow.find_first_required_policy_step(UUID, UUID, TEXT) FROM anon;
 
 REVOKE ALL ON FUNCTION puls_workflow.resolve_policy_step_approver(UUID, UUID, TEXT, UUID, INTEGER) FROM PUBLIC;
 REVOKE ALL ON FUNCTION puls_workflow.resolve_policy_step_approver(UUID, UUID, TEXT, UUID, INTEGER) FROM authenticated;
 REVOKE ALL ON FUNCTION puls_workflow.resolve_policy_step_approver(UUID, UUID, TEXT, UUID, INTEGER) FROM anon;
 
-REVOKE ALL ON FUNCTION puls_workflow.find_next_required_policy_step(UUID, UUID, INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_workflow.find_next_required_policy_step(UUID, UUID, INTEGER) FROM authenticated;
-REVOKE ALL ON FUNCTION puls_workflow.find_next_required_policy_step(UUID, UUID, INTEGER) FROM anon;
+REVOKE ALL ON FUNCTION puls_workflow.find_next_required_policy_step(UUID, UUID, INTEGER, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION puls_workflow.find_next_required_policy_step(UUID, UUID, INTEGER, TEXT) FROM authenticated;
+REVOKE ALL ON FUNCTION puls_workflow.find_next_required_policy_step(UUID, UUID, INTEGER, TEXT) FROM anon;
 
 REVOKE ALL ON FUNCTION puls_workflow.get_parent_policy_id(puls_workflow.approval_module, UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION puls_workflow.get_parent_policy_id(puls_workflow.approval_module, UUID) FROM authenticated;
@@ -489,7 +504,7 @@ BEGIN
   v_policy_id := v_leave_type.approval_policy_id;
 
   IF v_policy_id IS NOT NULL THEN
-    v_first_step := puls_workflow.find_first_required_policy_step(v_tenant_id, v_policy_id);
+    v_first_step := puls_workflow.find_first_required_policy_step(v_tenant_id, v_policy_id, 'leave');
     v_approver_id := puls_workflow.resolve_policy_step_approver(
       v_tenant_id,
       v_employee_id,
@@ -723,7 +738,7 @@ BEGIN
   v_policy_id := v_category.approval_policy_id;
 
   IF v_policy_id IS NOT NULL THEN
-    v_first_step := puls_workflow.find_first_required_policy_step(v_tenant_id, v_policy_id);
+    v_first_step := puls_workflow.find_first_required_policy_step(v_tenant_id, v_policy_id, 'expense');
     v_approver_id := puls_workflow.resolve_policy_step_approver(
       v_tenant_id,
       v_employee_id,
@@ -1053,7 +1068,8 @@ BEGIN
     v_next_step := puls_workflow.find_next_required_policy_step(
       v_tenant_id,
       v_policy_id,
-      v_approval.step_order
+      v_approval.step_order,
+      'leave'
     );
 
     IF v_next_step IS NOT NULL THEN
@@ -1290,7 +1306,8 @@ BEGIN
   v_next_step := puls_workflow.find_next_required_policy_step(
     v_tenant_id,
     v_policy_id,
-    v_approval.step_order
+    v_approval.step_order,
+    'expense'
   );
 
   -- expense policy intermediate approve (symmetric with leave branch above)

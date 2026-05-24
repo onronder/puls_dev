@@ -19,7 +19,8 @@ fi
 for needle in \
   "v_next_approval_id := puls_workflow.create_next_approval_request" \
   "PULS_POLICY_NOT_FOUND: Approval policy not found or inactive." \
-  "AND p.tenant_id = p_tenant_id"; do
+  "AND p.tenant_id = p_tenant_id" \
+  "AND p.module = p_module::puls_workflow.approval_module"; do
   if ! sql | rg -Fq "$needle"; then
     echo "FAIL: missing required fragment: $needle"
     exit 1
