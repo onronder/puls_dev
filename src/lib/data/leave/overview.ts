@@ -8,9 +8,12 @@ import type {
 } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
+import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
 import { resolveAdapterData } from '#/lib/data/result'
 
-export type LeaveOverview = DemoLeaveOverview
+export type LeaveOverview = Omit<DemoLeaveOverview, 'leaveTypes'> & {
+  leaveTypes: { id: string; label: string; code: string; requiresDocument: boolean }[]
+}
 export type { LeaveStatus }
 
 const LEAVE_TYPE_LABEL_KEYS: Record<string, string> = {
@@ -101,27 +104,27 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
       .limit(20),
     pulsWorkflow()
       .from('leave_types')
-      .select('id, code, name')
+      .select('id, code, name, requires_document')
       .eq('tenant_id', ctx.tenantId)
       .eq('is_active', true)
       .order('name', { ascending: true }),
     ctx.personaRole === 'manager' || ctx.personaRole === 'hr_admin' || ctx.personaRole === 'superadmin'
-      ? pulsWorkflow()
-          .from('leave_requests')
-          .select(
-            `
-            id,
-            start_date,
-            end_date,
-            business_days,
-            employees ( full_name ),
-            leave_types ( name )
-          `,
-          )
-          .eq('tenant_id', ctx.tenantId)
-          .eq('status', 'pending')
-          .order('start_date', { ascending: true })
-          .limit(10)
+      ? (() => {
+          let query = pulsWorkflow()
+            .from('approval_requests')
+            .select('id, leave_request_id, requester_employee_id')
+            .eq('tenant_id', ctx.tenantId)
+            .eq('module', 'leave')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true })
+            .limit(10)
+
+          if (ctx.personaRole === 'manager') {
+            query = query.eq('approver_employee_id', ctx.employeeId)
+          }
+
+          return query
+        })()
       : Promise.resolve({ data: [], error: null }),
   ])
 
@@ -142,9 +145,62 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
       teamPendingRow.error,
       'fetchLeaveOverview',
       'puls_workflow',
+      'approval_requests',
+    )
+  }
+
+  const approvalRows = teamPendingRow.data ?? []
+  const leaveRequestIds = uniqueNonNullIds(
+    approvalRows.map((row) => row.leave_request_id as string | null),
+  )
+  const requesterIds = uniqueNonNullIds(
+    approvalRows.map((row) => row.requester_employee_id as string | null),
+  )
+
+  const [leaveRequestRows, requesterNameMap] = await Promise.all([
+    leaveRequestIds.length > 0
+      ? pulsWorkflow()
+          .from('leave_requests')
+          .select('id, start_date, end_date, business_days, leave_type_id')
+          .eq('tenant_id', ctx.tenantId)
+          .in('id', leaveRequestIds)
+      : Promise.resolve({ data: [], error: null }),
+    fetchNamesByIds('employees', ctx.tenantId, requesterIds),
+  ])
+
+  if (leaveRequestRows.error) {
+    throw fromSupabaseError(
+      leaveRequestRows.error,
+      'fetchLeaveOverview',
+      'puls_workflow',
       'leave_requests',
     )
   }
+
+  const leaveTypeIds = uniqueNonNullIds(
+    (leaveRequestRows.data ?? []).map((row) => row.leave_type_id as string | null),
+  )
+
+  const leaveTypeNameMap =
+    leaveTypeIds.length > 0
+      ? await (async () => {
+          const { data, error } = await pulsWorkflow()
+            .from('leave_types')
+            .select('id, name')
+            .eq('tenant_id', ctx.tenantId)
+            .in('id', leaveTypeIds)
+
+          if (error) {
+            throw fromSupabaseError(error, 'fetchLeaveOverview', 'puls_workflow', 'leave_types')
+          }
+
+          return new Map((data ?? []).map((row) => [row.id as string, row.name as string]))
+        })()
+      : new Map<string, string>()
+
+  const leaveRequestById = new Map(
+    (leaveRequestRows.data ?? []).map((row) => [row.id as string, row]),
+  )
 
   const overview = overviewRow.data
   const balances = (balancesRow.data ?? []).map((row) => {
@@ -208,19 +264,24 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
       }
     })
 
-  const pendingApprovals: DemoLeaveApproval[] = (teamPendingRow.data ?? []).map((row) => {
-    const employee = row.employees as { full_name?: string } | null
-    const leaveType = row.leave_types as { name?: string } | null
-    const employeeName = employee?.full_name ?? '—'
-    return {
-      id: row.id as string,
-      employeeName,
-      initials: getInitials(employeeName),
-      typeLabel: leaveType?.name ?? '—',
-      startDate: row.start_date as string,
-      endDate: row.end_date as string,
-      businessDays: Number(row.business_days ?? 0),
-    }
+  const pendingApprovals: DemoLeaveApproval[] = approvalRows.flatMap((row) => {
+    const leaveRequest = leaveRequestById.get(row.leave_request_id as string)
+    if (!leaveRequest) return []
+
+    const employeeName = requesterNameMap.get(row.requester_employee_id as string) ?? '—'
+    const typeLabel = leaveTypeNameMap.get(leaveRequest.leave_type_id as string) ?? '—'
+
+    return [
+      {
+        id: row.id as string,
+        employeeName,
+        initials: getInitials(employeeName),
+        typeLabel,
+        startDate: leaveRequest.start_date as string,
+        endDate: leaveRequest.end_date as string,
+        businessDays: Number(leaveRequest.business_days ?? 0),
+      },
+    ]
   })
 
   return {
@@ -235,6 +296,8 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
     leaveTypes: (leaveTypesRow.data ?? []).map((row) => ({
       id: row.id as string,
       label: row.name as string,
+      code: row.code as string,
+      requiresDocument: Boolean(row.requires_document),
     })),
     delegates: [],
     approvers: [],
@@ -245,7 +308,17 @@ export async function fetchLeaveOverview(userId: string): Promise<LeaveOverview>
   return resolveAdapterData({
     operation: 'fetchLeaveOverview',
     fetchReal: () => fetchRealLeaveOverview(userId),
-    fetchDemo: fetchDemoLeaveOverview,
+    fetchDemo: async () => {
+      const demo = await fetchDemoLeaveOverview()
+      return {
+        ...demo,
+        leaveTypes: demo.leaveTypes.map((type) => ({
+          ...type,
+          code: type.id,
+          requiresDocument: type.id === 'sick' || type.id === 'maternity',
+        })),
+      }
+    },
     isEmpty: isLeaveOverviewEmpty,
   })
 }

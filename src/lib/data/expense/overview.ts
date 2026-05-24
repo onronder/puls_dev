@@ -6,6 +6,7 @@ import type {
 } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
+import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
 import { resolveAdapterData } from '#/lib/data/result'
 
 export type ExpenseOverview = DemoExpenseOverview
@@ -77,23 +78,22 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       .eq('is_active', true)
       .order('name', { ascending: true }),
     ctx.personaRole === 'manager' || ctx.personaRole === 'hr_admin' || ctx.personaRole === 'superadmin'
-      ? pulsWorkflow()
-          .from('expense_claims')
-          .select(
-            `
-            id,
-            title,
-            amount,
-            currency,
-            expense_date,
-            employees ( full_name ),
-            expense_categories ( name )
-          `,
-          )
-          .eq('tenant_id', ctx.tenantId)
-          .eq('status', 'pending')
-          .order('expense_date', { ascending: false })
-          .limit(10)
+      ? (() => {
+          let query = pulsWorkflow()
+            .from('approval_requests')
+            .select('id, expense_claim_id, requester_employee_id')
+            .eq('tenant_id', ctx.tenantId)
+            .eq('module', 'expense')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+            .limit(10)
+
+          if (ctx.personaRole === 'manager') {
+            query = query.eq('approver_employee_id', ctx.employeeId)
+          }
+
+          return query
+        })()
       : Promise.resolve({ data: [], error: null }),
   ])
 
@@ -116,9 +116,65 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       teamPendingRow.error,
       'fetchExpenseOverview',
       'puls_workflow',
+      'approval_requests',
+    )
+  }
+
+  const approvalRows = teamPendingRow.data ?? []
+  const claimIds = uniqueNonNullIds(
+    approvalRows.map((row) => row.expense_claim_id as string | null),
+  )
+  const requesterIds = uniqueNonNullIds(
+    approvalRows.map((row) => row.requester_employee_id as string | null),
+  )
+
+  const [claimRows, requesterNameMap] = await Promise.all([
+    claimIds.length > 0
+      ? pulsWorkflow()
+          .from('expense_claims')
+          .select('id, title, amount, currency, expense_date, category_id')
+          .eq('tenant_id', ctx.tenantId)
+          .in('id', claimIds)
+      : Promise.resolve({ data: [], error: null }),
+    fetchNamesByIds('employees', ctx.tenantId, requesterIds),
+  ])
+
+  if (claimRows.error) {
+    throw fromSupabaseError(
+      claimRows.error,
+      'fetchExpenseOverview',
+      'puls_workflow',
       'expense_claims',
     )
   }
+
+  const categoryIds = uniqueNonNullIds(
+    (claimRows.data ?? []).map((row) => row.category_id as string | null),
+  )
+
+  const categoryNameMap =
+    categoryIds.length > 0
+      ? await (async () => {
+          const { data, error } = await pulsWorkflow()
+            .from('expense_categories')
+            .select('id, name')
+            .eq('tenant_id', ctx.tenantId)
+            .in('id', categoryIds)
+
+          if (error) {
+            throw fromSupabaseError(
+              error,
+              'fetchExpenseOverview',
+              'puls_workflow',
+              'expense_categories',
+            )
+          }
+
+          return new Map((data ?? []).map((row) => [row.id as string, row.name as string]))
+        })()
+      : new Map<string, string>()
+
+  const claimById = new Map((claimRows.data ?? []).map((row) => [row.id as string, row]))
 
   const overview = overviewRow.data
   const approvedThisMonth = Number(overview?.approved_this_month_amount ?? 0)
@@ -168,20 +224,25 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
     }),
   )
 
-  const pendingApprovals: DemoExpenseApproval[] = (teamPendingRow.data ?? []).map((row) => {
-    const employee = row.employees as { full_name?: string } | null
-    const category = row.expense_categories as { name?: string } | null
-    const employeeName = employee?.full_name ?? '—'
-    return {
-      id: row.id as string,
-      employeeName,
-      initials: getInitials(employeeName),
-      title: row.title as string,
-      category: category?.name ?? '—',
-      amount: Number(row.amount ?? 0),
-      expenseDate: row.expense_date as string,
-      currency: (row.currency as string | null) ?? undefined,
-    }
+  const pendingApprovals: DemoExpenseApproval[] = approvalRows.flatMap((row) => {
+    const claim = claimById.get(row.expense_claim_id as string)
+    if (!claim) return []
+
+    const employeeName = requesterNameMap.get(row.requester_employee_id as string) ?? '—'
+    const category = categoryNameMap.get(claim.category_id as string) ?? '—'
+
+    return [
+      {
+        id: row.id as string,
+        employeeName,
+        initials: getInitials(employeeName),
+        title: claim.title as string,
+        category,
+        amount: Number(claim.amount ?? 0),
+        expenseDate: claim.expense_date as string,
+        currency: (claim.currency as string | null) ?? undefined,
+      },
+    ]
   })
 
   return {

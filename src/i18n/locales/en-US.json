@@ -413,13 +413,29 @@
       "descriptionPlaceholder": "Optional note",
       "balanceAfter": "Balance after",
       "balanceAfterHint": "Weekend/holiday rules will be calculated in Phase 2.",
-      "dateError": "Select a valid date range."
+      "dateError": "Select a valid date range.",
+      "approverAuto": "Your request will be routed to your manager automatically.",
+      "documentRequiredHint": "Document upload is coming soon. This leave type cannot be submitted yet."
     },
     "empty": {
       "history": "No leave records yet."
     },
     "toast": {
-      "submitted": "Leave request added to preview."
+      "submitted": "Your leave request has been submitted.",
+      "approved": "Leave request approved.",
+      "rejected": "Leave request rejected."
+    },
+    "error": {
+      "authRequired": "Session or employee record not found.",
+      "invalidDates": "Select a valid date range.",
+      "crossYear": "Leave request must fall within a single calendar year.",
+      "halfDayInvalid": "Half-day leave requires the same start and end date.",
+      "documentRequired": "This leave type requires a document.",
+      "insufficientBalance": "Insufficient leave balance.",
+      "invalidLeaveType": "Leave type not found or inactive.",
+      "invalidDelegate": "Delegate employee not found.",
+      "noApprover": "No approver could be resolved.",
+      "submitFailed": "Could not submit leave request."
     }
   },
   "leaveSetup": {
@@ -456,6 +472,7 @@
     },
     "form": {
       "halfDay": "Half day",
+      "halfDaySameDayHint": "Half-day is only available for single-day leave.",
       "delegateHint": "Person who will cover your work while you are away.",
       "totalDays": "Total {{count}} days",
       "totalDaysHint": "Excludes weekends and public holidays.",
@@ -474,10 +491,10 @@
     "approval": {
       "approve": "Approve",
       "reject": "Reject",
-      "demoApproveTitle": "Approval simulation (demo)",
-      "demoApproveDesc": "{{name}} — real approval flow will connect via API layer.",
-      "demoRejectTitle": "Rejection simulation (demo)",
-      "demoRejectDesc": "{{name}} — no record was changed."
+      "approvedTitle": "Approved",
+      "approvedDesc": "{{name}} leave request approved.",
+      "rejectedTitle": "Rejected",
+      "rejectedDesc": "{{name}} leave request rejected."
     }
   },
   "expense": {
@@ -504,7 +521,8 @@
       "pending": "Pending",
       "approved": "Approved",
       "rejected": "Rejected",
-      "paid": "Paid"
+      "paid": "Paid",
+      "exported": "Exported"
     },
     "actions": {
       "new": "New expense",
@@ -534,7 +552,18 @@
       "list": "No expense records yet."
     },
     "toast": {
-      "submitted": "Expense claim added to preview."
+      "submitted": "Your expense claim has been submitted.",
+      "approved": "Expense claim approved.",
+      "rejected": "Expense claim rejected."
+    },
+    "error": {
+      "authRequired": "Session or employee record not found.",
+      "invalidCategory": "Category not found or inactive.",
+      "invalidAmount": "Amount must be greater than zero.",
+      "invalidCurrency": "Invalid currency.",
+      "futureDate": "Expense date cannot be in the future.",
+      "noApprover": "No approver could be resolved.",
+      "submitFailed": "Could not submit expense claim."
     }
   },
   "expenseSetup": {
@@ -569,10 +598,10 @@
     "approval": {
       "approve": "Approve",
       "reject": "Reject",
-      "demoApproveTitle": "Approval simulation (demo)",
-      "demoApproveDesc": "{{title}} — real approval flow will connect via API layer.",
-      "demoRejectTitle": "Rejection simulation (demo)",
-      "demoRejectDesc": "{{title}} — no record was changed."
+      "approvedTitle": "Approved",
+      "approvedDesc": "{{title}} expense claim approved.",
+      "rejectedTitle": "Rejected",
+      "rejectedDesc": "{{title}} expense claim rejected."
     },
     "form": {
       "ocrTitle": "Receipt scanning (OCR)",
@@ -597,6 +626,16 @@
       "policyWarningTitle": "Policy warning",
       "policyWarningDesc": "Items over ₺2,000 require a receipt and additional approval.",
       "policyOk": "This item appears compliant with the expense policy."
+    }
+  },
+  "approval": {
+    "error": {
+      "notFound": "Approval record not found.",
+      "alreadyDecided": "This approval has already been decided.",
+      "forbidden": "You are not authorized to decide this approval.",
+      "selfApproval": "You cannot approve your own request.",
+      "invalidDecision": "Invalid approval decision.",
+      "authRequired": "Session or employee record not found."
     }
   },
   "menu": {

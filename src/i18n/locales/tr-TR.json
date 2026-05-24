@@ -413,13 +413,29 @@
       "descriptionPlaceholder": "İsteğe bağlı açıklama",
       "balanceAfter": "Bakiye sonrası",
       "balanceAfterHint": "Hafta sonu/tatil kuralı Canias API erişimi açılınca hesaplanacak.",
-      "dateError": "Geçerli bir tarih aralığı seçin."
+      "dateError": "Geçerli bir tarih aralığı seçin.",
+      "approverAuto": "Onay yöneticinize otomatik yönlendirilecek.",
+      "documentRequiredHint": "Belge yükleme özelliği yakında. Şimdilik bu izin türü için talep oluşturulamaz."
     },
     "empty": {
       "history": "Henüz izin kaydı yok."
     },
     "toast": {
-      "submitted": "İzin talebi önizlemeye eklendi."
+      "submitted": "İzin talebiniz gönderildi.",
+      "approved": "İzin talebi onaylandı.",
+      "rejected": "İzin talebi reddedildi."
+    },
+    "error": {
+      "authRequired": "Oturum veya çalışan kaydı bulunamadı.",
+      "invalidDates": "Geçerli bir tarih aralığı seçin.",
+      "crossYear": "İzin talebi tek bir takvim yılı içinde olmalı.",
+      "halfDayInvalid": "Yarım gün izin için başlangıç ve bitiş aynı gün olmalı.",
+      "documentRequired": "Bu izin türü belge gerektiriyor.",
+      "insufficientBalance": "Yetersiz izin bakiyesi.",
+      "invalidLeaveType": "İzin türü bulunamadı veya pasif.",
+      "invalidDelegate": "Vekil çalışan bulunamadı.",
+      "noApprover": "Onaycı bulunamadı.",
+      "submitFailed": "İzin talebi gönderilemedi."
     }
   },
   "leaveSetup": {
@@ -456,6 +472,7 @@
     },
     "form": {
       "halfDay": "Yarım gün",
+      "halfDaySameDayHint": "Yarım gün yalnızca tek günlük izinlerde kullanılabilir.",
       "delegateHint": "İzin süresince işlerini yürütecek kişi.",
       "totalDays": "Toplam {{count}} gün",
       "totalDaysHint": "Resmi tatil ve hafta sonu hariç hesaplanır.",
@@ -474,10 +491,10 @@
     "approval": {
       "approve": "Onayla",
       "reject": "Reddet",
-      "demoApproveTitle": "Onay simülasyonu (demo)",
-      "demoApproveDesc": "{{name}} — gerçek onay akışı API katmanında bağlanacak.",
-      "demoRejectTitle": "Red simülasyonu (demo)",
-      "demoRejectDesc": "{{name}} — kayıt değiştirilmedi."
+      "approvedTitle": "Onaylandı",
+      "approvedDesc": "{{name}} izin talebi onaylandı.",
+      "rejectedTitle": "Reddedildi",
+      "rejectedDesc": "{{name}} izin talebi reddedildi."
     }
   },
   "expense": {
@@ -504,7 +521,8 @@
       "pending": "Beklemede",
       "approved": "Onaylandı",
       "rejected": "Reddedildi",
-      "paid": "Ödendi"
+      "paid": "Ödendi",
+      "exported": "Aktarıldı"
     },
     "actions": {
       "new": "Yeni masraf",
@@ -534,7 +552,18 @@
       "list": "Henüz masraf kaydı yok."
     },
     "toast": {
-      "submitted": "Masraf bildirimi önizlemeye eklendi."
+      "submitted": "Masraf bildiriminiz gönderildi.",
+      "approved": "Masraf bildirimi onaylandı.",
+      "rejected": "Masraf bildirimi reddedildi."
+    },
+    "error": {
+      "authRequired": "Oturum veya çalışan kaydı bulunamadı.",
+      "invalidCategory": "Kategori bulunamadı veya pasif.",
+      "invalidAmount": "Tutar 0'dan büyük olmalı.",
+      "invalidCurrency": "Para birimi geçersiz.",
+      "futureDate": "Masraf tarihi gelecekte olamaz.",
+      "noApprover": "Onaycı bulunamadı.",
+      "submitFailed": "Masraf bildirimi gönderilemedi."
     }
   },
   "expenseSetup": {
@@ -569,10 +598,10 @@
     "approval": {
       "approve": "Onayla",
       "reject": "Reddet",
-      "demoApproveTitle": "Onay simülasyonu (demo)",
-      "demoApproveDesc": "{{title}} — gerçek onay akışı API katmanında bağlanacak.",
-      "demoRejectTitle": "Red simülasyonu (demo)",
-      "demoRejectDesc": "{{title}} — kayıt değiştirilmedi."
+      "approvedTitle": "Onaylandı",
+      "approvedDesc": "{{title}} masraf bildirimi onaylandı.",
+      "rejectedTitle": "Reddedildi",
+      "rejectedDesc": "{{title}} masraf bildirimi reddedildi."
     },
     "form": {
       "ocrTitle": "Fiş okuma (OCR)",
@@ -597,6 +626,16 @@
       "policyWarningTitle": "Politika uyarısı",
       "policyWarningDesc": "₺2.000 üzeri kalemler için fiş zorunlu ve ek onay gerekir.",
       "policyOk": "Kalem mevcut harcama politikasıyla uyumlu görünüyor."
+    }
+  },
+  "approval": {
+    "error": {
+      "notFound": "Onay kaydı bulunamadı.",
+      "alreadyDecided": "Bu onay kaydı zaten karara bağlanmış.",
+      "forbidden": "Bu onay kaydına karar verme yetkiniz yok.",
+      "selfApproval": "Kendi talebinizi onaylayamazsınız.",
+      "invalidDecision": "Geçersiz onay kararı.",
+      "authRequired": "Oturum veya çalışan kaydı bulunamadı."
     }
   },
   "menu": {
