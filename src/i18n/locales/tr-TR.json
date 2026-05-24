@@ -435,6 +435,8 @@
       "invalidLeaveType": "İzin türü bulunamadı veya pasif.",
       "invalidDelegate": "Vekil çalışan bulunamadı.",
       "noApprover": "Onaycı bulunamadı.",
+      "policyStepUnresolved": "Onay politikası adımı için onaycı çözümlenemedi.",
+      "policyNotFound": "Yapılandırılmış onay politikası bulunamadı veya pasif.",
       "submitFailed": "İzin talebi gönderilemedi."
     }
   },
@@ -563,6 +565,8 @@
       "invalidCurrency": "Para birimi geçersiz.",
       "futureDate": "Masraf tarihi gelecekte olamaz.",
       "noApprover": "Onaycı bulunamadı.",
+      "policyStepUnresolved": "Onay politikası adımı için onaycı çözümlenemedi.",
+      "policyNotFound": "Yapılandırılmış onay politikası bulunamadı veya pasif.",
       "submitFailed": "Masraf bildirimi gönderilemedi."
     }
   },
@@ -629,13 +633,20 @@
     }
   },
   "approval": {
+    "toast": {
+      "stepApproved": "Adım onaylandı",
+      "forwarded": "Sonraki onay için {{step}}. adıma iletildi."
+    },
     "error": {
       "notFound": "Onay kaydı bulunamadı.",
       "alreadyDecided": "Bu onay kaydı zaten karara bağlanmış.",
       "forbidden": "Bu onay kaydına karar verme yetkiniz yok.",
       "selfApproval": "Kendi talebinizi onaylayamazsınız.",
       "invalidDecision": "Geçersiz onay kararı.",
-      "authRequired": "Oturum veya çalışan kaydı bulunamadı."
+      "authRequired": "Oturum veya çalışan kaydı bulunamadı.",
+      "policyStepUnresolved": "Sonraki politika adımı için onaycı çözümlenemedi.",
+      "policyNotFound": "Onay politikası bulunamadı veya pasif.",
+      "policyChainInvalid": "Onay zinciri durumu geçersiz."
     }
   },
   "menu": {
@@ -829,7 +840,8 @@
       "paidCount": "Ücretli",
       "docRequiredCount": "Belge zorunlu",
       "approvalFlow": "Onay akışı",
-      "approvalFlowValue": "1 seviye"
+      "approvalFlowValue": "{{count}} seviye",
+      "approvalFlowValue_other": "{{count}} seviye"
     },
     "sections": {
       "list": "İzin tipleri"
@@ -894,7 +906,9 @@
       "categoryCount": "Kategori",
       "totalMonthlyLimit": "Aylık toplam limit",
       "docThreshold": "Belge eşiği",
-      "approvalLevels": "Onay seviyesi"
+      "approvalLevels": "Onay seviyesi",
+      "approvalLevelsValue": "{{count}} seviye",
+      "approvalLevelsValue_other": "{{count}} seviye"
     },
     "sections": {
       "list": "Kategori listesi"

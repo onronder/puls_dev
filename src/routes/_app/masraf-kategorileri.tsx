@@ -110,7 +110,9 @@ function MasrafKategorileriPage() {
           <MetricCard
             compact
             label={t('expenseCategorySetup.metrics.approvalLevels')}
-            value={String(data.approvalLevels)}
+            value={t('expenseCategorySetup.metrics.approvalLevelsValue', {
+              count: data.maxApprovalStepCount,
+            })}
             icon={Workflow}
           />
         </div>

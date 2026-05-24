@@ -14,6 +14,9 @@ export type DecideApprovalRequestResult = {
   parentId: string
   status: string
   approvalRequestId: string
+  final: boolean
+  nextApprovalRequestId?: string | null
+  currentStepOrder?: number | null
 }
 
 export async function decideApprovalRequest(
@@ -47,5 +50,8 @@ export async function decideApprovalRequest(
     parentId: row.parent_id as string,
     status: row.status as string,
     approvalRequestId: row.approval_request_id as string,
+    final: Boolean(row.final),
+    nextApprovalRequestId: (row.next_approval_request_id as string | undefined) ?? null,
+    currentStepOrder: (row.current_step_order as number | undefined) ?? null,
   }
 }
