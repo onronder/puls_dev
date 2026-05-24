@@ -35,3 +35,7 @@
 
 -- 12) Hotfix 2: after 20260524130000, workflow create RPC inserts audit_logs with puls_core.tenant_id
 --     Confirm: create_leave_request / create_expense_claim succeed, audit row present, full rollback on failure
+
+-- 13) Hotfix 3: assigned approver (yonetici@mertteknik.demo) reads parent leave/expense via RLS
+--     approval_requests visible AND leave_requests/expense_claims parent detail visible
+--     Onay bekleyenler tab count > 0; pending-only (decided approvals need future history policy)
