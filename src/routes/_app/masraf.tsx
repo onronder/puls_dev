@@ -145,7 +145,10 @@ function MasrafPage() {
     enabled: Boolean(user?.id),
   })
 
-  const usedPct = data ? Math.round((data.approvedThisMonth / data.monthlyLimit) * 100) : 0
+  const usedPct =
+    data && data.monthlyLimit > 0
+      ? Math.round((data.approvedThisMonth / data.monthlyLimit) * 100)
+      : 0
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">

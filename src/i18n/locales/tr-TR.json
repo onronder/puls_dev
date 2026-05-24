@@ -428,9 +428,12 @@
     "error": {
       "authRequired": "Oturum veya çalışan kaydı bulunamadı.",
       "invalidDates": "Geçerli bir tarih aralığı seçin.",
+      "crossYear": "İzin talebi tek bir takvim yılı içinde olmalı.",
       "halfDayInvalid": "Yarım gün izin için başlangıç ve bitiş aynı gün olmalı.",
       "documentRequired": "Bu izin türü belge gerektiriyor.",
       "insufficientBalance": "Yetersiz izin bakiyesi.",
+      "invalidLeaveType": "İzin türü bulunamadı veya pasif.",
+      "invalidDelegate": "Vekil çalışan bulunamadı.",
       "noApprover": "Onaycı bulunamadı.",
       "submitFailed": "İzin talebi gönderilemedi."
     }
@@ -469,6 +472,7 @@
     },
     "form": {
       "halfDay": "Yarım gün",
+      "halfDaySameDayHint": "Yarım gün yalnızca tek günlük izinlerde kullanılabilir.",
       "delegateHint": "İzin süresince işlerini yürütecek kişi.",
       "totalDays": "Toplam {{count}} gün",
       "totalDaysHint": "Resmi tatil ve hafta sonu hariç hesaplanır.",
@@ -558,6 +562,7 @@
       "invalidAmount": "Tutar 0'dan büyük olmalı.",
       "invalidCurrency": "Para birimi geçersiz.",
       "futureDate": "Masraf tarihi gelecekte olamaz.",
+      "noApprover": "Onaycı bulunamadı.",
       "submitFailed": "Masraf bildirimi gönderilemedi."
     }
   },
@@ -629,7 +634,8 @@
       "alreadyDecided": "Bu onay kaydı zaten karara bağlanmış.",
       "forbidden": "Bu onay kaydına karar verme yetkiniz yok.",
       "selfApproval": "Kendi talebinizi onaylayamazsınız.",
-      "invalidDecision": "Geçersiz onay kararı."
+      "invalidDecision": "Geçersiz onay kararı.",
+      "authRequired": "Oturum veya çalışan kaydı bulunamadı."
     }
   },
   "menu": {

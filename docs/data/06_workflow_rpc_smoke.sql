@@ -22,3 +22,7 @@
 -- 6) Expense create with limit exceed → policy_status = warning, status = pending
 
 -- 7) requires_document leave type → PULS_DOCUMENT_REQUIRED (sick/maternity blocked until upload V2)
+
+-- 8) Cross-year leave (Dec 30 – Jan 2) → PULS_CROSS_YEAR_LEAVE
+
+-- 9) Balance year: create leave with start_date in next calendar year locks that year's balance row

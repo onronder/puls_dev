@@ -5,6 +5,7 @@ import {
   fromRpcError,
   fromSupabaseError,
   isDataAdapterError,
+  mapRpcErrorToI18nKey,
 } from '#/lib/data/errors'
 
 describe('DataAdapterError', () => {
@@ -76,5 +77,41 @@ describe('fromRpcError', () => {
     )
 
     expect(error.i18nKey).toBe('leave.error.submitFailed')
+  })
+
+  it('maps leave-specific codes distinctly from expense codes', () => {
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_INVALID_LEAVE_TYPE: Leave type not found.',
+        'leave.error.submitFailed',
+        'createLeaveRequest',
+      ),
+    ).toBe('leave.error.invalidLeaveType')
+
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_INVALID_EXPENSE_CATEGORY: Category not found.',
+        'expense.error.submitFailed',
+        'createExpenseClaim',
+      ),
+    ).toBe('expense.error.invalidCategory')
+  })
+
+  it('maps shared codes using operation context', () => {
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_NO_APPROVER: No approver.',
+        'leave.error.submitFailed',
+        'createLeaveRequest',
+      ),
+    ).toBe('leave.error.noApprover')
+
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_NO_APPROVER: No approver.',
+        'expense.error.submitFailed',
+        'createExpenseClaim',
+      ),
+    ).toBe('expense.error.noApprover')
   })
 })

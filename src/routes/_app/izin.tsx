@@ -57,6 +57,7 @@ type LeaveTab = 'mine' | 'approvals' | 'calendar'
 type FormErrors = {
   startDate?: string
   endDate?: string
+  halfDay?: string
 }
 
 function toastAdapterError(
@@ -105,14 +106,22 @@ function formatUpcomingBadge(isoDate: string, locale: string): { month: string; 
 }
 
 function computeRequestedDays(startDate: string, endDate: string, halfDay: boolean): number {
-  const businessDays = countBusinessDays(startDate, endDate)
-  if (businessDays <= 0) return 0
-  return halfDay ? Math.max(0.5, businessDays - 0.5) : businessDays
+  if (!startDate || !endDate || endDate < startDate) return 0
+  if (halfDay) {
+    if (startDate !== endDate) return 0
+    return 0.5
+  }
+  return countBusinessDays(startDate, endDate)
+}
+
+function yearFromIsoDate(isoDate: string): number {
+  return Number(isoDate.slice(0, 4))
 }
 
 function validateLeaveForm(
   startDate: string,
   endDate: string,
+  halfDay: boolean,
   t: ReturnType<typeof useTranslation>['t'],
 ): FormErrors {
   const errors: FormErrors = {}
@@ -123,6 +132,10 @@ function validateLeaveForm(
     errors.endDate = t('leaveSetup.form.endRequired')
   } else if (startDate && endDate < startDate) {
     errors.endDate = t('leaveSetup.form.endBeforeStart')
+  } else if (startDate && endDate && yearFromIsoDate(startDate) !== yearFromIsoDate(endDate)) {
+    errors.endDate = t('leave.error.crossYear')
+  } else if (halfDay && startDate && endDate && startDate !== endDate) {
+    errors.halfDay = t('leave.error.halfDayInvalid')
   }
   return errors
 }
@@ -533,6 +546,7 @@ function LeaveFormSheet({
   })
 
   const requestedDays = computeRequestedDays(startDate, endDate, halfDay)
+  const halfDayBlocked = halfDay && !!startDate && !!endDate && startDate !== endDate
   const annualRemaining = data?.heroRemainingAnnual ?? 0
   const isAnnualType = resolvedLeaveType?.code === 'annual'
   const balanceAfter = isAnnualType ? annualRemaining - requestedDays : annualRemaining
@@ -562,7 +576,7 @@ function LeaveFormSheet({
     event.preventDefault()
     if (!resolvedLeaveType || requiresDocument) return
 
-    const nextErrors = validateLeaveForm(startDate, endDate, t)
+    const nextErrors = validateLeaveForm(startDate, endDate, halfDay, t)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
@@ -605,7 +619,7 @@ function LeaveFormSheet({
             type="submit"
             form="new-leave-form"
             className="min-h-11 flex-1"
-            disabled={isSubmitting || !data || !resolvedLeaveType || requiresDocument}
+            disabled={isSubmitting || !data || !resolvedLeaveType || requiresDocument || halfDayBlocked}
           >
             {isSubmitting ? (
               <>
@@ -692,11 +706,24 @@ function LeaveFormSheet({
             <div className="text-[12px] text-muted-foreground">
               {t('leaveSetup.form.totalDaysHint')}
             </div>
+            {errors.halfDay ? (
+              <div className="mt-1 text-[12px] text-[var(--color-danger)]">{errors.halfDay}</div>
+            ) : halfDayBlocked ? (
+              <div className="mt-1 text-[12px] text-muted-foreground">
+                {t('leaveSetup.form.halfDaySameDayHint')}
+              </div>
+            ) : null}
           </div>
-          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px]">
+          <label
+            className={cn(
+              'flex min-h-11 items-center gap-2 text-[13px]',
+              halfDayBlocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+            )}
+          >
             <input
               type="checkbox"
               checked={halfDay}
+              disabled={halfDayBlocked}
               onChange={(event) => setHalfDay(event.target.checked)}
               className="h-4 w-4 rounded border-border accent-[color:var(--primary)]"
             />

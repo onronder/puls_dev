@@ -38,13 +38,14 @@ export class DataAdapterError extends Error {
 }
 
 const RPC_ERROR_I18N: Record<string, string> = {
-  PULS_AUTH_REQUIRED: 'leave.error.authRequired',
   PULS_INVALID_DATES: 'leave.error.invalidDates',
+  PULS_CROSS_YEAR_LEAVE: 'leave.error.crossYear',
   PULS_HALF_DAY_INVALID: 'leave.error.halfDayInvalid',
   PULS_DOCUMENT_REQUIRED: 'leave.error.documentRequired',
   PULS_INSUFFICIENT_BALANCE: 'leave.error.insufficientBalance',
-  PULS_NO_APPROVER: 'leave.error.noApprover',
-  PULS_INVALID_CATEGORY: 'expense.error.invalidCategory',
+  PULS_INVALID_LEAVE_TYPE: 'leave.error.invalidLeaveType',
+  PULS_INVALID_DELEGATE: 'leave.error.invalidDelegate',
+  PULS_INVALID_EXPENSE_CATEGORY: 'expense.error.invalidCategory',
   PULS_INVALID_AMOUNT: 'expense.error.invalidAmount',
   PULS_INVALID_CURRENCY: 'expense.error.invalidCurrency',
   PULS_FUTURE_EXPENSE_DATE: 'expense.error.futureDate',
@@ -55,14 +56,50 @@ const RPC_ERROR_I18N: Record<string, string> = {
   PULS_INVALID_DECISION: 'approval.error.invalidDecision',
 }
 
+const OPERATION_AWARE_RPC_ERROR_I18N: Record<
+  string,
+  Partial<Record<'createLeaveRequest' | 'createExpenseClaim' | 'decideApprovalRequest', string>>
+> = {
+  PULS_AUTH_REQUIRED: {
+    createLeaveRequest: 'leave.error.authRequired',
+    createExpenseClaim: 'expense.error.authRequired',
+    decideApprovalRequest: 'approval.error.authRequired',
+  },
+  PULS_NO_APPROVER: {
+    createLeaveRequest: 'leave.error.noApprover',
+    createExpenseClaim: 'expense.error.noApprover',
+    decideApprovalRequest: 'approval.error.forbidden',
+  },
+}
+
+type RpcOperation = keyof (typeof OPERATION_AWARE_RPC_ERROR_I18N)[string]
+
+function isRpcOperation(operation: string): operation is RpcOperation {
+  return (
+    operation === 'createLeaveRequest' ||
+    operation === 'createExpenseClaim' ||
+    operation === 'decideApprovalRequest'
+  )
+}
+
 export function parseRpcErrorCode(message: string): string | null {
   const match = message.match(/^PULS_[A-Z_]+/)
   return match?.[0] ?? null
 }
 
-export function mapRpcErrorToI18nKey(message: string, fallback = 'leave.error.submitFailed'): string {
+export function mapRpcErrorToI18nKey(
+  message: string,
+  fallback = 'leave.error.submitFailed',
+  operation?: string,
+): string {
   const code = parseRpcErrorCode(message)
   if (!code) return fallback
+
+  if (operation && isRpcOperation(operation)) {
+    const operationKey = OPERATION_AWARE_RPC_ERROR_I18N[code]?.[operation]
+    if (operationKey) return operationKey
+  }
+
   return RPC_ERROR_I18N[code] ?? fallback
 }
 
@@ -88,7 +125,7 @@ export function fromRpcError(
   operation: string,
   fallbackKey = 'leave.error.submitFailed',
 ): DataAdapterError {
-  const i18nKey = mapRpcErrorToI18nKey(error.message, fallbackKey)
+  const i18nKey = mapRpcErrorToI18nKey(error.message, fallbackKey, operation)
   return new DataAdapterError({
     code: parseRpcErrorCode(error.message) ?? error.code ?? 'rpc_error',
     message: i18nKey,

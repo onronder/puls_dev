@@ -189,7 +189,7 @@ DECLARE
 BEGIN
   v_tenant_id := puls_core.current_tenant_id();
   v_employee_id := puls_core.current_employee_id();
-  v_period_year := EXTRACT(YEAR FROM CURRENT_DATE)::integer;
+  v_period_year := EXTRACT(YEAR FROM p_start_date)::integer;
 
   IF auth.uid() IS NULL OR v_tenant_id IS NULL OR v_employee_id IS NULL THEN
     RAISE EXCEPTION 'PULS_AUTH_REQUIRED: Authentication required.'
@@ -206,6 +206,11 @@ BEGIN
       USING ERRCODE = 'P0001';
   END IF;
 
+  IF EXTRACT(YEAR FROM p_start_date) <> EXTRACT(YEAR FROM p_end_date) THEN
+    RAISE EXCEPTION 'PULS_CROSS_YEAR_LEAVE: Leave request must fall within a single calendar year.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   IF p_half_day AND p_start_date <> p_end_date THEN
     RAISE EXCEPTION 'PULS_HALF_DAY_INVALID: Half-day leave requires the same start and end date.'
       USING ERRCODE = 'P0001';
@@ -219,7 +224,7 @@ BEGIN
     AND lt.is_active = true;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'PULS_INVALID_CATEGORY: Leave type not found or inactive.'
+    RAISE EXCEPTION 'PULS_INVALID_LEAVE_TYPE: Leave type not found or inactive.'
       USING ERRCODE = 'P0001';
   END IF;
 
@@ -236,7 +241,7 @@ BEGIN
         AND d.tenant_id = v_tenant_id
         AND d.employment_status = 'active'
     ) THEN
-      RAISE EXCEPTION 'PULS_INVALID_CATEGORY: Delegate employee not found.'
+      RAISE EXCEPTION 'PULS_INVALID_DELEGATE: Delegate employee not found.'
         USING ERRCODE = 'P0001';
     END IF;
   END IF;
@@ -367,6 +372,8 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION puls_workflow.create_leave_request(uuid, date, date, boolean, uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION puls_workflow.create_leave_request(uuid, date, date, boolean, uuid, text) FROM anon;
 GRANT EXECUTE ON FUNCTION puls_workflow.create_leave_request(uuid, date, date, boolean, uuid, text) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -439,7 +446,7 @@ BEGIN
     AND ec.is_active = true;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'PULS_INVALID_CATEGORY: Expense category not found or inactive.'
+    RAISE EXCEPTION 'PULS_INVALID_EXPENSE_CATEGORY: Expense category not found or inactive.'
       USING ERRCODE = 'P0001';
   END IF;
 
@@ -565,6 +572,8 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION puls_workflow.create_expense_claim(uuid, text, numeric, text, numeric, boolean, date, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION puls_workflow.create_expense_claim(uuid, text, numeric, text, numeric, boolean, date, text) FROM anon;
 GRANT EXECUTE ON FUNCTION puls_workflow.create_expense_claim(uuid, text, numeric, text, numeric, boolean, date, text) TO authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -655,6 +664,11 @@ BEGIN
         USING ERRCODE = 'P0001';
     END IF;
 
+    IF v_leave_request.status <> 'pending'::puls_workflow.leave_request_status THEN
+      RAISE EXCEPTION 'PULS_APPROVAL_ALREADY_DECIDED: Leave request is no longer pending.'
+        USING ERRCODE = 'P0001';
+    END IF;
+
     IF v_decision = 'approved' THEN
       UPDATE puls_workflow.leave_requests lr
       SET status = 'approved'::puls_workflow.leave_request_status,
@@ -668,7 +682,7 @@ BEGIN
       WHERE lb.tenant_id = v_tenant_id
         AND lb.employee_id = v_leave_request.employee_id
         AND lb.leave_type_id = v_leave_request.leave_type_id
-        AND lb.period_year = EXTRACT(YEAR FROM CURRENT_DATE)::integer
+        AND lb.period_year = EXTRACT(YEAR FROM v_leave_request.start_date)::integer
       FOR UPDATE;
 
       IF v_balance_id IS NOT NULL THEN
@@ -693,7 +707,7 @@ BEGIN
       WHERE lb.tenant_id = v_tenant_id
         AND lb.employee_id = v_leave_request.employee_id
         AND lb.leave_type_id = v_leave_request.leave_type_id
-        AND lb.period_year = EXTRACT(YEAR FROM CURRENT_DATE)::integer
+        AND lb.period_year = EXTRACT(YEAR FROM v_leave_request.start_date)::integer
       FOR UPDATE;
 
       IF v_balance_id IS NOT NULL THEN
@@ -740,6 +754,11 @@ BEGIN
       USING ERRCODE = 'P0001';
   END IF;
 
+  IF v_expense_claim.status <> 'pending'::puls_workflow.expense_claim_status THEN
+    RAISE EXCEPTION 'PULS_APPROVAL_ALREADY_DECIDED: Expense claim is no longer pending.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   IF v_decision = 'approved' THEN
     UPDATE puls_workflow.expense_claims ec
     SET status = 'approved'::puls_workflow.expense_claim_status,
@@ -780,4 +799,6 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION puls_workflow.decide_approval_request(uuid, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION puls_workflow.decide_approval_request(uuid, text, text) FROM anon;
 GRANT EXECUTE ON FUNCTION puls_workflow.decide_approval_request(uuid, text, text) TO authenticated;
