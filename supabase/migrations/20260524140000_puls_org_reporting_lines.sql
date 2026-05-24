@@ -103,6 +103,11 @@ BEGIN
     v_depth := v_depth + 1;
   END LOOP;
 
+  -- Chain still unresolved after max depth: reject (cycle or unsafe deep graph)
+  IF v_current IS NOT NULL THEN
+    RETURN TRUE;
+  END IF;
+
   RETURN FALSE;
 END;
 $$;
@@ -484,67 +489,144 @@ WHERE pd.legacy_public_department_id = pub.id
   AND pub.manager_employee_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- Backfill reporting lines from existing manager_employee_id
+-- Backfill reporting lines from existing manager_employee_id (skip invalid rows)
 -- ---------------------------------------------------------------------------
 
-INSERT INTO puls_core.employee_reporting_lines (
-  tenant_id,
-  employee_id,
-  manager_employee_id,
-  relationship_type,
-  starts_on,
-  is_active,
-  source
-)
-SELECT
-  e.tenant_id,
-  e.id,
-  e.manager_employee_id,
-  'primary_manager'::puls_core.reporting_relationship_type,
-  COALESCE(e.hire_date, CURRENT_DATE),
-  TRUE,
-  'bootstrap'
-FROM puls_core.employees e
-WHERE e.manager_employee_id IS NOT NULL
-  AND NOT EXISTS (
-    SELECT 1
-    FROM puls_core.employee_reporting_lines rl
-    WHERE rl.tenant_id = e.tenant_id
-      AND rl.employee_id = e.id
-      AND rl.is_active = TRUE
-      AND rl.relationship_type = 'primary_manager'::puls_core.reporting_relationship_type
-  );
+DO $$
+DECLARE
+  r RECORD;
+  v_inserted INTEGER := 0;
+  v_skipped INTEGER := 0;
+BEGIN
+  FOR r IN
+    SELECT
+      e.tenant_id,
+      e.id AS employee_id,
+      e.manager_employee_id,
+      COALESCE(e.hire_date, CURRENT_DATE) AS starts_on
+    FROM puls_core.employees e
+    INNER JOIN puls_core.employees m
+      ON m.id = e.manager_employee_id
+     AND m.tenant_id = e.tenant_id
+    WHERE e.manager_employee_id IS NOT NULL
+      AND e.manager_employee_id <> e.id
+      AND NOT EXISTS (
+        SELECT 1
+        FROM puls_core.employee_reporting_lines rl
+        WHERE rl.tenant_id = e.tenant_id
+          AND rl.employee_id = e.id
+          AND rl.is_active = TRUE
+          AND rl.relationship_type = 'primary_manager'::puls_core.reporting_relationship_type
+      )
+  LOOP
+    IF puls_core.detect_reporting_cycle(r.tenant_id, r.employee_id, r.manager_employee_id) THEN
+      v_skipped := v_skipped + 1;
+      RAISE WARNING 'puls_org_backfill: skipped cycle/deep chain employee=% manager=%',
+        r.employee_id, r.manager_employee_id;
+      CONTINUE;
+    END IF;
 
--- Infer employee managers from department managers where still missing
-INSERT INTO puls_core.employee_reporting_lines (
-  tenant_id,
-  employee_id,
-  manager_employee_id,
-  relationship_type,
-  starts_on,
-  is_active,
-  source
-)
-SELECT
-  pe.tenant_id,
-  pe.id,
-  pd.manager_employee_id,
-  'primary_manager'::puls_core.reporting_relationship_type,
-  COALESCE(pe.hire_date, CURRENT_DATE),
-  TRUE,
-  'bootstrap'
-FROM puls_core.employees pe
-JOIN puls_core.departments pd ON pd.id = pe.department_id
-WHERE pd.manager_employee_id IS NOT NULL
-  AND pd.manager_employee_id <> pe.id
-  AND NOT EXISTS (
-    SELECT 1
-    FROM puls_core.employee_reporting_lines rl
-    WHERE rl.tenant_id = pe.tenant_id
-      AND rl.employee_id = pe.id
-      AND rl.is_active = TRUE
-      AND rl.relationship_type = 'primary_manager'::puls_core.reporting_relationship_type
-  );
+    BEGIN
+      INSERT INTO puls_core.employee_reporting_lines (
+        tenant_id,
+        employee_id,
+        manager_employee_id,
+        relationship_type,
+        starts_on,
+        is_active,
+        source
+      )
+      VALUES (
+        r.tenant_id,
+        r.employee_id,
+        r.manager_employee_id,
+        'primary_manager'::puls_core.reporting_relationship_type,
+        r.starts_on,
+        TRUE,
+        'bootstrap'
+      );
+      v_inserted := v_inserted + 1;
+    EXCEPTION
+      WHEN OTHERS THEN
+        v_skipped := v_skipped + 1;
+        RAISE WARNING 'puls_org_backfill: skipped employee=% manager=% err=%',
+          r.employee_id, r.manager_employee_id, SQLERRM;
+    END;
+  END LOOP;
+
+  RAISE NOTICE 'puls_org_backfill from manager_employee_id: inserted=%, skipped=%',
+    v_inserted, v_skipped;
+END $$;
+
+-- Infer employee managers from department managers where still missing (skip invalid rows)
+DO $$
+DECLARE
+  r RECORD;
+  v_inserted INTEGER := 0;
+  v_skipped INTEGER := 0;
+BEGIN
+  FOR r IN
+    SELECT
+      pe.tenant_id,
+      pe.id AS employee_id,
+      pd.manager_employee_id,
+      COALESCE(pe.hire_date, CURRENT_DATE) AS starts_on
+    FROM puls_core.employees pe
+    INNER JOIN puls_core.departments pd
+      ON pd.id = pe.department_id
+     AND pd.tenant_id = pe.tenant_id
+    INNER JOIN puls_core.employees m
+      ON m.id = pd.manager_employee_id
+     AND m.tenant_id = pe.tenant_id
+    WHERE pd.manager_employee_id IS NOT NULL
+      AND pd.manager_employee_id <> pe.id
+      AND NOT EXISTS (
+        SELECT 1
+        FROM puls_core.employee_reporting_lines rl
+        WHERE rl.tenant_id = pe.tenant_id
+          AND rl.employee_id = pe.id
+          AND rl.is_active = TRUE
+          AND rl.relationship_type = 'primary_manager'::puls_core.reporting_relationship_type
+      )
+  LOOP
+    IF puls_core.detect_reporting_cycle(r.tenant_id, r.employee_id, r.manager_employee_id) THEN
+      v_skipped := v_skipped + 1;
+      RAISE WARNING 'puls_org_backfill: skipped dept-inferred cycle employee=% manager=%',
+        r.employee_id, r.manager_employee_id;
+      CONTINUE;
+    END IF;
+
+    BEGIN
+      INSERT INTO puls_core.employee_reporting_lines (
+        tenant_id,
+        employee_id,
+        manager_employee_id,
+        relationship_type,
+        starts_on,
+        is_active,
+        source
+      )
+      VALUES (
+        r.tenant_id,
+        r.employee_id,
+        r.manager_employee_id,
+        'primary_manager'::puls_core.reporting_relationship_type,
+        r.starts_on,
+        TRUE,
+        'bootstrap'
+      );
+      v_inserted := v_inserted + 1;
+    EXCEPTION
+      WHEN OTHERS THEN
+        v_skipped := v_skipped + 1;
+        RAISE WARNING 'puls_org_backfill: skipped dept-inferred employee=% manager=% err=%',
+          r.employee_id, r.manager_employee_id, SQLERRM;
+    END;
+  END LOOP;
+
+  RAISE NOTICE 'puls_org_backfill from department managers: inserted=%, skipped=%',
+    v_inserted, v_skipped;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- Demo single-root reporting lines (Mert Teknik tenant)

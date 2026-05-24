@@ -13,7 +13,10 @@
 -- Assert: employees.manager_employee_id = active primary_manager line for all non-GM demo employees
 
 -- 3) Cycle insert rejected by trigger (service_role only — expect ERROR)
--- INSERT INTO puls_core.employee_reporting_lines (...) VALUES (... cycle ...);
+-- Direct INSERT with A→B→A cycle must fail
+
+-- 3b) Backfill skips invalid rows without aborting migration (check NOTICE/WARNING)
+-- After 20260524140000: look for puls_org_backfill: inserted=N skipped=M in migration logs
 
 -- 4) Cross-tenant reporting line rejected (expect ERROR)
 -- INSERT with manager from different tenant

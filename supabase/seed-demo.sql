@@ -29,12 +29,11 @@ BEGIN
     legal_name = EXCLUDED.legal_name,
     trade_name = EXCLUDED.trade_name;
 
-  INSERT INTO public.departments (id, tenant_id, name, code, is_active, manager_employee_id) VALUES
-    ('22222222-2222-2222-2222-222222222201', v_tenant_id, 'Genel Yönetim', 'GY', TRUE, '44444444-4444-4444-4444-444444444402'),
-    ('22222222-2222-2222-2222-222222222202', v_tenant_id, 'İnsan Kaynakları', 'IK', TRUE, '44444444-4444-4444-4444-444444444401'),
-    ('22222222-2222-2222-2222-222222222203', v_tenant_id, 'Üretim', 'URT', TRUE, '44444444-4444-4444-4444-444444444404')
-  ON CONFLICT (id) DO UPDATE SET
-    manager_employee_id = EXCLUDED.manager_employee_id;
+  INSERT INTO public.departments (id, tenant_id, name, code, is_active) VALUES
+    ('22222222-2222-2222-2222-222222222201', v_tenant_id, 'Genel Yönetim', 'GY', TRUE),
+    ('22222222-2222-2222-2222-222222222202', v_tenant_id, 'İnsan Kaynakları', 'IK', TRUE),
+    ('22222222-2222-2222-2222-222222222203', v_tenant_id, 'Üretim', 'URT', TRUE)
+  ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.positions (id, tenant_id, name, code, department_id, level, salary_min, salary_max) VALUES
     ('33333333-3333-3333-3333-333333333301', v_tenant_id, 'Genel Müdür', 'GM', '22222222-2222-2222-2222-222222222201', 6, 150000, 250000),
@@ -49,6 +48,16 @@ BEGIN
     ('44444444-4444-4444-4444-444444444404', v_tenant_id, NULL, 'yonetici@mertteknik.demo', 'Demo Yönetici', 'Üretim Şefi', '22222222-2222-2222-2222-222222222203', '33333333-3333-3333-3333-333333333303', 'manager', '2015-09-10'),
     ('44444444-4444-4444-4444-444444444405', v_tenant_id, NULL, 'ik2@mertteknik.demo', 'Demo İK Uzmanı', 'İK Uzmanı', '22222222-2222-2222-2222-222222222202', '33333333-3333-3333-3333-333333333302', 'employee', '2018-11-20')
   ON CONFLICT (anonymous_id) DO NOTHING;
+
+  -- Wire department managers after employees exist (FK: manager_employee_id → public.employees)
+  UPDATE public.departments SET manager_employee_id = '44444444-4444-4444-4444-444444444402'::uuid
+  WHERE id = '22222222-2222-2222-2222-222222222201'::uuid AND tenant_id = v_tenant_id;
+
+  UPDATE public.departments SET manager_employee_id = '44444444-4444-4444-4444-444444444401'::uuid
+  WHERE id = '22222222-2222-2222-2222-222222222202'::uuid AND tenant_id = v_tenant_id;
+
+  UPDATE public.departments SET manager_employee_id = '44444444-4444-4444-4444-444444444404'::uuid
+  WHERE id = '22222222-2222-2222-2222-222222222203'::uuid AND tenant_id = v_tenant_id;
 
   IF NOT EXISTS (SELECT 1 FROM public.user_tenants WHERE user_id = v_user_id AND tenant_id = v_tenant_id) THEN
     INSERT INTO public.user_tenants (user_id, tenant_id, is_default) VALUES (v_user_id, v_tenant_id, TRUE);
