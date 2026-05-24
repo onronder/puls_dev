@@ -129,10 +129,23 @@ DECLARE
   v_step RECORD;
   v_approver_id UUID;
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM puls_workflow.approval_policies p
+    WHERE p.id = p_policy_id
+      AND p.tenant_id = p_tenant_id
+      AND p.is_active = TRUE
+  ) THEN
+    RAISE EXCEPTION 'PULS_POLICY_NOT_FOUND: Approval policy not found or inactive.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   SELECT s.approver_type, s.specific_employee_id, s.is_required
   INTO v_step
   FROM puls_workflow.approval_policy_steps s
-  JOIN puls_workflow.approval_policies p ON p.id = s.policy_id
+  JOIN puls_workflow.approval_policies p
+    ON p.id = s.policy_id
+   AND p.tenant_id = p_tenant_id
   WHERE s.policy_id = p_policy_id
     AND s.tenant_id = p_tenant_id
     AND s.step_order = p_step_order
@@ -186,10 +199,23 @@ AS $$
 DECLARE
   v_next_step integer;
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM puls_workflow.approval_policies p
+    WHERE p.id = p_policy_id
+      AND p.tenant_id = p_tenant_id
+      AND p.is_active = TRUE
+  ) THEN
+    RAISE EXCEPTION 'PULS_POLICY_NOT_FOUND: Approval policy not found or inactive.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   SELECT MIN(s.step_order)
   INTO v_next_step
   FROM puls_workflow.approval_policy_steps s
-  JOIN puls_workflow.approval_policies p ON p.id = s.policy_id
+  JOIN puls_workflow.approval_policies p
+    ON p.id = s.policy_id
+   AND p.tenant_id = p_tenant_id
   WHERE s.policy_id = p_policy_id
     AND s.tenant_id = p_tenant_id
     AND s.is_required = TRUE
@@ -1275,6 +1301,15 @@ BEGIN
       v_policy_id,
       v_next_step
     );
+
+    IF v_next_approver_id IS NULL THEN
+      RAISE EXCEPTION 'PULS_POLICY_STEP_UNRESOLVED: No approver could be resolved for next policy step.'
+        USING ERRCODE = 'P0001';
+    END IF;
+
+    v_next_approval_id := puls_workflow.create_next_approval_request(
+      v_tenant_id,
+      'expense'::puls_workflow.approval_module,
       v_expense_claim.id,
       v_approval.requester_employee_id,
       v_next_approver_id,
