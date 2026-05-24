@@ -107,7 +107,7 @@ async function fetchRealCompanySetupOverview(userId: string): Promise<CompanySet
   const tenant = tenantRow.data
   const activeEmployees = employeeCount.count ?? 0
   const mappedFields = mappedCount.count ?? 0
-  const totalFields = Math.max(mappingTotal.count ?? 0, mappedFields, 12)
+  const totalFields = mappingTotal.count ?? 0
   const completion = Number(readinessRow.data?.overall_readiness_pct ?? 0)
   const hasEmployees = activeEmployees > 0
   const hasErpMapping = mappedFields > 0

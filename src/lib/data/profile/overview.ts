@@ -2,6 +2,7 @@ import { fetchDemoProfileOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoProfileOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
+import { fetchNamesByIds } from '#/lib/data/core/lookups'
 import { resolveAdapterData } from '#/lib/data/result'
 
 export type ProfileOverview = DemoProfileOverview
@@ -54,15 +55,7 @@ async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview
   const [employeeRow, leaveRow, expenseRow, performanceRow] = await Promise.all([
     pulsCore()
       .from('employees')
-      .select(
-        `
-        email,
-        employment_status,
-        persona_role,
-        departments ( name ),
-        positions ( name )
-      `,
-      )
+      .select('email, employment_status, persona_role, department_id, position_id')
       .eq('id', ctx.employeeId)
       .maybeSingle(),
     pulsCalc()
@@ -103,20 +96,28 @@ async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview
     )
   }
 
-  const department = employeeRow.data?.departments as { name?: string } | null
-  const position = employeeRow.data?.positions as { name?: string } | null
+  const departmentId = employeeRow.data?.department_id as string | null
+  const positionId = employeeRow.data?.position_id as string | null
   const pendingCount = Number(performanceRow.data?.pending_review_count ?? 0)
 
-  const { count: pendingExpenseCount, error: pendingExpenseCountError } = await pulsWorkflow()
-    .from('expense_claims')
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', ctx.tenantId!)
-    .eq('employee_id', ctx.employeeId)
-    .eq('status', 'pending')
+  const [departmentNameMap, positionNameMap, pendingExpenseCountResult] = await Promise.all([
+    departmentId
+      ? fetchNamesByIds('departments', ctx.tenantId!, [departmentId])
+      : Promise.resolve(new Map<string, string>()),
+    positionId
+      ? fetchNamesByIds('positions', ctx.tenantId!, [positionId])
+      : Promise.resolve(new Map<string, string>()),
+    pulsWorkflow()
+      .from('expense_claims')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', ctx.tenantId!)
+      .eq('employee_id', ctx.employeeId)
+      .eq('status', 'pending'),
+  ])
 
-  if (pendingExpenseCountError) {
+  if (pendingExpenseCountResult.error) {
     throw fromSupabaseError(
-      pendingExpenseCountError,
+      pendingExpenseCountResult.error,
       'fetchProfileOverview',
       'puls_workflow',
       'expense_claims',
@@ -127,8 +128,8 @@ async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview
 
   return {
     fallbackEmail: (employeeRow.data?.email as string | null) ?? '—',
-    departmentKey: department?.name ?? '—',
-    positionKey: position?.name ?? '—',
+    departmentKey: departmentId ? (departmentNameMap.get(departmentId) ?? '—') : '—',
+    positionKey: positionId ? (positionNameMap.get(positionId) ?? '—') : '—',
     roleKey: mapPersonaRoleKey(employeeRow.data?.persona_role as string | null),
     statusKey:
       employeeRow.data?.employment_status === 'active'
@@ -138,7 +139,7 @@ async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview
     leaveTotal: Number(leaveRow.data?.annual_leave_total ?? 0),
     leaveHintKey: 'profileSetup.selfHr.leaveHint',
     pendingExpenseAmount: Number(expenseRow.data?.pending_expense_amount ?? 0),
-    pendingExpenseCount: pendingExpenseCount ?? 0,
+    pendingExpenseCount: pendingExpenseCountResult.count ?? 0,
     performanceCycleKey: cycleName ?? 'profileSetup.selfHr.performanceCycle',
     performanceHintKey:
       pendingCount > 0

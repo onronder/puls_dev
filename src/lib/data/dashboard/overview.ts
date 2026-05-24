@@ -141,7 +141,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
   }
 
   const mappedFields = mappingCount.count ?? 0
-  const totalFields = Math.max(mappingTotal.count ?? 0, mappedFields)
+  const totalFields = mappingTotal.count ?? 0
   const readiness = Number(dashboardRow.data?.data_readiness_pct ?? 0)
   const pendingLeave = Number(dashboardRow.data?.pending_leave_count ?? 0)
   const pendingExpense = Number(dashboardRow.data?.pending_expense_count ?? 0)
@@ -157,7 +157,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
       icon: 'target',
     })
   }
-  if (mappedFields < totalFields) {
+  if (totalFields > 0 && mappedFields < totalFields) {
     queue.push({
       id: 'q2',
       titleKey: 'dashboardSetup.queue.fieldMapping.title',
@@ -197,7 +197,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
         ? 'dashboard.erpConnected'
         : 'dashboardSetup.erpCard.statusPending',
       mappedFields,
-      totalFields: totalFields || 12,
+      totalFields,
       lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
       readiness,
       descriptionKey: 'dashboardSetup.erpCard.description',
