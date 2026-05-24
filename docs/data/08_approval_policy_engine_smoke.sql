@@ -1,6 +1,12 @@
 -- 08 Approval Policy Engine — manual SQL smoke checklist
 -- Run after supabase db push through 20260524153000 on staging.
 
+-- Pre-merge verification (from repo root):
+--   git fetch origin cursor/08-approval-policy-engine-b5b2
+--   ./scripts/verify-08-policy-engine-migration.sh origin/cursor/08-approval-policy-engine-b5b2
+--   git show origin/cursor/08-approval-policy-engine-b5b2:supabase/migrations/20260524153000_puls_workflow_policy_engine.sql | sed -n '1290,1320p'
+-- Expense intermediate approve is ~1296+ (line ~1271 is legacy-null audit log, not decide chain).
+
 -- Prerequisites: 07 org authority applied; demo tenant Mert Teknik seeded.
 
 -- ---------------------------------------------------------------------------

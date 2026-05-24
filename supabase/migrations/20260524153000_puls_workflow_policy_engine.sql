@@ -1293,6 +1293,7 @@ BEGIN
     v_approval.step_order
   );
 
+  -- expense policy intermediate approve (symmetric with leave branch above)
   IF v_next_step IS NOT NULL THEN
     v_next_approver_id := puls_workflow.resolve_policy_step_approver(
       v_tenant_id,
