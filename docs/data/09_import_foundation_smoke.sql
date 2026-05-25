@@ -71,21 +71,30 @@ END $$;
 */
 
 -- ---------------------------------------------------------------------------
--- 3) row_hash stability — sanitized unchanged => hash stable
--- Change only redacted field in source input; sanitized_payload identical => same row_hash
--- Change sanitized-visible field => row_hash changes
+-- 3) row_hash stability — same identity + sanitized payload => same hash across batches
+-- batch_id/row_number must NOT affect hash; tenant/namespace/entity/external_id + sanitized do
 -- ---------------------------------------------------------------------------
 
 /*
 SELECT puls_integration.compute_import_row_hash(
-  '00000000-0000-0000-0000-000000000001'::uuid,
-  1,
+  '<tenant_id>'::uuid,
+  '<namespace_id>'::uuid,
   'employee'::puls_integration.import_entity_type,
   'EXT-001',
   '{"full_name":"Smoke"}'::jsonb
-) AS hash_a;
+) AS hash_batch_a;
 
--- Different salary in source does not affect hash if sanitized identical (redact before hash)
+SELECT puls_integration.compute_import_row_hash(
+  '<tenant_id>'::uuid,
+  '<namespace_id>'::uuid,
+  'employee'::puls_integration.import_entity_type,
+  'EXT-001',
+  '{"full_name":"Smoke"}'::jsonb
+) AS hash_batch_b;
+-- Expect: hash_batch_a = hash_batch_b even when recorded in different import batches
+
+-- Different sanitized-visible field => hash changes
+-- Different salary in source (redacted before hash) => sanitized unchanged => hash stable
 */
 
 -- ---------------------------------------------------------------------------

@@ -21,14 +21,21 @@ for needle in \
   "SENSITIVE_BLOCK_LIST_BEGIN" \
   "SENSITIVE_BLOCK_LIST_END" \
   "CREATE OR REPLACE FUNCTION puls_integration.compute_import_row_hash" \
-  "sanitized_payload" \
+  "'tenant_id', p_tenant_id" \
+  "'source_namespace_id', p_source_namespace_id" \
   "CREATE OR REPLACE FUNCTION puls_integration.validate_entity_identity_map_tenant" \
   "PULS_IDENTITY_MAP_TARGET_NOT_ALLOWED" \
   "CREATE OR REPLACE FUNCTION puls_integration.create_import_batch" \
+  "p_tenant_id UUID DEFAULT NULL" \
   "CREATE OR REPLACE FUNCTION puls_integration.record_import_row" \
   "SECURITY DEFINER" \
   "puls_integration.can_read_import_payload()" \
-  "puls_integration.list_import_record_summaries"; do
+  "puls_integration.list_import_record_summaries" \
+  "REVOKE ALL ON FUNCTION puls_integration.create_import_batch" \
+  "REVOKE ALL ON FUNCTION puls_integration.record_import_row" \
+  "REVOKE ALL ON FUNCTION puls_integration.validate_entity_identity_map_tenant" \
+  "GRANT EXECUTE ON FUNCTION puls_integration.create_import_batch" \
+  "GRANT EXECUTE ON FUNCTION puls_integration.record_import_row"; do
   if ! sql | rg -Fq "$needle"; then
     echo "FAIL: missing required fragment: $needle"
     exit 1
@@ -40,11 +47,24 @@ if sql | rg -n "INSERT INTO" | rg -F "redact_import_payload" -q; then
   exit 1
 fi
 
-if ! sql | rg -Fq "ORDER BY priority_rank ASC, updated_at DESC, id ASC"; then
-  if ! sql | rg -Fq "updated_at DESC, id ASC"; then
-    echo "FAIL: missing priority_rank tie-break documentation"
-    exit 1
-  fi
+if sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg -Fq "'batch_id'"; then
+  echo "FAIL: compute_import_row_hash must not include batch_id in hash input"
+  exit 1
+fi
+
+if sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg -Fq "'row_number'"; then
+  echo "FAIL: compute_import_row_hash must not include row_number in hash input"
+  exit 1
+fi
+
+if sql | rg -n "SECURITY DEFINER" -A3 | rg "search_path = .*\\bpublic\\b" -q; then
+  echo "FAIL: SECURITY DEFINER functions must not include public in search_path"
+  exit 1
+fi
+
+if ! sql | rg -Fq "updated_at DESC, id ASC"; then
+  echo "FAIL: missing priority_rank tie-break documentation"
+  exit 1
 fi
 
 echo "OK: 09 PR1 migration structural checks passed for ${REF}"

@@ -1,6 +1,6 @@
 -- 09 PR1 — Namespace-aware import foundation (bridge alongside puls_integration.erp_*)
 -- Writes: SECURITY DEFINER RPCs only (create_import_batch, record_import_row).
--- service_role may call the same RPCs for connector/background jobs.
+-- service_role may call RPCs with explicit p_tenant_id (connector/background jobs).
 -- Pilot: import_records.raw_payload MUST remain NULL (encrypted/debug reserved).
 
 -- ---------------------------------------------------------------------------
@@ -196,8 +196,6 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION puls_integration.list_import_record_summaries(UUID) TO authenticated, service_role;
-
 -- ---------------------------------------------------------------------------
 -- updated_at triggers
 -- ---------------------------------------------------------------------------
@@ -231,7 +229,7 @@ RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = puls_core, puls_integration, public
+SET search_path = pg_catalog, puls_core, puls_integration
 AS $$
   SELECT
     puls_core.is_admin()
@@ -243,7 +241,7 @@ RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = puls_core, puls_integration, public
+SET search_path = pg_catalog, puls_core, puls_integration
 AS $$
   SELECT puls_core.is_admin();
 $$;
@@ -253,14 +251,10 @@ RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = puls_core, puls_integration, public
+SET search_path = pg_catalog, puls_core, puls_integration
 AS $$
   SELECT auth.role() = 'service_role' OR puls_core.is_admin();
 $$;
-
-REVOKE ALL ON FUNCTION puls_integration.is_import_metadata_reader() FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_integration.can_read_import_payload() FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_integration.can_write_import_data() FROM PUBLIC;
 
 -- ---------------------------------------------------------------------------
 -- External ID normalization
@@ -282,10 +276,6 @@ BEGIN
   RETURN v_normalized;
 END;
 $$;
-
-REVOKE ALL ON FUNCTION puls_integration.normalize_import_external_id(TEXT) FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_integration.normalize_import_external_id(TEXT) FROM authenticated;
-REVOKE ALL ON FUNCTION puls_integration.normalize_import_external_id(TEXT) FROM anon;
 
 -- ---------------------------------------------------------------------------
 -- Sensitive-field block list (pure redact — P1-1)
@@ -317,10 +307,6 @@ AS $$
     -- SENSITIVE_BLOCK_LIST_END
   ]::TEXT[];
 $$;
-
-REVOKE ALL ON FUNCTION puls_integration.import_blocked_keys() FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_integration.import_blocked_keys() FROM authenticated;
-REVOKE ALL ON FUNCTION puls_integration.import_blocked_keys() FROM anon;
 
 CREATE OR REPLACE FUNCTION puls_integration._redact_jsonb_node(
   p_in JSONB,
@@ -404,10 +390,6 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION puls_integration._redact_jsonb_node(JSONB, TEXT, TEXT[]) FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_integration._redact_jsonb_node(JSONB, TEXT, TEXT[]) FROM authenticated;
-REVOKE ALL ON FUNCTION puls_integration._redact_jsonb_node(JSONB, TEXT, TEXT[]) FROM anon;
-
 CREATE OR REPLACE FUNCTION puls_integration.redact_import_payload(p_payload JSONB)
 RETURNS TABLE (sanitized_payload JSONB, violations JSONB)
 LANGUAGE plpgsql
@@ -423,17 +405,13 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION puls_integration.redact_import_payload(JSONB) FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_integration.redact_import_payload(JSONB) FROM authenticated;
-REVOKE ALL ON FUNCTION puls_integration.redact_import_payload(JSONB) FROM anon;
-
 -- ---------------------------------------------------------------------------
--- row_hash from sanitized payload only (P1-5)
+-- row_hash from stable identity + sanitized payload only (P1-5; batch/row excluded)
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION puls_integration.compute_import_row_hash(
-  p_batch_id UUID,
-  p_row_number INTEGER,
+  p_tenant_id UUID,
+  p_source_namespace_id UUID,
   p_entity_type puls_integration.import_entity_type,
   p_external_id TEXT,
   p_sanitized_payload JSONB
@@ -447,8 +425,8 @@ AS $$
     digest(
       convert_to(
         jsonb_build_object(
-          'batch_id', p_batch_id,
-          'row_number', p_row_number,
+          'tenant_id', p_tenant_id,
+          'source_namespace_id', p_source_namespace_id,
           'entity_type', p_entity_type::text,
           'external_id', p_external_id,
           'sanitized_payload', COALESCE(p_sanitized_payload, '{}'::jsonb)
@@ -460,10 +438,6 @@ AS $$
     'hex'
   );
 $$;
-
-REVOKE ALL ON FUNCTION puls_integration.compute_import_row_hash(UUID, INTEGER, puls_integration.import_entity_type, TEXT, JSONB) FROM PUBLIC;
-REVOKE ALL ON FUNCTION puls_integration.compute_import_row_hash(UUID, INTEGER, puls_integration.import_entity_type, TEXT, JSONB) FROM authenticated;
-REVOKE ALL ON FUNCTION puls_integration.compute_import_row_hash(UUID, INTEGER, puls_integration.import_entity_type, TEXT, JSONB) FROM anon;
 
 -- ---------------------------------------------------------------------------
 -- Identity map validation (P1-4, P1-7)
@@ -554,7 +528,8 @@ CREATE TRIGGER puls_integration_identity_map_validate
 CREATE OR REPLACE FUNCTION puls_integration.create_import_batch(
   p_namespace_code TEXT,
   p_mode puls_integration.import_batch_mode DEFAULT 'dry_run',
-  p_source_checksum TEXT DEFAULT NULL
+  p_source_checksum TEXT DEFAULT NULL,
+  p_tenant_id UUID DEFAULT NULL
 )
 RETURNS UUID
 LANGUAGE plpgsql
@@ -571,9 +546,24 @@ BEGIN
     RAISE EXCEPTION 'PULS_IMPORT_FORBIDDEN: insufficient privileges to create import batch.';
   END IF;
 
-  v_tenant_id := puls_core.current_tenant_id();
-  IF v_tenant_id IS NULL AND auth.role() = 'service_role' THEN
-    RAISE EXCEPTION 'PULS_IMPORT_TENANT_REQUIRED: service_role must set tenant context before create_import_batch.';
+  IF auth.role() = 'service_role' THEN
+    IF p_tenant_id IS NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_TENANT_REQUIRED: service_role callers must pass p_tenant_id.';
+    END IF;
+    IF NOT EXISTS (
+      SELECT 1 FROM puls_core.tenants t WHERE t.id = p_tenant_id
+    ) THEN
+      RAISE EXCEPTION 'PULS_IMPORT_TENANT_INVALID: tenant % not found.', p_tenant_id;
+    END IF;
+    v_tenant_id := p_tenant_id;
+  ELSE
+    v_tenant_id := puls_core.current_tenant_id();
+    IF p_tenant_id IS NOT NULL AND p_tenant_id IS DISTINCT FROM v_tenant_id THEN
+      RAISE EXCEPTION 'PULS_IMPORT_FORBIDDEN: p_tenant_id is not allowed for authenticated callers.';
+    END IF;
+    IF v_tenant_id IS NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_TENANT_REQUIRED: authenticated caller has no tenant context.';
+    END IF;
   END IF;
 
   SELECT sn.id
@@ -630,6 +620,7 @@ AS $$
 DECLARE
   v_tenant_id UUID;
   v_batch_tenant UUID;
+  v_source_namespace_id UUID;
   v_normalized_external_id TEXT;
   v_sanitized JSONB;
   v_violations JSONB;
@@ -643,8 +634,8 @@ BEGIN
 
   v_tenant_id := puls_core.current_tenant_id();
 
-  SELECT ib.tenant_id
-  INTO v_batch_tenant
+  SELECT ib.tenant_id, ib.source_namespace_id
+  INTO v_batch_tenant, v_source_namespace_id
   FROM puls_integration.import_batches ib
   WHERE ib.id = p_batch_id;
 
@@ -663,8 +654,8 @@ BEGIN
   FROM puls_integration.redact_import_payload(COALESCE(p_payload, '{}'::jsonb)) AS r;
 
   v_row_hash := puls_integration.compute_import_row_hash(
-    p_batch_id,
-    p_row_number,
+    v_batch_tenant,
+    v_source_namespace_id,
     p_entity_type,
     v_normalized_external_id,
     v_sanitized
@@ -726,9 +717,6 @@ BEGIN
   RETURN v_record_id;
 END;
 $$;
-
-GRANT EXECUTE ON FUNCTION puls_integration.create_import_batch(TEXT, puls_integration.import_batch_mode, TEXT) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION puls_integration.record_import_row(UUID, INTEGER, puls_integration.import_entity_type, TEXT, JSONB) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- RLS
@@ -822,5 +810,23 @@ GRANT SELECT ON puls_integration.import_field_violations TO authenticated;
 
 GRANT ALL ON ALL TABLES IN SCHEMA puls_integration TO service_role;
 
+-- Function execute surface (REVOKE default PUBLIC; grant only intended callers)
+REVOKE ALL ON FUNCTION puls_integration.list_import_record_summaries(UUID) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.is_import_metadata_reader() FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.can_read_import_payload() FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.can_write_import_data() FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.normalize_import_external_id(TEXT) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.import_blocked_keys() FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration._redact_jsonb_node(JSONB, TEXT, TEXT[]) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.redact_import_payload(JSONB) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.compute_import_row_hash(UUID, UUID, puls_integration.import_entity_type, TEXT, JSONB) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.is_identity_map_target_allowed(TEXT, TEXT) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.validate_entity_identity_map_tenant() FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.create_import_batch(TEXT, puls_integration.import_batch_mode, TEXT, UUID) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration.record_import_row(UUID, INTEGER, puls_integration.import_entity_type, TEXT, JSONB) FROM PUBLIC, authenticated, anon;
+
+GRANT EXECUTE ON FUNCTION puls_integration.list_import_record_summaries(UUID) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION puls_integration.is_import_metadata_reader() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION puls_integration.can_read_import_payload() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION puls_integration.create_import_batch(TEXT, puls_integration.import_batch_mode, TEXT, UUID) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION puls_integration.record_import_row(UUID, INTEGER, puls_integration.import_entity_type, TEXT, JSONB) TO authenticated, service_role;
