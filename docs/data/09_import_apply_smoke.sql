@@ -394,6 +394,23 @@ BEGIN
       v_order_result ->> 'error_count';
   END IF;
 
+  -- -------------------------------------------------------------------------
+  -- single-match natural-key lookup exercises UUID deterministic pick
+  -- -------------------------------------------------------------------------
+
+  SELECT lb.canonical_id
+  INTO v_existing_le
+  FROM puls_integration._import_lookup_by_code(
+    v_tenant_id,
+    'legal_entity'::puls_integration.import_entity_type,
+    'smoke_apply_le'
+  ) lb
+  WHERE lb.error_code IS NULL;
+
+  IF v_existing_le IS NULL THEN
+    RAISE EXCEPTION 'SMOKE_FAIL: expected single-match legal_entity lookup to return a canonical id';
+  END IF;
+
   RAISE NOTICE '09 PR4 import apply smoke passed';
 
   PERFORM set_config('request.jwt.claim.role', '', true);
