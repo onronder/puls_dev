@@ -250,7 +250,7 @@ BEGIN
   v_strategy := lower(p_step_resolver_config ->> 'scope_strategy');
 
   IF p_step_resolver_config ? 'allow_tenant_fallback' THEN
-    v_fallback := (p_step_resolver_config -> 'allow_tenant_fallback')::boolean;
+    v_fallback := (p_step_resolver_config ->> 'allow_tenant_fallback')::boolean;
   END IF;
 
   IF v_strategy = 'tenant' THEN
