@@ -26,6 +26,7 @@ needles=(
   "scope_code"
   "allow_tenant_fallback"
   "DROP FUNCTION IF EXISTS puls_workflow._resolve_pool_approver_by_type"
+  "DROP FUNCTION IF EXISTS puls_workflow._resolve_approver_type_branch"
   "CREATE OR REPLACE FUNCTION puls_workflow.policy_step_condition_config_allowed_keys"
   "ARRAY[]::TEXT[]"
   "_validate_policy_step_resolver_config_semantics"
@@ -38,6 +39,8 @@ needles=(
   "CREATE OR REPLACE FUNCTION puls_workflow.resolve_approver"
   "CREATE OR REPLACE FUNCTION puls_workflow._resolve_approver_type_branch"
   "REVOKE ALL ON FUNCTION puls_workflow._resolve_pool_approver_by_type(UUID, puls_core.authority_pool_type, TEXT, puls_core.authority_scope_type, UUID, UUID, BOOLEAN, DATE)"
+  "REVOKE ALL ON FUNCTION puls_workflow._resolve_approver_type_branch(UUID, UUID, TEXT, puls_workflow.approver_type, UUID, JSONB)"
+  "p_module <> 'expense'"
 )
 
 for needle in "${needles[@]}"; do
@@ -81,7 +84,9 @@ smoke_needles=(
   "cost_center_owner"
   "resolve_policy_step_approver"
   "PULS_POLICY_STEP_RESOLVER_CONFIG"
-  "approver_type"
+  "hr_admin"
+  "specific_employee"
+  "leave"
 )
 
 for needle in "${smoke_needles[@]}"; do

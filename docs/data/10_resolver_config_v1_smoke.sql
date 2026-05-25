@@ -338,6 +338,47 @@ BEGIN
     IF SQLERRM NOT LIKE '%PULS_POLICY_STEP_CONFIG_UNKNOWN_FIELD%' THEN RAISE; END IF;
   END;
 
+  -- leave + cost_center_owner + explicit cost center → NULL (expense module guard)
+  INSERT INTO puls_workflow.approval_policies (tenant_id, code, name, module)
+  VALUES (v_tenant_id, 'smoke_rc10_cco_leave', 'Smoke RC10 CCO Leave', 'leave')
+  ON CONFLICT (tenant_id, code) DO UPDATE SET is_active = TRUE;
+
+  SELECT id INTO v_policy_id FROM puls_workflow.approval_policies
+  WHERE tenant_id = v_tenant_id AND code = 'smoke_rc10_cco_leave';
+
+  DELETE FROM puls_workflow.approval_policy_steps WHERE policy_id = v_policy_id;
+  INSERT INTO puls_workflow.approval_policy_steps (
+    tenant_id, policy_id, step_order, approver_type, is_required, step_resolver_config
+  ) VALUES (
+    v_tenant_id, v_policy_id, 1, 'cost_center_owner', TRUE,
+    jsonb_build_object(
+      'scope_strategy', 'explicit',
+      'scope_type', 'cost_center',
+      'scope_code', 'smoke_rc10_cc'
+    )
+  );
+
+  SELECT puls_workflow.resolve_policy_step_approver(
+    v_tenant_id, v_requester_id, 'leave', v_policy_id, 1
+  ) INTO v_approver;
+
+  IF v_approver IS NOT NULL THEN
+    RAISE EXCEPTION 'SMOKE_FAIL: leave cost_center_owner with explicit CC must be NULL, got %', v_approver;
+  END IF;
+
+  BEGIN
+    UPDATE puls_workflow.approval_policy_steps
+    SET step_resolver_config = jsonb_build_object(
+      'scope_strategy', 'requester_cost_center',
+      'scope_type', 'cost_center',
+      'scope_code', 'smoke_rc10_cc'
+    )
+    WHERE policy_id = v_policy_id;
+    RAISE EXCEPTION 'SMOKE_FAIL: scope_code with requester_cost_center should be rejected on write';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%PULS_POLICY_STEP_RESOLVER_CONFIG_INVALID%' THEN RAISE; END IF;
+  END;
+
   -- manager regression NULL config
   INSERT INTO puls_workflow.approval_policies (tenant_id, code, name, module)
   VALUES (v_tenant_id, 'smoke_rc10_mgr', 'Smoke RC10 Manager', 'leave')
@@ -357,6 +398,56 @@ BEGIN
 
   IF v_approver IS DISTINCT FROM v_manager_id THEN
     RAISE EXCEPTION 'SMOKE_FAIL: manager regression expected %, got %', v_manager_id, v_approver;
+  END IF;
+
+  IF v_hr_admin_id IS NOT NULL THEN
+    INSERT INTO puls_workflow.approval_policies (tenant_id, code, name, module)
+    VALUES (v_tenant_id, 'smoke_rc10_hr', 'Smoke RC10 HR Admin', 'leave')
+    ON CONFLICT (tenant_id, code) DO UPDATE SET is_active = TRUE;
+
+    SELECT id INTO v_policy_id FROM puls_workflow.approval_policies
+    WHERE tenant_id = v_tenant_id AND code = 'smoke_rc10_hr';
+
+    DELETE FROM puls_workflow.approval_policy_steps WHERE policy_id = v_policy_id;
+    INSERT INTO puls_workflow.approval_policy_steps (
+      tenant_id, policy_id, step_order, approver_type, is_required, step_resolver_config
+    ) VALUES (
+      v_tenant_id, v_policy_id, 1, 'hr_admin', TRUE,
+      '{"scope_strategy":"tenant"}'::jsonb
+    );
+
+    SELECT puls_workflow.resolve_policy_step_approver(
+      v_tenant_id, v_requester_id, 'leave', v_policy_id, 1
+    ) INTO v_approver;
+
+    IF v_approver IS DISTINCT FROM v_hr_admin_id THEN
+      RAISE EXCEPTION 'SMOKE_FAIL: hr_admin regression expected %, got %', v_hr_admin_id, v_approver;
+    END IF;
+  END IF;
+
+  IF v_specific_id IS NOT NULL THEN
+    INSERT INTO puls_workflow.approval_policies (tenant_id, code, name, module)
+    VALUES (v_tenant_id, 'smoke_rc10_spec', 'Smoke RC10 Specific', 'leave')
+    ON CONFLICT (tenant_id, code) DO UPDATE SET is_active = TRUE;
+
+    SELECT id INTO v_policy_id FROM puls_workflow.approval_policies
+    WHERE tenant_id = v_tenant_id AND code = 'smoke_rc10_spec';
+
+    DELETE FROM puls_workflow.approval_policy_steps WHERE policy_id = v_policy_id;
+    INSERT INTO puls_workflow.approval_policy_steps (
+      tenant_id, policy_id, step_order, approver_type, specific_employee_id, is_required,
+      step_resolver_config
+    ) VALUES (
+      v_tenant_id, v_policy_id, 1, 'specific_employee', v_specific_id, TRUE, NULL
+    );
+
+    SELECT puls_workflow.resolve_policy_step_approver(
+      v_tenant_id, v_requester_id, 'leave', v_policy_id, 1
+    ) INTO v_approver;
+
+    IF v_approver IS DISTINCT FROM v_specific_id THEN
+      RAISE EXCEPTION 'SMOKE_FAIL: specific_employee regression expected %, got %', v_specific_id, v_approver;
+    END IF;
   END IF;
 
   RAISE NOTICE '10 PR10.2 resolver config V1 smoke passed';

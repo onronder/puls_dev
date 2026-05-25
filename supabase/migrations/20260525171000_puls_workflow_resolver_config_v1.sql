@@ -133,6 +133,13 @@ BEGIN
     RETURN;
   END IF;
 
+  IF v_strategy <> 'explicit' THEN
+    IF v_has_scope_id OR v_has_scope_code OR v_has_scope_type THEN
+      RAISE EXCEPTION 'PULS_POLICY_STEP_RESOLVER_CONFIG_INVALID: scope_id, scope_code, and scope_type are allowed only with scope_strategy=explicit.'
+        USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+
   IF v_strategy = 'explicit' THEN
     IF NOT v_has_scope_type OR lower(btrim(p_config ->> 'scope_type')) <> 'cost_center' THEN
       RAISE EXCEPTION 'PULS_POLICY_STEP_RESOLVER_CONFIG_INVALID: explicit strategy requires scope_type=cost_center.'
@@ -374,6 +381,10 @@ $$;
 -- Approver branch + public resolvers (pass step_resolver_config)
 -- ---------------------------------------------------------------------------
 
+DROP FUNCTION IF EXISTS puls_workflow._resolve_approver_type_branch(
+  UUID, UUID, TEXT, puls_workflow.approver_type, UUID
+);
+
 CREATE OR REPLACE FUNCTION puls_workflow._resolve_approver_type_branch(
   p_tenant_id UUID,
   p_requester_id UUID,
@@ -467,6 +478,9 @@ BEGIN
   END IF;
 
   IF p_approver_type = 'cost_center_owner'::puls_workflow.approver_type THEN
+    IF p_module <> 'expense' THEN
+      RETURN NULL;
+    END IF;
     IF v_scope IS DISTINCT FROM 'cost_center'::puls_core.authority_scope_type
        OR v_scope_id IS NULL THEN
       RETURN NULL;
