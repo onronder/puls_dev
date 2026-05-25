@@ -695,8 +695,7 @@ BEGIN
 
     WHEN 'leave_type'::puls_core.authority_scope_type THEN
       IF puls_core.has_authority('approval_delegate'::puls_core.authority_type, p_scope_type, p_scope_id, p_module)
-         OR puls_core.has_authority('workflow_specific_delegate'::puls_core.authority_type, p_scope_type, p_scope_id, p_module)
-         OR puls_core.has_authority('hr_partner'::puls_core.authority_type, p_scope_type, p_scope_id, p_module) THEN
+         OR puls_core.has_authority('workflow_specific_delegate'::puls_core.authority_type, p_scope_type, p_scope_id, p_module) THEN
         RETURN TRUE;
       END IF;
       RETURN puls_core.is_pool_member_by_type('hr'::puls_core.authority_pool_type, p_scope_type, p_scope_id, p_module);
