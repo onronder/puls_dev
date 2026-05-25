@@ -62,6 +62,16 @@ if sql | rg -n "SECURITY DEFINER" -A3 | rg "search_path = .*\\bpublic\\b" -q; th
   exit 1
 fi
 
+if sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg "\\bdigest\\(" -q; then
+  echo "FAIL: compute_import_row_hash must not use unqualified digest(); use pg_catalog.sha256(convert_to(...))"
+  exit 1
+fi
+
+if ! sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg -Fq "sha256("; then
+  echo "FAIL: compute_import_row_hash must use sha256(convert_to(...))"
+  exit 1
+fi
+
 if ! sql | rg -Fq "updated_at DESC, id ASC"; then
   echo "FAIL: missing priority_rank tie-break documentation"
   exit 1

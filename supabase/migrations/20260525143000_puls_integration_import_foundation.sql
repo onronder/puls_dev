@@ -422,7 +422,7 @@ IMMUTABLE
 SET search_path = pg_catalog
 AS $$
   SELECT encode(
-    digest(
+    sha256(
       convert_to(
         jsonb_build_object(
           'tenant_id', p_tenant_id,
@@ -432,8 +432,7 @@ AS $$
           'sanitized_payload', COALESCE(p_sanitized_payload, '{}'::jsonb)
         )::text,
         'UTF8'
-      ),
-      'sha256'
+      )
     ),
     'hex'
   );
