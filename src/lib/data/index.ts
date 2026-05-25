@@ -87,6 +87,15 @@ export {
 } from '#/lib/data/setup/expense-categories'
 
 export {
+  fetchCostCenterReadinessOverview,
+  type CostCenterReadinessItem,
+  type CostCenterReadinessOverview,
+  type CostCenterReadinessStatus,
+  type ExpenseRoutingReadinessWarning,
+  type ExportSourceType,
+} from '#/lib/data/setup/cost-center-readiness'
+
+export {
   fetchPerformanceParametersOverview,
   type PerformanceParametersOverview,
 } from '#/lib/data/setup/performance-parameters'

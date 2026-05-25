@@ -946,6 +946,41 @@
         "accountingCode": "770.01"
       },
       "submit": "Save"
+    },
+    "costCenterMappings": {
+      "title": "Cost center mappings",
+      "description": "This section shows external mapping for the cost center dimension used in expense claims—not expense categories.",
+      "boundaryNote": "PULS does not create or update financial system master data. The financial system is the source of truth.",
+      "summary": "{{exportReady}} mapped · {{needsMapping}} need mapping",
+      "columns": {
+        "name": "Cost center",
+        "code": "Code",
+        "source": "Source",
+        "erpStatus": "ERP status"
+      },
+      "sourcePuls": "PULS",
+      "status": {
+        "export_ready_erp": "ERP mapped",
+        "export_ready_external": "External source mapped",
+        "needs_mapping": "Mapping required",
+        "puls_only": "PULS only",
+        "inactive": "Inactive"
+      },
+      "sheet": {
+        "title": "Cost center detail",
+        "description": "Read-only mapping information.",
+        "fields": {
+          "code": "PULS code",
+          "source": "Source namespace",
+          "externalId": "External ID",
+          "status": "ERP status"
+        }
+      },
+      "routingWarning": {
+        "title": "Approval routing vs accounting export",
+        "explicit": "Policy {{policy}} targets cost center {{code}}; mapping is required before accounting export.",
+        "requester": "Some cost centers are not ready for accounting export. If the requester's cost center is in this group, mapping is required before export."
+      }
     }
   },
   "performanceParamsSetup": {

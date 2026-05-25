@@ -946,6 +946,41 @@
         "accountingCode": "770.01"
       },
       "submit": "Kaydet"
+    },
+    "costCenterMappings": {
+      "title": "Masraf merkezi eşleşmeleri",
+      "description": "Bu bölüm masraf kategorilerini değil, masraf bildirimlerinde kullanılacak masraf merkezi boyutunun dış kaynak eşleşmesini gösterir.",
+      "boundaryNote": "PULS ERP ana verisi yazmaz. Finans sistemi kaynak sistemdir.",
+      "summary": "{{exportReady}} eşleşmiş · {{needsMapping}} eşleşme gerekiyor",
+      "columns": {
+        "name": "Masraf merkezi",
+        "code": "Kod",
+        "source": "Kaynak",
+        "erpStatus": "ERP durumu"
+      },
+      "sourcePuls": "PULS",
+      "status": {
+        "export_ready_erp": "ERP eşleşmiş",
+        "export_ready_external": "Dış kaynak eşleşmiş",
+        "needs_mapping": "Eşleşme gerekiyor",
+        "puls_only": "PULS içi",
+        "inactive": "Pasif"
+      },
+      "sheet": {
+        "title": "Masraf merkezi detayı",
+        "description": "Salt okunur eşleşme bilgisi.",
+        "fields": {
+          "code": "PULS kodu",
+          "source": "Kaynak namespace",
+          "externalId": "Dış kimlik",
+          "status": "ERP durumu"
+        }
+      },
+      "routingWarning": {
+        "title": "Onay routing ve muhasebe aktarımı",
+        "explicit": "{{policy}} politikası {{code}} masraf merkezini hedefliyor; muhasebe aktarımı için eşleşme gerekir.",
+        "requester": "Bazı masraf merkezleri muhasebe aktarımına hazır değil. Talep edenin masraf merkezi bu gruptaysa export öncesi eşleşme gerekir."
+      }
     }
   },
   "performanceParamsSetup": {
