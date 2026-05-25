@@ -11,6 +11,20 @@ sql() {
 
 echo "Checking ${REF}:${FILE} ..."
 
+SQL_CONTENT="$(sql)"
+
+contains_fixed() {
+  grep -Fq "$1" <<<"${SQL_CONTENT}"
+}
+
+hash_function_body() {
+  awk '
+    /FUNCTION puls_integration.compute_import_row_hash/ { in_body = 1 }
+    in_body { print }
+    in_body && /\$\$;/ { exit }
+  ' <<<"${SQL_CONTENT}"
+}
+
 for needle in \
   "CREATE TABLE IF NOT EXISTS puls_integration.source_namespaces" \
   "priority_rank INTEGER NOT NULL" \
@@ -36,43 +50,43 @@ for needle in \
   "REVOKE ALL ON FUNCTION puls_integration.validate_entity_identity_map_tenant" \
   "GRANT EXECUTE ON FUNCTION puls_integration.create_import_batch" \
   "GRANT EXECUTE ON FUNCTION puls_integration.record_import_row"; do
-  if ! sql | rg -Fq "$needle"; then
+  if ! contains_fixed "$needle"; then
     echo "FAIL: missing required fragment: $needle"
     exit 1
   fi
 done
 
-if sql | rg -n "INSERT INTO" | rg -F "redact_import_payload" -q; then
+if grep -n "INSERT INTO" <<<"${SQL_CONTENT}" | grep -Fq "redact_import_payload"; then
   echo "FAIL: redact_import_payload must be pure (no INSERT)"
   exit 1
 fi
 
-if sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg -Fq "'batch_id'"; then
+if hash_function_body | grep -Fq "'batch_id'"; then
   echo "FAIL: compute_import_row_hash must not include batch_id in hash input"
   exit 1
 fi
 
-if sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg -Fq "'row_number'"; then
+if hash_function_body | grep -Fq "'row_number'"; then
   echo "FAIL: compute_import_row_hash must not include row_number in hash input"
   exit 1
 fi
 
-if sql | rg -n "SECURITY DEFINER" -A3 | rg "search_path = .*\\bpublic\\b" -q; then
+if grep -Eiq "search_path = .*\\bpublic\\b" <<<"${SQL_CONTENT}"; then
   echo "FAIL: SECURITY DEFINER functions must not include public in search_path"
   exit 1
 fi
 
-if sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg "\\bdigest\\(" -q; then
+if hash_function_body | grep -Eq "\\bdigest\\("; then
   echo "FAIL: compute_import_row_hash must not use unqualified digest(); use pg_catalog.sha256(convert_to(...))"
   exit 1
 fi
 
-if ! sql | rg -U "FUNCTION puls_integration.compute_import_row_hash[\\s\\S]*?\\);\\s*\\$\\$" | rg -Fq "sha256("; then
+if ! hash_function_body | grep -Fq "sha256("; then
   echo "FAIL: compute_import_row_hash must use sha256(convert_to(...))"
   exit 1
 fi
 
-if ! sql | rg -Fq "updated_at DESC, id ASC"; then
+if ! contains_fixed "updated_at DESC, id ASC"; then
   echo "FAIL: missing priority_rank tie-break documentation"
   exit 1
 fi
