@@ -11,7 +11,6 @@ DECLARE
   v_manager_id UUID;
   v_hr_admin_id UUID;
   v_specific_id UUID;
-  v_finance_member_id UUID;
   v_hr_member_id UUID;
   v_legal_member_id UUID;
   v_cc_owner_id UUID;
@@ -70,15 +69,34 @@ BEGIN
     RETURN;
   END IF;
 
-  v_finance_member_id := COALESCE(v_specific_id, v_manager_id);
   v_hr_member_id := COALESCE(v_hr_admin_id, v_manager_id);
   v_legal_member_id := v_manager_id;
   v_cc_owner_id := v_manager_id;
-  v_scoped_member_id := v_finance_member_id;
-  v_tenant_member_id := CASE
-    WHEN v_finance_member_id IS DISTINCT FROM v_hr_member_id THEN v_hr_member_id
-    ELSE v_manager_id
-  END;
+
+  SELECT id INTO v_scoped_member_id
+  FROM puls_core.employees
+  WHERE tenant_id = v_tenant_id
+    AND employment_status = 'active'
+    AND id <> v_requester_id
+  ORDER BY full_name
+  LIMIT 1;
+
+  SELECT id INTO v_tenant_member_id
+  FROM puls_core.employees
+  WHERE tenant_id = v_tenant_id
+    AND employment_status = 'active'
+    AND id <> v_requester_id
+    AND id IS DISTINCT FROM v_scoped_member_id
+  ORDER BY full_name
+  LIMIT 1;
+
+  IF v_scoped_member_id IS NULL
+     OR v_tenant_member_id IS NULL
+     OR v_scoped_member_id = v_tenant_member_id THEN
+    RAISE EXCEPTION
+      'SMOKE_SETUP_FAIL: need two distinct active employees for scoped pool precedence (scoped=%, tenant=%)',
+      v_scoped_member_id, v_tenant_member_id;
+  END IF;
 
   INSERT INTO puls_core.legal_entities (tenant_id, code, name)
   VALUES (v_tenant_id, 'smoke_rv3_le', 'Smoke Resolver LE')
@@ -383,12 +401,17 @@ BEGIN
   UPDATE puls_core.authority_pool_members m
   SET is_active = FALSE
   FROM puls_core.authority_pools p
-  WHERE m.pool_id = p.id AND p.code = 'smoke_rv3_hr_pool';
+  WHERE m.pool_id = p.id AND p.code = 'smoke_rv3_hr';
 
   INSERT INTO puls_core.authority_pool_members (tenant_id, pool_id, employee_id, is_active)
   SELECT v_tenant_id, p.id, v_requester_id, TRUE
   FROM puls_core.authority_pools p
-  WHERE p.tenant_id = v_tenant_id AND p.code = 'smoke_rv3_hr_pool';
+  WHERE p.tenant_id = v_tenant_id AND p.code = 'smoke_rv3_hr';
+
+  SELECT id INTO v_policy_id
+  FROM puls_workflow.approval_policies
+  WHERE tenant_id = v_tenant_id
+    AND code = 'smoke_rv3_hr_pool';
 
   SELECT puls_workflow.resolve_policy_step_approver(
     v_tenant_id, v_requester_id, 'leave', v_policy_id, 1
