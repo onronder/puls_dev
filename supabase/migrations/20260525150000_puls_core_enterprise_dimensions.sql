@@ -293,6 +293,60 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION puls_core.detect_cost_center_cycle(
+  p_tenant_id UUID,
+  p_cost_center_id UUID,
+  p_parent_id UUID
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, puls_core
+AS $$
+DECLARE
+  v_current UUID := p_parent_id;
+  v_depth INTEGER := 0;
+  v_visited UUID[] := ARRAY[]::UUID[];
+  v_next UUID;
+BEGIN
+  IF p_parent_id IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  IF p_cost_center_id IS NOT NULL AND p_parent_id = p_cost_center_id THEN
+    RETURN TRUE;
+  END IF;
+
+  WHILE v_current IS NOT NULL AND v_depth < 20 LOOP
+    IF p_cost_center_id IS NOT NULL AND v_current = p_cost_center_id THEN
+      RETURN TRUE;
+    END IF;
+
+    IF v_current = ANY(v_visited) THEN
+      RETURN TRUE;
+    END IF;
+
+    v_visited := v_visited || v_current;
+
+    SELECT cc.parent_cost_center_id
+    INTO v_next
+    FROM puls_core.cost_centers cc
+    WHERE cc.id = v_current
+      AND cc.tenant_id = p_tenant_id;
+
+    v_current := v_next;
+    v_depth := v_depth + 1;
+  END LOOP;
+
+  IF v_current IS NOT NULL THEN
+    RETURN TRUE;
+  END IF;
+
+  RETURN FALSE;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION puls_core.validate_cost_center_tenant()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -323,6 +377,10 @@ BEGIN
         AND cc.is_active = TRUE
     ) THEN
       RAISE EXCEPTION 'PULS_COST_CENTER_INVALID_PARENT: parent missing, inactive, or cross-tenant.';
+    END IF;
+
+    IF puls_core.detect_cost_center_cycle(NEW.tenant_id, NEW.id, NEW.parent_cost_center_id) THEN
+      RAISE EXCEPTION 'PULS_COST_CENTER_CYCLE: parent assignment would create a cycle or exceed max depth.';
     END IF;
   END IF;
 
@@ -687,6 +745,75 @@ CREATE TRIGGER puls_core_emp_cc_assign_sync_cache
   FOR EACH ROW EXECUTE FUNCTION puls_core.sync_employee_cost_center_from_assignments();
 
 -- ---------------------------------------------------------------------------
+-- Employee cache guard — prevent direct cache bypass of assignment SoT
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION puls_core.validate_employee_dimension_cache()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, puls_core
+AS $$
+DECLARE
+  v_expected_le UUID;
+  v_expected_loc UUID;
+  v_expected_cc UUID;
+BEGIN
+  IF NEW.legal_entity_id IS DISTINCT FROM OLD.legal_entity_id THEN
+    SELECT a.legal_entity_id
+    INTO v_expected_le
+    FROM puls_core.employee_legal_entity_assignments a
+    WHERE a.tenant_id = NEW.tenant_id
+      AND a.employee_id = NEW.id
+      AND a.is_active = TRUE
+    ORDER BY a.starts_on DESC, a.updated_at DESC, a.id ASC
+    LIMIT 1;
+
+    IF NEW.legal_entity_id IS DISTINCT FROM v_expected_le THEN
+      RAISE EXCEPTION 'PULS_EMPLOYEE_CACHE_BYPASS: legal_entity_id must match active assignment cache or NULL when none exists.';
+    END IF;
+  END IF;
+
+  IF NEW.location_id IS DISTINCT FROM OLD.location_id THEN
+    SELECT a.location_id
+    INTO v_expected_loc
+    FROM puls_core.employee_location_assignments a
+    WHERE a.tenant_id = NEW.tenant_id
+      AND a.employee_id = NEW.id
+      AND a.is_active = TRUE
+    ORDER BY a.starts_on DESC, a.updated_at DESC, a.id ASC
+    LIMIT 1;
+
+    IF NEW.location_id IS DISTINCT FROM v_expected_loc THEN
+      RAISE EXCEPTION 'PULS_EMPLOYEE_CACHE_BYPASS: location_id must match active assignment cache or NULL when none exists.';
+    END IF;
+  END IF;
+
+  IF NEW.cost_center_id IS DISTINCT FROM OLD.cost_center_id THEN
+    SELECT a.cost_center_id
+    INTO v_expected_cc
+    FROM puls_core.employee_cost_center_assignments a
+    WHERE a.tenant_id = NEW.tenant_id
+      AND a.employee_id = NEW.id
+      AND a.is_active = TRUE
+    ORDER BY a.starts_on DESC, a.updated_at DESC, a.id ASC
+    LIMIT 1;
+
+    IF NEW.cost_center_id IS DISTINCT FROM v_expected_cc THEN
+      RAISE EXCEPTION 'PULS_EMPLOYEE_CACHE_BYPASS: cost_center_id must match active assignment cache or NULL when none exists.';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS puls_core_employees_validate_dimension_cache ON puls_core.employees;
+CREATE TRIGGER puls_core_employees_validate_dimension_cache
+  BEFORE UPDATE OF legal_entity_id, location_id, cost_center_id ON puls_core.employees
+  FOR EACH ROW EXECUTE FUNCTION puls_core.validate_employee_dimension_cache();
+
+-- ---------------------------------------------------------------------------
 -- Identity map allowlist expansion (PR2)
 -- ---------------------------------------------------------------------------
 
@@ -918,14 +1045,23 @@ GRANT SELECT, INSERT, UPDATE ON puls_core.employee_legal_entity_assignments TO a
 GRANT SELECT, INSERT, UPDATE ON puls_core.employee_location_assignments TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON puls_core.employee_cost_center_assignments TO authenticated;
 
+GRANT ALL ON puls_core.legal_entities TO service_role;
+GRANT ALL ON puls_core.locations TO service_role;
+GRANT ALL ON puls_core.cost_centers TO service_role;
+GRANT ALL ON puls_core.employee_legal_entity_assignments TO service_role;
+GRANT ALL ON puls_core.employee_location_assignments TO service_role;
+GRANT ALL ON puls_core.employee_cost_center_assignments TO service_role;
+
 -- Function execute surface
 REVOKE ALL ON FUNCTION puls_core.validate_enterprise_dimension_namespace() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.validate_location_tenant() FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_core.detect_cost_center_cycle(UUID, UUID, UUID) FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.validate_cost_center_tenant() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.validate_employee_legal_entity_assignment() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.validate_employee_location_assignment() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.validate_employee_cost_center_assignment() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.validate_department_cost_center() FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_core.validate_employee_dimension_cache() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.sync_employee_legal_entity_from_assignments() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.sync_employee_location_from_assignments() FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_core.sync_employee_cost_center_from_assignments() FROM PUBLIC, authenticated, anon;
