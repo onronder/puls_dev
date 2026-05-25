@@ -14,6 +14,8 @@ DECLARE
   v_bad_batch_id UUID;
   v_prio_batch_id UUID;
   v_dup_batch_id UUID;
+  v_order_batch_id UUID;
+  v_order_result JSONB;
   v_le_id UUID;
   v_loc_id UUID;
   v_cc_id UUID;
@@ -29,6 +31,8 @@ DECLARE
   v_count INTEGER;
   v_existing_le UUID;
 BEGIN
+  PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+
   SELECT id INTO v_tenant_id
   FROM puls_core.tenants
   WHERE legacy_public_tenant_id = '44444444-4444-4444-4444-444444444444'
@@ -364,7 +368,35 @@ BEGIN
     RAISE EXCEPTION 'SMOKE_FAIL: expected AMBIGUOUS_REFERENCE for duplicate email';
   END IF;
 
+  -- -------------------------------------------------------------------------
+  -- same-batch ref: child row before parent row still validates
+  -- -------------------------------------------------------------------------
+
+  SELECT puls_integration.create_import_batch('smoke_apply_erp', 'apply', NULL, v_tenant_id)
+  INTO v_order_batch_id;
+
+  SELECT puls_integration.record_import_row(
+    v_order_batch_id, 1, 'location', 'ORD-LOC-001',
+    jsonb_build_object(
+      'code', 'smoke_order_loc', 'name', 'Order Loc',
+      'legal_entity_code', 'smoke_order_le'
+    )
+  );
+  SELECT puls_integration.record_import_row(
+    v_order_batch_id, 2, 'legal_entity', 'ORD-LE-001',
+    jsonb_build_object('code', 'smoke_order_le', 'name', 'Order LE')
+  );
+
+  SELECT puls_integration.validate_import_batch(v_order_batch_id) INTO v_order_result;
+
+  IF (v_order_result ->> 'error_count')::integer <> 0 THEN
+    RAISE EXCEPTION 'SMOKE_FAIL: same-batch out-of-order refs should validate, error_count=%',
+      v_order_result ->> 'error_count';
+  END IF;
+
   RAISE NOTICE '09 PR4 import apply smoke passed';
+
+  PERFORM set_config('request.jwt.claim.role', '', true);
 END $$;
 
 ROLLBACK;

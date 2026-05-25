@@ -33,6 +33,7 @@ needles=(
   "employee_location_assignments"
   "employee_cost_center_assignments"
   "entity_identity_map"
+  "_import_check_ref"
   "upsert_primary_reporting_line"
   "REVOKE ALL ON FUNCTION puls_integration.validate_import_batch"
   "GRANT EXECUTE ON FUNCTION puls_integration.apply_import_batch"
@@ -75,6 +76,18 @@ if grep -Eiq "authority_pools|authority_relationships" <<< "$CONTENT" | grep -v 
     echo "FAIL: migration must not write authority graph tables"
     exit 1
   fi
+fi
+
+if grep -Eiq "PROCEDURE[[:space:]]+check_ref" <<< "$CONTENT"; then
+  echo "FAIL: migration must not use nested PROCEDURE check_ref (invalid plpgsql)"
+  exit 1
+fi
+
+if grep -Fq "request.jwt.claim.role" <<< "$SMOKE_CONTENT"; then
+  :
+else
+  echo "FAIL: smoke must set request.jwt.claim.role for service_role RPC context"
+  exit 1
 fi
 
 # Cache column writes on employees (blocker #8)

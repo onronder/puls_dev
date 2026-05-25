@@ -611,7 +611,7 @@ AS $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- Internal: same-batch reference lookup (validated/applied rows before current)
+-- Internal: same-batch reference lookup (entire batch; ambiguity-aware)
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION puls_integration._import_same_batch_lookup(
@@ -619,52 +619,89 @@ CREATE OR REPLACE FUNCTION puls_integration._import_same_batch_lookup(
   p_entity_type puls_integration.import_entity_type,
   p_ref_external_id TEXT,
   p_ref_code TEXT,
-  p_before_row_number INTEGER
+  p_exclude_row_number INTEGER DEFAULT NULL
 )
-RETURNS TABLE (canonical_id UUID, same_batch_pending BOOLEAN)
+RETURNS TABLE (canonical_id UUID, same_batch_pending BOOLEAN, error_code TEXT)
 LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = pg_catalog, puls_integration
 AS $$
 DECLARE
+  v_ext TEXT := NULLIF(btrim(COALESCE(p_ref_external_id, '')), '');
+  v_code TEXT := NULLIF(btrim(COALESCE(p_ref_code, '')), '');
+  v_count INTEGER;
   v_rec puls_integration.import_records;
 BEGIN
+  IF v_ext IS NULL AND v_code IS NULL THEN
+    canonical_id := NULL;
+    same_batch_pending := FALSE;
+    error_code := NULL;
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
+  SELECT COUNT(*)
+  INTO v_count
+  FROM puls_integration.import_records ir
+  WHERE ir.batch_id = p_batch_id
+    AND ir.entity_type = p_entity_type
+    AND (p_exclude_row_number IS NULL OR ir.row_number <> p_exclude_row_number)
+    AND (
+      (v_ext IS NOT NULL AND ir.external_id = v_ext)
+      OR (
+        v_code IS NOT NULL
+        AND (
+          COALESCE(ir.normalized_payload, ir.sanitized_payload) ->> 'code' = v_code
+          OR (
+            p_entity_type = 'employee'::puls_integration.import_entity_type
+            AND COALESCE(ir.normalized_payload, ir.sanitized_payload) ->> 'employee_code' = v_code
+          )
+        )
+      )
+    );
+
+  IF v_count > 1 THEN
+    canonical_id := NULL;
+    same_batch_pending := FALSE;
+    error_code := 'AMBIGUOUS_REFERENCE';
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
+  IF v_count = 0 THEN
+    canonical_id := NULL;
+    same_batch_pending := FALSE;
+    error_code := NULL;
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
   SELECT ir.*
   INTO v_rec
   FROM puls_integration.import_records ir
   WHERE ir.batch_id = p_batch_id
     AND ir.entity_type = p_entity_type
-    AND ir.status IN (
-      'validated'::puls_integration.import_record_status,
-      'applied'::puls_integration.import_record_status
-    )
-    AND ir.row_number < p_before_row_number
+    AND (p_exclude_row_number IS NULL OR ir.row_number <> p_exclude_row_number)
     AND (
-      (p_ref_external_id IS NOT NULL AND btrim(p_ref_external_id) <> '' AND ir.external_id = btrim(p_ref_external_id))
+      (v_ext IS NOT NULL AND ir.external_id = v_ext)
       OR (
-        p_ref_code IS NOT NULL AND btrim(p_ref_code) <> ''
+        v_code IS NOT NULL
         AND (
-          ir.normalized_payload ->> 'code' = btrim(p_ref_code)
+          COALESCE(ir.normalized_payload, ir.sanitized_payload) ->> 'code' = v_code
           OR (
             p_entity_type = 'employee'::puls_integration.import_entity_type
-            AND ir.normalized_payload ->> 'employee_code' = btrim(p_ref_code)
+            AND COALESCE(ir.normalized_payload, ir.sanitized_payload) ->> 'employee_code' = v_code
           )
         )
       )
     )
-  ORDER BY ir.row_number DESC
+  ORDER BY ir.row_number ASC
   LIMIT 1;
-
-  IF NOT FOUND THEN
-    canonical_id := NULL;
-    same_batch_pending := FALSE;
-    RETURN NEXT;
-    RETURN;
-  END IF;
 
   canonical_id := v_rec.canonical_id;
   same_batch_pending := v_rec.canonical_id IS NULL;
+  error_code := NULL;
   RETURN NEXT;
 END;
 $$;
@@ -680,7 +717,7 @@ CREATE OR REPLACE FUNCTION puls_integration._import_resolve_ref(
   p_entity_type puls_integration.import_entity_type,
   p_ref_external_id TEXT,
   p_ref_code TEXT,
-  p_before_row_number INTEGER DEFAULT NULL
+  p_exclude_row_number INTEGER DEFAULT NULL
 )
 RETURNS TABLE (canonical_id UUID, error_code TEXT, same_batch_pending BOOLEAN)
 LANGUAGE plpgsql
@@ -696,6 +733,7 @@ DECLARE
   v_lookup_err TEXT;
   v_batch UUID;
   v_batch_pending BOOLEAN;
+  v_batch_err TEXT;
 BEGIN
   IF v_ext IS NULL AND v_code IS NULL THEN
     canonical_id := NULL;
@@ -718,14 +756,22 @@ BEGIN
     END IF;
   END IF;
 
-  IF p_before_row_number IS NOT NULL THEN
-    SELECT sb.canonical_id, sb.same_batch_pending
-    INTO v_batch, v_batch_pending
+  IF p_batch_id IS NOT NULL THEN
+    SELECT sb.canonical_id, sb.same_batch_pending, sb.error_code
+    INTO v_batch, v_batch_pending, v_batch_err
     FROM puls_integration._import_same_batch_lookup(
-      p_batch_id, p_entity_type, v_ext, v_code, p_before_row_number
+      p_batch_id, p_entity_type, v_ext, v_code, p_exclude_row_number
     ) sb;
 
-    IF FOUND AND (v_batch IS NOT NULL OR v_batch_pending) THEN
+    IF v_batch_err IS NOT NULL THEN
+      canonical_id := NULL;
+      error_code := v_batch_err;
+      same_batch_pending := FALSE;
+      RETURN NEXT;
+      RETURN;
+    END IF;
+
+    IF v_batch IS NOT NULL OR COALESCE(v_batch_pending, FALSE) THEN
       canonical_id := v_batch;
       error_code := NULL;
       same_batch_pending := COALESCE(v_batch_pending, FALSE);
@@ -784,7 +830,7 @@ CREATE OR REPLACE FUNCTION puls_integration._import_resolve_entity_target(
   p_external_id TEXT,
   p_normalized JSONB
 )
-RETURNS UUID
+RETURNS TABLE (canonical_id UUID, error_code TEXT)
 LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
@@ -799,7 +845,10 @@ BEGIN
     p_tenant_id, p_namespace_id, p_entity_type, p_external_id
   );
   IF v_map_id IS NOT NULL THEN
-    RETURN v_map_id;
+    canonical_id := v_map_id;
+    error_code := NULL;
+    RETURN NEXT;
+    RETURN;
   END IF;
 
   IF p_entity_type = 'employee'::puls_integration.import_entity_type THEN
@@ -810,7 +859,10 @@ BEGIN
       p_normalized ->> 'employee_code',
       p_normalized ->> 'email'
     ) le;
-    RETURN v_lookup;
+    canonical_id := v_lookup;
+    error_code := v_err;
+    RETURN NEXT;
+    RETURN;
   END IF;
 
   SELECT lb.canonical_id, lb.error_code
@@ -819,7 +871,57 @@ BEGIN
     p_tenant_id, p_entity_type, p_normalized ->> 'code'
   ) lb;
 
-  RETURN v_lookup;
+  canonical_id := v_lookup;
+  error_code := v_err;
+  RETURN NEXT;
+END;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Internal: validate one reference field (fail closed)
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION puls_integration._import_check_ref(
+  p_tenant_id UUID,
+  p_namespace_id UUID,
+  p_batch_id UUID,
+  p_ref_entity puls_integration.import_entity_type,
+  p_ref_external_id TEXT,
+  p_ref_code TEXT,
+  p_required BOOLEAN DEFAULT FALSE
+)
+RETURNS TEXT[]
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, puls_integration, puls_core
+AS $$
+DECLARE
+  v_r UUID;
+  v_e TEXT;
+  v_p BOOLEAN;
+BEGIN
+  IF COALESCE(p_ref_external_id, '') = '' AND COALESCE(p_ref_code, '') = '' THEN
+    IF p_required THEN
+      RETURN ARRAY['UNRESOLVED_REFERENCE'];
+    END IF;
+    RETURN ARRAY[]::TEXT[];
+  END IF;
+
+  SELECT rr.canonical_id, rr.error_code, rr.same_batch_pending
+  INTO v_r, v_e, v_p
+  FROM puls_integration._import_resolve_ref(
+    p_tenant_id, p_namespace_id, p_batch_id, p_ref_entity,
+    p_ref_external_id, p_ref_code, NULL
+  ) rr;
+
+  IF v_e IS NOT NULL THEN
+    RETURN ARRAY[v_e];
+  ELSIF v_r IS NULL AND NOT COALESCE(v_p, FALSE) THEN
+    RETURN ARRAY['UNRESOLVED_REFERENCE'];
+  END IF;
+
+  RETURN ARRAY[]::TEXT[];
 END;
 $$;
 
@@ -843,115 +945,152 @@ SET search_path = pg_catalog, puls_integration, puls_core
 AS $$
 DECLARE
   v_errors TEXT[] := ARRAY[]::TEXT[];
-  v_res UUID;
-  v_err TEXT;
-  v_pending BOOLEAN;
-
-  PROCEDURE check_ref(
-    p_ref_entity puls_integration.import_entity_type,
-    p_ext_key TEXT,
-    p_code_key TEXT,
-    p_required BOOLEAN DEFAULT FALSE
-  ) IS
-    v_ext TEXT;
-    v_code TEXT;
-    v_r UUID;
-    v_e TEXT;
-    v_p BOOLEAN;
-  BEGIN
-    v_ext := p_normalized ->> p_ext_key;
-    v_code := p_normalized ->> p_code_key;
-
-    IF COALESCE(v_ext, '') = '' AND COALESCE(v_code, '') = '' THEN
-      IF p_required THEN
-        v_errors := array_append(v_errors, 'UNRESOLVED_REFERENCE');
-      END IF;
-      RETURN;
-    END IF;
-
-    SELECT rr.canonical_id, rr.error_code, rr.same_batch_pending
-    INTO v_r, v_e, v_p
-    FROM puls_integration._import_resolve_ref(
-      p_tenant_id, p_namespace_id, p_batch_id, p_ref_entity,
-      v_ext, v_code, p_row_number
-    ) rr;
-
-    IF v_e IS NOT NULL THEN
-      v_errors := array_append(v_errors, v_e);
-    ELSIF v_r IS NULL AND NOT COALESCE(v_p, FALSE) THEN
-      v_errors := array_append(v_errors, 'UNRESOLVED_REFERENCE');
-    END IF;
-  END;
 BEGIN
   CASE p_entity_type
     WHEN 'location'::puls_integration.import_entity_type THEN
-      CALL check_ref('legal_entity'::puls_integration.import_entity_type, 'legal_entity_external_id', 'legal_entity_code', TRUE);
+      v_errors := v_errors || puls_integration._import_check_ref(
+        p_tenant_id, p_namespace_id, p_batch_id,
+        'legal_entity'::puls_integration.import_entity_type,
+        p_normalized ->> 'legal_entity_external_id',
+        p_normalized ->> 'legal_entity_code',
+        TRUE
+      );
     WHEN 'cost_center'::puls_integration.import_entity_type THEN
-      CALL check_ref('legal_entity'::puls_integration.import_entity_type, 'legal_entity_external_id', 'legal_entity_code', TRUE);
+      v_errors := v_errors || puls_integration._import_check_ref(
+        p_tenant_id, p_namespace_id, p_batch_id,
+        'legal_entity'::puls_integration.import_entity_type,
+        p_normalized ->> 'legal_entity_external_id',
+        p_normalized ->> 'legal_entity_code',
+        TRUE
+      );
       IF p_normalized ? 'parent_cost_center_code' OR p_normalized ? 'parent_cost_center_external_id' THEN
-        CALL check_ref('cost_center'::puls_integration.import_entity_type, 'parent_cost_center_external_id', 'parent_cost_center_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'cost_center'::puls_integration.import_entity_type,
+          p_normalized ->> 'parent_cost_center_external_id',
+          p_normalized ->> 'parent_cost_center_code',
+          FALSE
+        );
       END IF;
     WHEN 'department'::puls_integration.import_entity_type THEN
       IF p_normalized ? 'parent_department_code' OR p_normalized ? 'parent_department_external_id' THEN
-        CALL check_ref('department'::puls_integration.import_entity_type, 'parent_department_external_id', 'parent_department_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'department'::puls_integration.import_entity_type,
+          p_normalized ->> 'parent_department_external_id',
+          p_normalized ->> 'parent_department_code',
+          FALSE
+        );
       END IF;
       IF p_normalized ? 'manager_employee_code' OR p_normalized ? 'manager_employee_external_id' OR p_normalized ? 'manager_email' THEN
-        CALL check_ref('employee'::puls_integration.import_entity_type, 'manager_employee_external_id', 'manager_employee_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'employee'::puls_integration.import_entity_type,
+          p_normalized ->> 'manager_employee_external_id',
+          p_normalized ->> 'manager_employee_code',
+          FALSE
+        );
         IF (p_normalized ->> 'manager_email') IS NOT NULL AND btrim(p_normalized ->> 'manager_email') <> '' THEN
-          SELECT rr.canonical_id, rr.error_code, rr.same_batch_pending
-          INTO v_res, v_err, v_pending
-          FROM puls_integration._import_resolve_ref(
-            p_tenant_id, p_namespace_id, p_batch_id, 'employee'::puls_integration.import_entity_type,
-            NULL, p_normalized ->> 'manager_email', p_row_number
-          ) rr;
-          IF v_err IS NOT NULL THEN
-            v_errors := array_append(v_errors, v_err);
-          ELSIF v_res IS NULL AND NOT COALESCE(v_pending, FALSE) THEN
-            v_errors := array_append(v_errors, 'UNRESOLVED_REFERENCE');
-          END IF;
+          v_errors := v_errors || puls_integration._import_check_ref(
+            p_tenant_id, p_namespace_id, p_batch_id,
+            'employee'::puls_integration.import_entity_type,
+            NULL,
+            p_normalized ->> 'manager_email',
+            FALSE
+          );
         END IF;
       END IF;
       IF p_normalized ? 'cost_center_code' OR p_normalized ? 'cost_center_external_id' THEN
-        CALL check_ref('cost_center'::puls_integration.import_entity_type, 'cost_center_external_id', 'cost_center_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'cost_center'::puls_integration.import_entity_type,
+          p_normalized ->> 'cost_center_external_id',
+          p_normalized ->> 'cost_center_code',
+          FALSE
+        );
       END IF;
     WHEN 'position'::puls_integration.import_entity_type THEN
       IF p_normalized ? 'department_code' OR p_normalized ? 'department_external_id' THEN
-        CALL check_ref('department'::puls_integration.import_entity_type, 'department_external_id', 'department_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'department'::puls_integration.import_entity_type,
+          p_normalized ->> 'department_external_id',
+          p_normalized ->> 'department_code',
+          FALSE
+        );
       END IF;
       IF p_normalized ? 'parent_position_code' OR p_normalized ? 'parent_position_external_id' THEN
-        CALL check_ref('position'::puls_integration.import_entity_type, 'parent_position_external_id', 'parent_position_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'position'::puls_integration.import_entity_type,
+          p_normalized ->> 'parent_position_external_id',
+          p_normalized ->> 'parent_position_code',
+          FALSE
+        );
       END IF;
     WHEN 'employee'::puls_integration.import_entity_type THEN
       IF p_normalized ? 'department_code' OR p_normalized ? 'department_external_id' THEN
-        CALL check_ref('department'::puls_integration.import_entity_type, 'department_external_id', 'department_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'department'::puls_integration.import_entity_type,
+          p_normalized ->> 'department_external_id',
+          p_normalized ->> 'department_code',
+          FALSE
+        );
       END IF;
       IF p_normalized ? 'position_code' OR p_normalized ? 'position_external_id' THEN
-        CALL check_ref('position'::puls_integration.import_entity_type, 'position_external_id', 'position_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'position'::puls_integration.import_entity_type,
+          p_normalized ->> 'position_external_id',
+          p_normalized ->> 'position_code',
+          FALSE
+        );
       END IF;
       IF p_normalized ? 'manager_employee_code' OR p_normalized ? 'manager_employee_external_id' OR p_normalized ? 'manager_email' THEN
-        CALL check_ref('employee'::puls_integration.import_entity_type, 'manager_employee_external_id', 'manager_employee_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'employee'::puls_integration.import_entity_type,
+          p_normalized ->> 'manager_employee_external_id',
+          p_normalized ->> 'manager_employee_code',
+          FALSE
+        );
         IF (p_normalized ->> 'manager_email') IS NOT NULL AND btrim(p_normalized ->> 'manager_email') <> '' THEN
-          SELECT rr.canonical_id, rr.error_code, rr.same_batch_pending
-          INTO v_res, v_err, v_pending
-          FROM puls_integration._import_resolve_ref(
-            p_tenant_id, p_namespace_id, p_batch_id, 'employee'::puls_integration.import_entity_type,
-            NULL, p_normalized ->> 'manager_email', p_row_number
-          ) rr;
-          IF v_err IS NOT NULL THEN
-            v_errors := array_append(v_errors, v_err);
-          ELSIF v_res IS NULL AND NOT COALESCE(v_pending, FALSE) THEN
-            v_errors := array_append(v_errors, 'UNRESOLVED_REFERENCE');
-          END IF;
+          v_errors := v_errors || puls_integration._import_check_ref(
+            p_tenant_id, p_namespace_id, p_batch_id,
+            'employee'::puls_integration.import_entity_type,
+            NULL,
+            p_normalized ->> 'manager_email',
+            FALSE
+          );
         END IF;
       END IF;
       IF p_normalized ? 'legal_entity_code' OR p_normalized ? 'legal_entity_external_id' THEN
-        CALL check_ref('legal_entity'::puls_integration.import_entity_type, 'legal_entity_external_id', 'legal_entity_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'legal_entity'::puls_integration.import_entity_type,
+          p_normalized ->> 'legal_entity_external_id',
+          p_normalized ->> 'legal_entity_code',
+          FALSE
+        );
       END IF;
       IF p_normalized ? 'location_code' OR p_normalized ? 'location_external_id' THEN
-        CALL check_ref('location'::puls_integration.import_entity_type, 'location_external_id', 'location_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'location'::puls_integration.import_entity_type,
+          p_normalized ->> 'location_external_id',
+          p_normalized ->> 'location_code',
+          FALSE
+        );
       END IF;
       IF p_normalized ? 'cost_center_code' OR p_normalized ? 'cost_center_external_id' THEN
-        CALL check_ref('cost_center'::puls_integration.import_entity_type, 'cost_center_external_id', 'cost_center_code', FALSE);
+        v_errors := v_errors || puls_integration._import_check_ref(
+          p_tenant_id, p_namespace_id, p_batch_id,
+          'cost_center'::puls_integration.import_entity_type,
+          p_normalized ->> 'cost_center_external_id',
+          p_normalized ->> 'cost_center_code',
+          FALSE
+        );
       END IF;
     ELSE
       NULL;
@@ -1057,10 +1196,17 @@ SET search_path = pg_catalog, puls_integration, puls_core
 AS $$
 DECLARE
   v_target UUID;
+  v_err TEXT;
 BEGIN
-  v_target := puls_integration._import_resolve_entity_target(
+  SELECT t.canonical_id, t.error_code
+  INTO v_target, v_err
+  FROM puls_integration._import_resolve_entity_target(
     p_tenant_id, p_namespace_id, p_entity_type, p_external_id, p_normalized
-  );
+  ) t;
+
+  IF v_err IS NOT NULL THEN
+    RAISE EXCEPTION 'PULS_IMPORT_CLASSIFY_FAILED: target ambiguity % on import row.', v_err;
+  END IF;
 
   IF v_target IS NULL THEN
     action := 'create';
@@ -1167,6 +1313,7 @@ DECLARE
   v_all_errors TEXT[];
   v_error_count INTEGER := 0;
   v_target UUID;
+  v_target_err TEXT;
 BEGIN
   v_batch := puls_integration._import_lock_batch(p_batch_id);
 
@@ -1197,7 +1344,20 @@ BEGIN
       v_norm
     );
 
+    SELECT t.canonical_id, t.error_code
+    INTO v_target, v_target_err
+    FROM puls_integration._import_resolve_entity_target(
+      v_batch.tenant_id,
+      v_batch.source_namespace_id,
+      v_rec.entity_type,
+      v_rec.external_id,
+      v_norm
+    ) t;
+
     v_all_errors := COALESCE(v_errors, '{}') || COALESCE(v_req_errors, '{}') || COALESCE(v_ref_errors, '{}');
+    IF v_target_err IS NOT NULL THEN
+      v_all_errors := v_all_errors || ARRAY[v_target_err];
+    END IF;
 
     IF array_length(v_all_errors, 1) IS NOT NULL AND array_length(v_all_errors, 1) > 0 THEN
       UPDATE puls_integration.import_records ir
@@ -1211,14 +1371,6 @@ BEGIN
       WHERE ir.id = v_rec.id;
       v_error_count := v_error_count + 1;
     ELSE
-      v_target := puls_integration._import_resolve_entity_target(
-        v_batch.tenant_id,
-        v_batch.source_namespace_id,
-        v_rec.entity_type,
-        v_rec.external_id,
-        v_norm
-      );
-
       UPDATE puls_integration.import_records ir
       SET
         normalized_payload = v_norm,
@@ -1369,6 +1521,7 @@ DECLARE
   v_rec RECORD;
   v_payload JSONB;
   v_target UUID;
+  v_target_err TEXT;
   v_canonical_id UUID;
   v_is_active BOOLEAN;
   v_le_id UUID;
@@ -1423,9 +1576,15 @@ BEGIN
     ORDER BY ir.row_number
   LOOP
     v_payload := v_rec.normalized_payload;
-    v_target := puls_integration._import_resolve_entity_target(
+    SELECT t.canonical_id, t.error_code
+    INTO v_target, v_target_err
+    FROM puls_integration._import_resolve_entity_target(
       v_batch.tenant_id, v_batch.source_namespace_id, v_rec.entity_type, v_rec.external_id, v_payload
-    );
+    ) t;
+
+    IF v_target_err IS NOT NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_APPLY_FAILED: ambiguous target on row % (%)', v_rec.row_number, v_target_err;
+    END IF;
 
     IF v_target IS NOT NULL THEN
       IF puls_integration._import_should_skip_priority(
@@ -1489,9 +1648,15 @@ BEGIN
     ORDER BY ir.row_number
   LOOP
     v_payload := v_rec.normalized_payload;
-    v_target := puls_integration._import_resolve_entity_target(
+    SELECT t.canonical_id, t.error_code
+    INTO v_target, v_target_err
+    FROM puls_integration._import_resolve_entity_target(
       v_batch.tenant_id, v_batch.source_namespace_id, v_rec.entity_type, v_rec.external_id, v_payload
-    );
+    ) t;
+
+    IF v_target_err IS NOT NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_APPLY_FAILED: ambiguous target on row % (%)', v_rec.row_number, v_target_err;
+    END IF;
 
     IF v_target IS NOT NULL THEN
       IF puls_integration._import_should_skip_priority(
@@ -1562,9 +1727,15 @@ BEGIN
     ORDER BY ir.row_number
   LOOP
     v_payload := v_rec.normalized_payload;
-    v_target := puls_integration._import_resolve_entity_target(
+    SELECT t.canonical_id, t.error_code
+    INTO v_target, v_target_err
+    FROM puls_integration._import_resolve_entity_target(
       v_batch.tenant_id, v_batch.source_namespace_id, v_rec.entity_type, v_rec.external_id, v_payload
-    );
+    ) t;
+
+    IF v_target_err IS NOT NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_APPLY_FAILED: ambiguous target on row % (%)', v_rec.row_number, v_target_err;
+    END IF;
 
     IF v_target IS NOT NULL THEN
       IF puls_integration._import_should_skip_priority(
@@ -1663,9 +1834,15 @@ BEGIN
     ORDER BY ir.row_number
   LOOP
     v_payload := v_rec.normalized_payload;
-    v_target := puls_integration._import_resolve_entity_target(
+    SELECT t.canonical_id, t.error_code
+    INTO v_target, v_target_err
+    FROM puls_integration._import_resolve_entity_target(
       v_batch.tenant_id, v_batch.source_namespace_id, v_rec.entity_type, v_rec.external_id, v_payload
-    );
+    ) t;
+
+    IF v_target_err IS NOT NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_APPLY_FAILED: ambiguous target on row % (%)', v_rec.row_number, v_target_err;
+    END IF;
 
     IF v_target IS NOT NULL THEN
       IF puls_integration._import_should_skip_priority(
@@ -1744,9 +1921,15 @@ BEGIN
     ORDER BY ir.row_number
   LOOP
     v_payload := v_rec.normalized_payload;
-    v_target := puls_integration._import_resolve_entity_target(
+    SELECT t.canonical_id, t.error_code
+    INTO v_target, v_target_err
+    FROM puls_integration._import_resolve_entity_target(
       v_batch.tenant_id, v_batch.source_namespace_id, v_rec.entity_type, v_rec.external_id, v_payload
-    );
+    ) t;
+
+    IF v_target_err IS NOT NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_APPLY_FAILED: ambiguous target on row % (%)', v_rec.row_number, v_target_err;
+    END IF;
 
     IF v_target IS NOT NULL THEN
       IF puls_integration._import_should_skip_priority(
@@ -1832,9 +2015,15 @@ BEGIN
     ORDER BY ir.row_number
   LOOP
     v_payload := v_rec.normalized_payload;
-    v_target := puls_integration._import_resolve_entity_target(
+    SELECT t.canonical_id, t.error_code
+    INTO v_target, v_target_err
+    FROM puls_integration._import_resolve_entity_target(
       v_batch.tenant_id, v_batch.source_namespace_id, v_rec.entity_type, v_rec.external_id, v_payload
-    );
+    ) t;
+
+    IF v_target_err IS NOT NULL THEN
+      RAISE EXCEPTION 'PULS_IMPORT_APPLY_FAILED: ambiguous target on row % (%)', v_rec.row_number, v_target_err;
+    END IF;
 
     IF v_target IS NOT NULL THEN
       IF puls_integration._import_should_skip_priority(
@@ -2172,6 +2361,7 @@ REVOKE ALL ON FUNCTION puls_integration._import_identity_map_lookup(UUID, UUID, 
 REVOKE ALL ON FUNCTION puls_integration._import_same_batch_lookup(UUID, puls_integration.import_entity_type, TEXT, TEXT, INTEGER) FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_integration._import_resolve_ref(UUID, UUID, UUID, puls_integration.import_entity_type, TEXT, TEXT, INTEGER) FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_integration._import_resolve_entity_target(UUID, UUID, puls_integration.import_entity_type, TEXT, JSONB) FROM PUBLIC, authenticated, anon;
+REVOKE ALL ON FUNCTION puls_integration._import_check_ref(UUID, UUID, UUID, puls_integration.import_entity_type, TEXT, TEXT, BOOLEAN) FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_integration._import_validate_entity_refs(UUID, UUID, UUID, INTEGER, puls_integration.import_entity_type, JSONB) FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_integration._import_resolve_ref_at_apply(UUID, UUID, UUID, puls_integration.import_entity_type, TEXT, TEXT) FROM PUBLIC, authenticated, anon;
 REVOKE ALL ON FUNCTION puls_integration._import_classify_record(UUID, UUID, INTEGER, puls_integration.import_entity_type, TEXT, JSONB, TEXT) FROM PUBLIC, authenticated, anon;
