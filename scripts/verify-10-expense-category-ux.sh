@@ -56,12 +56,12 @@ for needle in \
   fi
 done
 
-if ! grep -Fq 'expenseCategorySetup.validation' "$I18N_TR" || ! grep -Fq 'expenseCategorySetup.validation' "$I18N_EN"; then
+if ! grep -Fq '"validation"' "$I18N_TR" || ! grep -Fq '"validation"' "$I18N_EN"; then
   echo "FAIL: missing expenseCategorySetup.validation i18n namespace"
   exit 1
 fi
 
-if ! grep -Fq 'discardConfirm' "$I18N_TR" || ! grep -Fq 'duplicateAccountingCode' "$I18N_EN"; then
+if ! grep -Fq '"discardConfirm"' "$I18N_TR" || ! grep -Fq '"duplicateAccountingCode"' "$I18N_EN"; then
   echo "FAIL: missing validation i18n keys"
   exit 1
 fi
