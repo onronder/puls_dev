@@ -665,9 +665,12 @@ export async function fetchDemoLeaveTypesOverview(): Promise<DemoLeaveTypesOverv
 
 export type DemoExpenseCategoryRule = {
   id: string
+  name: string
   nameKey: string
+  categoryCode: string
   monthly: number
   docThreshold: number
+  accountingCode: string | null
   code: string
   approvalPolicyId?: string | null
   approvalPolicyName?: string | null
@@ -690,49 +693,67 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
   categories: [
     {
       id: 'ec1',
+      name: 'Seyahat',
       nameKey: 'expenseCategorySetup.categories.travel',
+      categoryCode: 'travel',
       monthly: 15000,
       docThreshold: 2000,
+      accountingCode: '770.01',
       code: '770.01',
       approvalStepCount: 1,
     },
     {
       id: 'ec2',
+      name: 'Yemek',
       nameKey: 'expenseCategorySetup.categories.meals',
+      categoryCode: 'meals',
       monthly: 5000,
       docThreshold: 500,
+      accountingCode: '770.02',
       code: '770.02',
       approvalStepCount: 1,
     },
     {
       id: 'ec3',
+      name: 'Konaklama',
       nameKey: 'expenseCategorySetup.categories.lodging',
+      categoryCode: 'lodging',
       monthly: 20000,
       docThreshold: 2000,
+      accountingCode: '770.03',
       code: '770.03',
       approvalStepCount: 1,
     },
     {
       id: 'ec4',
+      name: 'Yazılım',
       nameKey: 'expenseCategorySetup.categories.software',
+      categoryCode: 'software',
       monthly: 10000,
       docThreshold: 1000,
+      accountingCode: '770.04',
       code: '770.04',
       approvalStepCount: 1,
     },
     {
       id: 'ec5',
+      name: 'Ulaşım',
       nameKey: 'expenseCategorySetup.categories.transport',
+      categoryCode: 'transport',
       monthly: 3000,
       docThreshold: 500,
+      accountingCode: '770.05',
       code: '770.05',
       approvalStepCount: 1,
     },
     {
       id: 'ec6',
+      name: 'Diğer',
       nameKey: 'expenseCategorySetup.categories.other',
+      categoryCode: 'other',
       monthly: 2000,
       docThreshold: 500,
+      accountingCode: '770.99',
       code: '770.99',
       approvalStepCount: 1,
     },

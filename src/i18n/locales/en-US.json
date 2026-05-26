@@ -929,23 +929,47 @@
       "other": "Other"
     },
     "actions": {
-      "add": "Add category"
+      "add": "Add category",
+      "save": "Save",
+      "saving": "Saving"
     },
     "sheet": {
-      "title": "Add category",
-      "description": "Creating new expense categories will be enabled after the pilot.",
+      "create": {
+        "title": "Add category",
+        "description": "Define a new expense category used inside PULS."
+      },
+      "edit": {
+        "title": "Edit category",
+        "description": "Update category limits, document threshold, and accounting code."
+      },
+      "boundaryNote": "This only updates the PULS expense category setup; external financial master data is unchanged.",
       "mvpBadge": "Read-only",
       "fields": {
         "name": "Category name",
+        "code": "Category code",
         "monthlyLimit": "Monthly limit",
+        "docThreshold": "Document threshold",
         "accountingCode": "Accounting code"
       },
       "placeholders": {
         "name": "e.g. Travel",
+        "code": "travel",
         "monthlyLimit": "15,000",
+        "docThreshold": "500",
         "accountingCode": "770.01"
       },
       "submit": "Save"
+    },
+    "toast": {
+      "created": "Expense category added.",
+      "updated": "Expense category updated."
+    },
+    "errors": {
+      "required": "Category name and category code are required.",
+      "monthlyLimit": "Monthly limit must be 0 or greater.",
+      "docThreshold": "Document threshold must be 0 or greater.",
+      "duplicateCode": "This category code is already in use.",
+      "saveFailed": "Expense category could not be saved."
     },
     "costCenterMappings": {
       "title": "Cost center mappings",
