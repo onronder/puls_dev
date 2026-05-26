@@ -1,10 +1,18 @@
 import { fetchDemoExpenseCategoriesOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoExpenseCategoriesOverview } from '#/lib/demo/puls-demo-data'
-import { fromSupabaseError } from '#/lib/data/errors'
+import { DataAdapterError, fromSupabaseError } from '#/lib/data/errors'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData } from '#/lib/data/result'
 
 export type ExpenseCategoriesOverview = DemoExpenseCategoriesOverview
+
+export type ExpenseCategoryMutationInput = {
+  name: string
+  code: string
+  monthlyLimit: number
+  receiptRequiredOver: number
+  accountingCode: string | null
+}
 
 const EXPENSE_CATEGORY_NAME_KEYS: Record<string, string> = {
   travel: 'expenseCategorySetup.categories.travel',
@@ -23,6 +31,15 @@ function emptyExpenseCategoriesOverview(): ExpenseCategoriesOverview {
     maxApprovalStepCount: 0,
     categories: [],
   }
+}
+
+function normalizeCategoryCode(code: string): string {
+  return code.trim().toLowerCase().replace(/\s+/g, '_')
+}
+
+function normalizeOptionalText(value: string | null | undefined): string | null {
+  const normalized = value?.trim()
+  return normalized ? normalized : null
 }
 
 async function fetchRealExpenseCategoriesOverview(
@@ -94,9 +111,12 @@ async function fetchRealExpenseCategoriesOverview(
 
     return {
       id: row.id as string,
+      name: row.name as string,
       nameKey: EXPENSE_CATEGORY_NAME_KEYS[code] ?? (row.name as string),
+      categoryCode: code,
       monthly: Number(row.monthly_limit ?? 0),
       docThreshold: Number(row.receipt_required_over ?? 0),
+      accountingCode: (row.erp_account_code as string | null) ?? null,
       code: (row.erp_account_code as string | null) ?? code,
       approvalPolicyId: policyId,
       approvalPolicyName: policyName ?? null,
@@ -128,4 +148,82 @@ export async function fetchExpenseCategoriesOverview(
     fetchDemo: fetchDemoExpenseCategoriesOverview,
     isEmpty: (data) => data.categories.length === 0,
   })
+}
+
+export async function createExpenseCategory(
+  userId: string,
+  input: ExpenseCategoryMutationInput,
+): Promise<void> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { error } = await pulsWorkflow()
+    .from('expense_categories')
+    .insert({
+      tenant_id: ctx.tenantId,
+      name: input.name.trim(),
+      code: normalizeCategoryCode(input.code),
+      monthly_limit: input.monthlyLimit,
+      receipt_required_over: input.receiptRequiredOver,
+      erp_account_code: normalizeOptionalText(input.accountingCode),
+      is_active: true,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'createExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+  }
+}
+
+export async function updateExpenseCategory(
+  userId: string,
+  categoryId: string,
+  input: ExpenseCategoryMutationInput,
+): Promise<void> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsWorkflow()
+    .from('expense_categories')
+    .update({
+      name: input.name.trim(),
+      code: normalizeCategoryCode(input.code),
+      monthly_limit: input.monthlyLimit,
+      receipt_required_over: input.receiptRequiredOver,
+      erp_account_code: normalizeOptionalText(input.accountingCode),
+    })
+    .eq('tenant_id', ctx.tenantId)
+    .eq('id', categoryId)
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'updateExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+  }
+
+  if (!data) {
+    throw new DataAdapterError({
+      code: 'not_found',
+      message: 'Expense category was not updated',
+      source: 'adapter',
+      operation: 'updateExpenseCategory',
+      schema: 'puls_workflow',
+      table: 'expense_categories',
+    })
+  }
 }

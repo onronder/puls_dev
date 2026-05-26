@@ -929,23 +929,47 @@
       "other": "Diğer"
     },
     "actions": {
-      "add": "Kategori ekle"
+      "add": "Kategori ekle",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor"
     },
     "sheet": {
-      "title": "Kategori ekle",
-      "description": "Yeni masraf kategorisi oluşturma pilot sonrası açılacak.",
+      "create": {
+        "title": "Kategori ekle",
+        "description": "PULS içinde kullanılacak yeni masraf kategorisini tanımla."
+      },
+      "edit": {
+        "title": "Kategori düzenle",
+        "description": "Kategori limitlerini, belge eşiğini ve muhasebe kodunu güncelle."
+      },
+      "boundaryNote": "Bu işlem yalnızca PULS masraf kategori tanımını günceller; ERP veya finans sistemine veri yazmaz.",
       "mvpBadge": "Salt okunur",
       "fields": {
         "name": "Kategori adı",
+        "code": "Kategori kodu",
         "monthlyLimit": "Aylık limit",
+        "docThreshold": "Belge eşiği",
         "accountingCode": "Muhasebe kodu"
       },
       "placeholders": {
         "name": "Örn. Seyahat",
+        "code": "orn_seyahat",
         "monthlyLimit": "15.000",
+        "docThreshold": "500",
         "accountingCode": "770.01"
       },
       "submit": "Kaydet"
+    },
+    "toast": {
+      "created": "Masraf kategorisi eklendi.",
+      "updated": "Masraf kategorisi güncellendi."
+    },
+    "errors": {
+      "required": "Kategori adı ve kategori kodu zorunludur.",
+      "monthlyLimit": "Aylık limit 0 veya daha büyük olmalıdır.",
+      "docThreshold": "Belge eşiği 0 veya daha büyük olmalıdır.",
+      "duplicateCode": "Bu kategori kodu zaten kullanılıyor.",
+      "saveFailed": "Masraf kategorisi kaydedilemedi."
     },
     "costCenterMappings": {
       "title": "Masraf merkezi eşleşmeleri",

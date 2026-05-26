@@ -1,8 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, FileCheck2, Plus, Receipt, Wallet, Workflow } from 'lucide-react'
-import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  AlertTriangle,
+  FileCheck2,
+  Loader2,
+  Plus,
+  Receipt,
+  Save,
+  Wallet,
+  Workflow,
+  X,
+} from 'lucide-react'
+import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DataList } from '#/components/puls/DataList'
@@ -19,10 +30,14 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  createExpenseCategory,
   fetchCostCenterReadinessOverview,
   fetchExpenseCategoriesOverview,
+  isDataAdapterError,
+  updateExpenseCategory,
   type CostCenterReadinessItem,
   type CostCenterReadinessStatus,
+  type ExpenseCategoriesOverview,
   type ExpenseRoutingReadinessWarning,
 } from '#/lib/data'
 import { formatCurrency } from '#/lib/format'
@@ -55,6 +70,34 @@ const CATEGORY_TABLE_GRID_COLS =
   'grid-cols-[minmax(0,1fr)_minmax(0,112px)_minmax(0,112px)_88px]'
 const COST_CENTER_TABLE_GRID_COLS =
   'grid-cols-[minmax(0,1fr)_minmax(0,96px)_minmax(0,120px)_120px]'
+
+type ExpenseCategoryRule = ExpenseCategoriesOverview['categories'][number]
+
+type ExpenseCategoryFormState = {
+  name: string
+  code: string
+  monthlyLimit: string
+  receiptRequiredOver: string
+  accountingCode: string
+}
+
+const EMPTY_CATEGORY_FORM: ExpenseCategoryFormState = {
+  name: '',
+  code: '',
+  monthlyLimit: '',
+  receiptRequiredOver: '0',
+  accountingCode: '',
+}
+
+function categoryToForm(category: ExpenseCategoryRule): ExpenseCategoryFormState {
+  return {
+    name: category.name,
+    code: category.categoryCode,
+    monthlyLimit: String(category.monthly),
+    receiptRequiredOver: String(category.docThreshold),
+    accountingCode: category.accountingCode ?? '',
+  }
+}
 
 function readinessStatusTone(status: CostCenterReadinessStatus): StatusTone {
   switch (status) {
@@ -132,7 +175,11 @@ function RoutingReadinessWarnings({
 function MasrafKategorileriPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const queryClient = useQueryClient()
+  const [categorySheetOpen, setCategorySheetOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<ExpenseCategoryRule | null>(null)
+  const [categoryForm, setCategoryForm] =
+    useState<ExpenseCategoryFormState>(EMPTY_CATEGORY_FORM)
   const [selectedCostCenter, setSelectedCostCenter] = useState<CostCenterReadinessItem | null>(
     null,
   )
@@ -149,18 +196,113 @@ function MasrafKategorileriPage() {
     enabled: Boolean(user?.id),
   })
 
+  const categoryMutation = useMutation({
+    mutationFn: () => {
+      if (!user?.id) {
+        throw new Error('Missing user')
+      }
+
+      const monthlyLimit = Number(categoryForm.monthlyLimit)
+      const receiptRequiredOver = Number(categoryForm.receiptRequiredOver)
+      const payload = {
+        name: categoryForm.name,
+        code: categoryForm.code,
+        monthlyLimit,
+        receiptRequiredOver,
+        accountingCode: categoryForm.accountingCode,
+      }
+
+      if (editingCategory) {
+        return updateExpenseCategory(user.id, editingCategory.id, payload)
+      }
+      return createExpenseCategory(user.id, payload)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expense-categories-overview', user?.id] })
+      setCategorySheetOpen(false)
+      setEditingCategory(null)
+      setCategoryForm(EMPTY_CATEGORY_FORM)
+      toast.success(
+        t(
+          editingCategory
+            ? 'expenseCategorySetup.toast.updated'
+            : 'expenseCategorySetup.toast.created',
+        ),
+      )
+    },
+    onError: (error) => {
+      if (isDataAdapterError(error) && error.code === '23505') {
+        toast.error(t('expenseCategorySetup.errors.duplicateCode'))
+        return
+      }
+      toast.error(t('expenseCategorySetup.errors.saveFailed'))
+    },
+  })
+
   function formatDocThreshold(amount: number): string {
     return t('expenseCategorySetup.docThresholdAbove', {
       amount: formatCurrency(amount, 'tr-TR'),
     })
   }
 
+  function openCreateCategorySheet() {
+    setEditingCategory(null)
+    setCategoryForm(EMPTY_CATEGORY_FORM)
+    setCategorySheetOpen(true)
+  }
+
+  function openEditCategorySheet(category: ExpenseCategoryRule) {
+    setEditingCategory(category)
+    setCategoryForm(categoryToForm(category))
+    setCategorySheetOpen(true)
+  }
+
+  function closeCategorySheet(open: boolean) {
+    setCategorySheetOpen(open)
+    if (!open) {
+      setEditingCategory(null)
+      setCategoryForm(EMPTY_CATEGORY_FORM)
+    }
+  }
+
+  function updateCategoryForm(field: keyof ExpenseCategoryFormState, value: string) {
+    setCategoryForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function handleCategorySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const monthlyLimit = Number(categoryForm.monthlyLimit)
+    const receiptRequiredOver = Number(categoryForm.receiptRequiredOver)
+
+    if (!categoryForm.name.trim() || !categoryForm.code.trim()) {
+      toast.error(t('expenseCategorySetup.errors.required'))
+      return
+    }
+
+    if (!Number.isFinite(monthlyLimit) || monthlyLimit < 0) {
+      toast.error(t('expenseCategorySetup.errors.monthlyLimit'))
+      return
+    }
+
+    if (!Number.isFinite(receiptRequiredOver) || receiptRequiredOver < 0) {
+      toast.error(t('expenseCategorySetup.errors.docThreshold'))
+      return
+    }
+
+    categoryMutation.mutate()
+  }
+
   function openCostCenterDetail(item: CostCenterReadinessItem) {
     setSelectedCostCenter(item)
   }
 
+  const categoryRowClassName =
+    'cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border)]'
   const costCenterRowClassName =
     'cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border)]'
+  const categorySheetMode = editingCategory ? 'edit' : 'create'
+  const isSavingCategory = categoryMutation.isPending
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -172,7 +314,7 @@ function MasrafKategorileriPage() {
         title={t('expenseCategorySetup.title')}
         subtitle={t('expenseCategorySetup.description')}
         actions={
-          <Button type="button" className="touch-target w-full sm:w-auto" onClick={() => setSheetOpen(true)}>
+          <Button type="button" className="touch-target w-full sm:w-auto" onClick={openCreateCategorySheet}>
             <Plus className="h-4 w-4" />
             {t('expenseCategorySetup.actions.add')}
           </Button>
@@ -233,6 +375,7 @@ function MasrafKategorileriPage() {
                 title: t(category.nameKey),
                 subtitle: formatCurrency(category.monthly, 'tr-TR'),
                 meta: category.code,
+                onClick: () => openEditCategorySheet(category),
                 trailing: (
                   <span className="text-xs tabular-nums text-[var(--color-text-muted)]">
                     {formatDocThreshold(category.docThreshold)}
@@ -271,14 +414,23 @@ function MasrafKategorileriPage() {
               : (data?.categories ?? []).map((category) => (
                   <li
                     key={category.id}
-                    className={cn('grid items-center gap-3 px-4 py-3', CATEGORY_TABLE_GRID_COLS)}
                   >
-                    <div className="truncate text-sm font-medium">{t(category.nameKey)}</div>
-                    <div className="text-right text-sm tabular-nums">{formatCurrency(category.monthly, 'tr-TR')}</div>
-                    <div className="text-right text-sm tabular-nums">
-                      {formatDocThreshold(category.docThreshold)}
-                    </div>
-                    <div className="text-right font-mono text-sm tabular-nums">{category.code}</div>
+                    <button
+                      type="button"
+                      className={cn(
+                        'grid w-full items-center gap-3 px-4 py-3 text-left',
+                        CATEGORY_TABLE_GRID_COLS,
+                        categoryRowClassName,
+                      )}
+                      onClick={() => openEditCategorySheet(category)}
+                    >
+                      <div className="truncate text-sm font-medium">{t(category.nameKey)}</div>
+                      <div className="text-right text-sm tabular-nums">{formatCurrency(category.monthly, 'tr-TR')}</div>
+                      <div className="text-right text-sm tabular-nums">
+                        {formatDocThreshold(category.docThreshold)}
+                      </div>
+                      <div className="text-right font-mono text-sm tabular-nums">{category.code}</div>
+                    </button>
                   </li>
                 ))}
           </ul>
@@ -380,28 +532,64 @@ function MasrafKategorileriPage() {
       </section>
 
       <SheetShell
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        title={t('expenseCategorySetup.sheet.title')}
-        description={t('expenseCategorySetup.sheet.description')}
+        open={categorySheetOpen}
+        onOpenChange={closeCategorySheet}
+        title={t(`expenseCategorySetup.sheet.${categorySheetMode}.title`)}
+        description={t(`expenseCategorySetup.sheet.${categorySheetMode}.description`)}
         footer={
-          <div className="flex w-full flex-col gap-3">
-            <StatusPill tone="neutral" className="self-start">
-              {t('common.soon')}
-            </StatusPill>
-            <Button type="button" className="touch-target w-full" disabled>
-              {t('common.readOnlyAction')}
+          <div className="flex w-full gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 flex-1"
+              onClick={() => closeCategorySheet(false)}
+              disabled={isSavingCategory}
+            >
+              <X className="h-4 w-4" />
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              form="expense-category-form"
+              className="min-h-11 flex-1"
+              disabled={isSavingCategory}
+            >
+              {isSavingCategory ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('expenseCategorySetup.actions.saving')}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  {t('expenseCategorySetup.actions.save')}
+                </>
+              )}
             </Button>
           </div>
         }
       >
-        <div className="space-y-4">
+        <form id="expense-category-form" className="space-y-4" onSubmit={handleCategorySubmit}>
           <FormField label={t('expenseCategorySetup.sheet.fields.name')} htmlFor="expense-category-name">
             <Input
               id="expense-category-name"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.name')}
-              disabled
+              value={categoryForm.name}
+              onChange={(event) => updateCategoryForm('name', event.target.value)}
+              disabled={isSavingCategory}
+              autoComplete="off"
+            />
+          </FormField>
+          <FormField label={t('expenseCategorySetup.sheet.fields.code')} htmlFor="expense-category-code">
+            <Input
+              id="expense-category-code"
+              className="font-mono text-base"
+              placeholder={t('expenseCategorySetup.sheet.placeholders.code')}
+              value={categoryForm.code}
+              onChange={(event) => updateCategoryForm('code', event.target.value)}
+              disabled={isSavingCategory}
+              autoComplete="off"
             />
           </FormField>
           <FormField
@@ -412,21 +600,48 @@ function MasrafKategorileriPage() {
               id="expense-category-limit"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.monthlyLimit')}
-              disabled
+              type="number"
+              min="0"
+              step="0.01"
+              value={categoryForm.monthlyLimit}
+              onChange={(event) => updateCategoryForm('monthlyLimit', event.target.value)}
+              disabled={isSavingCategory}
+            />
+          </FormField>
+          <FormField
+            label={t('expenseCategorySetup.sheet.fields.docThreshold')}
+            htmlFor="expense-category-doc-threshold"
+          >
+            <Input
+              id="expense-category-doc-threshold"
+              className="text-base"
+              placeholder={t('expenseCategorySetup.sheet.placeholders.docThreshold')}
+              type="number"
+              min="0"
+              step="0.01"
+              value={categoryForm.receiptRequiredOver}
+              onChange={(event) => updateCategoryForm('receiptRequiredOver', event.target.value)}
+              disabled={isSavingCategory}
             />
           </FormField>
           <FormField
             label={t('expenseCategorySetup.sheet.fields.accountingCode')}
-            htmlFor="expense-category-code"
+            htmlFor="expense-category-accounting-code"
           >
             <Input
-              id="expense-category-code"
+              id="expense-category-accounting-code"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.accountingCode')}
-              disabled
+              value={categoryForm.accountingCode}
+              onChange={(event) => updateCategoryForm('accountingCode', event.target.value)}
+              disabled={isSavingCategory}
+              autoComplete="off"
             />
           </FormField>
-        </div>
+          <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+            {t('expenseCategorySetup.sheet.boundaryNote')}
+          </p>
+        </form>
       </SheetShell>
 
       <SheetShell

@@ -82,7 +82,10 @@ export {
 } from '#/lib/data/setup/leave-types'
 
 export {
+  createExpenseCategory,
   fetchExpenseCategoriesOverview,
+  updateExpenseCategory,
+  type ExpenseCategoryMutationInput,
   type ExpenseCategoriesOverview,
 } from '#/lib/data/setup/expense-categories'
 
