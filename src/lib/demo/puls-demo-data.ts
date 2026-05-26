@@ -743,6 +743,123 @@ export async function fetchDemoExpenseCategoriesOverview(): Promise<DemoExpenseC
   return demoExpenseCategoriesOverview
 }
 
+export type DemoCostCenterReadinessStatus = 'export_ready' | 'needs_mapping' | 'puls_only' | 'inactive'
+
+export type DemoCostCenterReadinessItem = {
+  id: string
+  code: string
+  name: string
+  sourceName: string | null
+  sourceCode: string | null
+  sourceType: string | null
+  externalId: string | null
+  status: DemoCostCenterReadinessStatus
+  exportSourceType: 'erp' | 'excel_csv' | null
+}
+
+export type DemoExpenseRoutingReadinessWarning = {
+  policyId: string
+  policyName: string
+  categoryNames: string[]
+  strategy: 'explicit' | 'requester_cost_center'
+  costCenterCode?: string
+  costCenterStatus?: DemoCostCenterReadinessStatus
+}
+
+export type DemoCostCenterReadinessOverview = {
+  items: DemoCostCenterReadinessItem[]
+  exportReadyCount: number
+  needsMappingCount: number
+  routingWarnings: DemoExpenseRoutingReadinessWarning[]
+}
+
+const demoCostCenterReadinessOverview: DemoCostCenterReadinessOverview = {
+  exportReadyCount: 2,
+  needsMappingCount: 2,
+  items: [
+    {
+      id: 'cc-demo-ops',
+      code: 'CC-OPS',
+      name: 'Operasyon',
+      sourceName: 'Logo ERP',
+      sourceCode: 'logo_erp',
+      sourceType: 'erp',
+      externalId: 'EXT-OPS-001',
+      status: 'export_ready',
+      exportSourceType: 'erp',
+    },
+    {
+      id: 'cc-demo-import',
+      code: 'CC-IMP',
+      name: 'İthalat',
+      sourceName: 'Excel içe aktarım',
+      sourceCode: 'excel_import',
+      sourceType: 'excel_csv',
+      externalId: 'EXT-IMP-002',
+      status: 'export_ready',
+      exportSourceType: 'excel_csv',
+    },
+    {
+      id: 'cc-demo-int',
+      code: 'CC-INT',
+      name: 'İç proje',
+      sourceName: 'PULS demo',
+      sourceCode: 'puls_demo',
+      sourceType: 'demo',
+      externalId: 'EXT-INT-003',
+      status: 'needs_mapping',
+      exportSourceType: null,
+    },
+    {
+      id: 'cc-demo-partial',
+      code: 'CC-PART',
+      name: 'Kısmi eşleşme',
+      sourceName: null,
+      sourceCode: null,
+      sourceType: null,
+      externalId: 'EXT-PART-004',
+      status: 'needs_mapping',
+      exportSourceType: null,
+    },
+    {
+      id: 'cc-demo-only',
+      code: 'CC-PULS',
+      name: 'PULS içi proje',
+      sourceName: null,
+      sourceCode: null,
+      sourceType: null,
+      externalId: null,
+      status: 'puls_only',
+      exportSourceType: null,
+    },
+    {
+      id: 'cc-demo-inactive',
+      code: 'CC-OLD',
+      name: 'Eski merkez',
+      sourceName: 'Logo ERP',
+      sourceCode: 'logo_erp',
+      sourceType: 'erp',
+      externalId: 'EXT-OLD-005',
+      status: 'inactive',
+      exportSourceType: null,
+    },
+  ],
+  routingWarnings: [
+    {
+      policyId: 'policy-demo-expense',
+      policyName: 'Masraf onay akışı',
+      categoryNames: ['Seyahat', 'Konaklama'],
+      strategy: 'explicit',
+      costCenterCode: 'CC-INT',
+      costCenterStatus: 'needs_mapping',
+    },
+  ],
+}
+
+export async function fetchDemoCostCenterReadinessOverview(): Promise<DemoCostCenterReadinessOverview> {
+  return demoCostCenterReadinessOverview
+}
+
 export type DemoPerformanceScoreBandTone = 'success' | 'info' | 'neutral' | 'warning' | 'danger'
 
 export type DemoPerformanceCompetencyTemplate = {
