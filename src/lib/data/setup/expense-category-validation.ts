@@ -1,3 +1,5 @@
+import { parseDecimalAmount } from '#/lib/format'
+
 export type ExpenseCategoryFormFields = {
   name: string
   code: string
@@ -33,10 +35,10 @@ export function normalizeCategoryCode(code: string): string {
   return code.trim().toLowerCase().replace(/\s+/g, '_')
 }
 
-function parseNonNegativeNumber(raw: string): number {
+function parseNonNegativeAmount(raw: string): number {
   const trimmed = raw.trim()
   if (trimmed === '') return NaN
-  return Number(trimmed)
+  return parseDecimalAmount(trimmed)
 }
 
 export function normalizeExpenseCategoryFormInput(
@@ -49,8 +51,8 @@ export function normalizeExpenseCategoryFormInput(
   return {
     name: form.name.trim(),
     code: normalizeCategoryCode(form.code),
-    monthlyLimit: parseNonNegativeNumber(monthlyRaw),
-    receiptRequiredOver: receiptRaw === '' ? 0 : Number(receiptRaw),
+    monthlyLimit: parseNonNegativeAmount(monthlyRaw),
+    receiptRequiredOver: receiptRaw === '' ? 0 : parseNonNegativeAmount(receiptRaw),
     erpAccountCode: erpAccountCodeRaw ? erpAccountCodeRaw : null,
   }
 }

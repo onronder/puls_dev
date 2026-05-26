@@ -668,9 +668,8 @@ function MasrafKategorileriPage() {
               id="expense-category-limit"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.monthlyLimit')}
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={categoryForm.monthlyLimit}
               onChange={(event) => updateCategoryForm('monthlyLimit', event.target.value)}
               disabled={isSavingCategory}
@@ -689,9 +688,8 @@ function MasrafKategorileriPage() {
               id="expense-category-doc-threshold"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.docThreshold')}
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={categoryForm.receiptRequiredOver}
               onChange={(event) => updateCategoryForm('receiptRequiredOver', event.target.value)}
               disabled={isSavingCategory}

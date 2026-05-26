@@ -44,6 +44,26 @@ describe('mapExpenseCategoryMutationError', () => {
     })
   })
 
+  it('maps code duplicate 23505 when only details contains tenant_id+code', () => {
+    const error = fromSupabaseError(
+      {
+        code: '23505',
+        message: 'duplicate key value violates unique constraint',
+        details: 'Key (tenant_id, code)=(tenant-a, travel) already exists.',
+        hint: null,
+      } as unknown as import('@supabase/supabase-js').PostgrestError,
+      'createExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+
+    expect(mapExpenseCategoryMutationError(error)).toEqual({
+      fieldErrors: {
+        code: 'expenseCategorySetup.validation.duplicateCode',
+      },
+    })
+  })
+
   it('maps accounting duplicate 23505 when active account index appears', () => {
     const error = fromSupabaseError(
       {

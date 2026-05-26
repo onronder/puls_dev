@@ -47,6 +47,22 @@ describe('normalizeExpenseCategoryFormInput', () => {
     })
     expect(normalized.erpAccountCode).toBeNull()
   })
+
+  it('parses Turkish thousands separator for monthly limit', () => {
+    const normalized = normalizeExpenseCategoryFormInput({
+      ...VALID_FORM,
+      monthlyLimit: '15.000',
+    })
+    expect(normalized.monthlyLimit).toBe(15000)
+  })
+
+  it('parses Turkish thousands separator for receipt threshold', () => {
+    const normalized = normalizeExpenseCategoryFormInput({
+      ...VALID_FORM,
+      receiptRequiredOver: '1.500',
+    })
+    expect(normalized.receiptRequiredOver).toBe(1500)
+  })
 })
 
 describe('validateExpenseCategoryForm', () => {
@@ -107,6 +123,15 @@ describe('validateExpenseCategoryForm', () => {
     const result = validateExpenseCategoryForm(VALID_FORM)
     expect(result.isValid).toBe(true)
     expect(result.fieldErrors).toEqual({})
+    expect(result.normalized.monthlyLimit).toBe(15000)
+  })
+
+  it('accepts Turkish-formatted monthly limit input', () => {
+    const result = validateExpenseCategoryForm({
+      ...VALID_FORM,
+      monthlyLimit: '15.000',
+    })
+    expect(result.isValid).toBe(true)
     expect(result.normalized.monthlyLimit).toBe(15000)
   })
 })

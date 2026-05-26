@@ -4,6 +4,7 @@ export type DataAdapterErrorFields = {
   code: string
   message: string
   hint?: string
+  details?: string
   source: 'supabase' | 'adapter' | 'rpc'
   operation: string
   schema?: string
@@ -14,6 +15,7 @@ export type DataAdapterErrorFields = {
 export class DataAdapterError extends Error {
   readonly code: string
   readonly hint?: string
+  readonly details?: string
   readonly source: DataAdapterErrorFields['source']
   readonly operation: string
   readonly schema?: string
@@ -25,6 +27,7 @@ export class DataAdapterError extends Error {
     this.name = 'DataAdapterError'
     this.code = fields.code
     this.hint = fields.hint
+    this.details = fields.details
     this.source = fields.source
     this.operation = fields.operation
     this.schema = fields.schema
@@ -137,6 +140,7 @@ export function fromSupabaseError(
     code: error.code ?? 'unknown',
     message: error.message,
     hint: error.hint ?? undefined,
+    details: error.details?.trim() ? error.details : undefined,
     source: 'supabase',
     operation,
     schema,

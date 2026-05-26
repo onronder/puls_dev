@@ -27,6 +27,8 @@ describe('DataAdapterError', () => {
     expect(error.schema).toBe('puls_performance')
     expect(error.table).toBe('performance_cycles')
     expect(error.message).toContain('permission denied')
+    expect(error.hint).toBe('Check RLS')
+    expect(error.details).toBeUndefined()
     expect(error.toUserMessage()).toBe(
       'Veri yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.',
     )
@@ -43,6 +45,22 @@ describe('DataAdapterError', () => {
 
     expect(isDataAdapterError(error)).toBe(true)
     expect(isDataAdapterError(new Error('nope'))).toBe(false)
+  })
+
+  it('preserves supabase error details when present', () => {
+    const error = fromSupabaseError(
+      {
+        code: '23505',
+        message: 'duplicate key value violates unique constraint',
+        details: 'Key (tenant_id, code)=(a, b) already exists.',
+        hint: null,
+      } as unknown as import('@supabase/supabase-js').PostgrestError,
+      'createExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+
+    expect(error.details).toBe('Key (tenant_id, code)=(a, b) already exists.')
   })
 })
 

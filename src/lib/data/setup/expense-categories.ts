@@ -80,7 +80,7 @@ function normalizeOptionalText(value: string | null | undefined): string | null 
 }
 
 function duplicate23505Mapping(error: DataAdapterError): ExpenseCategoryMutationErrorMapping | null {
-  const haystack = `${error.message} ${error.hint ?? ''}`.toLowerCase()
+  const haystack = `${error.message} ${error.hint ?? ''} ${error.details ?? ''}`.toLowerCase()
 
   const isCodeDuplicate =
     haystack.includes('expense_categories_tenant_id_code_key') ||
