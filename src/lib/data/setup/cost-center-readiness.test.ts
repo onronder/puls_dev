@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildRoutingWarnings,
   computeCostCenterReadinessResult,
   computeCostCenterReadinessStatus,
+  type CostCenterReadinessItem,
   type CostCenterReadinessInput,
   type IdentityMapSnapshot,
   type NamespaceSnapshot,
@@ -193,5 +195,98 @@ describe('computeCostCenterReadinessStatus', () => {
   it('returns inactive for inactive cost center with full mapping signals', () => {
     const input = baseInput({ isActive: false })
     expect(computeCostCenterReadinessStatus(input)).toBe('inactive')
+  })
+})
+
+const READY_ITEM: CostCenterReadinessItem = {
+  id: 'cc-ready',
+  code: 'CC-READY',
+  name: 'Ready cost center',
+  sourceName: 'Logo ERP',
+  sourceCode: 'logo_erp',
+  sourceType: 'erp',
+  externalId: 'EXT-READY',
+  status: 'export_ready',
+  exportSourceType: 'erp',
+}
+
+const NEEDS_MAPPING_ITEM: CostCenterReadinessItem = {
+  id: 'cc-needs',
+  code: 'CC-NEEDS',
+  name: 'Needs mapping',
+  sourceName: null,
+  sourceCode: null,
+  sourceType: null,
+  externalId: 'EXT-NEEDS',
+  status: 'needs_mapping',
+  exportSourceType: null,
+}
+
+describe('buildRoutingWarnings', () => {
+  it('warns for explicit scope_id that targets a non-export-ready cost center', () => {
+    const warnings = buildRoutingWarnings(
+      [READY_ITEM, NEEDS_MAPPING_ITEM],
+      [{ approvalPolicyId: 'policy-1', name: 'Travel' }],
+      [{ id: 'policy-1', name: 'Expense policy' }],
+      [
+        {
+          policyId: 'policy-1',
+          approverType: 'cost_center_owner',
+          stepResolverConfig: {
+            scope_strategy: 'explicit',
+            scope_id: 'cc-needs',
+          },
+        },
+      ],
+    )
+
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toMatchObject({
+      policyId: 'policy-1',
+      costCenterCode: 'CC-NEEDS',
+      costCenterStatus: 'needs_mapping',
+      strategy: 'explicit',
+    })
+  })
+
+  it('warns for explicit scope_code that targets a non-export-ready cost center', () => {
+    const warnings = buildRoutingWarnings(
+      [READY_ITEM, NEEDS_MAPPING_ITEM],
+      [{ approvalPolicyId: 'policy-1', name: 'Travel' }],
+      [{ id: 'policy-1', name: 'Expense policy' }],
+      [
+        {
+          policyId: 'policy-1',
+          approverType: 'cost_center_owner',
+          stepResolverConfig: {
+            scope_strategy: 'explicit',
+            scope_code: 'CC-NEEDS',
+          },
+        },
+      ],
+    )
+
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]?.costCenterCode).toBe('CC-NEEDS')
+  })
+
+  it('does not warn for explicit scope_code that targets an export-ready cost center', () => {
+    const warnings = buildRoutingWarnings(
+      [READY_ITEM, NEEDS_MAPPING_ITEM],
+      [{ approvalPolicyId: 'policy-1', name: 'Travel' }],
+      [{ id: 'policy-1', name: 'Expense policy' }],
+      [
+        {
+          policyId: 'policy-1',
+          approverType: 'cost_center_owner',
+          stepResolverConfig: {
+            scope_strategy: 'explicit',
+            scope_code: 'CC-READY',
+          },
+        },
+      ],
+    )
+
+    expect(warnings).toHaveLength(0)
   })
 })

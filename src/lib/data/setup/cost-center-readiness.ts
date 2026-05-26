@@ -151,6 +151,7 @@ function isCostCenterReadinessEmpty(data: CostCenterReadinessOverview): boolean 
 type StepResolverConfig = {
   scope_strategy?: string
   scope_id?: string
+  scope_code?: string
 }
 
 function parseStepResolverConfig(raw: unknown): StepResolverConfig {
@@ -160,10 +161,11 @@ function parseStepResolverConfig(raw: unknown): StepResolverConfig {
     scope_strategy:
       typeof config.scope_strategy === 'string' ? config.scope_strategy.toLowerCase() : undefined,
     scope_id: typeof config.scope_id === 'string' ? config.scope_id : undefined,
+    scope_code: typeof config.scope_code === 'string' ? config.scope_code.trim() : undefined,
   }
 }
 
-function buildRoutingWarnings(
+export function buildRoutingWarnings(
   items: CostCenterReadinessItem[],
   categories: Array<{ approvalPolicyId: string | null; name: string }>,
   policies: Array<{ id: string; name: string }>,
@@ -174,6 +176,7 @@ function buildRoutingWarnings(
   }>,
 ): ExpenseRoutingReadinessWarning[] {
   const statusById = new Map(items.map((item) => [item.id, item]))
+  const statusByCode = new Map(items.map((item) => [item.code, item]))
   const hasNonExportReadyCostCenter = items.some((item) => item.status !== 'export_ready')
   const categoriesByPolicy = new Map<string, string[]>()
 
@@ -194,11 +197,14 @@ function buildRoutingWarnings(
     const config = parseStepResolverConfig(step.stepResolverConfig)
     const strategy = config.scope_strategy
 
-    if (strategy === 'explicit' && config.scope_id) {
-      const target = statusById.get(config.scope_id)
+    if (strategy === 'explicit' && (config.scope_id || config.scope_code)) {
+      const target = config.scope_id
+        ? statusById.get(config.scope_id)
+        : statusByCode.get(config.scope_code ?? '')
       if (!target || target.status === 'export_ready') continue
 
-      const key = `explicit:${step.policyId}:${config.scope_id}`
+      const targetKey = config.scope_id ?? `code:${config.scope_code}`
+      const key = `explicit:${step.policyId}:${targetKey}`
       if (seen.has(key)) continue
       seen.add(key)
 
