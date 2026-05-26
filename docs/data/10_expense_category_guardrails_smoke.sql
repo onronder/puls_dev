@@ -8,6 +8,8 @@ DECLARE
   v_category_id UUID;
   v_stored_name TEXT;
   v_stored_account_code TEXT;
+  v_valid_account_code TEXT;
+  v_duplicate_account_code TEXT;
 BEGIN
   PERFORM set_config('request.jwt.claim.role', 'service_role', true);
 
@@ -26,18 +28,45 @@ BEGIN
   WHERE tenant_id = v_tenant_id
     AND code LIKE 'demo_guardrails%';
 
+  WITH candidate_codes AS (
+    SELECT format('%s.%s', gs / 100, lpad((gs % 100)::TEXT, 2, '0')) AS account_code
+    FROM generate_series(90000, 99999) AS gs
+  ),
+  available_codes AS (
+    SELECT c.account_code
+    FROM candidate_codes c
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM puls_workflow.expense_categories ec
+      WHERE ec.tenant_id = v_tenant_id
+        AND ec.is_active = TRUE
+        AND NULLIF(BTRIM(ec.erp_account_code), '') = c.account_code
+    )
+    ORDER BY c.account_code
+    LIMIT 2
+  )
+  SELECT
+    (array_agg(account_code ORDER BY account_code))[1],
+    (array_agg(account_code ORDER BY account_code))[2]
+  INTO v_valid_account_code, v_duplicate_account_code
+  FROM available_codes;
+
+  IF v_valid_account_code IS NULL OR v_duplicate_account_code IS NULL THEN
+    RAISE EXCEPTION 'SMOKE_SETUP_FAIL: expected at least two available accounting codes for guardrails smoke';
+  END IF;
+
   -- Valid insert
   INSERT INTO puls_workflow.expense_categories (
     tenant_id, code, name, monthly_limit, receipt_required_over, erp_account_code, is_active
   ) VALUES (
-    v_tenant_id, 'demo_guardrails', 'Demo Guardrails', 1000, 100, '610.45', TRUE
+    v_tenant_id, 'demo_guardrails', 'Demo Guardrails', 1000, 100, v_valid_account_code, TRUE
   )
   RETURNING id INTO v_category_id;
 
   -- Valid update trims name and accounting code
   UPDATE puls_workflow.expense_categories
   SET name = '  Demo Guardrails Trimmed  ',
-      erp_account_code = '  610.45  '
+      erp_account_code = '  ' || v_valid_account_code || '  '
   WHERE id = v_category_id;
 
   SELECT name, erp_account_code
@@ -49,7 +78,7 @@ BEGIN
     RAISE EXCEPTION 'SMOKE_FAIL: expected trimmed name, got %', v_stored_name;
   END IF;
 
-  IF v_stored_account_code <> '610.45' THEN
+  IF v_stored_account_code <> v_valid_account_code THEN
     RAISE EXCEPTION 'SMOKE_FAIL: expected trimmed account code, got %', v_stored_account_code;
   END IF;
 
@@ -155,7 +184,7 @@ BEGIN
 
   -- Restore valid account code before duplicate tests
   UPDATE puls_workflow.expense_categories
-  SET erp_account_code = '610.45'
+  SET erp_account_code = v_valid_account_code
   WHERE id = v_category_id;
 
   -- Two active rows with NULL accounting code pass
@@ -175,14 +204,14 @@ BEGIN
   INSERT INTO puls_workflow.expense_categories (
     tenant_id, code, name, monthly_limit, receipt_required_over, erp_account_code, is_active
   ) VALUES (
-    v_tenant_id, 'demo_guardrails_dup_a', 'Demo Guardrails Dup A', 500, 0, '620.10', TRUE
+    v_tenant_id, 'demo_guardrails_dup_a', 'Demo Guardrails Dup A', 500, 0, v_duplicate_account_code, TRUE
   );
 
   BEGIN
     INSERT INTO puls_workflow.expense_categories (
       tenant_id, code, name, monthly_limit, receipt_required_over, erp_account_code, is_active
     ) VALUES (
-      v_tenant_id, 'demo_guardrails_dup_b', 'Demo Guardrails Dup B', 500, 0, '620.10', TRUE
+      v_tenant_id, 'demo_guardrails_dup_b', 'Demo Guardrails Dup B', 500, 0, v_duplicate_account_code, TRUE
     );
     RAISE EXCEPTION 'SMOKE_FAIL: duplicate active accounting code should raise 23505';
   EXCEPTION
@@ -196,7 +225,7 @@ BEGIN
   INSERT INTO puls_workflow.expense_categories (
     tenant_id, code, name, monthly_limit, receipt_required_over, erp_account_code, is_active
   ) VALUES (
-    v_tenant_id, 'demo_guardrails_dup_inactive', 'Demo Guardrails Dup Inactive', 500, 0, '620.10', FALSE
+    v_tenant_id, 'demo_guardrails_dup_inactive', 'Demo Guardrails Dup Inactive', 500, 0, v_duplicate_account_code, FALSE
   );
 
   PERFORM set_config('request.jwt.claim.role', '', true);
