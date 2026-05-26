@@ -971,6 +971,20 @@
       "duplicateCode": "Bu kategori kodu zaten kullanılıyor.",
       "saveFailed": "Masraf kategorisi kaydedilemedi."
     },
+    "validation": {
+      "nameRequired": "Kategori adı zorunludur.",
+      "codeRequired": "Kategori kodu zorunludur.",
+      "codeInvalid": "Kategori kodu küçük harf, rakam ve alt çizgi içeren geçerli bir slug olmalıdır.",
+      "monthlyLimitRequired": "Aylık limit zorunludur.",
+      "monthlyLimitInvalid": "Geçerli bir tutar girin. 15.000 formatı desteklenir.",
+      "receiptThresholdInvalid": "Geçerli bir tutar girin. 15.000 formatı desteklenir.",
+      "erpAccountCodeInvalid": "Muhasebe kodu 770 veya 770.01 formatında olmalıdır.",
+      "duplicateCode": "Bu kategori kodu zaten kullanılıyor.",
+      "duplicateAccountingCode": "Bu muhasebe kodu zaten kullanılıyor.",
+      "codePreviewHint": "Kaydedilecek kod: {{code}}",
+      "amountInputHint": "Binlik ayırıcı olarak nokta kullanabilirsiniz.",
+      "discardConfirm": "Kaydedilmemiş değişiklikler var. Kapatmak istediğinize emin misiniz?"
+    },
     "costCenterMappings": {
       "title": "Masraf merkezi eşleşmeleri",
       "description": "Bu bölüm masraf kategorilerini değil, masraf bildirimlerinde kullanılacak masraf merkezi boyutunun dış kaynak eşleşmesini gösterir.",

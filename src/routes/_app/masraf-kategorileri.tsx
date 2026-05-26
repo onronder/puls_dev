@@ -33,11 +33,16 @@ import {
   createExpenseCategory,
   fetchCostCenterReadinessOverview,
   fetchExpenseCategoriesOverview,
-  isDataAdapterError,
+  isExpenseCategoryFormDirty,
+  mapExpenseCategoryMutationError,
+  normalizeCategoryCode,
   updateExpenseCategory,
+  validateExpenseCategoryForm,
   type CostCenterReadinessItem,
   type CostCenterReadinessStatus,
   type ExpenseCategoriesOverview,
+  type ExpenseCategoryFieldKey,
+  type ExpenseCategoryFormFields,
   type ExpenseRoutingReadinessWarning,
 } from '#/lib/data'
 import { formatCurrency } from '#/lib/format'
@@ -73,20 +78,14 @@ const COST_CENTER_TABLE_GRID_COLS =
 
 type ExpenseCategoryRule = ExpenseCategoriesOverview['categories'][number]
 
-type ExpenseCategoryFormState = {
-  name: string
-  code: string
-  monthlyLimit: string
-  receiptRequiredOver: string
-  accountingCode: string
-}
+type ExpenseCategoryFormState = ExpenseCategoryFormFields
 
 const EMPTY_CATEGORY_FORM: ExpenseCategoryFormState = {
   name: '',
   code: '',
   monthlyLimit: '',
   receiptRequiredOver: '0',
-  accountingCode: '',
+  erpAccountCode: '',
 }
 
 function categoryToForm(category: ExpenseCategoryRule): ExpenseCategoryFormState {
@@ -95,8 +94,17 @@ function categoryToForm(category: ExpenseCategoryRule): ExpenseCategoryFormState
     code: category.categoryCode,
     monthlyLimit: String(category.monthly),
     receiptRequiredOver: String(category.docThreshold),
-    accountingCode: category.accountingCode ?? '',
+    erpAccountCode: category.accountingCode ?? '',
   }
+}
+
+function translateFieldError(
+  t: (key: string) => string,
+  fieldErrors: Partial<Record<ExpenseCategoryFieldKey, string>>,
+  field: ExpenseCategoryFieldKey,
+): string | undefined {
+  const key = fieldErrors[field]
+  return key ? t(key) : undefined
 }
 
 function readinessStatusTone(status: CostCenterReadinessStatus): StatusTone {
@@ -180,6 +188,10 @@ function MasrafKategorileriPage() {
   const [editingCategory, setEditingCategory] = useState<ExpenseCategoryRule | null>(null)
   const [categoryForm, setCategoryForm] =
     useState<ExpenseCategoryFormState>(EMPTY_CATEGORY_FORM)
+  const [formBaseline, setFormBaseline] = useState<ExpenseCategoryFormState | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<ExpenseCategoryFieldKey, string>>
+  >({})
   const [selectedCostCenter, setSelectedCostCenter] = useState<CostCenterReadinessItem | null>(
     null,
   )
@@ -197,19 +209,15 @@ function MasrafKategorileriPage() {
   })
 
   const categoryMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: (payload: {
+      name: string
+      code: string
+      monthlyLimit: number
+      receiptRequiredOver: number
+      erpAccountCode: string | null
+    }) => {
       if (!user?.id) {
         throw new Error('Missing user')
-      }
-
-      const monthlyLimit = Number(categoryForm.monthlyLimit)
-      const receiptRequiredOver = Number(categoryForm.receiptRequiredOver)
-      const payload = {
-        name: categoryForm.name,
-        code: categoryForm.code,
-        monthlyLimit,
-        receiptRequiredOver,
-        accountingCode: categoryForm.accountingCode,
       }
 
       if (editingCategory) {
@@ -219,9 +227,7 @@ function MasrafKategorileriPage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['expense-categories-overview', user?.id] })
-      setCategorySheetOpen(false)
-      setEditingCategory(null)
-      setCategoryForm(EMPTY_CATEGORY_FORM)
+      resetCategorySheetState()
       toast.success(
         t(
           editingCategory
@@ -231,11 +237,13 @@ function MasrafKategorileriPage() {
       )
     },
     onError: (error) => {
-      if (isDataAdapterError(error) && error.code === '23505') {
-        toast.error(t('expenseCategorySetup.errors.duplicateCode'))
-        return
+      const mapped = mapExpenseCategoryMutationError(error)
+      if (Object.keys(mapped.fieldErrors).length > 0) {
+        setFieldErrors((current) => ({ ...current, ...mapped.fieldErrors }))
       }
-      toast.error(t('expenseCategorySetup.errors.saveFailed'))
+      if (mapped.toastKey) {
+        toast.error(t(mapped.toastKey))
+      }
     },
   })
 
@@ -245,52 +253,78 @@ function MasrafKategorileriPage() {
     })
   }
 
+  function resetCategorySheetState() {
+    setCategorySheetOpen(false)
+    setEditingCategory(null)
+    setCategoryForm(EMPTY_CATEGORY_FORM)
+    setFormBaseline(null)
+    setFieldErrors({})
+  }
+
   function openCreateCategorySheet() {
     setEditingCategory(null)
     setCategoryForm(EMPTY_CATEGORY_FORM)
+    setFormBaseline(EMPTY_CATEGORY_FORM)
+    setFieldErrors({})
     setCategorySheetOpen(true)
   }
 
   function openEditCategorySheet(category: ExpenseCategoryRule) {
+    const baseline = categoryToForm(category)
     setEditingCategory(category)
-    setCategoryForm(categoryToForm(category))
+    setCategoryForm(baseline)
+    setFormBaseline(baseline)
+    setFieldErrors({})
     setCategorySheetOpen(true)
   }
 
-  function closeCategorySheet(open: boolean) {
-    setCategorySheetOpen(open)
-    if (!open) {
-      setEditingCategory(null)
-      setCategoryForm(EMPTY_CATEGORY_FORM)
+  function requestCloseCategorySheet() {
+    const baseline = formBaseline ?? EMPTY_CATEGORY_FORM
+    const dirty = isExpenseCategoryFormDirty(categoryForm, baseline)
+
+    if (dirty && !window.confirm(t('expenseCategorySetup.validation.discardConfirm'))) {
+      return
     }
+
+    resetCategorySheetState()
+  }
+
+  function handleCategorySheetOpenChange(open: boolean) {
+    if (open) {
+      setCategorySheetOpen(true)
+      return
+    }
+
+    requestCloseCategorySheet()
   }
 
   function updateCategoryForm(field: keyof ExpenseCategoryFormState, value: string) {
     setCategoryForm((current) => ({ ...current, [field]: value }))
+    setFieldErrors((current) => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
   }
 
   function handleCategorySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const monthlyLimit = Number(categoryForm.monthlyLimit)
-    const receiptRequiredOver = Number(categoryForm.receiptRequiredOver)
+    const validation = validateExpenseCategoryForm(categoryForm)
+    setFieldErrors(validation.fieldErrors)
 
-    if (!categoryForm.name.trim() || !categoryForm.code.trim()) {
-      toast.error(t('expenseCategorySetup.errors.required'))
+    if (!validation.isValid) {
       return
     }
 
-    if (!Number.isFinite(monthlyLimit) || monthlyLimit < 0) {
-      toast.error(t('expenseCategorySetup.errors.monthlyLimit'))
-      return
-    }
-
-    if (!Number.isFinite(receiptRequiredOver) || receiptRequiredOver < 0) {
-      toast.error(t('expenseCategorySetup.errors.docThreshold'))
-      return
-    }
-
-    categoryMutation.mutate()
+    categoryMutation.mutate({
+      name: validation.normalized.name,
+      code: validation.normalized.code,
+      monthlyLimit: validation.normalized.monthlyLimit,
+      receiptRequiredOver: validation.normalized.receiptRequiredOver,
+      erpAccountCode: validation.normalized.erpAccountCode,
+    })
   }
 
   function openCostCenterDetail(item: CostCenterReadinessItem) {
@@ -303,6 +337,11 @@ function MasrafKategorileriPage() {
     'cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border)]'
   const categorySheetMode = editingCategory ? 'edit' : 'create'
   const isSavingCategory = categoryMutation.isPending
+  const dirtyBaseline = formBaseline ?? EMPTY_CATEGORY_FORM
+  const isCategoryFormDirty = isExpenseCategoryFormDirty(categoryForm, dirtyBaseline)
+  const normalizedCodePreview = normalizeCategoryCode(categoryForm.code)
+  const isSaveDisabled =
+    isSavingCategory || (categorySheetMode === 'edit' && !isCategoryFormDirty)
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -533,7 +572,7 @@ function MasrafKategorileriPage() {
 
       <SheetShell
         open={categorySheetOpen}
-        onOpenChange={closeCategorySheet}
+        onOpenChange={handleCategorySheetOpenChange}
         title={t(`expenseCategorySetup.sheet.${categorySheetMode}.title`)}
         description={t(`expenseCategorySetup.sheet.${categorySheetMode}.description`)}
         footer={
@@ -542,7 +581,7 @@ function MasrafKategorileriPage() {
               type="button"
               variant="outline"
               className="min-h-11 flex-1"
-              onClick={() => closeCategorySheet(false)}
+              onClick={requestCloseCategorySheet}
               disabled={isSavingCategory}
             >
               <X className="h-4 w-4" />
@@ -552,7 +591,7 @@ function MasrafKategorileriPage() {
               type="submit"
               form="expense-category-form"
               className="min-h-11 flex-1"
-              disabled={isSavingCategory}
+              disabled={isSaveDisabled}
             >
               {isSavingCategory ? (
                 <>
@@ -570,7 +609,12 @@ function MasrafKategorileriPage() {
         }
       >
         <form id="expense-category-form" className="space-y-4" onSubmit={handleCategorySubmit}>
-          <FormField label={t('expenseCategorySetup.sheet.fields.name')} htmlFor="expense-category-name">
+          <FormField
+            label={t('expenseCategorySetup.sheet.fields.name')}
+            htmlFor="expense-category-name"
+            required
+            error={translateFieldError(t, fieldErrors, 'name')}
+          >
             <Input
               id="expense-category-name"
               className="text-base"
@@ -579,9 +623,23 @@ function MasrafKategorileriPage() {
               onChange={(event) => updateCategoryForm('name', event.target.value)}
               disabled={isSavingCategory}
               autoComplete="off"
+              aria-invalid={Boolean(fieldErrors.name) || undefined}
+              aria-describedby={fieldErrors.name ? 'expense-category-name-error' : undefined}
             />
           </FormField>
-          <FormField label={t('expenseCategorySetup.sheet.fields.code')} htmlFor="expense-category-code">
+          <FormField
+            label={t('expenseCategorySetup.sheet.fields.code')}
+            htmlFor="expense-category-code"
+            required
+            error={translateFieldError(t, fieldErrors, 'code')}
+            hint={
+              categoryForm.code.trim()
+                ? t('expenseCategorySetup.validation.codePreviewHint', {
+                    code: normalizedCodePreview,
+                  })
+                : undefined
+            }
+          >
             <Input
               id="expense-category-code"
               className="font-mono text-base"
@@ -590,52 +648,80 @@ function MasrafKategorileriPage() {
               onChange={(event) => updateCategoryForm('code', event.target.value)}
               disabled={isSavingCategory}
               autoComplete="off"
+              aria-invalid={Boolean(fieldErrors.code) || undefined}
+              aria-describedby={
+                fieldErrors.code
+                  ? 'expense-category-code-error'
+                  : categoryForm.code.trim()
+                    ? 'expense-category-code-hint'
+                    : undefined
+              }
             />
           </FormField>
           <FormField
             label={t('expenseCategorySetup.sheet.fields.monthlyLimit')}
             htmlFor="expense-category-limit"
+            required
+            hint={t('expenseCategorySetup.validation.amountInputHint')}
+            error={translateFieldError(t, fieldErrors, 'monthlyLimit')}
           >
             <Input
               id="expense-category-limit"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.monthlyLimit')}
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={categoryForm.monthlyLimit}
               onChange={(event) => updateCategoryForm('monthlyLimit', event.target.value)}
               disabled={isSavingCategory}
+              aria-invalid={Boolean(fieldErrors.monthlyLimit) || undefined}
+              aria-describedby={
+                fieldErrors.monthlyLimit
+                  ? 'expense-category-limit-error'
+                  : 'expense-category-limit-hint'
+              }
             />
           </FormField>
           <FormField
             label={t('expenseCategorySetup.sheet.fields.docThreshold')}
             htmlFor="expense-category-doc-threshold"
+            hint={t('expenseCategorySetup.validation.amountInputHint')}
+            error={translateFieldError(t, fieldErrors, 'receiptRequiredOver')}
           >
             <Input
               id="expense-category-doc-threshold"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.docThreshold')}
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={categoryForm.receiptRequiredOver}
               onChange={(event) => updateCategoryForm('receiptRequiredOver', event.target.value)}
               disabled={isSavingCategory}
+              aria-invalid={Boolean(fieldErrors.receiptRequiredOver) || undefined}
+              aria-describedby={
+                fieldErrors.receiptRequiredOver
+                  ? 'expense-category-doc-threshold-error'
+                  : 'expense-category-doc-threshold-hint'
+              }
             />
           </FormField>
           <FormField
             label={t('expenseCategorySetup.sheet.fields.accountingCode')}
             htmlFor="expense-category-accounting-code"
+            error={translateFieldError(t, fieldErrors, 'erpAccountCode')}
           >
             <Input
               id="expense-category-accounting-code"
               className="text-base"
               placeholder={t('expenseCategorySetup.sheet.placeholders.accountingCode')}
-              value={categoryForm.accountingCode}
-              onChange={(event) => updateCategoryForm('accountingCode', event.target.value)}
+              value={categoryForm.erpAccountCode}
+              onChange={(event) => updateCategoryForm('erpAccountCode', event.target.value)}
               disabled={isSavingCategory}
               autoComplete="off"
+              aria-invalid={Boolean(fieldErrors.erpAccountCode) || undefined}
+              aria-describedby={
+                fieldErrors.erpAccountCode ? 'expense-category-accounting-code-error' : undefined
+              }
             />
           </FormField>
           <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">

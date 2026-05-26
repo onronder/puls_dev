@@ -30,9 +30,18 @@ export function FormField({
       </Label>
       {children}
       {hint && !error ? (
-        <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">{hint}</p>
+        <p
+          id={htmlFor ? `${htmlFor}-hint` : undefined}
+          className="text-xs leading-relaxed text-[var(--color-text-muted)]"
+        >
+          {hint}
+        </p>
       ) : null}
-      {error ? <p className="text-xs text-[var(--color-danger)]">{error}</p> : null}
+      {error ? (
+        <p id={htmlFor ? `${htmlFor}-error` : undefined} className="text-xs text-[var(--color-danger)]">
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }

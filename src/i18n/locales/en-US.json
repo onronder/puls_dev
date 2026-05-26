@@ -954,7 +954,7 @@
       "placeholders": {
         "name": "e.g. Travel",
         "code": "travel",
-        "monthlyLimit": "15,000",
+        "monthlyLimit": "15000",
         "docThreshold": "500",
         "accountingCode": "770.01"
       },
@@ -970,6 +970,20 @@
       "docThreshold": "Document threshold must be 0 or greater.",
       "duplicateCode": "This category code is already in use.",
       "saveFailed": "Expense category could not be saved."
+    },
+    "validation": {
+      "nameRequired": "Category name is required.",
+      "codeRequired": "Category code is required.",
+      "codeInvalid": "Category code must be a valid lowercase slug with letters, numbers, and underscores.",
+      "monthlyLimitRequired": "Monthly limit is required.",
+      "monthlyLimitInvalid": "Enter a valid amount. Use plain numbers like 15000; do not use comma thousands separators.",
+      "receiptThresholdInvalid": "Enter a valid amount. Use plain numbers like 1500; do not use comma thousands separators.",
+      "erpAccountCodeInvalid": "Accounting code must match 770 or 770.01 format.",
+      "duplicateCode": "This category code is already in use.",
+      "duplicateAccountingCode": "This accounting code is already in use.",
+      "codePreviewHint": "Code to be saved: {{code}}",
+      "amountInputHint": "Enter numbers without thousands separators.",
+      "discardConfirm": "You have unsaved changes. Close without saving?"
     },
     "costCenterMappings": {
       "title": "Cost center mappings",

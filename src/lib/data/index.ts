@@ -84,10 +84,20 @@ export {
 export {
   createExpenseCategory,
   fetchExpenseCategoriesOverview,
+  mapExpenseCategoryMutationError,
+  normalizeCategoryCode,
   updateExpenseCategory,
+  type ExpenseCategoryMutationErrorMapping,
   type ExpenseCategoryMutationInput,
   type ExpenseCategoriesOverview,
 } from '#/lib/data/setup/expense-categories'
+
+export {
+  isExpenseCategoryFormDirty,
+  validateExpenseCategoryForm,
+  type ExpenseCategoryFieldKey,
+  type ExpenseCategoryFormFields,
+} from '#/lib/data/setup/expense-category-validation'
 
 export {
   fetchCostCenterReadinessOverview,
