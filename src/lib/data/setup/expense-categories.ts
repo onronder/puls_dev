@@ -1,8 +1,12 @@
+import { DataAdapterError, fromSupabaseError, isDataAdapterError, parseRpcErrorCode } from '#/lib/data/errors'
 import { fetchDemoExpenseCategoriesOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoExpenseCategoriesOverview } from '#/lib/demo/puls-demo-data'
-import { DataAdapterError, fromSupabaseError } from '#/lib/data/errors'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData } from '#/lib/data/result'
+import {
+  normalizeCategoryCode,
+  type ExpenseCategoryFieldKey,
+} from '#/lib/data/setup/expense-category-validation'
 
 export type ExpenseCategoriesOverview = DemoExpenseCategoriesOverview
 
@@ -11,7 +15,12 @@ export type ExpenseCategoryMutationInput = {
   code: string
   monthlyLimit: number
   receiptRequiredOver: number
-  accountingCode: string | null
+  erpAccountCode: string | null
+}
+
+export type ExpenseCategoryMutationErrorMapping = {
+  fieldErrors: Partial<Record<ExpenseCategoryFieldKey, string>>
+  toastKey?: string
 }
 
 const EXPENSE_CATEGORY_NAME_KEYS: Record<string, string> = {
@@ -23,6 +32,38 @@ const EXPENSE_CATEGORY_NAME_KEYS: Record<string, string> = {
   other: 'expenseCategorySetup.categories.other',
 }
 
+const PULS_CATEGORY_ERROR_MAP: Record<
+  string,
+  { field: ExpenseCategoryFieldKey; i18nKey: string }
+> = {
+  PULS_EXPENSE_CATEGORY_NAME_REQUIRED: {
+    field: 'name',
+    i18nKey: 'expenseCategorySetup.validation.nameRequired',
+  },
+  PULS_EXPENSE_CATEGORY_CODE_REQUIRED: {
+    field: 'code',
+    i18nKey: 'expenseCategorySetup.validation.codeRequired',
+  },
+  PULS_EXPENSE_CATEGORY_CODE_INVALID: {
+    field: 'code',
+    i18nKey: 'expenseCategorySetup.validation.codeInvalid',
+  },
+  PULS_EXPENSE_CATEGORY_MONTHLY_LIMIT_INVALID: {
+    field: 'monthlyLimit',
+    i18nKey: 'expenseCategorySetup.validation.monthlyLimitInvalid',
+  },
+  PULS_EXPENSE_CATEGORY_RECEIPT_THRESHOLD_INVALID: {
+    field: 'receiptRequiredOver',
+    i18nKey: 'expenseCategorySetup.validation.receiptThresholdInvalid',
+  },
+  PULS_EXPENSE_CATEGORY_ACCOUNT_CODE_INVALID: {
+    field: 'erpAccountCode',
+    i18nKey: 'expenseCategorySetup.validation.erpAccountCodeInvalid',
+  },
+}
+
+export { normalizeCategoryCode }
+
 function emptyExpenseCategoriesOverview(): ExpenseCategoriesOverview {
   return {
     categoryCount: 0,
@@ -33,13 +74,75 @@ function emptyExpenseCategoriesOverview(): ExpenseCategoriesOverview {
   }
 }
 
-function normalizeCategoryCode(code: string): string {
-  return code.trim().toLowerCase().replace(/\s+/g, '_')
-}
-
 function normalizeOptionalText(value: string | null | undefined): string | null {
   const normalized = value?.trim()
   return normalized ? normalized : null
+}
+
+function duplicate23505Mapping(error: DataAdapterError): ExpenseCategoryMutationErrorMapping | null {
+  const haystack = `${error.message} ${error.hint ?? ''}`.toLowerCase()
+
+  const isCodeDuplicate =
+    haystack.includes('expense_categories_tenant_id_code_key') ||
+    haystack.includes('(tenant_id, code)')
+
+  const isAccountingDuplicate =
+    haystack.includes('idx_puls_workflow_expense_categories_active_account_code_unique') ||
+    haystack.includes('erp_account_code')
+
+  if (isCodeDuplicate && isAccountingDuplicate) {
+    return null
+  }
+
+  if (isCodeDuplicate) {
+    return {
+      fieldErrors: {
+        code: 'expenseCategorySetup.validation.duplicateCode',
+      },
+    }
+  }
+
+  if (isAccountingDuplicate) {
+    return {
+      fieldErrors: {
+        erpAccountCode: 'expenseCategorySetup.validation.duplicateAccountingCode',
+      },
+    }
+  }
+
+  return null
+}
+
+export function mapExpenseCategoryMutationError(error: unknown): ExpenseCategoryMutationErrorMapping {
+  const fallback: ExpenseCategoryMutationErrorMapping = {
+    fieldErrors: {},
+    toastKey: 'expenseCategorySetup.errors.saveFailed',
+  }
+
+  if (!isDataAdapterError(error)) {
+    return fallback
+  }
+
+  const pulsCode = parseRpcErrorCode(error.message)
+  if (pulsCode) {
+    const mapped = PULS_CATEGORY_ERROR_MAP[pulsCode]
+    if (mapped) {
+      return {
+        fieldErrors: {
+          [mapped.field]: mapped.i18nKey,
+        },
+      }
+    }
+  }
+
+  if (error.code === '23505') {
+    const duplicateMapping = duplicate23505Mapping(error)
+    if (duplicateMapping) {
+      return duplicateMapping
+    }
+  }
+
+  return fallback
 }
 
 async function fetchRealExpenseCategoriesOverview(
@@ -167,7 +270,7 @@ export async function createExpenseCategory(
       code: normalizeCategoryCode(input.code),
       monthly_limit: input.monthlyLimit,
       receipt_required_over: input.receiptRequiredOver,
-      erp_account_code: normalizeOptionalText(input.accountingCode),
+      erp_account_code: normalizeOptionalText(input.erpAccountCode),
       is_active: true,
     })
     .select('id')
@@ -200,7 +303,7 @@ export async function updateExpenseCategory(
       code: normalizeCategoryCode(input.code),
       monthly_limit: input.monthlyLimit,
       receipt_required_over: input.receiptRequiredOver,
-      erp_account_code: normalizeOptionalText(input.accountingCode),
+      erp_account_code: normalizeOptionalText(input.erpAccountCode),
     })
     .eq('tenant_id', ctx.tenantId)
     .eq('id', categoryId)

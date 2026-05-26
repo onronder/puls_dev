@@ -971,6 +971,19 @@
       "duplicateCode": "This category code is already in use.",
       "saveFailed": "Expense category could not be saved."
     },
+    "validation": {
+      "nameRequired": "Category name is required.",
+      "codeRequired": "Category code is required.",
+      "codeInvalid": "Category code must be a valid lowercase slug with letters, numbers, and underscores.",
+      "monthlyLimitRequired": "Monthly limit is required.",
+      "monthlyLimitInvalid": "Monthly limit must be 0 or greater.",
+      "receiptThresholdInvalid": "Document threshold must be 0 or greater.",
+      "erpAccountCodeInvalid": "Accounting code must match 770 or 770.01 format.",
+      "duplicateCode": "This category code is already in use.",
+      "duplicateAccountingCode": "This accounting code is already in use.",
+      "codePreviewHint": "Code to be saved: {{code}}",
+      "discardConfirm": "You have unsaved changes. Close without saving?"
+    },
     "costCenterMappings": {
       "title": "Cost center mappings",
       "description": "This section shows external mapping for the cost center dimension used in expense claims—not expense categories.",
