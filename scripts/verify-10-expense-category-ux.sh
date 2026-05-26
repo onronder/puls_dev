@@ -56,6 +56,36 @@ for needle in \
   fi
 done
 
+if ! grep -Fq 'parseExpenseCategoryAmount' "$VALIDATION"; then
+  echo "FAIL: validation module must use parseExpenseCategoryAmount wrapper"
+  exit 1
+fi
+
+if ! grep -Fq "15.000" "$VALIDATION_TEST" || ! grep -Fq "15,000" "$VALIDATION_TEST"; then
+  echo "FAIL: validation tests must lock TR dot and EN comma amount behavior"
+  exit 1
+fi
+
+if grep -Fq '"15,000"' "$I18N_EN"; then
+  echo "FAIL: EN placeholder must not use comma thousands separators"
+  exit 1
+fi
+
+if ! grep -Fq '"15000"' "$I18N_EN"; then
+  echo "FAIL: EN monthlyLimit placeholder must be plain 15000"
+  exit 1
+fi
+
+if ! grep -Fq 'amountInputHint' "$I18N_TR" || ! grep -Fq 'amountInputHint' "$I18N_EN"; then
+  echo "FAIL: missing amountInputHint i18n key"
+  exit 1
+fi
+
+if ! grep -Fq 'amountInputHint' "$ROUTE"; then
+  echo "FAIL: route must show amount input hint on limit fields"
+  exit 1
+fi
+
 if ! grep -Fq '"validation"' "$I18N_TR" || ! grep -Fq '"validation"' "$I18N_EN"; then
   echo "FAIL: missing expenseCategorySetup.validation i18n namespace"
   exit 1

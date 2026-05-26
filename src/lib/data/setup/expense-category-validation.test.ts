@@ -5,6 +5,7 @@ import {
   isExpenseCategoryFormDirty,
   normalizeCategoryCode,
   normalizeExpenseCategoryFormInput,
+  parseExpenseCategoryAmount,
   validateExpenseCategoryForm,
   type ExpenseCategoryFormFields,
 } from '#/lib/data/setup/expense-category-validation'
@@ -28,6 +29,25 @@ const VALID_FORM: ExpenseCategoryFormFields = {
 describe('normalizeCategoryCode', () => {
   it('lowercases, trims, and replaces spaces with underscores', () => {
     expect(normalizeCategoryCode(' Orn Seyahat ')).toBe('orn_seyahat')
+  })
+})
+
+describe('parseExpenseCategoryAmount', () => {
+  it('parses TR dot thousands without corrupting value', () => {
+    expect(parseExpenseCategoryAmount('15.000')).toBe(15000)
+    expect(parseExpenseCategoryAmount('1.500')).toBe(1500)
+  })
+
+  it('parses plain EN numbers', () => {
+    expect(parseExpenseCategoryAmount('15000')).toBe(15000)
+  })
+
+  it('rejects EN comma thousands to avoid silent 15,000 → 15', () => {
+    expect(parseExpenseCategoryAmount('15,000')).toBeNaN()
+  })
+
+  it('still allows decimal comma amounts', () => {
+    expect(parseExpenseCategoryAmount('15,50')).toBe(15.5)
   })
 })
 
@@ -62,6 +82,22 @@ describe('normalizeExpenseCategoryFormInput', () => {
       receiptRequiredOver: '1.500',
     })
     expect(normalized.receiptRequiredOver).toBe(1500)
+  })
+
+  it('parses plain monthly limit without separators', () => {
+    const normalized = normalizeExpenseCategoryFormInput({
+      ...VALID_FORM,
+      monthlyLimit: '15000',
+    })
+    expect(normalized.monthlyLimit).toBe(15000)
+  })
+
+  it('does not silently normalize EN comma thousands', () => {
+    const normalized = normalizeExpenseCategoryFormInput({
+      ...VALID_FORM,
+      monthlyLimit: '15,000',
+    })
+    expect(normalized.monthlyLimit).toBeNaN()
   })
 })
 
@@ -133,6 +169,36 @@ describe('validateExpenseCategoryForm', () => {
     })
     expect(result.isValid).toBe(true)
     expect(result.normalized.monthlyLimit).toBe(15000)
+  })
+
+  it('accepts plain monthly limit input', () => {
+    const result = validateExpenseCategoryForm({
+      ...VALID_FORM,
+      monthlyLimit: '15000',
+    })
+    expect(result.isValid).toBe(true)
+    expect(result.normalized.monthlyLimit).toBe(15000)
+  })
+
+  it('rejects EN comma thousands for monthly limit', () => {
+    const result = validateExpenseCategoryForm({
+      ...VALID_FORM,
+      monthlyLimit: '15,000',
+    })
+    expect(result.isValid).toBe(false)
+    expect(result.fieldErrors.monthlyLimit).toBe(EXPENSE_CATEGORY_VALIDATION.monthlyLimitInvalid)
+    expect(result.normalized.monthlyLimit).toBeNaN()
+  })
+
+  it('rejects EN comma thousands for receipt threshold', () => {
+    const result = validateExpenseCategoryForm({
+      ...VALID_FORM,
+      receiptRequiredOver: '1,500',
+    })
+    expect(result.isValid).toBe(false)
+    expect(result.fieldErrors.receiptRequiredOver).toBe(
+      EXPENSE_CATEGORY_VALIDATION.receiptThresholdInvalid,
+    )
   })
 })
 

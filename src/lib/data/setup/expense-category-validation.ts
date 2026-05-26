@@ -30,14 +30,19 @@ export const EXPENSE_CATEGORY_VALIDATION = {
 
 const CATEGORY_CODE_SLUG_REGEX = /^[a-z][a-z0-9_]{1,63}$/
 const ERP_ACCOUNT_CODE_REGEX = /^[0-9]{3}(\.[0-9]{2})?$/
+const EN_COMMA_THOUSANDS_REGEX = /^\d{1,3}(,\d{3})+(\.\d+)?$/
 
 export function normalizeCategoryCode(code: string): string {
   return code.trim().toLowerCase().replace(/\s+/g, '_')
 }
 
-function parseNonNegativeAmount(raw: string): number {
+/** Category amounts only: TR dot thousands OK; EN comma thousands rejected (avoid 15,000 → 15). */
+export function parseExpenseCategoryAmount(raw: string): number {
   const trimmed = raw.trim()
   if (trimmed === '') return NaN
+
+  if (EN_COMMA_THOUSANDS_REGEX.test(trimmed)) return NaN
+
   return parseDecimalAmount(trimmed)
 }
 
@@ -51,8 +56,8 @@ export function normalizeExpenseCategoryFormInput(
   return {
     name: form.name.trim(),
     code: normalizeCategoryCode(form.code),
-    monthlyLimit: parseNonNegativeAmount(monthlyRaw),
-    receiptRequiredOver: receiptRaw === '' ? 0 : parseNonNegativeAmount(receiptRaw),
+    monthlyLimit: parseExpenseCategoryAmount(monthlyRaw),
+    receiptRequiredOver: receiptRaw === '' ? 0 : parseExpenseCategoryAmount(receiptRaw),
     erpAccountCode: erpAccountCodeRaw ? erpAccountCodeRaw : null,
   }
 }

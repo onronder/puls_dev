@@ -662,6 +662,7 @@ function MasrafKategorileriPage() {
             label={t('expenseCategorySetup.sheet.fields.monthlyLimit')}
             htmlFor="expense-category-limit"
             required
+            hint={t('expenseCategorySetup.validation.amountInputHint')}
             error={translateFieldError(t, fieldErrors, 'monthlyLimit')}
           >
             <Input
@@ -675,13 +676,16 @@ function MasrafKategorileriPage() {
               disabled={isSavingCategory}
               aria-invalid={Boolean(fieldErrors.monthlyLimit) || undefined}
               aria-describedby={
-                fieldErrors.monthlyLimit ? 'expense-category-limit-error' : undefined
+                fieldErrors.monthlyLimit
+                  ? 'expense-category-limit-error'
+                  : 'expense-category-limit-hint'
               }
             />
           </FormField>
           <FormField
             label={t('expenseCategorySetup.sheet.fields.docThreshold')}
             htmlFor="expense-category-doc-threshold"
+            hint={t('expenseCategorySetup.validation.amountInputHint')}
             error={translateFieldError(t, fieldErrors, 'receiptRequiredOver')}
           >
             <Input
@@ -695,7 +699,9 @@ function MasrafKategorileriPage() {
               disabled={isSavingCategory}
               aria-invalid={Boolean(fieldErrors.receiptRequiredOver) || undefined}
               aria-describedby={
-                fieldErrors.receiptRequiredOver ? 'expense-category-doc-threshold-error' : undefined
+                fieldErrors.receiptRequiredOver
+                  ? 'expense-category-doc-threshold-error'
+                  : 'expense-category-doc-threshold-hint'
               }
             />
           </FormField>
