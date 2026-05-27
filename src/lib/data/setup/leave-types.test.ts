@@ -1,12 +1,96 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { fromSupabaseError } from '#/lib/data/errors'
-import { mapLeaveTypeMutationError } from '#/lib/data/setup/leave-types'
+import {
+  applyLeaveTypeLifecycleFilter,
+  mapLeaveTypeLifecycleError,
+  mapLeaveTypeMutationError,
+  parseLeaveTypeLifecycleRpcResult,
+} from '#/lib/data/setup/leave-types'
 
 vi.mock('#/lib/data/client', () => ({
   pulsWorkflow: vi.fn(),
   resolveTenantContext: vi.fn(),
 }))
+
+const sampleLeaveTypes = [
+  { id: '1', isActive: true, name: 'Annual' },
+  { id: '2', isActive: false, name: 'Legacy' },
+  { id: '3', isActive: true, name: 'Sick' },
+]
+
+describe('applyLeaveTypeLifecycleFilter', () => {
+  it('filters active leave types', () => {
+    expect(applyLeaveTypeLifecycleFilter(sampleLeaveTypes, 'active')).toEqual([
+      sampleLeaveTypes[0],
+      sampleLeaveTypes[2],
+    ])
+  })
+
+  it('filters inactive leave types', () => {
+    expect(applyLeaveTypeLifecycleFilter(sampleLeaveTypes, 'inactive')).toEqual([
+      sampleLeaveTypes[1],
+    ])
+  })
+
+  it('returns all leave types for all filter', () => {
+    expect(applyLeaveTypeLifecycleFilter(sampleLeaveTypes, 'all')).toEqual(sampleLeaveTypes)
+  })
+})
+
+describe('parseLeaveTypeLifecycleRpcResult', () => {
+  it('parses deactivated result', () => {
+    expect(
+      parseLeaveTypeLifecycleRpcResult({
+        status: 'deactivated',
+        leave_type_id: 'lt-1',
+        has_history: true,
+      }),
+    ).toEqual({
+      status: 'deactivated',
+      leaveTypeId: 'lt-1',
+      hasHistory: true,
+    })
+  })
+
+  it('parses restored and idempotent statuses', () => {
+    expect(
+      parseLeaveTypeLifecycleRpcResult({ status: 'restored', leave_type_id: 'lt-2' }),
+    ).toEqual({ status: 'restored', leaveTypeId: 'lt-2' })
+    expect(
+      parseLeaveTypeLifecycleRpcResult({ status: 'already_inactive', leave_type_id: 'lt-3' }),
+    ).toEqual({ status: 'already_inactive', leaveTypeId: 'lt-3' })
+    expect(
+      parseLeaveTypeLifecycleRpcResult({ status: 'already_active', leave_type_id: 'lt-4' }),
+    ).toEqual({ status: 'already_active', leaveTypeId: 'lt-4' })
+  })
+})
+
+describe('mapLeaveTypeLifecycleError', () => {
+  it('maps active request guard to toast key', () => {
+    const error = fromSupabaseError(
+      {
+        code: 'P0001',
+        message: 'PULS_LEAVE_TYPE_IN_USE_ACTIVE_REQUESTS: leave type has open leave requests.',
+        details: '',
+        hint: null,
+      } as unknown as import('@supabase/supabase-js').PostgrestError,
+      'deactivateLeaveType',
+      'puls_workflow',
+      'leave_types',
+    )
+
+    expect(mapLeaveTypeLifecycleError(error)).toEqual({
+      toastKey: 'leaveTypeSetup.lifecycle.errors.activeRequests',
+    })
+  })
+
+  it('falls back to generic lifecycle error', () => {
+    expect(mapLeaveTypeLifecycleError(new Error('network'))).toEqual({
+      toastKey: 'leaveTypeSetup.lifecycle.errors.generic',
+    })
+  })
+})
 
 describe('mapLeaveTypeMutationError', () => {
   it('maps PULS guardrail codes to field i18n keys', () => {

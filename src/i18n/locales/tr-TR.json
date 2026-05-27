@@ -497,6 +497,11 @@
       "approvedDesc": "{{name}} izin talebi onaylandı.",
       "rejectedTitle": "Reddedildi",
       "rejectedDesc": "{{name}} izin talebi reddedildi."
+    },
+    "typeLifecycle": {
+      "inactiveTypeBadge": "Pasif izin tipi",
+      "inactiveTypeHint": "Bu kayıt pasifleştirilmiş bir izin tipine aittir.",
+      "noActiveLeaveTypes": "Yeni izin talebi oluşturmak için aktif bir izin tipi tanımlanmalıdır."
     }
   },
   "expense": {
@@ -866,13 +871,15 @@
       "docRequiredCount": "Belge zorunlu",
       "approvalFlow": "Onay akışı",
       "approvalFlowValue": "{{count}} seviye",
-      "approvalFlowValue_other": "{{count}} seviye"
+      "approvalFlowValue_other": "{{count}} seviye",
+      "activeOnlyHint": "Yalnızca aktif izin tipleri"
     },
     "sections": {
       "list": "İzin tipleri"
     },
     "columns": {
       "label": "İzin tipi",
+      "status": "Durum",
       "days": "Gün",
       "paid": "Ücret",
       "doc": "Belge",
@@ -903,6 +910,43 @@
     },
     "actions": {
       "add": "İzin tipi ekle"
+    },
+    "lifecycle": {
+      "filter": {
+        "ariaLabel": "İzin tipi durumu filtresi",
+        "active": "Aktif",
+        "inactive": "Pasif",
+        "all": "Tümü"
+      },
+      "status": {
+        "active": "Aktif",
+        "inactive": "Pasif"
+      },
+      "actions": {
+        "deactivate": "Pasifleştir",
+        "restore": "Geri yükle",
+        "restoring": "Geri yükleniyor"
+      },
+      "confirm": {
+        "deactivate": "Bu izin tipini pasifleştirmek istediğinize emin misiniz? Yeni izin taleplerinde görünmez; geçmiş kayıtlar okunabilir kalır.",
+        "restore": "Bu izin tipini geri yüklemek istediğinize emin misiniz?"
+      },
+      "toast": {
+        "deactivated": "İzin tipi pasifleştirildi.",
+        "alreadyInactive": "İzin tipi zaten pasif.",
+        "restored": "İzin tipi geri yüklendi.",
+        "alreadyActive": "İzin tipi zaten aktif."
+      },
+      "errors": {
+        "activeRequests": "Bu izin tipinde taslak, bekleyen veya güncel onaylı izin talepleri var. Önce bu talepleri kapatın veya taşıyın.",
+        "notFound": "İzin tipi bulunamadı.",
+        "forbidden": "Bu işlem için yetkiniz yok.",
+        "generic": "İzin tipi durumu güncellenemedi."
+      },
+      "sheet": {
+        "inactiveTitle": "Pasif izin tipi",
+        "inactiveDescription": "Bu izin tipi pasif. Geçmiş izin kayıtları okunabilir; yeni taleplerde seçilemez."
+      }
     },
     "validation": {
       "nameRequired": "İzin tipi adı zorunludur.",
