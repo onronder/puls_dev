@@ -10,6 +10,7 @@ DECLARE
   v_expense_policy_id UUID;
   v_stored_name TEXT;
   v_stored_code TEXT;
+  v_stored_entitlement NUMERIC(8, 2);
 BEGIN
   PERFORM set_config('request.jwt.claim.role', 'service_role', true);
 
@@ -132,6 +133,23 @@ BEGIN
     WHEN OTHERS THEN
       IF SQLERRM NOT LIKE '%PULS_LEAVE_TYPE_ENTITLEMENT_INVALID%' THEN RAISE; END IF;
   END;
+
+  -- Half-day entitlement (1.5) valid
+  UPDATE puls_workflow.leave_types
+  SET default_entitlement_days = 1.5
+  WHERE id = v_leave_type_id;
+
+  SELECT default_entitlement_days INTO v_stored_entitlement
+  FROM puls_workflow.leave_types
+  WHERE id = v_leave_type_id;
+
+  IF v_stored_entitlement <> 1.5 THEN
+    RAISE EXCEPTION 'SMOKE_FAIL: expected half-day entitlement 1.5, got %', v_stored_entitlement;
+  END IF;
+
+  UPDATE puls_workflow.leave_types
+  SET default_entitlement_days = 20
+  WHERE id = v_leave_type_id;
 
   -- Negative carry over
   BEGIN

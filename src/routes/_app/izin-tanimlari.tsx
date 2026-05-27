@@ -362,9 +362,21 @@ function IzinTanimlariPage() {
     })
     setFieldErrors((current) => {
       const key = field as LeaveTypeFieldKey
-      if (!current[key]) return current
+      const shouldClearField = Boolean(current[key])
+      const shouldClearCarryOverMax =
+        field === 'carryOverAllowed' && value === false && Boolean(current.maxCarryOverDays)
+
+      if (!shouldClearField && !shouldClearCarryOverMax) {
+        return current
+      }
+
       const next = { ...current }
-      delete next[key]
+      if (shouldClearField) {
+        delete next[key]
+      }
+      if (shouldClearCarryOverMax) {
+        delete next.maxCarryOverDays
+      }
       return next
     })
   }

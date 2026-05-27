@@ -100,6 +100,7 @@ smoke_needles=(
   "PULS_LEAVE_TYPE_POLICY_MODULE_INVALID"
   "23505"
   "demo_leave_type_guardrails_dup"
+  "expected half-day entitlement 1.5"
   "set_config('request.jwt.claim.role', 'service_role', true)"
 )
 
