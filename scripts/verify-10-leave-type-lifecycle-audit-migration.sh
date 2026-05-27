@@ -4,10 +4,15 @@ set -euo pipefail
 
 REF="${1:-HEAD}"
 FILE="supabase/migrations/20260525181000_puls_workflow_leave_type_lifecycle_audit.sql"
+TIMESTAMP_FIX_FILE="supabase/migrations/20260525181200_puls_workflow_leave_type_lifecycle_audit_timestamp_fix.sql"
 SMOKE="docs/data/10_leave_type_lifecycle_audit_smoke.sql"
 
 sql() {
   git show "${REF}:${FILE}" 2>/dev/null || cat "${FILE}"
+}
+
+timestamp_fix_sql() {
+  git show "${REF}:${TIMESTAMP_FIX_FILE}" 2>/dev/null || cat "${TIMESTAMP_FIX_FILE}"
 }
 
 smoke() {
@@ -15,6 +20,7 @@ smoke() {
 }
 
 CONTENT="$(sql)"
+TIMESTAMP_FIX_CONTENT="$(timestamp_fix_sql)"
 SMOKE_CONTENT="$(smoke)"
 
 echo "Checking ${REF}:${FILE} ..."
@@ -85,6 +91,53 @@ for forbidden in \
 do
   if grep -v '^[[:space:]]*--' <<< "$CONTENT" | grep -Fiq "$forbidden"; then
     echo "FAIL: migration must not contain forbidden ERP fragment: $forbidden"
+    exit 1
+  fi
+done
+
+echo "Checking ${REF}:${TIMESTAMP_FIX_FILE} ..."
+
+timestamp_fix_needles=(
+  "ALTER COLUMN occurred_at SET DEFAULT clock_timestamp()"
+  "CREATE OR REPLACE FUNCTION puls_workflow.deactivate_leave_type"
+  "CREATE OR REPLACE FUNCTION puls_workflow.restore_leave_type"
+  "occurred_at,"
+  "clock_timestamp()"
+  "GRANT EXECUTE ON FUNCTION puls_workflow.deactivate_leave_type(UUID, TEXT)"
+  "GRANT EXECUTE ON FUNCTION puls_workflow.restore_leave_type(UUID)"
+)
+
+for needle in "${timestamp_fix_needles[@]}"; do
+  if ! grep -Fq "$needle" <<< "$TIMESTAMP_FIX_CONTENT"; then
+    echo "FAIL: timestamp fix migration missing required fragment: $needle"
+    exit 1
+  fi
+done
+
+if ! grep -Fq "clock_timestamp()" <<< "$TIMESTAMP_FIX_CONTENT"; then
+  echo "FAIL: timestamp fix migration must use clock_timestamp() for audit ordering"
+  exit 1
+fi
+
+if grep -E "search_path = .*\\bauth\\b" <<< "$TIMESTAMP_FIX_CONTENT" >/dev/null 2>&1; then
+  echo "FAIL: timestamp fix functions must not include auth in search_path"
+  exit 1
+fi
+
+if grep -E "search_path = .*\\bpublic\\b" <<< "$TIMESTAMP_FIX_CONTENT" >/dev/null 2>&1; then
+  echo "FAIL: timestamp fix functions must not include public in search_path"
+  exit 1
+fi
+
+for forbidden in \
+  "DELETE FROM puls_workflow.leave_types" \
+  "CREATE OR REPLACE FUNCTION puls_workflow.resolve_policy_step_approver" \
+  "CREATE OR REPLACE FUNCTION puls_workflow.resolve_approver" \
+  "CREATE OR REPLACE FUNCTION puls_workflow.decide_approval_request" \
+  "CREATE OR REPLACE FUNCTION puls_integration.apply_import_batch"
+do
+  if grep -v '^[[:space:]]*--' <<< "$TIMESTAMP_FIX_CONTENT" | grep -Fq "$forbidden"; then
+    echo "FAIL: timestamp fix migration must not contain forbidden fragment: $forbidden"
     exit 1
   fi
 done
@@ -179,4 +232,4 @@ if git rev-parse origin/main >/dev/null 2>&1; then
   fi
 fi
 
-echo "OK: 10 PR10.13 leave type lifecycle audit checks passed for ${REF}"
+echo "OK: 10 PR10.13 leave type lifecycle audit checks passed for ${REF} (includes timestamp fix)"
