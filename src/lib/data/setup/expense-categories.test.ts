@@ -242,6 +242,23 @@ describe('parseExpenseCategoryLifecycleRpcResult', () => {
       categoryId: 'cat-1',
     })
   })
+
+  it('throws when state-change result omits event_id', () => {
+    expect(() =>
+      parseExpenseCategoryLifecycleRpcResult({
+        status: 'deactivated',
+        category_id: 'cat-1',
+        has_history: false,
+      }),
+    ).toThrow(/Missing event_id/)
+
+    expect(() =>
+      parseExpenseCategoryLifecycleRpcResult({
+        status: 'restored',
+        category_id: 'cat-1',
+      }),
+    ).toThrow(/Missing event_id/)
+  })
 })
 
 describe('mapExpenseCategoryLifecycleEventRow', () => {

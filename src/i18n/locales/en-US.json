@@ -978,7 +978,7 @@
       "reasonLabel": "Deactivation reason",
       "reasonPlaceholder": "Optional short note",
       "reasonHint": "This note is kept only in PULS lifecycle history.",
-      "reasonTooLong": "Reason must be shorter than 500 characters.",
+      "reasonTooLong": "Reason must be at most 500 characters.",
       "historyTitle": "Lifecycle history",
       "historyEmpty": "No lifecycle history is available for this category.",
       "action": {

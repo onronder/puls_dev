@@ -978,7 +978,7 @@
       "reasonLabel": "Pasifleştirme nedeni",
       "reasonPlaceholder": "İsteğe bağlı kısa not",
       "reasonHint": "Bu not yalnızca PULS içinde lifecycle geçmişinde tutulur.",
-      "reasonTooLong": "Neden 500 karakterden kısa olmalı.",
+      "reasonTooLong": "Neden en fazla 500 karakter olmalı.",
       "historyTitle": "Lifecycle geçmişi",
       "historyEmpty": "Bu kategori için lifecycle geçmişi bulunmuyor.",
       "action": {

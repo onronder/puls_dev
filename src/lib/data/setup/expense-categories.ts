@@ -107,7 +107,14 @@ export function parseExpenseCategoryLifecycleRpcResult(
   const row = data as Record<string, unknown>
   const status = row.status as ExpenseCategoryLifecycleResult['status']
   const categoryId = row.category_id as string
-  const eventId = typeof row.event_id === 'string' ? row.event_id : String(row.event_id ?? '')
+
+  function requireEventId(): string {
+    const raw = row.event_id
+    if (typeof raw === 'string' && raw.trim().length > 0) {
+      return raw
+    }
+    throw new Error(`Missing event_id for lifecycle RPC status: ${String(status)}`)
+  }
 
   switch (status) {
     case 'deactivated':
@@ -115,13 +122,13 @@ export function parseExpenseCategoryLifecycleRpcResult(
         status: 'deactivated',
         categoryId,
         hasHistory: Boolean(row.has_history),
-        eventId,
+        eventId: requireEventId(),
       }
     case 'restored':
       return {
         status: 'restored',
         categoryId,
-        eventId,
+        eventId: requireEventId(),
       }
     case 'already_inactive':
       return { status: 'already_inactive', categoryId }
