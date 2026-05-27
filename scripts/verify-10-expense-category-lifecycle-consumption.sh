@@ -57,8 +57,12 @@ smoke_needles=(
   "deactivate_expense_category"
   "restore_expense_category"
   "PULS_INVALID_EXPENSE_CATEGORY"
-  "demo_lifecycle_consumption"
-  "historical claim category name should remain readable"
+  "demo_lifecycle_consumption_active"
+  "demo_lifecycle_consumption_history"
+  "status = 'exported'"
+  "historical claim should reference inactive category row"
+  "Fixture B:"
+  "Fixture C:"
 )
 
 for needle in "${smoke_needles[@]}"; do

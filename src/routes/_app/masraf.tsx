@@ -116,7 +116,7 @@ function ClaimCategoryLine({
   t,
 }: {
   category: string
-  categoryIsActive?: boolean
+  categoryIsActive: boolean
   expenseDate: string
   locale: string
   t: ReturnType<typeof useTranslation>['t']
@@ -459,6 +459,7 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
                 <div className="truncate text-[14px] font-medium text-foreground">
                   {approval.employeeName} · {approval.title}
                 </div>
+                {/* Defensive display only: inactive category + open approval is not a supported production state. */}
                 <ClaimCategoryLine
                   category={approval.category}
                   categoryIsActive={approval.categoryIsActive}

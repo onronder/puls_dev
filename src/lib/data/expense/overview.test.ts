@@ -30,4 +30,14 @@ describe('mapClaimCategoryFromJoin', () => {
       categoryIsActive: true,
     })
   })
+
+  it('always returns boolean categoryIsActive for adapter consumers', () => {
+    for (const result of [
+      mapClaimCategoryFromJoin({ name: 'Seyahat', is_active: true }),
+      mapClaimCategoryFromJoin({ name: 'Eski eğitim', is_active: false }),
+      mapClaimCategoryFromJoin(null),
+    ]) {
+      expect(typeof result.categoryIsActive).toBe('boolean')
+    }
+  })
 })
