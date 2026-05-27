@@ -12,11 +12,24 @@ export type ExpenseCategoriesOverview = DemoExpenseCategoriesOverview
 
 export type ExpenseCategoryLifecycleFilter = 'active' | 'inactive' | 'all'
 
-export type ExpenseCategoryLifecycleResult = {
-  status: 'deactivated' | 'already_inactive' | 'restored' | 'already_active'
+export type ExpenseCategoryLifecycleEventAction = 'deactivated' | 'restored'
+
+export type ExpenseCategoryLifecycleEvent = {
+  id: string
   categoryId: string
-  hasHistory?: boolean
+  action: ExpenseCategoryLifecycleEventAction
+  reason: string | null
+  actorRole: string | null
+  occurredAt: string
 }
+
+export type ExpenseCategoryLifecycleResult =
+  | { status: 'deactivated'; categoryId: string; hasHistory: boolean; eventId: string }
+  | { status: 'restored'; categoryId: string; eventId: string }
+  | { status: 'already_inactive'; categoryId: string }
+  | { status: 'already_active'; categoryId: string }
+
+export const DEACTIVATE_REASON_MAX_LENGTH = 500
 
 export type ExpenseCategoryLifecycleErrorMapping = {
   toastKey: string
@@ -26,6 +39,18 @@ const PULS_CATEGORY_LIFECYCLE_ERROR_MAP: Record<string, string> = {
   PULS_EXPENSE_CATEGORY_IN_USE_ACTIVE_CLAIMS: 'expenseCategorySetup.lifecycle.errors.activeClaims',
   PULS_EXPENSE_CATEGORY_NOT_FOUND: 'expenseCategorySetup.lifecycle.errors.notFound',
   PULS_EXPENSE_CATEGORY_FORBIDDEN: 'expenseCategorySetup.lifecycle.errors.forbidden',
+  PULS_EXPENSE_CATEGORY_LIFECYCLE_REASON_TOO_LONG:
+    'expenseCategorySetup.lifecycleAudit.reasonTooLong',
+}
+
+export function normalizeDeactivateReason(value: string | null | undefined): string | null {
+  const normalized = value?.trim()
+  return normalized ? normalized : null
+}
+
+export function isDeactivateReasonTooLong(value: string | null | undefined): boolean {
+  const normalized = normalizeDeactivateReason(value)
+  return normalized != null && normalized.length > DEACTIVATE_REASON_MAX_LENGTH
 }
 
 export function applyExpenseCategoryLifecycleFilter<
@@ -76,17 +101,54 @@ export function mapExpenseCategoryLifecycleError(
   return fallback
 }
 
-function parseLifecycleRpcResult(data: unknown): ExpenseCategoryLifecycleResult {
+export function parseExpenseCategoryLifecycleRpcResult(
+  data: unknown,
+): ExpenseCategoryLifecycleResult {
   const row = data as Record<string, unknown>
+  const status = row.status as ExpenseCategoryLifecycleResult['status']
+  const categoryId = row.category_id as string
+
+  function requireEventId(): string {
+    const raw = row.event_id
+    if (typeof raw === 'string' && raw.trim().length > 0) {
+      return raw
+    }
+    throw new Error(`Missing event_id for lifecycle RPC status: ${String(status)}`)
+  }
+
+  switch (status) {
+    case 'deactivated':
+      return {
+        status: 'deactivated',
+        categoryId,
+        hasHistory: Boolean(row.has_history),
+        eventId: requireEventId(),
+      }
+    case 'restored':
+      return {
+        status: 'restored',
+        categoryId,
+        eventId: requireEventId(),
+      }
+    case 'already_inactive':
+      return { status: 'already_inactive', categoryId }
+    case 'already_active':
+      return { status: 'already_active', categoryId }
+    default:
+      throw new Error(`Unexpected lifecycle RPC status: ${String(status)}`)
+  }
+}
+
+export function mapExpenseCategoryLifecycleEventRow(
+  row: Record<string, unknown>,
+): ExpenseCategoryLifecycleEvent {
   return {
-    status: row.status as ExpenseCategoryLifecycleResult['status'],
+    id: row.id as string,
     categoryId: row.category_id as string,
-    hasHistory:
-      typeof row.has_history === 'boolean'
-        ? row.has_history
-        : row.has_history == null
-          ? undefined
-          : Boolean(row.has_history),
+    action: row.action as ExpenseCategoryLifecycleEventAction,
+    reason: (row.reason as string | null) ?? null,
+    actorRole: (row.actor_role as string | null) ?? null,
+    occurredAt: row.occurred_at as string,
   }
 }
 
@@ -102,7 +164,7 @@ export async function deactivateExpenseCategory(
 
   const { data, error } = await pulsWorkflow().rpc('deactivate_expense_category', {
     p_category_id: categoryId,
-    p_reason: reason ?? null,
+    p_reason: normalizeDeactivateReason(reason),
   })
 
   if (error) {
@@ -114,7 +176,7 @@ export async function deactivateExpenseCategory(
     )
   }
 
-  return parseLifecycleRpcResult(data)
+  return parseExpenseCategoryLifecycleRpcResult(data)
 }
 
 export async function restoreExpenseCategory(
@@ -139,7 +201,39 @@ export async function restoreExpenseCategory(
     )
   }
 
-  return parseLifecycleRpcResult(data)
+  return parseExpenseCategoryLifecycleRpcResult(data)
+}
+
+export async function fetchExpenseCategoryLifecycleEvents(
+  userId: string,
+  categoryId: string,
+  limit = 5,
+): Promise<ExpenseCategoryLifecycleEvent[]> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    return []
+  }
+
+  const { data, error } = await pulsWorkflow()
+    .from('expense_category_lifecycle_events')
+    .select('id, category_id, action, reason, actor_role, occurred_at')
+    .eq('category_id', categoryId)
+    .order('occurred_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'fetchExpenseCategoryLifecycleEvents',
+      'puls_workflow',
+      'expense_category_lifecycle_events',
+    )
+  }
+
+  return (data ?? []).map((row) =>
+    mapExpenseCategoryLifecycleEventRow(row as Record<string, unknown>),
+  )
 }
 
 export type ExpenseCategoryMutationInput = {

@@ -974,6 +974,22 @@
         "generic": "Masraf kategorisi durumu güncellenemedi."
       }
     },
+    "lifecycleAudit": {
+      "reasonLabel": "Pasifleştirme nedeni",
+      "reasonPlaceholder": "İsteğe bağlı kısa not",
+      "reasonHint": "Bu not yalnızca PULS içinde lifecycle geçmişinde tutulur.",
+      "reasonTooLong": "Neden en fazla 500 karakter olmalı.",
+      "historyTitle": "Lifecycle geçmişi",
+      "historyEmpty": "Bu kategori için lifecycle geçmişi bulunmuyor.",
+      "action": {
+        "deactivated": "Pasifleştirildi",
+        "restored": "Geri yüklendi"
+      },
+      "toast": {
+        "deactivatedWithAudit": "Kategori pasifleştirildi ve lifecycle geçmişine kaydedildi.",
+        "restoredWithAudit": "Kategori geri yüklendi ve lifecycle geçmişine kaydedildi."
+      }
+    },
     "sheet": {
       "create": {
         "title": "Kategori ekle",
