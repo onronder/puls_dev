@@ -76,7 +76,7 @@ describe('validateLeaveTypeForm', () => {
   it('rejects invalid code slug', () => {
     const result = validateLeaveTypeForm({
       ...VALID_FORM,
-      code: 'Demo Bad',
+      code: 'demo-bad',
     })
     expect(result.isValid).toBe(false)
     expect(result.fieldErrors.code).toBe('leaveTypeSetup.validation.codeInvalid')
