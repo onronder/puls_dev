@@ -675,6 +675,7 @@ export type DemoExpenseCategoryRule = {
   approvalPolicyId?: string | null
   approvalPolicyName?: string | null
   approvalStepCount: number
+  isActive: boolean
 }
 
 export type DemoExpenseCategoriesOverview = {
@@ -701,6 +702,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       accountingCode: '770.01',
       code: '770.01',
       approvalStepCount: 1,
+      isActive: true,
     },
     {
       id: 'ec2',
@@ -712,6 +714,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       accountingCode: '770.02',
       code: '770.02',
       approvalStepCount: 1,
+      isActive: true,
     },
     {
       id: 'ec3',
@@ -723,6 +726,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       accountingCode: '770.03',
       code: '770.03',
       approvalStepCount: 1,
+      isActive: true,
     },
     {
       id: 'ec4',
@@ -734,6 +738,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       accountingCode: '770.04',
       code: '770.04',
       approvalStepCount: 1,
+      isActive: true,
     },
     {
       id: 'ec5',
@@ -745,6 +750,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       accountingCode: '770.05',
       code: '770.05',
       approvalStepCount: 1,
+      isActive: true,
     },
     {
       id: 'ec6',
@@ -756,6 +762,20 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       accountingCode: '770.99',
       code: '770.99',
       approvalStepCount: 1,
+      isActive: true,
+    },
+    {
+      id: 'ec7',
+      name: 'Eski eğitim',
+      nameKey: 'Eski eğitim',
+      categoryCode: 'legacy_training',
+      monthly: 0,
+      docThreshold: 0,
+      accountingCode: '770.90',
+      code: '770.90',
+      approvalPolicyName: 'Masraf onay — standart',
+      approvalStepCount: 1,
+      isActive: false,
     },
   ],
 }

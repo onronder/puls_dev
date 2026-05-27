@@ -10,6 +10,138 @@ import {
 
 export type ExpenseCategoriesOverview = DemoExpenseCategoriesOverview
 
+export type ExpenseCategoryLifecycleFilter = 'active' | 'inactive' | 'all'
+
+export type ExpenseCategoryLifecycleResult = {
+  status: 'deactivated' | 'already_inactive' | 'restored' | 'already_active'
+  categoryId: string
+  hasHistory?: boolean
+}
+
+export type ExpenseCategoryLifecycleErrorMapping = {
+  toastKey: string
+}
+
+const PULS_CATEGORY_LIFECYCLE_ERROR_MAP: Record<string, string> = {
+  PULS_EXPENSE_CATEGORY_IN_USE_ACTIVE_CLAIMS: 'expenseCategorySetup.lifecycle.errors.activeClaims',
+  PULS_EXPENSE_CATEGORY_NOT_FOUND: 'expenseCategorySetup.lifecycle.errors.notFound',
+  PULS_EXPENSE_CATEGORY_FORBIDDEN: 'expenseCategorySetup.lifecycle.errors.forbidden',
+}
+
+export function applyExpenseCategoryLifecycleFilter<
+  T extends { isActive: boolean },
+>(categories: T[], filter: ExpenseCategoryLifecycleFilter): T[] {
+  switch (filter) {
+    case 'active':
+      return categories.filter((category) => category.isActive)
+    case 'inactive':
+      return categories.filter((category) => !category.isActive)
+    default:
+      return categories
+  }
+}
+
+export function mapExpenseCategoryLifecycleError(
+  error: unknown,
+): ExpenseCategoryLifecycleErrorMapping {
+  const fallback: ExpenseCategoryLifecycleErrorMapping = {
+    toastKey: 'expenseCategorySetup.lifecycle.errors.generic',
+  }
+
+  if (!isDataAdapterError(error)) {
+    return fallback
+  }
+
+  const pulsCode = parseRpcErrorCode(error.message)
+  if (pulsCode) {
+    const mapped = PULS_CATEGORY_LIFECYCLE_ERROR_MAP[pulsCode]
+    if (mapped) {
+      return { toastKey: mapped }
+    }
+  }
+
+  if (error.code === '23505') {
+    const haystack = `${error.message} ${error.hint ?? ''} ${error.details ?? ''}`.toLowerCase()
+    const isAccountingDuplicate =
+      haystack.includes('idx_puls_workflow_expense_categories_active_account_code_unique') ||
+      haystack.includes('erp_account_code')
+
+    if (isAccountingDuplicate) {
+      return {
+        toastKey: 'expenseCategorySetup.lifecycle.errors.restoreDuplicateAccounting',
+      }
+    }
+  }
+
+  return fallback
+}
+
+function parseLifecycleRpcResult(data: unknown): ExpenseCategoryLifecycleResult {
+  const row = data as Record<string, unknown>
+  return {
+    status: row.status as ExpenseCategoryLifecycleResult['status'],
+    categoryId: row.category_id as string,
+    hasHistory:
+      typeof row.has_history === 'boolean'
+        ? row.has_history
+        : row.has_history == null
+          ? undefined
+          : Boolean(row.has_history),
+  }
+}
+
+export async function deactivateExpenseCategory(
+  userId: string,
+  categoryId: string,
+  reason?: string | null,
+): Promise<ExpenseCategoryLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsWorkflow().rpc('deactivate_expense_category', {
+    p_category_id: categoryId,
+    p_reason: reason ?? null,
+  })
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'deactivateExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+  }
+
+  return parseLifecycleRpcResult(data)
+}
+
+export async function restoreExpenseCategory(
+  userId: string,
+  categoryId: string,
+): Promise<ExpenseCategoryLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsWorkflow().rpc('restore_expense_category', {
+    p_category_id: categoryId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'restoreExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+  }
+
+  return parseLifecycleRpcResult(data)
+}
+
 export type ExpenseCategoryMutationInput = {
   name: string
   code: string
@@ -154,10 +286,9 @@ async function fetchRealExpenseCategoriesOverview(
   const { data, error } = await pulsWorkflow()
     .from('expense_categories')
     .select(
-      'id, code, name, monthly_limit, receipt_required_over, erp_account_code, approval_policy_id, approval_policies(name)',
+      'id, code, name, monthly_limit, receipt_required_over, erp_account_code, approval_policy_id, is_active, approval_policies(name)',
     )
     .eq('tenant_id', ctx.tenantId)
-    .eq('is_active', true)
     .order('name', { ascending: true })
 
   if (error) {
@@ -224,17 +355,21 @@ async function fetchRealExpenseCategoriesOverview(
       approvalPolicyId: policyId,
       approvalPolicyName: policyName ?? null,
       approvalStepCount: policyId ? (requiredStepCountByPolicy.get(policyId) ?? 0) : 1,
+      isActive: Boolean(row.is_active),
     }
   })
 
-  const totalMonthlyLimit = categories.reduce((sum, row) => sum + row.monthly, 0)
+  const activeCategories = categories.filter((row) => row.isActive)
+  const totalMonthlyLimit = activeCategories.reduce((sum, row) => sum + row.monthly, 0)
   const docThresholdMetric =
-    categories.length > 0 ? Math.max(...categories.map((row) => row.docThreshold)) : 0
+    activeCategories.length > 0 ? Math.max(...activeCategories.map((row) => row.docThreshold)) : 0
   const maxApprovalStepCount =
-    categories.length > 0 ? Math.max(...categories.map((row) => row.approvalStepCount)) : 0
+    activeCategories.length > 0
+      ? Math.max(...activeCategories.map((row) => row.approvalStepCount))
+      : 0
 
   return {
-    categoryCount: categories.length,
+    categoryCount: activeCategories.length,
     totalMonthlyLimit,
     docThresholdMetric,
     maxApprovalStepCount,

@@ -82,11 +82,18 @@ export {
 } from '#/lib/data/setup/leave-types'
 
 export {
+  applyExpenseCategoryLifecycleFilter,
   createExpenseCategory,
+  deactivateExpenseCategory,
   fetchExpenseCategoriesOverview,
+  mapExpenseCategoryLifecycleError,
   mapExpenseCategoryMutationError,
   normalizeCategoryCode,
+  restoreExpenseCategory,
   updateExpenseCategory,
+  type ExpenseCategoryLifecycleErrorMapping,
+  type ExpenseCategoryLifecycleFilter,
+  type ExpenseCategoryLifecycleResult,
   type ExpenseCategoryMutationErrorMapping,
   type ExpenseCategoryMutationInput,
   type ExpenseCategoriesOverview,

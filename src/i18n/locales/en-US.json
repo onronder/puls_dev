@@ -908,7 +908,10 @@
       "docThreshold": "Document threshold",
       "approvalLevels": "Approval levels",
       "approvalLevelsValue": "{{count}} level",
-      "approvalLevelsValue_other": "{{count}} levels"
+      "approvalLevelsValue_other": "{{count}} levels",
+      "activeCategoryCount": "Active categories",
+      "activeTotalMonthlyLimit": "Active total monthly limit",
+      "activeOnlyHint": "Active categories only"
     },
     "sections": {
       "list": "Category list"
@@ -917,7 +920,8 @@
       "name": "Category",
       "monthlyLimit": "Monthly limit",
       "docThreshold": "Document threshold",
-      "accountingCode": "Accounting code"
+      "accountingCode": "Accounting code",
+      "status": "Status"
     },
     "docThresholdAbove": "Above {{amount}}",
     "categories": {
@@ -933,6 +937,38 @@
       "save": "Save",
       "saving": "Saving"
     },
+    "lifecycle": {
+      "filter": {
+        "ariaLabel": "Category lifecycle filter",
+        "active": "Active",
+        "inactive": "Inactive",
+        "all": "All"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "deactivate": "Deactivate",
+        "restore": "Restore",
+        "restoring": "Restoring"
+      },
+      "confirm": {
+        "deactivate": "Deactivate this category? It will be hidden from new expense entries; historical records stay readable.",
+        "restore": "Restore this category and make it available for new expense entries again?"
+      },
+      "toast": {
+        "deactivated": "Expense category deactivated.",
+        "restored": "Expense category restored."
+      },
+      "errors": {
+        "activeClaims": "This category has draft, pending, or approved expense claims. Close or move those claims first.",
+        "notFound": "Expense category not found.",
+        "forbidden": "You do not have permission for this action.",
+        "restoreDuplicateAccounting": "This accounting code is already used by another active category. Change the code on that active category first, then restore this one.",
+        "generic": "Expense category status could not be updated."
+      }
+    },
     "sheet": {
       "create": {
         "title": "Add category",
@@ -942,6 +978,11 @@
         "title": "Edit category",
         "description": "Update category limits, document threshold, and accounting code."
       },
+      "inactive": {
+        "title": "Inactive category",
+        "description": "This category is inactive. Fields are read-only; restore it to use again in new expense entries."
+      },
+      "policyBound": "Approval policy bound: {{policy}}",
       "boundaryNote": "This only updates the PULS expense category setup; external financial master data is unchanged.",
       "mvpBadge": "Read-only",
       "fields": {
