@@ -948,6 +948,22 @@
         "inactiveDescription": "This leave type is inactive. Historical leave records remain readable; it cannot be selected for new requests."
       }
     },
+    "lifecycleAudit": {
+      "reasonLabel": "Deactivation reason",
+      "reasonPlaceholder": "Optional short note",
+      "reasonHint": "This note is kept only in PULS lifecycle history.",
+      "reasonTooLong": "Reason must be at most 500 characters.",
+      "historyTitle": "Lifecycle history",
+      "historyEmpty": "No lifecycle history is available for this leave type.",
+      "action": {
+        "deactivated": "Deactivated",
+        "restored": "Restored"
+      },
+      "toast": {
+        "deactivatedWithAudit": "Leave type deactivated and recorded in lifecycle history.",
+        "restoredWithAudit": "Leave type restored and recorded in lifecycle history."
+      }
+    },
     "validation": {
       "nameRequired": "Leave type name is required.",
       "codeRequired": "Leave type code is required.",

@@ -18,6 +18,7 @@ import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
+import { Textarea } from '#/components/ui/textarea'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
@@ -26,10 +27,13 @@ import {
   createLeaveType,
   deactivateLeaveType,
   fetchApprovalPoliciesOverview,
+  fetchLeaveTypeLifecycleEvents,
   fetchLeaveTypesOverview,
+  isDeactivateLeaveTypeReasonTooLong,
   isLeaveTypeFormDirty,
   mapLeaveTypeLifecycleError,
   mapLeaveTypeMutationError,
+  normalizeDeactivateLeaveTypeReason,
   normalizeLeaveTypeCode,
   restoreLeaveType,
   updateLeaveType,
@@ -39,6 +43,7 @@ import {
   type LeaveTypeFieldKey,
   type LeaveTypeFormFields,
   type LeaveTypeLifecycleFilter,
+  type LeaveTypeLifecycleResult,
   type LeaveTypesOverview,
 } from '#/lib/data'
 import { cn } from '#/lib/utils'
@@ -240,7 +245,7 @@ function MobileRuleTrailing({ rule }: LeaveTypeCellsProps) {
 }
 
 function IzinTanimlariPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -249,6 +254,7 @@ function IzinTanimlariPage() {
   const [formBaseline, setFormBaseline] = useState<LeaveTypeFormFields | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<LeaveTypeFieldKey, string>>>({})
   const [lifecycleFilter, setLifecycleFilter] = useState<LeaveTypeLifecycleFilter>('active')
+  const [deactivateReason, setDeactivateReason] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['leave-types-overview', user?.id],
@@ -260,6 +266,15 @@ function IzinTanimlariPage() {
     queryKey: ['approval-policies-overview', user?.id],
     queryFn: () => fetchApprovalPoliciesOverview(user!.id),
     enabled: Boolean(user?.id),
+  })
+
+  const inactiveLeaveTypeId =
+    sheetOpen && editingLeaveType && !editingLeaveType.isActive ? editingLeaveType.id : null
+
+  const { data: lifecycleEvents, isLoading: lifecycleEventsLoading } = useQuery({
+    queryKey: ['leave-type-lifecycle-events', user?.id, inactiveLeaveTypeId],
+    queryFn: () => fetchLeaveTypeLifecycleEvents(user!.id, inactiveLeaveTypeId!, 5),
+    enabled: Boolean(user?.id && inactiveLeaveTypeId),
   })
 
   const leaveTypeMutation = useMutation({
@@ -307,18 +322,21 @@ function IzinTanimlariPage() {
   })
 
   const deactivateMutation = useMutation({
-    mutationFn: (leaveTypeId: string) => {
+    mutationFn: ({ leaveTypeId, reason }: { leaveTypeId: string; reason: string | null }) => {
       if (!user?.id) throw new Error('Missing user')
-      return deactivateLeaveType(user.id, leaveTypeId)
+      return deactivateLeaveType(user.id, leaveTypeId, reason)
     },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ['leave-types-overview', user?.id] })
+      void queryClient.invalidateQueries({
+        queryKey: ['leave-type-lifecycle-events', user?.id],
+      })
       resetLeaveTypeSheetState()
       toast.success(
         t(
-          result.status === 'deactivated'
-            ? 'leaveTypeSetup.lifecycle.toast.deactivated'
-            : 'leaveTypeSetup.lifecycle.toast.alreadyInactive',
+          result.status === 'deactivated' && result.eventId
+            ? 'leaveTypeSetup.lifecycleAudit.toast.deactivatedWithAudit'
+            : 'leaveTypeSetup.lifecycle.toast.deactivated',
         ),
       )
     },
@@ -333,14 +351,17 @@ function IzinTanimlariPage() {
       if (!user?.id) throw new Error('Missing user')
       return restoreLeaveType(user.id, leaveTypeId)
     },
-    onSuccess: (result) => {
+    onSuccess: (result: LeaveTypeLifecycleResult) => {
       void queryClient.invalidateQueries({ queryKey: ['leave-types-overview', user?.id] })
+      void queryClient.invalidateQueries({
+        queryKey: ['leave-type-lifecycle-events', user?.id],
+      })
       resetLeaveTypeSheetState()
       toast.success(
         t(
-          result.status === 'restored'
-            ? 'leaveTypeSetup.lifecycle.toast.restored'
-            : 'leaveTypeSetup.lifecycle.toast.alreadyActive',
+          result.status === 'restored' && result.eventId
+            ? 'leaveTypeSetup.lifecycleAudit.toast.restoredWithAudit'
+            : 'leaveTypeSetup.lifecycle.toast.restored',
         ),
       )
     },
@@ -362,6 +383,9 @@ function IzinTanimlariPage() {
   const isLeaveTypeFormDirtyState = isLeaveTypeFormDirty(leaveTypeForm, dirtyBaseline)
   const isSaving = leaveTypeMutation.isPending
   const isFormReadOnly = isSaving || isLifecyclePending || isInactiveLeaveTypeSheet
+  const isDeactivateReasonInvalid = isDeactivateLeaveTypeReasonTooLong(deactivateReason)
+  const showDeactivateReasonField =
+    sheetMode === 'edit' && Boolean(editingLeaveType?.isActive)
   const isSaveDisabled =
     isSaving || isLifecyclePending || (sheetMode === 'edit' && !isLeaveTypeFormDirtyState)
   const normalizedCodePreview = normalizeLeaveTypeCode(leaveTypeForm.code)
@@ -382,6 +406,7 @@ function IzinTanimlariPage() {
     setLeaveTypeForm(EMPTY_LEAVE_TYPE_FORM)
     setFormBaseline(null)
     setFieldErrors({})
+    setDeactivateReason('')
   }
 
   function openCreateLeaveTypeSheet() {
@@ -403,7 +428,8 @@ function IzinTanimlariPage() {
 
   function requestCloseLeaveTypeSheet() {
     if (
-      isLeaveTypeFormDirtyState &&
+      (isLeaveTypeFormDirtyState ||
+        normalizeDeactivateLeaveTypeReason(deactivateReason) != null) &&
       !window.confirm(t('leaveTypeSetup.validation.discardConfirm'))
     ) {
       return
@@ -468,10 +494,16 @@ function IzinTanimlariPage() {
 
   function handleDeactivateLeaveType() {
     if (!editingLeaveType?.isActive) return
+    if (isDeactivateReasonInvalid) {
+      return
+    }
     if (!window.confirm(t('leaveTypeSetup.lifecycle.confirm.deactivate'))) {
       return
     }
-    deactivateMutation.mutate(editingLeaveType.id)
+    deactivateMutation.mutate({
+      leaveTypeId: editingLeaveType.id,
+      reason: normalizeDeactivateLeaveTypeReason(deactivateReason),
+    })
   }
 
   function handleRestoreLeaveType() {
@@ -710,7 +742,7 @@ function IzinTanimlariPage() {
                 variant="outline"
                 className="touch-target min-h-11 flex-1 border-[var(--color-danger)]/40 text-[var(--color-danger)] hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,transparent)]"
                 onClick={handleDeactivateLeaveType}
-                disabled={isDeactivatingLeaveType || isSaving}
+                disabled={isDeactivatingLeaveType || isSaving || isDeactivateReasonInvalid}
               >
                 {isDeactivatingLeaveType ? (
                   <>
@@ -898,7 +930,63 @@ function IzinTanimlariPage() {
           ) : null}
 
           <ApprovalPolicyBindingSection binding={isInactiveLeaveTypeSheet ? editingLeaveType!.approvalPolicy : formBinding} />
+
+          {showDeactivateReasonField ? (
+            <FormField
+              label={t('leaveTypeSetup.lifecycleAudit.reasonLabel')}
+              htmlFor="leave-type-deactivate-reason"
+              hint={t('leaveTypeSetup.lifecycleAudit.reasonHint')}
+              error={
+                isDeactivateReasonInvalid
+                  ? t('leaveTypeSetup.lifecycleAudit.reasonTooLong')
+                  : undefined
+              }
+            >
+              <Textarea
+                id="leave-type-deactivate-reason"
+                className="min-h-[88px] text-base"
+                placeholder={t('leaveTypeSetup.lifecycleAudit.reasonPlaceholder')}
+                value={deactivateReason}
+                onChange={(event) => setDeactivateReason(event.target.value)}
+                disabled={isFormReadOnly}
+                aria-invalid={isDeactivateReasonInvalid || undefined}
+              />
+            </FormField>
+          ) : null}
         </form>
+        {isInactiveLeaveTypeSheet && editingLeaveType ? (
+          <div className="mt-6 space-y-3">
+            <SectionHeader title={t('leaveTypeSetup.lifecycleAudit.historyTitle')} />
+            {lifecycleEventsLoading ? (
+              <Skeleton className="h-20 w-full rounded-xl" />
+            ) : lifecycleEvents && lifecycleEvents.length > 0 ? (
+              <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)]">
+                {lifecycleEvents.map((event) => (
+                  <li key={event.id} className="space-y-1 px-4 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                        {t(`leaveTypeSetup.lifecycleAudit.action.${event.action}`)}
+                      </span>
+                      <time
+                        className="text-xs text-[var(--color-text-muted)]"
+                        dateTime={event.occurredAt}
+                      >
+                        {new Date(event.occurredAt).toLocaleString(i18n.language)}
+                      </time>
+                    </div>
+                    {event.reason ? (
+                      <p className="text-sm text-[var(--color-text-secondary)]">{event.reason}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--color-text-muted)]">
+                {t('leaveTypeSetup.lifecycleAudit.historyEmpty')}
+              </p>
+            )}
+          </div>
+        ) : null}
       </SheetShell>
     </div>
   )
