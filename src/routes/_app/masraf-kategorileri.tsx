@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
+import { ApprovalPolicyBindingSection } from '#/components/puls/ApprovalPolicyBindingSection'
 import { DataList } from '#/components/puls/DataList'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -845,13 +846,6 @@ function MasrafKategorileriPage() {
           )
         }
       >
-        {isInactiveCategorySheet && editingCategory?.approvalPolicyName ? (
-          <p className="mb-4 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
-            {t('expenseCategorySetup.sheet.policyBound', {
-              policy: editingCategory.approvalPolicyName,
-            })}
-          </p>
-        ) : null}
         <form id="expense-category-form" className="space-y-4" onSubmit={handleCategorySubmit}>
           <FormField
             label={t('expenseCategorySetup.sheet.fields.name')}
@@ -971,6 +965,9 @@ function MasrafKategorileriPage() {
           <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
             {t('expenseCategorySetup.sheet.boundaryNote')}
           </p>
+          {categorySheetMode === 'edit' && editingCategory ? (
+            <ApprovalPolicyBindingSection binding={editingCategory.approvalPolicy} />
+          ) : null}
           {showDeactivateReasonField ? (
             <FormField
               label={t('expenseCategorySetup.lifecycleAudit.reasonLabel')}
@@ -995,7 +992,9 @@ function MasrafKategorileriPage() {
           ) : null}
         </form>
         {isInactiveCategorySheet && editingCategory ? (
-          <div className="mt-6 space-y-3">
+          <>
+            <ApprovalPolicyBindingSection binding={editingCategory.approvalPolicy} />
+            <div className="mt-6 space-y-3">
             <SectionHeader title={t('expenseCategorySetup.lifecycleAudit.historyTitle')} />
             {lifecycleEventsLoading ? (
               <Skeleton className="h-20 w-full rounded-xl" />
@@ -1026,6 +1025,7 @@ function MasrafKategorileriPage() {
               </p>
             )}
           </div>
+          </>
         ) : null}
       </SheetShell>
 

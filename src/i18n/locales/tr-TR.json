@@ -654,6 +654,26 @@
       "policyChainInvalid": "Onay zinciri durumu geçersiz."
     }
   },
+  "approvalPolicyBinding": {
+    "title": "Onay politikası bağlantısı",
+    "empty": "Politika bağlı değil",
+    "status": {
+      "ready": "Hazır",
+      "unbound": "Bağlı değil",
+      "policy_unavailable": "Politika kullanılamıyor",
+      "inactive_policy": "Pasif politika",
+      "missing_required_steps": "Zorunlu adım eksik",
+      "module_mismatch": "Modül uyumsuz"
+    },
+    "description": {
+      "ready": "Aktif bir onay politikası ve zorunlu adımlar bağlı.",
+      "unbound": "Bu kurulum kaydına onay politikası bağlanmamış.",
+      "policy_unavailable": "Bağlı politika okunamıyor veya artık mevcut değil.",
+      "inactive_policy": "Bağlı onay politikası pasif.",
+      "missing_required_steps": "Bağlı politikada zorunlu onay adımı yok.",
+      "module_mismatch": "Bağlı politika farklı bir iş akışı modülüne ait."
+    }
+  },
   "menu": {
     "title": "Menü",
     "subtitle": "Profil ve modül kısayolları",
@@ -887,6 +907,10 @@
     "sheet": {
       "title": "İzin tipi ekle",
       "description": "Yeni izin tipi oluşturma pilot sonrası açılacak.",
+      "detail": {
+        "title": "İzin tipi detayı",
+        "description": "İzin tipi kurulumu ve onay politikası bağlantısının salt okunur görünümü."
+      },
       "mvpBadge": "Salt okunur",
       "fields": {
         "label": "İzin tipi adı",

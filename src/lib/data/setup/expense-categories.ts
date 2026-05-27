@@ -4,6 +4,10 @@ import type { DemoExpenseCategoriesOverview } from '#/lib/demo/puls-demo-data'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData } from '#/lib/data/result'
 import {
+  buildApprovalPolicyBindingInfo,
+  parseApprovalPolicyJoin,
+} from '#/lib/data/workflow/policy-binding-readiness'
+import {
   normalizeCategoryCode,
   type ExpenseCategoryFieldKey,
 } from '#/lib/data/setup/expense-category-validation'
@@ -380,7 +384,7 @@ async function fetchRealExpenseCategoriesOverview(
   const { data, error } = await pulsWorkflow()
     .from('expense_categories')
     .select(
-      'id, code, name, monthly_limit, receipt_required_over, erp_account_code, approval_policy_id, is_active, approval_policies(name)',
+      'id, code, name, monthly_limit, receipt_required_over, erp_account_code, approval_policy_id, is_active, approval_policies ( name, module, is_active )',
     )
     .eq('tenant_id', ctx.tenantId)
     .order('name', { ascending: true })
@@ -432,10 +436,13 @@ async function fetchRealExpenseCategoriesOverview(
   const categories = (data ?? []).map((row) => {
     const code = row.code as string
     const policyId = (row.approval_policy_id as string | null) ?? null
-    const policyJoin = row.approval_policies as { name: string } | { name: string }[] | null
-    const policyName = Array.isArray(policyJoin)
-      ? policyJoin[0]?.name
-      : policyJoin?.name
+    const policyMeta = parseApprovalPolicyJoin(
+      row.approval_policies as
+        | { name: string; module: string; is_active: boolean }
+        | { name: string; module: string; is_active: boolean }[]
+        | null,
+    )
+    const requiredStepCount = policyId ? (requiredStepCountByPolicy.get(policyId) ?? 0) : 0
 
     return {
       id: row.id as string,
@@ -447,8 +454,16 @@ async function fetchRealExpenseCategoriesOverview(
       accountingCode: (row.erp_account_code as string | null) ?? null,
       code: (row.erp_account_code as string | null) ?? code,
       approvalPolicyId: policyId,
-      approvalPolicyName: policyName ?? null,
-      approvalStepCount: policyId ? (requiredStepCountByPolicy.get(policyId) ?? 0) : 1,
+      approvalPolicyName: policyMeta.policyName,
+      approvalStepCount: policyId ? requiredStepCount : 1,
+      approvalPolicy: buildApprovalPolicyBindingInfo({
+        expectedModule: 'expense',
+        policyId,
+        policyName: policyMeta.policyName,
+        policyModule: policyMeta.policyModule,
+        policyIsActive: policyMeta.policyIsActive,
+        requiredStepCount,
+      }),
       isActive: Boolean(row.is_active),
     }
   })

@@ -654,6 +654,26 @@
       "policyChainInvalid": "Approval chain state is invalid."
     }
   },
+  "approvalPolicyBinding": {
+    "title": "Approval policy binding",
+    "empty": "No policy bound",
+    "status": {
+      "ready": "Ready",
+      "unbound": "Unbound",
+      "policy_unavailable": "Policy unavailable",
+      "inactive_policy": "Inactive policy",
+      "missing_required_steps": "Missing required steps",
+      "module_mismatch": "Module mismatch"
+    },
+    "description": {
+      "ready": "An active approval policy with required steps is bound.",
+      "unbound": "No approval policy is linked to this setup record.",
+      "policy_unavailable": "The linked policy cannot be read or no longer exists.",
+      "inactive_policy": "The linked approval policy is inactive.",
+      "missing_required_steps": "The linked policy has no required approval steps.",
+      "module_mismatch": "The linked policy belongs to a different workflow module."
+    }
+  },
   "menu": {
     "title": "Menu",
     "subtitle": "Profile and module shortcuts",
@@ -887,6 +907,10 @@
     "sheet": {
       "title": "Add leave type",
       "description": "Creating new leave types will be enabled after the pilot.",
+      "detail": {
+        "title": "Leave type details",
+        "description": "Read-only view of leave type setup and approval policy binding."
+      },
       "mvpBadge": "Read-only",
       "fields": {
         "label": "Leave type name",

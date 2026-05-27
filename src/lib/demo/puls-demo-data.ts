@@ -1,3 +1,8 @@
+import {
+  buildApprovalPolicyBindingInfo,
+  type ApprovalPolicyBindingInfo,
+} from '#/lib/data/workflow/policy-binding-readiness'
+
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
 
 export type DemoLeaveBalance = {
@@ -587,6 +592,24 @@ export type DemoLeaveTypeRule = {
   approvalPolicyId?: string | null
   approvalPolicyName?: string | null
   approvalStepCount: number
+  approvalPolicy: ApprovalPolicyBindingInfo
+}
+
+function attachLeaveApprovalPolicy(
+  rule: Omit<DemoLeaveTypeRule, 'approvalPolicy'>,
+): DemoLeaveTypeRule {
+  const policyId = rule.approvalPolicyId ?? null
+  return {
+    ...rule,
+    approvalPolicy: buildApprovalPolicyBindingInfo({
+      expectedModule: 'leave',
+      policyId,
+      policyName: rule.approvalPolicyName ?? null,
+      policyModule: policyId ? 'leave' : null,
+      policyIsActive: policyId ? true : null,
+      requiredStepCount: policyId ? rule.approvalStepCount : 0,
+    }),
+  }
 }
 
 export type DemoLeaveTypesOverview = {
@@ -603,16 +626,18 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
   docRequiredCount: 2,
   maxApprovalStepCount: 1,
   leaveTypes: [
-    {
+    attachLeaveApprovalPolicy({
       id: 'yillik',
       labelKey: 'leaveTypeSetup.types.annual',
       days: 20,
       paid: true,
       doc: false,
       carryOver: true,
+      approvalPolicyId: 'demo-leave-policy',
+      approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
-    },
-    {
+    }),
+    attachLeaveApprovalPolicy({
       id: 'mazeret',
       labelKey: 'leaveTypeSetup.types.excuse',
       days: 10,
@@ -620,61 +645,73 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       doc: false,
       carryOver: false,
       approvalStepCount: 1,
-    },
-    {
+    }),
+    attachLeaveApprovalPolicy({
       id: 'hastalik',
       labelKey: 'leaveTypeSetup.types.sick',
       days: 10,
       paid: true,
       doc: true,
       carryOver: false,
+      approvalPolicyId: 'demo-leave-policy',
+      approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
-    },
-    {
+    }),
+    attachLeaveApprovalPolicy({
       id: 'ucretsiz',
       labelKey: 'leaveTypeSetup.types.unpaid',
       days: 30,
       paid: false,
       doc: false,
       carryOver: false,
+      approvalPolicyId: 'demo-leave-policy',
+      approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
-    },
-    {
+    }),
+    attachLeaveApprovalPolicy({
       id: 'idari',
       labelKey: 'leaveTypeSetup.types.administrative',
       days: 5,
       paid: true,
       doc: false,
       carryOver: false,
+      approvalPolicyId: 'demo-leave-policy',
+      approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
-    },
-    {
+    }),
+    attachLeaveApprovalPolicy({
       id: 'evlilik',
       labelKey: 'leaveTypeSetup.types.marriage',
       days: 3,
       paid: true,
       doc: true,
       carryOver: false,
+      approvalPolicyId: 'demo-leave-policy',
+      approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
-    },
-    {
+    }),
+    attachLeaveApprovalPolicy({
       id: 'dogum',
       labelKey: 'leaveTypeSetup.types.parental',
       days: 16,
       paid: true,
       doc: false,
       carryOver: false,
+      approvalPolicyId: 'demo-leave-policy',
+      approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
-    },
-    {
+    }),
+    attachLeaveApprovalPolicy({
       id: 'olum',
       labelKey: 'leaveTypeSetup.types.bereavement',
       days: 3,
       paid: true,
       doc: false,
       carryOver: false,
+      approvalPolicyId: 'demo-leave-policy',
+      approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
-    },
+    }),
   ],
 }
 
@@ -694,7 +731,25 @@ export type DemoExpenseCategoryRule = {
   approvalPolicyId?: string | null
   approvalPolicyName?: string | null
   approvalStepCount: number
+  approvalPolicy: ApprovalPolicyBindingInfo
   isActive: boolean
+}
+
+function attachExpenseApprovalPolicy(
+  rule: Omit<DemoExpenseCategoryRule, 'approvalPolicy'>,
+): DemoExpenseCategoryRule {
+  const policyId = rule.approvalPolicyId ?? null
+  return {
+    ...rule,
+    approvalPolicy: buildApprovalPolicyBindingInfo({
+      expectedModule: 'expense',
+      policyId,
+      policyName: rule.approvalPolicyName ?? null,
+      policyModule: policyId ? 'expense' : null,
+      policyIsActive: policyId ? true : null,
+      requiredStepCount: policyId ? rule.approvalStepCount : 0,
+    }),
+  }
 }
 
 export type DemoExpenseCategoriesOverview = {
@@ -711,7 +766,7 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
   docThresholdMetric: 2000,
   maxApprovalStepCount: 1,
   categories: [
-    {
+    attachExpenseApprovalPolicy({
       id: 'ec1',
       name: 'Seyahat',
       nameKey: 'expenseCategorySetup.categories.travel',
@@ -720,10 +775,12 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       docThreshold: 2000,
       accountingCode: '770.01',
       code: '770.01',
+      approvalPolicyId: 'demo-expense-policy',
+      approvalPolicyName: 'Masraf onay — standart',
       approvalStepCount: 1,
       isActive: true,
-    },
-    {
+    }),
+    attachExpenseApprovalPolicy({
       id: 'ec2',
       name: 'Yemek',
       nameKey: 'expenseCategorySetup.categories.meals',
@@ -732,10 +789,12 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       docThreshold: 500,
       accountingCode: '770.02',
       code: '770.02',
+      approvalPolicyId: 'demo-expense-policy',
+      approvalPolicyName: 'Masraf onay — standart',
       approvalStepCount: 1,
       isActive: true,
-    },
-    {
+    }),
+    attachExpenseApprovalPolicy({
       id: 'ec3',
       name: 'Konaklama',
       nameKey: 'expenseCategorySetup.categories.lodging',
@@ -744,10 +803,12 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       docThreshold: 2000,
       accountingCode: '770.03',
       code: '770.03',
+      approvalPolicyId: 'demo-expense-policy',
+      approvalPolicyName: 'Masraf onay — standart',
       approvalStepCount: 1,
       isActive: true,
-    },
-    {
+    }),
+    attachExpenseApprovalPolicy({
       id: 'ec4',
       name: 'Yazılım',
       nameKey: 'expenseCategorySetup.categories.software',
@@ -756,10 +817,12 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       docThreshold: 1000,
       accountingCode: '770.04',
       code: '770.04',
+      approvalPolicyId: 'demo-expense-policy',
+      approvalPolicyName: 'Masraf onay — standart',
       approvalStepCount: 1,
       isActive: true,
-    },
-    {
+    }),
+    attachExpenseApprovalPolicy({
       id: 'ec5',
       name: 'Ulaşım',
       nameKey: 'expenseCategorySetup.categories.transport',
@@ -768,10 +831,12 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       docThreshold: 500,
       accountingCode: '770.05',
       code: '770.05',
+      approvalPolicyId: 'demo-expense-policy',
+      approvalPolicyName: 'Masraf onay — standart',
       approvalStepCount: 1,
       isActive: true,
-    },
-    {
+    }),
+    attachExpenseApprovalPolicy({
       id: 'ec6',
       name: 'Diğer',
       nameKey: 'expenseCategorySetup.categories.other',
@@ -782,8 +847,8 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       code: '770.99',
       approvalStepCount: 1,
       isActive: true,
-    },
-    {
+    }),
+    attachExpenseApprovalPolicy({
       id: 'ec7',
       name: 'Eski eğitim',
       nameKey: 'Eski eğitim',
@@ -792,10 +857,11 @@ const demoExpenseCategoriesOverview: DemoExpenseCategoriesOverview = {
       docThreshold: 0,
       accountingCode: '770.90',
       code: '770.90',
+      approvalPolicyId: 'demo-expense-policy',
       approvalPolicyName: 'Masraf onay — standart',
       approvalStepCount: 1,
       isActive: false,
-    },
+    }),
   ],
 }
 

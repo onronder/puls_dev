@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
+import { ApprovalPolicyBindingSection } from '#/components/puls/ApprovalPolicyBindingSection'
 import { DataList } from '#/components/puls/DataList'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -45,8 +46,10 @@ const LEAVE_TYPE_SKELETON_COUNT = 4
 const LEAVE_TYPE_TABLE_GRID_COLS =
   'grid-cols-[minmax(0,1.1fr)_56px_minmax(0,88px)_minmax(0,88px)_72px]'
 
+type LeaveTypeRule = LeaveTypesOverview['leaveTypes'][number]
+
 type LeaveTypeCellsProps = {
-  rule: LeaveTypesOverview['leaveTypes'][number]
+  rule: LeaveTypeRule
 }
 
 function PaidCell({ rule }: LeaveTypeCellsProps) {
@@ -91,13 +94,27 @@ function MobileRuleTrailing({ rule }: LeaveTypeCellsProps) {
 function IzinTanimlariPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [addSheetOpen, setAddSheetOpen] = useState(false)
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false)
+  const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveTypeRule | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['leave-types-overview', user?.id],
     queryFn: () => fetchLeaveTypesOverview(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  function openLeaveTypeDetail(rule: LeaveTypeRule) {
+    setSelectedLeaveType(rule)
+    setDetailSheetOpen(true)
+  }
+
+  function handleDetailSheetOpenChange(open: boolean) {
+    setDetailSheetOpen(open)
+    if (!open) {
+      setSelectedLeaveType(null)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -109,7 +126,7 @@ function IzinTanimlariPage() {
         title={t('leaveTypeSetup.title')}
         subtitle={t('leaveTypeSetup.description')}
         actions={
-          <Button type="button" className="touch-target w-full sm:w-auto" onClick={() => setSheetOpen(true)}>
+          <Button type="button" className="touch-target w-full sm:w-auto" onClick={() => setAddSheetOpen(true)}>
             <Plus className="h-4 w-4" />
             {t('leaveTypeSetup.actions.add')}
           </Button>
@@ -175,6 +192,7 @@ function IzinTanimlariPage() {
                   .filter(Boolean)
                   .join(' · '),
                 trailing: <MobileRuleTrailing rule={rule} />,
+                onClick: () => openLeaveTypeDetail(rule),
               }))}
             />
           )}
@@ -208,21 +226,27 @@ function IzinTanimlariPage() {
                   </li>
                 ))
               : (data?.leaveTypes ?? []).map((rule) => (
-                  <li
-                    key={rule.id}
-                    className={cn('grid items-center gap-3 px-4 py-3', LEAVE_TYPE_TABLE_GRID_COLS)}
-                  >
-                    <div className="truncate text-sm font-medium">{t(rule.labelKey)}</div>
-                    <div className="text-right text-sm tabular-nums">{rule.days}</div>
-                    <div>
-                      <PaidCell rule={rule} />
-                    </div>
-                    <div>
-                      <DocCell rule={rule} />
-                    </div>
-                    <div>
-                      <CarryOverCell rule={rule} />
-                    </div>
+                  <li key={rule.id}>
+                    <button
+                      type="button"
+                      className={cn(
+                        'grid w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-bg-elevated)]',
+                        LEAVE_TYPE_TABLE_GRID_COLS,
+                      )}
+                      onClick={() => openLeaveTypeDetail(rule)}
+                    >
+                      <div className="truncate text-sm font-medium">{t(rule.labelKey)}</div>
+                      <div className="text-right text-sm tabular-nums">{rule.days}</div>
+                      <div>
+                        <PaidCell rule={rule} />
+                      </div>
+                      <div>
+                        <DocCell rule={rule} />
+                      </div>
+                      <div>
+                        <CarryOverCell rule={rule} />
+                      </div>
+                    </button>
                   </li>
                 ))}
           </ul>
@@ -230,8 +254,8 @@ function IzinTanimlariPage() {
       </section>
 
       <SheetShell
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        open={addSheetOpen}
+        onOpenChange={setAddSheetOpen}
         title={t('leaveTypeSetup.sheet.title')}
         description={t('leaveTypeSetup.sheet.description')}
         footer={
@@ -263,6 +287,42 @@ function IzinTanimlariPage() {
             />
           </FormField>
         </div>
+      </SheetShell>
+
+      <SheetShell
+        open={detailSheetOpen}
+        onOpenChange={handleDetailSheetOpenChange}
+        title={t('leaveTypeSetup.sheet.detail.title')}
+        description={t('leaveTypeSetup.sheet.detail.description')}
+        footer={
+          <Button type="button" className="touch-target w-full" onClick={() => handleDetailSheetOpenChange(false)}>
+            {t('common.close')}
+          </Button>
+        }
+      >
+        {selectedLeaveType ? (
+          <div className="space-y-4">
+            <FormField label={t('leaveTypeSetup.sheet.fields.label')} htmlFor="leave-type-detail-label">
+              <Input
+                id="leave-type-detail-label"
+                className="text-base"
+                value={t(selectedLeaveType.labelKey)}
+                readOnly
+                disabled
+              />
+            </FormField>
+            <FormField label={t('leaveTypeSetup.sheet.fields.days')} htmlFor="leave-type-detail-days">
+              <Input
+                id="leave-type-detail-days"
+                className="text-base"
+                value={String(selectedLeaveType.days)}
+                readOnly
+                disabled
+              />
+            </FormField>
+            <ApprovalPolicyBindingSection binding={selectedLeaveType.approvalPolicy} />
+          </div>
+        ) : null}
       </SheetShell>
     </div>
   )
