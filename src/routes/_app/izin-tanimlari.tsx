@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { CalendarDays, Check, FileCheck2, Plus, Workflow } from 'lucide-react'
-import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CalendarDays, Check, FileCheck2, Loader2, Plus, Save, Workflow, X } from 'lucide-react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { ApprovalPolicyBindingSection } from '#/components/puls/ApprovalPolicyBindingSection'
@@ -18,7 +19,22 @@ import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchLeaveTypesOverview, type LeaveTypesOverview } from '#/lib/data'
+import {
+  buildApprovalPolicyBindingInfo,
+  createLeaveType,
+  fetchApprovalPoliciesOverview,
+  fetchLeaveTypesOverview,
+  isLeaveTypeFormDirty,
+  mapLeaveTypeMutationError,
+  normalizeLeaveTypeCode,
+  updateLeaveType,
+  validateLeaveTypeForm,
+  type ApprovalPolicyBindingInfo,
+  type ApprovalPolicyOverviewItem,
+  type LeaveTypeFieldKey,
+  type LeaveTypeFormFields,
+  type LeaveTypesOverview,
+} from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/izin-tanimlari')({
@@ -47,6 +63,119 @@ const LEAVE_TYPE_TABLE_GRID_COLS =
   'grid-cols-[minmax(0,1.1fr)_56px_minmax(0,88px)_minmax(0,88px)_72px]'
 
 type LeaveTypeRule = LeaveTypesOverview['leaveTypes'][number]
+
+const EMPTY_LEAVE_TYPE_FORM: LeaveTypeFormFields = {
+  name: '',
+  code: '',
+  defaultEntitlementDays: '',
+  requiresDocument: false,
+  carryOverAllowed: false,
+  maxCarryOverDays: '',
+  approvalPolicyId: null,
+}
+
+function leaveTypeToForm(rule: LeaveTypeRule): LeaveTypeFormFields {
+  return {
+    name: rule.name,
+    code: rule.code,
+    defaultEntitlementDays:
+      rule.defaultEntitlementDays === null ? '' : String(rule.defaultEntitlementDays),
+    requiresDocument: rule.doc,
+    carryOverAllowed: rule.carryOver,
+    maxCarryOverDays:
+      rule.maxCarryOverDays === null ? '' : String(rule.maxCarryOverDays),
+    approvalPolicyId: rule.approvalPolicyId ?? null,
+  }
+}
+
+function translateFieldError(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  fieldErrors: Partial<Record<LeaveTypeFieldKey, string>>,
+  field: LeaveTypeFieldKey,
+): string | undefined {
+  const key = fieldErrors[field]
+  return key ? t(key) : undefined
+}
+
+type PolicySelectOption = {
+  value: string
+  label: string
+  disabled?: boolean
+}
+
+function buildPolicySelectOptions(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  policies: ApprovalPolicyOverviewItem[],
+  editingRule: LeaveTypeRule | null,
+): PolicySelectOption[] {
+  const leavePolicies = policies.filter((policy) => policy.module === 'leave')
+  const options: PolicySelectOption[] = [
+    { value: '', label: t('leaveTypeSetup.sheet.policyUnbound') },
+    ...leavePolicies.map((policy) => ({
+      value: policy.id,
+      label: policy.name,
+    })),
+  ]
+
+  const currentPolicyId = editingRule?.approvalPolicyId ?? null
+  if (currentPolicyId && !leavePolicies.some((policy) => policy.id === currentPolicyId)) {
+    const binding = editingRule!.approvalPolicy
+    const policyName =
+      editingRule!.approvalPolicyName ?? binding.policyName ?? currentPolicyId
+    const statusKey =
+      binding.status === 'unbound' ? 'policy_unavailable' : binding.status
+    options.splice(1, 0, {
+      value: currentPolicyId,
+      label: t(`leaveTypeSetup.sheet.policyCurrent.${statusKey}`, { name: policyName }),
+      disabled: binding.status !== 'ready',
+    })
+  }
+
+  return options
+}
+
+function resolveFormBinding(
+  form: LeaveTypeFormFields,
+  policies: ApprovalPolicyOverviewItem[],
+  editingRule: LeaveTypeRule | null,
+): ApprovalPolicyBindingInfo {
+  const policyId = form.approvalPolicyId
+  if (!policyId) {
+    return buildApprovalPolicyBindingInfo({
+      expectedModule: 'leave',
+      policyId: null,
+      policyName: null,
+      policyModule: null,
+      policyIsActive: null,
+      requiredStepCount: 0,
+    })
+  }
+
+  const activePolicy = policies.find((policy) => policy.id === policyId)
+  if (activePolicy) {
+    return buildApprovalPolicyBindingInfo({
+      expectedModule: 'leave',
+      policyId,
+      policyName: activePolicy.name,
+      policyModule: activePolicy.module,
+      policyIsActive: true,
+      requiredStepCount: activePolicy.requiredStepCount,
+    })
+  }
+
+  if (editingRule?.approvalPolicyId === policyId) {
+    return editingRule.approvalPolicy
+  }
+
+  return buildApprovalPolicyBindingInfo({
+    expectedModule: 'leave',
+    policyId,
+    policyName: null,
+    policyModule: null,
+    policyIsActive: null,
+    requiredStepCount: 0,
+  })
+}
 
 type LeaveTypeCellsProps = {
   rule: LeaveTypeRule
@@ -94,9 +223,12 @@ function MobileRuleTrailing({ rule }: LeaveTypeCellsProps) {
 function IzinTanimlariPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [addSheetOpen, setAddSheetOpen] = useState(false)
-  const [detailSheetOpen, setDetailSheetOpen] = useState(false)
-  const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveTypeRule | null>(null)
+  const queryClient = useQueryClient()
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingLeaveType, setEditingLeaveType] = useState<LeaveTypeRule | null>(null)
+  const [leaveTypeForm, setLeaveTypeForm] = useState<LeaveTypeFormFields>(EMPTY_LEAVE_TYPE_FORM)
+  const [formBaseline, setFormBaseline] = useState<LeaveTypeFormFields | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<LeaveTypeFieldKey, string>>>({})
 
   const { data, isLoading } = useQuery({
     queryKey: ['leave-types-overview', user?.id],
@@ -104,16 +236,162 @@ function IzinTanimlariPage() {
     enabled: Boolean(user?.id),
   })
 
-  function openLeaveTypeDetail(rule: LeaveTypeRule) {
-    setSelectedLeaveType(rule)
-    setDetailSheetOpen(true)
+  const { data: policies = [] } = useQuery({
+    queryKey: ['approval-policies-overview', user?.id],
+    queryFn: () => fetchApprovalPoliciesOverview(user!.id),
+    enabled: Boolean(user?.id),
+  })
+
+  const leaveTypeMutation = useMutation({
+    mutationFn: (payload: LeaveTypeFormFields) => {
+      const validation = validateLeaveTypeForm(payload)
+      if (!validation.isValid) {
+        throw new Error('validation')
+      }
+
+      const input = {
+        name: validation.normalized.name,
+        code: validation.normalized.code,
+        defaultEntitlementDays: validation.normalized.defaultEntitlementDays,
+        requiresDocument: validation.normalized.requiresDocument,
+        carryOverAllowed: validation.normalized.carryOverAllowed,
+        maxCarryOverDays: validation.normalized.maxCarryOverDays,
+        approvalPolicyId: validation.normalized.approvalPolicyId,
+      }
+
+      if (editingLeaveType) {
+        return updateLeaveType(user!.id, editingLeaveType.id, input)
+      }
+
+      return createLeaveType(user!.id, input)
+    },
+    onSuccess: () => {
+      const wasEdit = Boolean(editingLeaveType)
+      void queryClient.invalidateQueries({ queryKey: ['leave-types-overview', user?.id] })
+      resetLeaveTypeSheetState()
+      toast.success(
+        t(wasEdit ? 'leaveTypeSetup.toast.updated' : 'leaveTypeSetup.toast.created'),
+      )
+    },
+    onError: (error) => {
+      if (error instanceof Error && error.message === 'validation') {
+        return
+      }
+
+      const mapped = mapLeaveTypeMutationError(error)
+      setFieldErrors((current) => ({ ...current, ...mapped.fieldErrors }))
+      if (mapped.toastKey) {
+        toast.error(t(mapped.toastKey))
+      }
+    },
+  })
+
+  const sheetMode = editingLeaveType ? 'edit' : 'create'
+  const dirtyBaseline = formBaseline ?? EMPTY_LEAVE_TYPE_FORM
+  const isLeaveTypeFormDirtyState = isLeaveTypeFormDirty(leaveTypeForm, dirtyBaseline)
+  const isSaving = leaveTypeMutation.isPending
+  const isSaveDisabled =
+    isSaving || (sheetMode === 'edit' && !isLeaveTypeFormDirtyState)
+  const normalizedCodePreview = normalizeLeaveTypeCode(leaveTypeForm.code)
+
+  const policySelectOptions = useMemo(
+    () => buildPolicySelectOptions(t, policies, editingLeaveType),
+    [t, policies, editingLeaveType],
+  )
+
+  const formBinding = useMemo(
+    () => resolveFormBinding(leaveTypeForm, policies, editingLeaveType),
+    [leaveTypeForm, policies, editingLeaveType],
+  )
+
+  function resetLeaveTypeSheetState() {
+    setSheetOpen(false)
+    setEditingLeaveType(null)
+    setLeaveTypeForm(EMPTY_LEAVE_TYPE_FORM)
+    setFormBaseline(null)
+    setFieldErrors({})
   }
 
-  function handleDetailSheetOpenChange(open: boolean) {
-    setDetailSheetOpen(open)
-    if (!open) {
-      setSelectedLeaveType(null)
+  function openCreateLeaveTypeSheet() {
+    setEditingLeaveType(null)
+    setLeaveTypeForm(EMPTY_LEAVE_TYPE_FORM)
+    setFormBaseline(EMPTY_LEAVE_TYPE_FORM)
+    setFieldErrors({})
+    setSheetOpen(true)
+  }
+
+  function openEditLeaveTypeSheet(rule: LeaveTypeRule) {
+    const baseline = leaveTypeToForm(rule)
+    setEditingLeaveType(rule)
+    setLeaveTypeForm(baseline)
+    setFormBaseline(baseline)
+    setFieldErrors({})
+    setSheetOpen(true)
+  }
+
+  function requestCloseLeaveTypeSheet() {
+    if (
+      isLeaveTypeFormDirtyState &&
+      !window.confirm(t('leaveTypeSetup.validation.discardConfirm'))
+    ) {
+      return
     }
+
+    resetLeaveTypeSheetState()
+  }
+
+  function handleLeaveTypeSheetOpenChange(open: boolean) {
+    if (open) {
+      setSheetOpen(true)
+      return
+    }
+
+    requestCloseLeaveTypeSheet()
+  }
+
+  function updateLeaveTypeForm<K extends keyof LeaveTypeFormFields>(
+    field: K,
+    value: LeaveTypeFormFields[K],
+  ) {
+    setLeaveTypeForm((current) => {
+      const next = { ...current, [field]: value }
+      if (field === 'carryOverAllowed' && value === false) {
+        next.maxCarryOverDays = ''
+      }
+      return next
+    })
+    setFieldErrors((current) => {
+      const key = field as LeaveTypeFieldKey
+      const shouldClearField = Boolean(current[key])
+      const shouldClearCarryOverMax =
+        field === 'carryOverAllowed' && value === false && Boolean(current.maxCarryOverDays)
+
+      if (!shouldClearField && !shouldClearCarryOverMax) {
+        return current
+      }
+
+      const next = { ...current }
+      if (shouldClearField) {
+        delete next[key]
+      }
+      if (shouldClearCarryOverMax) {
+        delete next.maxCarryOverDays
+      }
+      return next
+    })
+  }
+
+  function handleLeaveTypeSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const validation = validateLeaveTypeForm(leaveTypeForm)
+    setFieldErrors(validation.fieldErrors)
+
+    if (!validation.isValid) {
+      return
+    }
+
+    leaveTypeMutation.mutate(leaveTypeForm)
   }
 
   return (
@@ -126,7 +404,11 @@ function IzinTanimlariPage() {
         title={t('leaveTypeSetup.title')}
         subtitle={t('leaveTypeSetup.description')}
         actions={
-          <Button type="button" className="touch-target w-full sm:w-auto" onClick={() => setAddSheetOpen(true)}>
+          <Button
+            type="button"
+            className="touch-target w-full sm:w-auto"
+            onClick={openCreateLeaveTypeSheet}
+          >
             <Plus className="h-4 w-4" />
             {t('leaveTypeSetup.actions.add')}
           </Button>
@@ -184,7 +466,7 @@ function IzinTanimlariPage() {
             <DataList
               items={(data?.leaveTypes ?? []).map((rule) => ({
                 id: rule.id,
-                title: t(rule.labelKey),
+                title: rule.name,
                 subtitle: [
                   t('leaveTypeSetup.dayCount', { count: rule.days }),
                   rule.carryOver ? t('leaveTypeSetup.carryOver.yes') : null,
@@ -192,7 +474,7 @@ function IzinTanimlariPage() {
                   .filter(Boolean)
                   .join(' · '),
                 trailing: <MobileRuleTrailing rule={rule} />,
-                onClick: () => openLeaveTypeDetail(rule),
+                onClick: () => openEditLeaveTypeSheet(rule),
               }))}
             />
           )}
@@ -233,9 +515,9 @@ function IzinTanimlariPage() {
                         'grid w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-bg-elevated)]',
                         LEAVE_TYPE_TABLE_GRID_COLS,
                       )}
-                      onClick={() => openLeaveTypeDetail(rule)}
+                      onClick={() => openEditLeaveTypeSheet(rule)}
                     >
-                      <div className="truncate text-sm font-medium">{t(rule.labelKey)}</div>
+                      <div className="truncate text-sm font-medium">{rule.name}</div>
                       <div className="text-right text-sm tabular-nums">{rule.days}</div>
                       <div>
                         <PaidCell rule={rule} />
@@ -254,75 +536,170 @@ function IzinTanimlariPage() {
       </section>
 
       <SheetShell
-        open={addSheetOpen}
-        onOpenChange={setAddSheetOpen}
-        title={t('leaveTypeSetup.sheet.title')}
-        description={t('leaveTypeSetup.sheet.description')}
+        open={sheetOpen}
+        onOpenChange={handleLeaveTypeSheetOpenChange}
+        title={t(
+          sheetMode === 'edit'
+            ? 'leaveTypeSetup.sheet.edit.title'
+            : 'leaveTypeSetup.sheet.create.title',
+        )}
+        description={t(
+          sheetMode === 'edit'
+            ? 'leaveTypeSetup.sheet.edit.description'
+            : 'leaveTypeSetup.sheet.create.description',
+        )}
         footer={
-          <div className="flex w-full flex-col gap-3">
-            <StatusPill tone="neutral" className="self-start">
-              {t('common.soon')}
-            </StatusPill>
-            <Button type="button" className="touch-target w-full" disabled>
-              {t('common.readOnlyAction')}
+          <div className="flex w-full flex-col gap-3 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              className="touch-target w-full sm:w-auto"
+              onClick={requestCloseLeaveTypeSheet}
+              disabled={isSaving}
+            >
+              <X className="h-4 w-4" />
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              form="leave-type-form"
+              className="touch-target w-full sm:flex-1"
+              disabled={isSaveDisabled}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {t('leaveTypeSetup.sheet.submit')}
             </Button>
           </div>
         }
       >
-        <div className="space-y-4">
-          <FormField label={t('leaveTypeSetup.sheet.fields.label')} htmlFor="leave-type-label">
+        <form id="leave-type-form" className="space-y-4" onSubmit={handleLeaveTypeSubmit}>
+          <FormField
+            label={t('leaveTypeSetup.sheet.fields.label')}
+            htmlFor="leave-type-name"
+            required
+            error={translateFieldError(t, fieldErrors, 'name')}
+          >
             <Input
-              id="leave-type-label"
+              id="leave-type-name"
               className="text-base"
               placeholder={t('leaveTypeSetup.sheet.placeholders.label')}
-              disabled
+              value={leaveTypeForm.name}
+              onChange={(event) => updateLeaveTypeForm('name', event.target.value)}
+              aria-invalid={Boolean(fieldErrors.name) || undefined}
             />
           </FormField>
-          <FormField label={t('leaveTypeSetup.sheet.fields.days')} htmlFor="leave-type-days">
+
+          <FormField
+            label={t('leaveTypeSetup.sheet.fields.code')}
+            htmlFor="leave-type-code"
+            required
+            hint={
+              leaveTypeForm.code.trim()
+                ? t('leaveTypeSetup.validation.codePreviewHint', { code: normalizedCodePreview })
+                : undefined
+            }
+            error={translateFieldError(t, fieldErrors, 'code')}
+          >
+            <Input
+              id="leave-type-code"
+              className="text-base font-mono"
+              placeholder={t('leaveTypeSetup.sheet.placeholders.code')}
+              value={leaveTypeForm.code}
+              onChange={(event) => updateLeaveTypeForm('code', event.target.value)}
+              aria-invalid={Boolean(fieldErrors.code) || undefined}
+            />
+          </FormField>
+
+          <FormField
+            label={t('leaveTypeSetup.sheet.fields.days')}
+            htmlFor="leave-type-days"
+            error={translateFieldError(t, fieldErrors, 'defaultEntitlementDays')}
+          >
             <Input
               id="leave-type-days"
               className="text-base"
+              inputMode="decimal"
               placeholder={t('leaveTypeSetup.sheet.placeholders.days')}
-              disabled
+              value={leaveTypeForm.defaultEntitlementDays}
+              onChange={(event) =>
+                updateLeaveTypeForm('defaultEntitlementDays', event.target.value)
+              }
+              aria-invalid={Boolean(fieldErrors.defaultEntitlementDays) || undefined}
             />
           </FormField>
-        </div>
-      </SheetShell>
 
-      <SheetShell
-        open={detailSheetOpen}
-        onOpenChange={handleDetailSheetOpenChange}
-        title={t('leaveTypeSetup.sheet.detail.title')}
-        description={t('leaveTypeSetup.sheet.detail.description')}
-        footer={
-          <Button type="button" className="touch-target w-full" onClick={() => handleDetailSheetOpenChange(false)}>
-            {t('common.close')}
-          </Button>
-        }
-      >
-        {selectedLeaveType ? (
-          <div className="space-y-4">
-            <FormField label={t('leaveTypeSetup.sheet.fields.label')} htmlFor="leave-type-detail-label">
-              <Input
-                id="leave-type-detail-label"
-                className="text-base"
-                value={t(selectedLeaveType.labelKey)}
-                readOnly
-                disabled
-              />
-            </FormField>
-            <FormField label={t('leaveTypeSetup.sheet.fields.days')} htmlFor="leave-type-detail-days">
-              <Input
-                id="leave-type-detail-days"
-                className="text-base"
-                value={String(selectedLeaveType.days)}
-                readOnly
-                disabled
-              />
-            </FormField>
-            <ApprovalPolicyBindingSection binding={selectedLeaveType.approvalPolicy} />
-          </div>
-        ) : null}
+          <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3">
+            <span className="text-sm font-medium">{t('leaveTypeSetup.sheet.fields.requiresDocument')}</span>
+            <input
+              type="checkbox"
+              checked={leaveTypeForm.requiresDocument}
+              onChange={(event) =>
+                updateLeaveTypeForm('requiresDocument', event.target.checked)
+              }
+              className="h-5 w-5 shrink-0 rounded border-[var(--color-border)] accent-[color:var(--color-primary)]"
+            />
+          </label>
+
+          <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3">
+            <span className="text-sm font-medium">{t('leaveTypeSetup.sheet.fields.carryOverAllowed')}</span>
+            <input
+              type="checkbox"
+              checked={leaveTypeForm.carryOverAllowed}
+              onChange={(event) =>
+                updateLeaveTypeForm('carryOverAllowed', event.target.checked)
+              }
+              className="h-5 w-5 shrink-0 rounded border-[var(--color-border)] accent-[color:var(--color-primary)]"
+            />
+          </label>
+
+          <FormField
+            label={t('leaveTypeSetup.sheet.fields.maxCarryOverDays')}
+            htmlFor="leave-type-max-carry-over"
+            error={translateFieldError(t, fieldErrors, 'maxCarryOverDays')}
+          >
+            <Input
+              id="leave-type-max-carry-over"
+              className="text-base"
+              inputMode="decimal"
+              placeholder={t('leaveTypeSetup.sheet.placeholders.maxCarryOverDays')}
+              value={leaveTypeForm.maxCarryOverDays}
+              onChange={(event) => updateLeaveTypeForm('maxCarryOverDays', event.target.value)}
+              disabled={!leaveTypeForm.carryOverAllowed}
+              aria-invalid={Boolean(fieldErrors.maxCarryOverDays) || undefined}
+            />
+          </FormField>
+
+          <FormField
+            label={t('leaveTypeSetup.sheet.fields.approvalPolicy')}
+            htmlFor="leave-type-policy"
+            error={translateFieldError(t, fieldErrors, 'approvalPolicyId')}
+          >
+            <select
+              id="leave-type-policy"
+              value={leaveTypeForm.approvalPolicyId ?? ''}
+              onChange={(event) =>
+                updateLeaveTypeForm(
+                  'approvalPolicyId',
+                  event.target.value ? event.target.value : null,
+                )
+              }
+              className="h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 text-base text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)]"
+              aria-invalid={Boolean(fieldErrors.approvalPolicyId) || undefined}
+            >
+              {policySelectOptions.map((option) => (
+                <option key={option.value || '__unbound__'} value={option.value} disabled={option.disabled}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <ApprovalPolicyBindingSection binding={formBinding} />
+        </form>
       </SheetShell>
     </div>
   )
