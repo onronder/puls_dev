@@ -596,6 +596,11 @@
       "recent": "Henüz masraf kaydı yok.",
       "approvals": "Onay bekleyen masraf yok."
     },
+    "categoryLifecycle": {
+      "inactiveCategoryBadge": "Pasif kategori",
+      "inactiveCategoryHint": "Bu kategori artık yeni masraf girişlerinde kullanılamaz; geçmiş kayıt okunabilir kalır.",
+      "noActiveCategories": "Aktif masraf kategorisi bulunmuyor. Yeni masraf girişi için önce bir kategoriyi aktif hale getirin."
+    },
     "error": {
       "loadFailed": "Masraf verileri yüklenemedi."
     },

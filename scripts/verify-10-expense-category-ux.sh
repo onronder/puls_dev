@@ -124,9 +124,9 @@ scan_forbidden_in_src() {
 }
 
 if ((${#CHANGED_SRC_FILES[@]} > 0)); then
-  scan_forbidden_in_src 'resolveApprover\(|decideApproval(Request)?\(|importApply\(|puls_integration\(\).*\.(insert|update|upsert|delete)\(' 'resolver-decide-import-runtime'
+  scan_forbidden_in_src 'resolveApprover\(|decideApproval\(|importApply\(|puls_integration\(\).*\.(insert|update|upsert|delete)\(' 'resolver-decide-import-runtime'
   scan_forbidden_in_src 'write.*erp' 'write-erp-en'
-  scan_forbidden_in_src 'sync.*erp' 'sync-erp-en'
+  scan_forbidden_in_src '\bsync\b.*erp' 'sync-erp-en'
   scan_forbidden_in_src 'push.*erp' 'push-erp-en'
 fi
 

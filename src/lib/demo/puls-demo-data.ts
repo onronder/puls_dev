@@ -44,6 +44,7 @@ export type DemoExpenseClaim = {
   id: string
   title: string
   category: string
+  categoryIsActive: boolean
   amount: number
   currency: string
   expenseDate: string
@@ -77,6 +78,7 @@ export type DemoExpenseApproval = {
   initials: string
   title: string
   category: string
+  categoryIsActive: boolean
   amount: number
   expenseDate: string
   currency?: string
@@ -246,6 +248,7 @@ const demoExpenseOverview: DemoExpenseOverview = {
       id: 'ex-1',
       title: 'Ankara müşteri ziyareti',
       category: 'Seyahat',
+      categoryIsActive: true,
       amount: 1840,
       currency: 'TRY',
       expenseDate: '2026-05-08',
@@ -255,6 +258,7 @@ const demoExpenseOverview: DemoExpenseOverview = {
       id: 'ex-2',
       title: 'Ekip akşam yemeği',
       category: 'Yemek',
+      categoryIsActive: true,
       amount: 620,
       currency: 'TRY',
       expenseDate: '2026-05-06',
@@ -264,6 +268,7 @@ const demoExpenseOverview: DemoExpenseOverview = {
       id: 'ex-3',
       title: 'Figma yıllık',
       category: 'Yazılım',
+      categoryIsActive: true,
       amount: 1500,
       currency: 'TRY',
       expenseDate: '2026-05-03',
@@ -273,6 +278,7 @@ const demoExpenseOverview: DemoExpenseOverview = {
       id: 'ex-4',
       title: 'Taksi · havaalanı',
       category: 'Ulaşım',
+      categoryIsActive: true,
       amount: 240,
       currency: 'TRY',
       expenseDate: '2026-05-01',
@@ -282,10 +288,21 @@ const demoExpenseOverview: DemoExpenseOverview = {
       id: 'ex-5',
       title: 'Otel · İzmir',
       category: 'Konaklama',
+      categoryIsActive: true,
       amount: 3200,
       currency: 'TRY',
       expenseDate: '2026-04-28',
       status: 'approved',
+    },
+    {
+      id: 'ex-inactive-cat',
+      title: 'Eski eğitim sertifikası',
+      category: 'Eski eğitim',
+      categoryIsActive: false,
+      amount: 890,
+      currency: 'TRY',
+      expenseDate: '2026-03-15',
+      status: 'exported',
     },
   ],
   categories: [
@@ -311,6 +328,7 @@ const demoExpenseOverview: DemoExpenseOverview = {
       initials: 'AK',
       title: 'Figma yıllık',
       category: 'Yazılım',
+      categoryIsActive: true,
       amount: 1500,
       expenseDate: '2026-05-03',
     },
@@ -320,6 +338,7 @@ const demoExpenseOverview: DemoExpenseOverview = {
       initials: 'MT',
       title: 'Taksi · havaalanı',
       category: 'Ulaşım',
+      categoryIsActive: true,
       amount: 240,
       expenseDate: '2026-05-01',
     },

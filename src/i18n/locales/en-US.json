@@ -596,6 +596,11 @@
       "recent": "No expense records yet.",
       "approvals": "No pending expense approvals."
     },
+    "categoryLifecycle": {
+      "inactiveCategoryBadge": "Inactive category",
+      "inactiveCategoryHint": "This category can no longer be used for new expenses; historical records remain readable.",
+      "noActiveCategories": "No active expense categories are available. Restore or create an active category before creating an expense."
+    },
     "error": {
       "loadFailed": "Could not load expense data."
     },
