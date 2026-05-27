@@ -2,10 +2,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
+  Archive,
   FileCheck2,
   Loader2,
   Plus,
   Receipt,
+  RotateCcw,
   Save,
   Wallet,
   Workflow,
@@ -21,6 +23,7 @@ import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
+import { Segmented } from '#/components/puls/Segmented'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill } from '#/components/puls/StatusPill'
 import type { StatusTone } from '#/components/puls/StatusPill'
@@ -30,12 +33,16 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  applyExpenseCategoryLifecycleFilter,
   createExpenseCategory,
+  deactivateExpenseCategory,
   fetchCostCenterReadinessOverview,
   fetchExpenseCategoriesOverview,
   isExpenseCategoryFormDirty,
+  mapExpenseCategoryLifecycleError,
   mapExpenseCategoryMutationError,
   normalizeCategoryCode,
+  restoreExpenseCategory,
   updateExpenseCategory,
   validateExpenseCategoryForm,
   type CostCenterReadinessItem,
@@ -43,6 +50,7 @@ import {
   type ExpenseCategoriesOverview,
   type ExpenseCategoryFieldKey,
   type ExpenseCategoryFormFields,
+  type ExpenseCategoryLifecycleFilter,
   type ExpenseRoutingReadinessWarning,
 } from '#/lib/data'
 import { formatCurrency } from '#/lib/format'
@@ -72,7 +80,7 @@ function MasrafKategorileriRoute() {
 const CATEGORY_SKELETON_COUNT = 4
 const COST_CENTER_SKELETON_COUNT = 3
 const CATEGORY_TABLE_GRID_COLS =
-  'grid-cols-[minmax(0,1fr)_minmax(0,112px)_minmax(0,112px)_88px]'
+  'grid-cols-[minmax(0,1fr)_minmax(0,112px)_minmax(0,112px)_88px_96px]'
 const COST_CENTER_TABLE_GRID_COLS =
   'grid-cols-[minmax(0,1fr)_minmax(0,96px)_minmax(0,120px)_120px]'
 
@@ -147,6 +155,19 @@ function CostCenterReadinessPill({ item }: { item: CostCenterReadinessItem }) {
   )
 }
 
+function ExpenseCategoryStatusPill({ isActive }: { isActive: boolean }) {
+  const { t } = useTranslation()
+  return (
+    <StatusPill tone={isActive ? 'success' : 'neutral'}>
+      {t(
+        isActive
+          ? 'expenseCategorySetup.lifecycle.status.active'
+          : 'expenseCategorySetup.lifecycle.status.inactive',
+      )}
+    </StatusPill>
+  )
+}
+
 function RoutingReadinessWarnings({
   warnings,
 }: {
@@ -195,6 +216,7 @@ function MasrafKategorileriPage() {
   const [selectedCostCenter, setSelectedCostCenter] = useState<CostCenterReadinessItem | null>(
     null,
   )
+  const [lifecycleFilter, setLifecycleFilter] = useState<ExpenseCategoryLifecycleFilter>('active')
 
   const { data, isLoading } = useQuery({
     queryKey: ['expense-categories-overview', user?.id],
@@ -244,6 +266,42 @@ function MasrafKategorileriPage() {
       if (mapped.toastKey) {
         toast.error(t(mapped.toastKey))
       }
+    },
+  })
+
+  const deactivateMutation = useMutation({
+    mutationFn: (categoryId: string) => {
+      if (!user?.id) {
+        throw new Error('Missing user')
+      }
+      return deactivateExpenseCategory(user.id, categoryId)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expense-categories-overview', user?.id] })
+      resetCategorySheetState()
+      toast.success(t('expenseCategorySetup.lifecycle.toast.deactivated'))
+    },
+    onError: (error) => {
+      const mapped = mapExpenseCategoryLifecycleError(error)
+      toast.error(t(mapped.toastKey))
+    },
+  })
+
+  const restoreMutation = useMutation({
+    mutationFn: (categoryId: string) => {
+      if (!user?.id) {
+        throw new Error('Missing user')
+      }
+      return restoreExpenseCategory(user.id, categoryId)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expense-categories-overview', user?.id] })
+      resetCategorySheetState()
+      toast.success(t('expenseCategorySetup.lifecycle.toast.restored'))
+    },
+    onError: (error) => {
+      const mapped = mapExpenseCategoryLifecycleError(error)
+      toast.error(t(mapped.toastKey))
     },
   })
 
@@ -311,6 +369,10 @@ function MasrafKategorileriPage() {
   function handleCategorySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
+    if (isInactiveCategorySheet) {
+      return
+    }
+
     const validation = validateExpenseCategoryForm(categoryForm)
     setFieldErrors(validation.fieldErrors)
 
@@ -327,6 +389,22 @@ function MasrafKategorileriPage() {
     })
   }
 
+  function handleDeactivateCategory() {
+    if (!editingCategory) return
+    if (!window.confirm(t('expenseCategorySetup.lifecycle.confirm.deactivate'))) {
+      return
+    }
+    deactivateMutation.mutate(editingCategory.id)
+  }
+
+  function handleRestoreCategory() {
+    if (!editingCategory) return
+    if (!window.confirm(t('expenseCategorySetup.lifecycle.confirm.restore'))) {
+      return
+    }
+    restoreMutation.mutate(editingCategory.id)
+  }
+
   function openCostCenterDetail(item: CostCenterReadinessItem) {
     setSelectedCostCenter(item)
   }
@@ -336,12 +414,27 @@ function MasrafKategorileriPage() {
   const costCenterRowClassName =
     'cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border)]'
   const categorySheetMode = editingCategory ? 'edit' : 'create'
+  const isInactiveCategorySheet = Boolean(editingCategory && !editingCategory.isActive)
   const isSavingCategory = categoryMutation.isPending
+  const isDeactivatingCategory = deactivateMutation.isPending
+  const isRestoringCategory = restoreMutation.isPending
+  const isLifecyclePending = isDeactivatingCategory || isRestoringCategory
+  const filteredCategories = applyExpenseCategoryLifecycleFilter(
+    data?.categories ?? [],
+    lifecycleFilter,
+  )
+  const metricsHint =
+    lifecycleFilter === 'active'
+      ? undefined
+      : t('expenseCategorySetup.metrics.activeOnlyHint')
   const dirtyBaseline = formBaseline ?? EMPTY_CATEGORY_FORM
   const isCategoryFormDirty = isExpenseCategoryFormDirty(categoryForm, dirtyBaseline)
   const normalizedCodePreview = normalizeCategoryCode(categoryForm.code)
   const isSaveDisabled =
-    isSavingCategory || (categorySheetMode === 'edit' && !isCategoryFormDirty)
+    isSavingCategory ||
+    isLifecyclePending ||
+    (categorySheetMode === 'edit' && !isCategoryFormDirty)
+  const isFormReadOnly = isSavingCategory || isLifecyclePending || isInactiveCategorySheet
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -371,20 +464,23 @@ function MasrafKategorileriPage() {
         <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
           <MetricCard
             compact
-            label={t('expenseCategorySetup.metrics.categoryCount')}
+            label={t('expenseCategorySetup.metrics.activeCategoryCount')}
             value={String(data.categoryCount)}
+            hint={metricsHint}
             icon={Receipt}
           />
           <MetricCard
             compact
-            label={t('expenseCategorySetup.metrics.totalMonthlyLimit')}
+            label={t('expenseCategorySetup.metrics.activeTotalMonthlyLimit')}
             value={formatCurrency(data.totalMonthlyLimit, 'tr-TR')}
+            hint={metricsHint}
             icon={Wallet}
           />
           <MetricCard
             compact
             label={t('expenseCategorySetup.metrics.docThreshold')}
             value={formatCurrency(data.docThresholdMetric, 'tr-TR')}
+            hint={metricsHint}
             icon={FileCheck2}
           />
           <MetricCard
@@ -393,6 +489,7 @@ function MasrafKategorileriPage() {
             value={t('expenseCategorySetup.metrics.approvalLevelsValue', {
               count: data.maxApprovalStepCount,
             })}
+            hint={metricsHint}
             icon={Workflow}
           />
         </div>
@@ -400,6 +497,18 @@ function MasrafKategorileriPage() {
 
       <section>
         <SectionHeader title={t('expenseCategorySetup.sections.list')} />
+        <div className="mt-3 max-w-md">
+          <Segmented
+            ariaLabel={t('expenseCategorySetup.lifecycle.filter.ariaLabel')}
+            value={lifecycleFilter}
+            onChange={setLifecycleFilter}
+            options={[
+              { value: 'active', label: t('expenseCategorySetup.lifecycle.filter.active') },
+              { value: 'inactive', label: t('expenseCategorySetup.lifecycle.filter.inactive') },
+              { value: 'all', label: t('expenseCategorySetup.lifecycle.filter.all') },
+            ]}
+          />
+        </div>
         <div className="mt-3 md:hidden">
           {isLoading ? (
             <div className="space-y-2">
@@ -409,16 +518,19 @@ function MasrafKategorileriPage() {
             </div>
           ) : (
             <DataList
-              items={(data?.categories ?? []).map((category) => ({
+              items={filteredCategories.map((category) => ({
                 id: category.id,
                 title: t(category.nameKey),
                 subtitle: formatCurrency(category.monthly, 'tr-TR'),
                 meta: category.code,
                 onClick: () => openEditCategorySheet(category),
                 trailing: (
-                  <span className="text-xs tabular-nums text-[var(--color-text-muted)]">
-                    {formatDocThreshold(category.docThreshold)}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <ExpenseCategoryStatusPill isActive={category.isActive} />
+                    <span className="text-xs tabular-nums text-[var(--color-text-muted)]">
+                      {formatDocThreshold(category.docThreshold)}
+                    </span>
+                  </div>
                 ),
               }))}
             />
@@ -436,6 +548,7 @@ function MasrafKategorileriPage() {
             <div className="text-right">{t('expenseCategorySetup.columns.monthlyLimit')}</div>
             <div className="text-right">{t('expenseCategorySetup.columns.docThreshold')}</div>
             <div className="text-right">{t('expenseCategorySetup.columns.accountingCode')}</div>
+            <div className="text-right">{t('expenseCategorySetup.columns.status')}</div>
           </div>
           <ul className="divide-y divide-[var(--color-border)]">
             {isLoading
@@ -448,9 +561,10 @@ function MasrafKategorileriPage() {
                     <Skeleton className="ml-auto h-4 w-16" />
                     <Skeleton className="ml-auto h-4 w-20" />
                     <Skeleton className="ml-auto h-4 w-12" />
+                    <Skeleton className="ml-auto h-6 w-16" />
                   </li>
                 ))
-              : (data?.categories ?? []).map((category) => (
+              : filteredCategories.map((category) => (
                   <li
                     key={category.id}
                   >
@@ -469,6 +583,9 @@ function MasrafKategorileriPage() {
                         {formatDocThreshold(category.docThreshold)}
                       </div>
                       <div className="text-right font-mono text-sm tabular-nums">{category.code}</div>
+                      <div className="flex justify-end">
+                        <ExpenseCategoryStatusPill isActive={category.isActive} />
+                      </div>
                     </button>
                   </li>
                 ))}
@@ -573,41 +690,129 @@ function MasrafKategorileriPage() {
       <SheetShell
         open={categorySheetOpen}
         onOpenChange={handleCategorySheetOpenChange}
-        title={t(`expenseCategorySetup.sheet.${categorySheetMode}.title`)}
-        description={t(`expenseCategorySetup.sheet.${categorySheetMode}.description`)}
+        title={
+          isInactiveCategorySheet
+            ? t('expenseCategorySetup.sheet.inactive.title')
+            : t(`expenseCategorySetup.sheet.${categorySheetMode}.title`)
+        }
+        description={
+          isInactiveCategorySheet
+            ? t('expenseCategorySetup.sheet.inactive.description')
+            : t(`expenseCategorySetup.sheet.${categorySheetMode}.description`)
+        }
         footer={
-          <div className="flex w-full gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11 flex-1"
-              onClick={requestCloseCategorySheet}
-              disabled={isSavingCategory}
-            >
-              <X className="h-4 w-4" />
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="expense-category-form"
-              className="min-h-11 flex-1"
-              disabled={isSaveDisabled}
-            >
-              {isSavingCategory ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('expenseCategorySetup.actions.saving')}
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  {t('expenseCategorySetup.actions.save')}
-                </>
-              )}
-            </Button>
-          </div>
+          isInactiveCategorySheet ? (
+            <div className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 flex-1"
+                onClick={requestCloseCategorySheet}
+                disabled={isRestoringCategory}
+              >
+                <X className="h-4 w-4" />
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                className="min-h-11 flex-1"
+                onClick={handleRestoreCategory}
+                disabled={isRestoringCategory}
+              >
+                {isRestoringCategory ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('expenseCategorySetup.lifecycle.actions.restoring')}
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4" />
+                    {t('expenseCategorySetup.lifecycle.actions.restore')}
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : categorySheetMode === 'edit' ? (
+            <div className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 flex-1 border-[var(--color-danger)]/40 text-[var(--color-danger)] hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,transparent)]"
+                onClick={handleDeactivateCategory}
+                disabled={isDeactivatingCategory || isSavingCategory}
+              >
+                {isDeactivatingCategory ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('expenseCategorySetup.lifecycle.actions.deactivate')}
+                  </>
+                ) : (
+                  <>
+                    <Archive className="h-4 w-4" />
+                    {t('expenseCategorySetup.lifecycle.actions.deactivate')}
+                  </>
+                )}
+              </Button>
+              <Button
+                type="submit"
+                form="expense-category-form"
+                className="min-h-11 flex-1"
+                disabled={isSaveDisabled}
+              >
+                {isSavingCategory ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('expenseCategorySetup.actions.saving')}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    {t('expenseCategorySetup.actions.save')}
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 flex-1"
+                onClick={requestCloseCategorySheet}
+                disabled={isSavingCategory}
+              >
+                <X className="h-4 w-4" />
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                form="expense-category-form"
+                className="min-h-11 flex-1"
+                disabled={isSaveDisabled}
+              >
+                {isSavingCategory ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('expenseCategorySetup.actions.saving')}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    {t('expenseCategorySetup.actions.save')}
+                  </>
+                )}
+              </Button>
+            </div>
+          )
         }
       >
+        {isInactiveCategorySheet && editingCategory?.approvalPolicyName ? (
+          <p className="mb-4 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-2 text-sm text-[var(--color-text-secondary)]">
+            {t('expenseCategorySetup.sheet.policyBound', {
+              policy: editingCategory.approvalPolicyName,
+            })}
+          </p>
+        ) : null}
         <form id="expense-category-form" className="space-y-4" onSubmit={handleCategorySubmit}>
           <FormField
             label={t('expenseCategorySetup.sheet.fields.name')}
@@ -621,7 +826,7 @@ function MasrafKategorileriPage() {
               placeholder={t('expenseCategorySetup.sheet.placeholders.name')}
               value={categoryForm.name}
               onChange={(event) => updateCategoryForm('name', event.target.value)}
-              disabled={isSavingCategory}
+              disabled={isFormReadOnly}
               autoComplete="off"
               aria-invalid={Boolean(fieldErrors.name) || undefined}
               aria-describedby={fieldErrors.name ? 'expense-category-name-error' : undefined}
@@ -646,7 +851,7 @@ function MasrafKategorileriPage() {
               placeholder={t('expenseCategorySetup.sheet.placeholders.code')}
               value={categoryForm.code}
               onChange={(event) => updateCategoryForm('code', event.target.value)}
-              disabled={isSavingCategory}
+              disabled={isFormReadOnly}
               autoComplete="off"
               aria-invalid={Boolean(fieldErrors.code) || undefined}
               aria-describedby={
@@ -673,7 +878,7 @@ function MasrafKategorileriPage() {
               inputMode="decimal"
               value={categoryForm.monthlyLimit}
               onChange={(event) => updateCategoryForm('monthlyLimit', event.target.value)}
-              disabled={isSavingCategory}
+              disabled={isFormReadOnly}
               aria-invalid={Boolean(fieldErrors.monthlyLimit) || undefined}
               aria-describedby={
                 fieldErrors.monthlyLimit
@@ -696,7 +901,7 @@ function MasrafKategorileriPage() {
               inputMode="decimal"
               value={categoryForm.receiptRequiredOver}
               onChange={(event) => updateCategoryForm('receiptRequiredOver', event.target.value)}
-              disabled={isSavingCategory}
+              disabled={isFormReadOnly}
               aria-invalid={Boolean(fieldErrors.receiptRequiredOver) || undefined}
               aria-describedby={
                 fieldErrors.receiptRequiredOver
@@ -716,7 +921,7 @@ function MasrafKategorileriPage() {
               placeholder={t('expenseCategorySetup.sheet.placeholders.accountingCode')}
               value={categoryForm.erpAccountCode}
               onChange={(event) => updateCategoryForm('erpAccountCode', event.target.value)}
-              disabled={isSavingCategory}
+              disabled={isFormReadOnly}
               autoComplete="off"
               aria-invalid={Boolean(fieldErrors.erpAccountCode) || undefined}
               aria-describedby={

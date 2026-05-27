@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { fromSupabaseError } from '#/lib/data/errors'
-import { mapExpenseCategoryMutationError } from '#/lib/data/setup/expense-categories'
+import {
+  mapExpenseCategoryLifecycleError,
+  mapExpenseCategoryMutationError,
+} from '#/lib/data/setup/expense-categories'
 
 describe('mapExpenseCategoryMutationError', () => {
   it('maps PULS guardrail codes to field i18n keys', () => {
@@ -101,6 +104,46 @@ describe('mapExpenseCategoryMutationError', () => {
     expect(mapExpenseCategoryMutationError(error)).toEqual({
       fieldErrors: {},
       toastKey: 'expenseCategorySetup.errors.saveFailed',
+    })
+  })
+})
+
+describe('mapExpenseCategoryLifecycleError', () => {
+  it('maps active claims guard to lifecycle toast key', () => {
+    const error = fromSupabaseError(
+      {
+        code: 'P0001',
+        message:
+          'PULS_EXPENSE_CATEGORY_IN_USE_ACTIVE_CLAIMS: category has open expense claims.',
+        details: '',
+        hint: null,
+      } as unknown as import('@supabase/supabase-js').PostgrestError,
+      'deactivateExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+
+    expect(mapExpenseCategoryLifecycleError(error)).toEqual({
+      toastKey: 'expenseCategorySetup.lifecycle.errors.activeClaims',
+    })
+  })
+
+  it('maps restore duplicate accounting 23505 to guided toast key', () => {
+    const error = fromSupabaseError(
+      {
+        code: '23505',
+        message:
+          'duplicate key value violates unique constraint "idx_puls_workflow_expense_categories_active_account_code_unique"',
+        details: 'Key (tenant_id, erp_account_code)=(...) already exists.',
+        hint: null,
+      } as unknown as import('@supabase/supabase-js').PostgrestError,
+      'restoreExpenseCategory',
+      'puls_workflow',
+      'expense_categories',
+    )
+
+    expect(mapExpenseCategoryLifecycleError(error)).toEqual({
+      toastKey: 'expenseCategorySetup.lifecycle.errors.restoreDuplicateAccounting',
     })
   })
 })

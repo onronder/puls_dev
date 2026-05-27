@@ -908,7 +908,10 @@
       "docThreshold": "Belge eşiği",
       "approvalLevels": "Onay seviyesi",
       "approvalLevelsValue": "{{count}} seviye",
-      "approvalLevelsValue_other": "{{count}} seviye"
+      "approvalLevelsValue_other": "{{count}} seviye",
+      "activeCategoryCount": "Aktif kategori",
+      "activeTotalMonthlyLimit": "Aktif aylık toplam limit",
+      "activeOnlyHint": "Yalnızca aktif kategoriler"
     },
     "sections": {
       "list": "Kategori listesi"
@@ -917,7 +920,8 @@
       "name": "Kategori",
       "monthlyLimit": "Aylık limit",
       "docThreshold": "Belge eşiği",
-      "accountingCode": "Muhasebe kodu"
+      "accountingCode": "Muhasebe kodu",
+      "status": "Durum"
     },
     "docThresholdAbove": "{{amount}} üzeri",
     "categories": {
@@ -933,6 +937,38 @@
       "save": "Kaydet",
       "saving": "Kaydediliyor"
     },
+    "lifecycle": {
+      "filter": {
+        "ariaLabel": "Kategori durumu filtresi",
+        "active": "Aktif",
+        "inactive": "Pasif",
+        "all": "Tümü"
+      },
+      "status": {
+        "active": "Aktif",
+        "inactive": "Pasif"
+      },
+      "actions": {
+        "deactivate": "Pasifleştir",
+        "restore": "Geri yükle",
+        "restoring": "Geri yükleniyor"
+      },
+      "confirm": {
+        "deactivate": "Bu kategoriyi pasifleştirmek istediğinize emin misiniz? Yeni masraf girişlerinde görünmez; geçmiş kayıtlar okunabilir kalır.",
+        "restore": "Bu kategoriyi geri yüklemek istediğinize emin misiniz?"
+      },
+      "toast": {
+        "deactivated": "Masraf kategorisi pasifleştirildi.",
+        "restored": "Masraf kategorisi geri yüklendi."
+      },
+      "errors": {
+        "activeClaims": "Bu kategoride taslak, bekleyen veya onaylı masraf kayıtları var. Önce bu kayıtları kapatın veya taşıyın.",
+        "notFound": "Masraf kategorisi bulunamadı.",
+        "forbidden": "Bu işlem için yetkiniz yok.",
+        "restoreDuplicateAccounting": "Bu muhasebe kodu aktif başka bir kategoride kullanılıyor. Önce o aktif kategorideki muhasebe kodunu değiştirin, ardından bu kategoriyi geri yükleyin.",
+        "generic": "Masraf kategorisi durumu güncellenemedi."
+      }
+    },
     "sheet": {
       "create": {
         "title": "Kategori ekle",
@@ -942,6 +978,11 @@
         "title": "Kategori düzenle",
         "description": "Kategori limitlerini, belge eşiğini ve muhasebe kodunu güncelle."
       },
+      "inactive": {
+        "title": "Pasif kategori",
+        "description": "Bu kategori pasif. Alanlar salt okunurdur; geri yükleyerek yeni masraf girişlerinde tekrar kullanılabilir."
+      },
+      "policyBound": "Onay politikası bağlı: {{policy}}",
       "boundaryNote": "Bu işlem yalnızca PULS masraf kategori tanımını günceller; ERP veya finans sistemine veri yazmaz.",
       "mvpBadge": "Salt okunur",
       "fields": {
