@@ -584,11 +584,15 @@ export async function fetchDemoPositionsOverview(): Promise<DemoPositionsOvervie
 
 export type DemoLeaveTypeRule = {
   id: string
+  code: string
+  name: string
   labelKey: string
   days: number
+  defaultEntitlementDays: number | null
   paid: boolean
   doc: boolean
   carryOver: boolean
+  maxCarryOverDays: number | null
   approvalPolicyId?: string | null
   approvalPolicyName?: string | null
   approvalStepCount: number
@@ -596,11 +600,12 @@ export type DemoLeaveTypeRule = {
 }
 
 function attachLeaveApprovalPolicy(
-  rule: Omit<DemoLeaveTypeRule, 'approvalPolicy'>,
+  rule: Omit<DemoLeaveTypeRule, 'approvalPolicy' | 'days'>,
 ): DemoLeaveTypeRule {
   const policyId = rule.approvalPolicyId ?? null
   return {
     ...rule,
+    days: rule.defaultEntitlementDays ?? 0,
     approvalPolicy: buildApprovalPolicyBindingInfo({
       expectedModule: 'leave',
       policyId,
@@ -628,86 +633,110 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
   leaveTypes: [
     attachLeaveApprovalPolicy({
       id: 'yillik',
+      code: 'annual',
+      name: 'Yıllık İzin',
       labelKey: 'leaveTypeSetup.types.annual',
-      days: 20,
+      defaultEntitlementDays: 20,
       paid: true,
       doc: false,
       carryOver: true,
+      maxCarryOverDays: 5,
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
     }),
     attachLeaveApprovalPolicy({
       id: 'mazeret',
+      code: 'excuse',
+      name: 'Mazeret İzni',
       labelKey: 'leaveTypeSetup.types.excuse',
-      days: 10,
+      defaultEntitlementDays: 10,
       paid: true,
       doc: false,
       carryOver: false,
+      maxCarryOverDays: null,
       approvalStepCount: 1,
     }),
     attachLeaveApprovalPolicy({
       id: 'hastalik',
+      code: 'sick',
+      name: 'Hastalık İzni',
       labelKey: 'leaveTypeSetup.types.sick',
-      days: 10,
+      defaultEntitlementDays: 10,
       paid: true,
       doc: true,
       carryOver: false,
+      maxCarryOverDays: null,
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
     }),
     attachLeaveApprovalPolicy({
       id: 'ucretsiz',
+      code: 'unpaid',
+      name: 'Ücretsiz İzin',
       labelKey: 'leaveTypeSetup.types.unpaid',
-      days: 30,
+      defaultEntitlementDays: 30,
       paid: false,
       doc: false,
       carryOver: false,
+      maxCarryOverDays: null,
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
     }),
     attachLeaveApprovalPolicy({
       id: 'idari',
+      code: 'administrative',
+      name: 'İdari İzin',
       labelKey: 'leaveTypeSetup.types.administrative',
-      days: 5,
+      defaultEntitlementDays: 5,
       paid: true,
       doc: false,
       carryOver: false,
+      maxCarryOverDays: null,
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
     }),
     attachLeaveApprovalPolicy({
       id: 'evlilik',
+      code: 'marriage',
+      name: 'Evlilik İzni',
       labelKey: 'leaveTypeSetup.types.marriage',
-      days: 3,
+      defaultEntitlementDays: 3,
       paid: true,
       doc: true,
       carryOver: false,
+      maxCarryOverDays: null,
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
     }),
     attachLeaveApprovalPolicy({
       id: 'dogum',
+      code: 'parental',
+      name: 'Doğum İzni',
       labelKey: 'leaveTypeSetup.types.parental',
-      days: 16,
+      defaultEntitlementDays: 16,
       paid: true,
       doc: false,
       carryOver: false,
+      maxCarryOverDays: null,
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
     }),
     attachLeaveApprovalPolicy({
       id: 'olum',
+      code: 'bereavement',
+      name: 'Ölüm İzni',
       labelKey: 'leaveTypeSetup.types.bereavement',
-      days: 3,
+      defaultEntitlementDays: 3,
       paid: true,
       doc: false,
       carryOver: false,
+      maxCarryOverDays: null,
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
@@ -717,6 +746,42 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
 
 export async function fetchDemoLeaveTypesOverview(): Promise<DemoLeaveTypesOverview> {
   return demoLeaveTypesOverview
+}
+
+export type DemoApprovalPolicyOverviewItem = {
+  id: string
+  code: string
+  name: string
+  module: 'leave' | 'expense'
+  requiredStepCount: number
+}
+
+const demoApprovalPoliciesOverview: DemoApprovalPolicyOverviewItem[] = [
+  {
+    id: 'demo-leave-policy',
+    code: 'leave_manager_approval',
+    name: 'İzin onay — standart',
+    module: 'leave',
+    requiredStepCount: 1,
+  },
+  {
+    id: 'demo-leave-policy-inactive',
+    code: 'leave_legacy',
+    name: 'Eski izin onay (pasif)',
+    module: 'leave',
+    requiredStepCount: 1,
+  },
+  {
+    id: 'demo-expense-policy',
+    code: 'expense_manager_approval',
+    name: 'Masraf onay — standart',
+    module: 'expense',
+    requiredStepCount: 1,
+  },
+]
+
+export async function fetchDemoApprovalPoliciesOverview(): Promise<DemoApprovalPolicyOverviewItem[]> {
+  return demoApprovalPoliciesOverview
 }
 
 export type DemoExpenseCategoryRule = {

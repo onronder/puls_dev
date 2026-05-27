@@ -78,8 +78,21 @@ export {
 
 export {
   fetchLeaveTypesOverview,
+  createLeaveType,
+  updateLeaveType,
+  mapLeaveTypeMutationError,
+  normalizeLeaveTypeCode,
+  type LeaveTypeMutationErrorMapping,
+  type LeaveTypeMutationInput,
   type LeaveTypesOverview,
 } from '#/lib/data/setup/leave-types'
+
+export {
+  isLeaveTypeFormDirty,
+  validateLeaveTypeForm,
+  type LeaveTypeFieldKey,
+  type LeaveTypeFormFields,
+} from '#/lib/data/setup/leave-type-validation'
 
 export {
   applyExpenseCategoryLifecycleFilter,

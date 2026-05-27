@@ -1,13 +1,10 @@
+import { fetchDemoApprovalPoliciesOverview } from '#/lib/demo/puls-demo-data'
+import type { DemoApprovalPolicyOverviewItem } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
+import { resolveAdapterData } from '#/lib/data/result'
 
-export type ApprovalPolicyOverviewItem = {
-  id: string
-  code: string
-  name: string
-  module: 'leave' | 'expense'
-  requiredStepCount: number
-}
+export type ApprovalPolicyOverviewItem = DemoApprovalPolicyOverviewItem
 
 export type ApprovalPolicyDetail = ApprovalPolicyOverviewItem & {
   steps: Array<{
@@ -17,7 +14,7 @@ export type ApprovalPolicyDetail = ApprovalPolicyOverviewItem & {
   }>
 }
 
-export async function fetchApprovalPoliciesOverview(
+async function fetchRealApprovalPoliciesOverview(
   userId: string,
 ): Promise<ApprovalPolicyOverviewItem[]> {
   const ctx = await resolveTenantContext(userId)
@@ -67,6 +64,17 @@ export async function fetchApprovalPoliciesOverview(
     module: row.module as 'leave' | 'expense',
     requiredStepCount: requiredCountByPolicy.get(row.id as string) ?? 0,
   }))
+}
+
+export async function fetchApprovalPoliciesOverview(
+  userId: string,
+): Promise<ApprovalPolicyOverviewItem[]> {
+  return resolveAdapterData({
+    operation: 'fetchApprovalPoliciesOverview',
+    fetchReal: () => fetchRealApprovalPoliciesOverview(userId),
+    fetchDemo: fetchDemoApprovalPoliciesOverview,
+    isEmpty: (data) => data.length === 0,
+  })
 }
 
 export async function fetchApprovalPolicyDetail(

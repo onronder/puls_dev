@@ -904,9 +904,35 @@
     "actions": {
       "add": "Add leave type"
     },
+    "validation": {
+      "nameRequired": "Leave type name is required.",
+      "codeRequired": "Leave type code is required.",
+      "codeInvalid": "Code must be a lowercase slug (letters, numbers, underscores).",
+      "entitlementInvalid": "Day entitlement must be between 0 and 365.",
+      "carryOverInvalid": "Carry-over days must be between 0 and 365, or empty when carry-over is disabled.",
+      "duplicateCode": "This leave type code already exists.",
+      "policyInvalid": "The selected approval policy is invalid for this tenant.",
+      "policyModuleInvalid": "The selected policy must belong to the leave module.",
+      "generic": "Please fix the highlighted fields.",
+      "codePreviewHint": "Stored code: {{code}}",
+      "discardConfirm": "You have unsaved changes. Close without saving?"
+    },
+    "errors": {
+      "saveFailed": "Could not save leave type. Please try again."
+    },
+    "toast": {
+      "created": "Leave type created.",
+      "updated": "Leave type updated."
+    },
     "sheet": {
-      "title": "Add leave type",
-      "description": "Creating new leave types will be enabled after the pilot.",
+      "create": {
+        "title": "Add leave type",
+        "description": "Define a new leave type used inside PULS."
+      },
+      "edit": {
+        "title": "Edit leave type",
+        "description": "Update leave type entitlements, document rules, and optional policy binding."
+      },
       "detail": {
         "title": "Leave type details",
         "description": "Read-only view of leave type setup and approval policy binding."
@@ -914,11 +940,28 @@
       "mvpBadge": "Read-only",
       "fields": {
         "label": "Leave type name",
-        "days": "Day entitlement"
+        "code": "Leave type code",
+        "days": "Day entitlement",
+        "requiresDocument": "Document required",
+        "carryOverAllowed": "Carry-over allowed",
+        "maxCarryOverDays": "Max carry-over days",
+        "approvalPolicy": "Approval policy"
       },
       "placeholders": {
         "label": "e.g. Annual",
-        "days": "20"
+        "code": "annual",
+        "days": "20",
+        "maxCarryOverDays": "5"
+      },
+      "policyUnbound": "No policy (unbound)",
+      "policyPlaceholder": "Select an approval policy (optional)",
+      "policyCurrent": {
+        "inactive_policy": "Current bound policy (inactive): {{name}}",
+        "module_mismatch": "Current bound policy (module mismatch): {{name}}",
+        "policy_unavailable": "Current bound policy (unavailable): {{name}}",
+        "missing_required_steps": "Current bound policy (missing steps): {{name}}",
+        "ready": "Current bound policy: {{name}}",
+        "unbound": "No policy bound"
       },
       "submit": "Save"
     }

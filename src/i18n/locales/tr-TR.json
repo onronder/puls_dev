@@ -904,9 +904,35 @@
     "actions": {
       "add": "İzin tipi ekle"
     },
+    "validation": {
+      "nameRequired": "İzin tipi adı zorunludur.",
+      "codeRequired": "İzin tipi kodu zorunludur.",
+      "codeInvalid": "Kod küçük harf slug olmalıdır (harf, rakam, alt çizgi).",
+      "entitlementInvalid": "Gün hakkı 0 ile 365 arasında olmalıdır.",
+      "carryOverInvalid": "Devir günü 0–365 arasında olmalı veya devir kapalıyken boş bırakılmalıdır.",
+      "duplicateCode": "Bu izin tipi kodu zaten mevcut.",
+      "policyInvalid": "Seçilen onay politikası bu kiracı için geçersiz.",
+      "policyModuleInvalid": "Seçilen politika izin modülüne ait olmalıdır.",
+      "generic": "Lütfen işaretli alanları düzeltin.",
+      "codePreviewHint": "Kaydedilecek kod: {{code}}",
+      "discardConfirm": "Kaydedilmemiş değişiklikler var. Kaydetmeden kapatılsın mı?"
+    },
+    "errors": {
+      "saveFailed": "İzin tipi kaydedilemedi. Lütfen tekrar deneyin."
+    },
+    "toast": {
+      "created": "İzin tipi oluşturuldu.",
+      "updated": "İzin tipi güncellendi."
+    },
     "sheet": {
-      "title": "İzin tipi ekle",
-      "description": "Yeni izin tipi oluşturma pilot sonrası açılacak.",
+      "create": {
+        "title": "İzin tipi ekle",
+        "description": "PULS içinde kullanılacak yeni bir izin tipi tanımla."
+      },
+      "edit": {
+        "title": "İzin tipi düzenle",
+        "description": "Gün hakkı, belge kuralları ve isteğe bağlı politika bağlantısını güncelle."
+      },
       "detail": {
         "title": "İzin tipi detayı",
         "description": "İzin tipi kurulumu ve onay politikası bağlantısının salt okunur görünümü."
@@ -914,11 +940,28 @@
       "mvpBadge": "Salt okunur",
       "fields": {
         "label": "İzin tipi adı",
-        "days": "Gün hakkı"
+        "code": "İzin tipi kodu",
+        "days": "Gün hakkı",
+        "requiresDocument": "Belge zorunlu",
+        "carryOverAllowed": "Devir izni",
+        "maxCarryOverDays": "Azami devir günü",
+        "approvalPolicy": "Onay politikası"
       },
       "placeholders": {
         "label": "Örn. Yıllık",
-        "days": "20"
+        "code": "annual",
+        "days": "20",
+        "maxCarryOverDays": "5"
+      },
+      "policyUnbound": "Politika yok (bağlı değil)",
+      "policyPlaceholder": "Onay politikası seç (isteğe bağlı)",
+      "policyCurrent": {
+        "inactive_policy": "Mevcut bağlı politika (pasif): {{name}}",
+        "module_mismatch": "Mevcut bağlı politika (modül uyumsuz): {{name}}",
+        "policy_unavailable": "Mevcut bağlı politika (kullanılamıyor): {{name}}",
+        "missing_required_steps": "Mevcut bağlı politika (adım eksik): {{name}}",
+        "ready": "Mevcut bağlı politika: {{name}}",
+        "unbound": "Politika bağlı değil"
       },
       "submit": "Kaydet"
     }
