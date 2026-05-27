@@ -156,6 +156,15 @@ export {
 } from '#/lib/data/workflow/approvals'
 
 export {
+  buildApprovalPolicyBindingInfo,
+  computeApprovalPolicyBindingStatus,
+  parseApprovalPolicyJoin,
+  type ApprovalPolicyBindingInfo,
+  type ApprovalPolicyBindingInput,
+  type ApprovalPolicyBindingStatus,
+} from '#/lib/data/workflow/policy-binding-readiness'
+
+export {
   fetchApprovalPoliciesOverview,
   fetchApprovalPolicyDetail,
   type ApprovalPolicyDetail,

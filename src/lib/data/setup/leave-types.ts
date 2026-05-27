@@ -3,6 +3,10 @@ import type { DemoLeaveTypesOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData } from '#/lib/data/result'
+import {
+  buildApprovalPolicyBindingInfo,
+  parseApprovalPolicyJoin,
+} from '#/lib/data/workflow/policy-binding-readiness'
 
 export type LeaveTypesOverview = DemoLeaveTypesOverview
 
@@ -35,7 +39,7 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
   const { data, error } = await pulsWorkflow()
     .from('leave_types')
     .select(
-      'id, code, name, default_entitlement_days, is_paid, requires_document, carry_over_allowed, approval_policy_id, approval_policies(name)',
+      'id, code, name, default_entitlement_days, is_paid, requires_document, carry_over_allowed, approval_policy_id, approval_policies ( name, module, is_active )',
     )
     .eq('tenant_id', ctx.tenantId)
     .eq('is_active', true)
@@ -83,10 +87,13 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
   const leaveTypes = (data ?? []).map((row) => {
     const code = row.code as string
     const policyId = (row.approval_policy_id as string | null) ?? null
-    const policyJoin = row.approval_policies as { name: string } | { name: string }[] | null
-    const policyName = Array.isArray(policyJoin)
-      ? policyJoin[0]?.name
-      : policyJoin?.name
+    const policyMeta = parseApprovalPolicyJoin(
+      row.approval_policies as
+        | { name: string; module: string; is_active: boolean }
+        | { name: string; module: string; is_active: boolean }[]
+        | null,
+    )
+    const requiredStepCount = policyId ? (requiredStepCountByPolicy.get(policyId) ?? 0) : 0
 
     return {
       id: row.id as string,
@@ -96,8 +103,16 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
       doc: Boolean(row.requires_document),
       carryOver: Boolean(row.carry_over_allowed),
       approvalPolicyId: policyId,
-      approvalPolicyName: policyName ?? null,
-      approvalStepCount: policyId ? (requiredStepCountByPolicy.get(policyId) ?? 0) : 1,
+      approvalPolicyName: policyMeta.policyName,
+      approvalStepCount: policyId ? requiredStepCount : 1,
+      approvalPolicy: buildApprovalPolicyBindingInfo({
+        expectedModule: 'leave',
+        policyId,
+        policyName: policyMeta.policyName,
+        policyModule: policyMeta.policyModule,
+        policyIsActive: policyMeta.policyIsActive,
+        requiredStepCount,
+      }),
     }
   })
 
