@@ -965,7 +965,7 @@ function MasrafKategorileriPage() {
           <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
             {t('expenseCategorySetup.sheet.boundaryNote')}
           </p>
-          {categorySheetMode === 'edit' && editingCategory ? (
+          {categorySheetMode === 'edit' && editingCategory && !isInactiveCategorySheet ? (
             <ApprovalPolicyBindingSection binding={editingCategory.approvalPolicy} />
           ) : null}
           {showDeactivateReasonField ? (
