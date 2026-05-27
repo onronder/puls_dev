@@ -38,10 +38,13 @@ import {
   deactivateExpenseCategory,
   fetchCostCenterReadinessOverview,
   fetchExpenseCategoriesOverview,
+  fetchExpenseCategoryLifecycleEvents,
+  isDeactivateReasonTooLong,
   isExpenseCategoryFormDirty,
   mapExpenseCategoryLifecycleError,
   mapExpenseCategoryMutationError,
   normalizeCategoryCode,
+  normalizeDeactivateReason,
   restoreExpenseCategory,
   updateExpenseCategory,
   validateExpenseCategoryForm,
@@ -51,8 +54,10 @@ import {
   type ExpenseCategoryFieldKey,
   type ExpenseCategoryFormFields,
   type ExpenseCategoryLifecycleFilter,
+  type ExpenseCategoryLifecycleResult,
   type ExpenseRoutingReadinessWarning,
 } from '#/lib/data'
+import { Textarea } from '#/components/ui/textarea'
 import { formatCurrency } from '#/lib/format'
 import { cn } from '#/lib/utils'
 
@@ -202,7 +207,7 @@ function RoutingReadinessWarnings({
 }
 
 function MasrafKategorileriPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [categorySheetOpen, setCategorySheetOpen] = useState(false)
@@ -217,6 +222,7 @@ function MasrafKategorileriPage() {
     null,
   )
   const [lifecycleFilter, setLifecycleFilter] = useState<ExpenseCategoryLifecycleFilter>('active')
+  const [deactivateReason, setDeactivateReason] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['expense-categories-overview', user?.id],
@@ -228,6 +234,15 @@ function MasrafKategorileriPage() {
     queryKey: ['cost-center-readiness', user?.id],
     queryFn: () => fetchCostCenterReadinessOverview(user!.id),
     enabled: Boolean(user?.id),
+  })
+
+  const inactiveCategoryId =
+    categorySheetOpen && editingCategory && !editingCategory.isActive ? editingCategory.id : null
+
+  const { data: lifecycleEvents, isLoading: lifecycleEventsLoading } = useQuery({
+    queryKey: ['expense-category-lifecycle-events', user?.id, inactiveCategoryId],
+    queryFn: () => fetchExpenseCategoryLifecycleEvents(user!.id, inactiveCategoryId!, 5),
+    enabled: Boolean(user?.id && inactiveCategoryId),
   })
 
   const categoryMutation = useMutation({
@@ -270,16 +285,22 @@ function MasrafKategorileriPage() {
   })
 
   const deactivateMutation = useMutation({
-    mutationFn: (categoryId: string) => {
+    mutationFn: ({ categoryId, reason }: { categoryId: string; reason: string | null }) => {
       if (!user?.id) {
         throw new Error('Missing user')
       }
-      return deactivateExpenseCategory(user.id, categoryId)
+      return deactivateExpenseCategory(user.id, categoryId, reason)
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ['expense-categories-overview', user?.id] })
       resetCategorySheetState()
-      toast.success(t('expenseCategorySetup.lifecycle.toast.deactivated'))
+      toast.success(
+        t(
+          result.status === 'deactivated' && result.eventId
+            ? 'expenseCategorySetup.lifecycleAudit.toast.deactivatedWithAudit'
+            : 'expenseCategorySetup.lifecycle.toast.deactivated',
+        ),
+      )
     },
     onError: (error) => {
       const mapped = mapExpenseCategoryLifecycleError(error)
@@ -294,10 +315,16 @@ function MasrafKategorileriPage() {
       }
       return restoreExpenseCategory(user.id, categoryId)
     },
-    onSuccess: () => {
+    onSuccess: (result: ExpenseCategoryLifecycleResult) => {
       void queryClient.invalidateQueries({ queryKey: ['expense-categories-overview', user?.id] })
       resetCategorySheetState()
-      toast.success(t('expenseCategorySetup.lifecycle.toast.restored'))
+      toast.success(
+        t(
+          result.status === 'restored' && result.eventId
+            ? 'expenseCategorySetup.lifecycleAudit.toast.restoredWithAudit'
+            : 'expenseCategorySetup.lifecycle.toast.restored',
+        ),
+      )
     },
     onError: (error) => {
       const mapped = mapExpenseCategoryLifecycleError(error)
@@ -317,6 +344,7 @@ function MasrafKategorileriPage() {
     setCategoryForm(EMPTY_CATEGORY_FORM)
     setFormBaseline(null)
     setFieldErrors({})
+    setDeactivateReason('')
   }
 
   function openCreateCategorySheet() {
@@ -338,7 +366,9 @@ function MasrafKategorileriPage() {
 
   function requestCloseCategorySheet() {
     const baseline = formBaseline ?? EMPTY_CATEGORY_FORM
-    const dirty = isExpenseCategoryFormDirty(categoryForm, baseline)
+    const dirty =
+      isExpenseCategoryFormDirty(categoryForm, baseline) ||
+      normalizeDeactivateReason(deactivateReason) != null
 
     if (dirty && !window.confirm(t('expenseCategorySetup.validation.discardConfirm'))) {
       return
@@ -391,10 +421,16 @@ function MasrafKategorileriPage() {
 
   function handleDeactivateCategory() {
     if (!editingCategory) return
+    if (isDeactivateReasonTooLong(deactivateReason)) {
+      return
+    }
     if (!window.confirm(t('expenseCategorySetup.lifecycle.confirm.deactivate'))) {
       return
     }
-    deactivateMutation.mutate(editingCategory.id)
+    deactivateMutation.mutate({
+      categoryId: editingCategory.id,
+      reason: normalizeDeactivateReason(deactivateReason),
+    })
   }
 
   function handleRestoreCategory() {
@@ -429,12 +465,15 @@ function MasrafKategorileriPage() {
       : t('expenseCategorySetup.metrics.activeOnlyHint')
   const dirtyBaseline = formBaseline ?? EMPTY_CATEGORY_FORM
   const isCategoryFormDirty = isExpenseCategoryFormDirty(categoryForm, dirtyBaseline)
+  const isDeactivateReasonInvalid = isDeactivateReasonTooLong(deactivateReason)
   const normalizedCodePreview = normalizeCategoryCode(categoryForm.code)
   const isSaveDisabled =
     isSavingCategory ||
     isLifecyclePending ||
     (categorySheetMode === 'edit' && !isCategoryFormDirty)
   const isFormReadOnly = isSavingCategory || isLifecyclePending || isInactiveCategorySheet
+  const showDeactivateReasonField =
+    categorySheetMode === 'edit' && Boolean(editingCategory?.isActive)
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -739,7 +778,7 @@ function MasrafKategorileriPage() {
                 variant="outline"
                 className="min-h-11 flex-1 border-[var(--color-danger)]/40 text-[var(--color-danger)] hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,transparent)]"
                 onClick={handleDeactivateCategory}
-                disabled={isDeactivatingCategory || isSavingCategory}
+                disabled={isDeactivatingCategory || isSavingCategory || isDeactivateReasonInvalid}
               >
                 {isDeactivatingCategory ? (
                   <>
@@ -932,7 +971,62 @@ function MasrafKategorileriPage() {
           <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
             {t('expenseCategorySetup.sheet.boundaryNote')}
           </p>
+          {showDeactivateReasonField ? (
+            <FormField
+              label={t('expenseCategorySetup.lifecycleAudit.reasonLabel')}
+              htmlFor="expense-category-deactivate-reason"
+              hint={t('expenseCategorySetup.lifecycleAudit.reasonHint')}
+              error={
+                isDeactivateReasonInvalid
+                  ? t('expenseCategorySetup.lifecycleAudit.reasonTooLong')
+                  : undefined
+              }
+            >
+              <Textarea
+                id="expense-category-deactivate-reason"
+                className="min-h-[88px] text-base"
+                placeholder={t('expenseCategorySetup.lifecycleAudit.reasonPlaceholder')}
+                value={deactivateReason}
+                onChange={(event) => setDeactivateReason(event.target.value)}
+                disabled={isFormReadOnly}
+                aria-invalid={isDeactivateReasonInvalid || undefined}
+              />
+            </FormField>
+          ) : null}
         </form>
+        {isInactiveCategorySheet && editingCategory ? (
+          <div className="mt-6 space-y-3">
+            <SectionHeader title={t('expenseCategorySetup.lifecycleAudit.historyTitle')} />
+            {lifecycleEventsLoading ? (
+              <Skeleton className="h-20 w-full rounded-xl" />
+            ) : lifecycleEvents && lifecycleEvents.length > 0 ? (
+              <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)]">
+                {lifecycleEvents.map((event) => (
+                  <li key={event.id} className="space-y-1 px-4 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                        {t(`expenseCategorySetup.lifecycleAudit.action.${event.action}`)}
+                      </span>
+                      <time
+                        className="text-xs text-[var(--color-text-muted)]"
+                        dateTime={event.occurredAt}
+                      >
+                        {new Date(event.occurredAt).toLocaleString(i18n.language)}
+                      </time>
+                    </div>
+                    {event.reason ? (
+                      <p className="text-sm text-[var(--color-text-secondary)]">{event.reason}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--color-text-muted)]">
+                {t('expenseCategorySetup.lifecycleAudit.historyEmpty')}
+              </p>
+            )}
+          </div>
+        ) : null}
       </SheetShell>
 
       <SheetShell

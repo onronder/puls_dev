@@ -974,6 +974,22 @@
         "generic": "Expense category status could not be updated."
       }
     },
+    "lifecycleAudit": {
+      "reasonLabel": "Deactivation reason",
+      "reasonPlaceholder": "Optional short note",
+      "reasonHint": "This note is kept only in PULS lifecycle history.",
+      "reasonTooLong": "Reason must be shorter than 500 characters.",
+      "historyTitle": "Lifecycle history",
+      "historyEmpty": "No lifecycle history is available for this category.",
+      "action": {
+        "deactivated": "Deactivated",
+        "restored": "Restored"
+      },
+      "toast": {
+        "deactivatedWithAudit": "Category deactivated and recorded in lifecycle history.",
+        "restoredWithAudit": "Category restored and recorded in lifecycle history."
+      }
+    },
     "sheet": {
       "create": {
         "title": "Add category",
