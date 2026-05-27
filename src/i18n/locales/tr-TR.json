@@ -948,6 +948,22 @@
         "inactiveDescription": "Bu izin tipi pasif. Geçmiş izin kayıtları okunabilir; yeni taleplerde seçilemez."
       }
     },
+    "lifecycleAudit": {
+      "reasonLabel": "Pasifleştirme gerekçesi",
+      "reasonPlaceholder": "İsteğe bağlı kısa not",
+      "reasonHint": "Bu not yalnızca PULS yaşam döngüsü geçmişinde tutulur.",
+      "reasonTooLong": "Gerekçe en fazla 500 karakter olabilir.",
+      "historyTitle": "Yaşam döngüsü geçmişi",
+      "historyEmpty": "Bu izin tipi için yaşam döngüsü geçmişi yok.",
+      "action": {
+        "deactivated": "Pasifleştirildi",
+        "restored": "Geri yüklendi"
+      },
+      "toast": {
+        "deactivatedWithAudit": "İzin tipi pasifleştirildi ve yaşam döngüsü geçmişine kaydedildi.",
+        "restoredWithAudit": "İzin tipi geri yüklendi ve yaşam döngüsü geçmişine kaydedildi."
+      }
+    },
     "validation": {
       "nameRequired": "İzin tipi adı zorunludur.",
       "codeRequired": "İzin tipi kodu zorunludur.",

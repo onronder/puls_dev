@@ -16,11 +16,24 @@ export type LeaveTypesOverview = DemoLeaveTypesOverview
 
 export type LeaveTypeLifecycleFilter = 'active' | 'inactive' | 'all'
 
+export type LeaveTypeLifecycleEventAction = 'deactivated' | 'restored'
+
+export type LeaveTypeLifecycleEvent = {
+  id: string
+  leaveTypeId: string
+  action: LeaveTypeLifecycleEventAction
+  reason: string | null
+  actorRole: string | null
+  occurredAt: string
+}
+
 export type LeaveTypeLifecycleResult =
-  | { status: 'deactivated'; leaveTypeId: string; hasHistory: boolean }
+  | { status: 'deactivated'; leaveTypeId: string; hasHistory: boolean; eventId: string }
   | { status: 'already_inactive'; leaveTypeId: string }
-  | { status: 'restored'; leaveTypeId: string }
+  | { status: 'restored'; leaveTypeId: string; eventId: string }
   | { status: 'already_active'; leaveTypeId: string }
+
+export const DEACTIVATE_LEAVE_TYPE_REASON_MAX_LENGTH = 500
 
 export type LeaveTypeLifecycleErrorMapping = {
   toastKey: string
@@ -91,6 +104,17 @@ const PULS_LEAVE_TYPE_LIFECYCLE_ERROR_MAP: Record<string, string> = {
   PULS_LEAVE_TYPE_IN_USE_ACTIVE_REQUESTS: 'leaveTypeSetup.lifecycle.errors.activeRequests',
   PULS_LEAVE_TYPE_NOT_FOUND: 'leaveTypeSetup.lifecycle.errors.notFound',
   PULS_LEAVE_TYPE_FORBIDDEN: 'leaveTypeSetup.lifecycle.errors.forbidden',
+  PULS_LEAVE_TYPE_LIFECYCLE_REASON_TOO_LONG: 'leaveTypeSetup.lifecycleAudit.reasonTooLong',
+}
+
+export function normalizeDeactivateLeaveTypeReason(value: string | null | undefined): string | null {
+  const normalized = value?.trim()
+  return normalized ? normalized : null
+}
+
+export function isDeactivateLeaveTypeReasonTooLong(value: string | null | undefined): boolean {
+  const normalized = normalizeDeactivateLeaveTypeReason(value)
+  return normalized != null && normalized.length > DEACTIVATE_LEAVE_TYPE_REASON_MAX_LENGTH
 }
 
 export function applyLeaveTypeLifecycleFilter<
@@ -131,15 +155,28 @@ export function parseLeaveTypeLifecycleRpcResult(data: unknown): LeaveTypeLifecy
   const status = row.status as LeaveTypeLifecycleResult['status']
   const leaveTypeId = row.leave_type_id as string
 
+  function requireEventId(): string {
+    const raw = row.event_id
+    if (typeof raw === 'string' && raw.trim().length > 0) {
+      return raw
+    }
+    throw new Error(`Missing event_id for lifecycle RPC status: ${String(status)}`)
+  }
+
   switch (status) {
     case 'deactivated':
       return {
         status: 'deactivated',
         leaveTypeId,
         hasHistory: Boolean(row.has_history),
+        eventId: requireEventId(),
       }
     case 'restored':
-      return { status: 'restored', leaveTypeId }
+      return {
+        status: 'restored',
+        leaveTypeId,
+        eventId: requireEventId(),
+      }
     case 'already_inactive':
       return { status: 'already_inactive', leaveTypeId }
     case 'already_active':
@@ -149,9 +186,23 @@ export function parseLeaveTypeLifecycleRpcResult(data: unknown): LeaveTypeLifecy
   }
 }
 
+export function mapLeaveTypeLifecycleEventRow(
+  row: Record<string, unknown>,
+): LeaveTypeLifecycleEvent {
+  return {
+    id: row.id as string,
+    leaveTypeId: row.leave_type_id as string,
+    action: row.action as LeaveTypeLifecycleEventAction,
+    reason: (row.reason as string | null) ?? null,
+    actorRole: (row.actor_role as string | null) ?? null,
+    occurredAt: row.occurred_at as string,
+  }
+}
+
 export async function deactivateLeaveType(
   userId: string,
   leaveTypeId: string,
+  reason?: string | null,
 ): Promise<LeaveTypeLifecycleResult> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) {
@@ -160,6 +211,7 @@ export async function deactivateLeaveType(
 
   const { data, error } = await pulsWorkflow().rpc('deactivate_leave_type', {
     p_leave_type_id: leaveTypeId,
+    p_reason: normalizeDeactivateLeaveTypeReason(reason ?? ''),
   })
 
   if (error) {
@@ -187,6 +239,38 @@ export async function restoreLeaveType(
   }
 
   return parseLeaveTypeLifecycleRpcResult(data)
+}
+
+export async function fetchLeaveTypeLifecycleEvents(
+  userId: string,
+  leaveTypeId: string,
+  limit = 5,
+): Promise<LeaveTypeLifecycleEvent[]> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    return []
+  }
+
+  const { data, error } = await pulsWorkflow()
+    .from('leave_type_lifecycle_events')
+    .select('id, leave_type_id, action, reason, actor_role, occurred_at')
+    .eq('leave_type_id', leaveTypeId)
+    .order('occurred_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'fetchLeaveTypeLifecycleEvents',
+      'puls_workflow',
+      'leave_type_lifecycle_events',
+    )
+  }
+
+  return (data ?? []).map((row) =>
+    mapLeaveTypeLifecycleEventRow(row as Record<string, unknown>),
+  )
 }
 
 export { normalizeLeaveTypeCode }
