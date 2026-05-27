@@ -108,6 +108,33 @@ function formatExpenseDate(isoDate: string, locale: string): string {
   )
 }
 
+function ClaimCategoryLine({
+  category,
+  categoryIsActive,
+  expenseDate,
+  locale,
+  t,
+}: {
+  category: string
+  categoryIsActive?: boolean
+  expenseDate: string
+  locale: string
+  t: ReturnType<typeof useTranslation>['t']
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-muted-foreground">
+      <span>
+        {category} · {formatExpenseDate(expenseDate, locale)}
+      </span>
+      {categoryIsActive === false ? (
+        <StatusPill tone="neutral" className="text-[10px]">
+          {t('expenseSetup.categoryLifecycle.inactiveCategoryBadge')}
+        </StatusPill>
+      ) : null}
+    </div>
+  )
+}
+
 function validateExpenseForm(
   category: string,
   amount: string,
@@ -346,9 +373,13 @@ function RecentTab({ claims, locale, t }: RecentTabProps) {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14px] font-medium text-foreground">{claim.title}</div>
-                <div className="text-[12px] text-muted-foreground">
-                  {claim.category} · {formatExpenseDate(claim.expenseDate, locale)}
-                </div>
+                <ClaimCategoryLine
+                  category={claim.category}
+                  categoryIsActive={claim.categoryIsActive}
+                  expenseDate={claim.expenseDate}
+                  locale={locale}
+                  t={t}
+                />
               </div>
               <div className="flex w-[110px] shrink-0 flex-col items-end gap-1">
                 <div className="text-[14px] font-semibold tabular text-foreground">
@@ -428,9 +459,13 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
                 <div className="truncate text-[14px] font-medium text-foreground">
                   {approval.employeeName} · {approval.title}
                 </div>
-                <div className="text-[12px] text-muted-foreground">
-                  {approval.category} · {formatExpenseDate(approval.expenseDate, locale)}
-                </div>
+                <ClaimCategoryLine
+                  category={approval.category}
+                  categoryIsActive={approval.categoryIsActive}
+                  expenseDate={approval.expenseDate}
+                  locale={locale}
+                  t={t}
+                />
               </div>
               <div className="shrink-0 text-right">
                 <div className="text-[14px] font-semibold tabular text-foreground">
@@ -611,6 +646,7 @@ function ExpenseFormSheet({
   }
 
   const isSubmitting = createMutation.isPending
+  const hasActiveCategories = (data?.categoryLimits.length ?? 0) > 0
 
   return (
     <SheetShell
@@ -633,7 +669,7 @@ function ExpenseFormSheet({
             type="submit"
             form="new-expense-form"
             className="min-h-11 flex-1"
-            disabled={isSubmitting || !data}
+            disabled={isSubmitting || !data || !hasActiveCategories}
           >
             {isSubmitting ? (
               <>
@@ -684,6 +720,11 @@ function ExpenseFormSheet({
               </option>
             ))}
           </select>
+          {!hasActiveCategories ? (
+            <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+              {t('expenseSetup.categoryLifecycle.noActiveCategories')}
+            </p>
+          ) : null}
         </FormField>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_110px]">

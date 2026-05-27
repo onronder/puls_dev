@@ -11,6 +11,25 @@ import { resolveAdapterData } from '#/lib/data/result'
 
 export type ExpenseOverview = DemoExpenseOverview
 
+export type ExpenseClaimCategoryJoin = {
+  name?: string
+  is_active?: boolean
+} | null
+
+export function mapClaimCategoryFromJoin(join: ExpenseClaimCategoryJoin | undefined): {
+  category: string
+  categoryIsActive: boolean
+} {
+  if (!join?.name) {
+    return { category: '—', categoryIsActive: true }
+  }
+
+  return {
+    category: join.name,
+    categoryIsActive: join.is_active !== false,
+  }
+}
+
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -64,7 +83,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
         currency,
         expense_date,
         status,
-        expense_categories ( name )
+        expense_categories ( name, is_active )
       `,
       )
       .eq('tenant_id', ctx.tenantId)
@@ -144,12 +163,12 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
     (claimRows.data ?? []).map((row) => row.category_id as string | null),
   )
 
-  const categoryNameMap =
+  const categoryMetaMap =
     categoryIds.length > 0
       ? await (async () => {
           const { data, error } = await pulsWorkflow()
             .from('expense_categories')
-            .select('id, name')
+            .select('id, name, is_active')
             .eq('tenant_id', ctx.tenantId)
             .in('id', categoryIds)
 
@@ -162,9 +181,17 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
             )
           }
 
-          return new Map((data ?? []).map((row) => [row.id as string, row.name as string]))
+          return new Map(
+            (data ?? []).map((row) => [
+              row.id as string,
+              {
+                name: row.name as string,
+                isActive: Boolean(row.is_active),
+              },
+            ]),
+          )
         })()
-      : new Map<string, string>()
+      : new Map<string, { name: string; isActive: boolean }>()
 
   const claimById = new Map((claimRows.data ?? []).map((row) => [row.id as string, row]))
 
@@ -176,11 +203,14 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
     monthlyLimit > 0 ? Math.round((approvedThisMonth / monthlyLimit) * 100) : 0
 
   const claims: DemoExpenseClaim[] = (claimsRow.data ?? []).map((row) => {
-    const category = row.expense_categories as { name?: string } | null
+    const categoryJoin = row.expense_categories as ExpenseClaimCategoryJoin
+    const mapped = mapClaimCategoryFromJoin(categoryJoin)
+
     return {
       id: row.id as string,
       title: row.title as string,
-      category: category?.name ?? '—',
+      category: mapped.category,
+      categoryIsActive: mapped.categoryIsActive ? undefined : false,
       amount: Number(row.amount ?? 0),
       currency: (row.currency as string | null) ?? 'TRY',
       expenseDate: row.expense_date as string,
@@ -221,7 +251,9 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
     if (!claim) return []
 
     const employeeName = requesterNameMap.get(row.requester_employee_id as string) ?? '—'
-    const category = categoryNameMap.get(claim.category_id as string) ?? '—'
+    const categoryMeta = categoryMetaMap.get(claim.category_id as string)
+    const category = categoryMeta?.name ?? '—'
+    const categoryIsActive = categoryMeta?.isActive ?? true
 
     return [
       {
@@ -230,6 +262,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
         initials: getInitials(employeeName),
         title: claim.title as string,
         category,
+        categoryIsActive: categoryIsActive ? undefined : false,
         amount: Number(claim.amount ?? 0),
         expenseDate: claim.expense_date as string,
         currency: (claim.currency as string | null) ?? undefined,

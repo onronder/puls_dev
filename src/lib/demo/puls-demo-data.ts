@@ -44,6 +44,7 @@ export type DemoExpenseClaim = {
   id: string
   title: string
   category: string
+  categoryIsActive?: boolean
   amount: number
   currency: string
   expenseDate: string
@@ -77,6 +78,7 @@ export type DemoExpenseApproval = {
   initials: string
   title: string
   category: string
+  categoryIsActive?: boolean
   amount: number
   expenseDate: string
   currency?: string
@@ -286,6 +288,16 @@ const demoExpenseOverview: DemoExpenseOverview = {
       currency: 'TRY',
       expenseDate: '2026-04-28',
       status: 'approved',
+    },
+    {
+      id: 'ex-inactive-cat',
+      title: 'Eski eğitim sertifikası',
+      category: 'Eski eğitim',
+      categoryIsActive: false,
+      amount: 890,
+      currency: 'TRY',
+      expenseDate: '2026-03-15',
+      status: 'exported',
     },
   ],
   categories: [
