@@ -164,7 +164,12 @@ if ((${#CHANGED_SRC_FILES[@]} > 0)); then
   scan_forbidden_in_src 'push.*erp' 'push-erp-en'
   scan_forbidden_in_src 'supabase\.functions\.invoke' 'supabase-functions-invoke'
   scan_forbidden_in_src 'DELETE FROM puls_workflow\.leave_types' 'leave-type-delete'
-  scan_forbidden_in_src 'deactivate_leave_type|restore_leave_type' 'leave-lifecycle-rpc'
+  if [[ -f supabase/migrations/20260525180000_puls_workflow_leave_type_lifecycle.sql ]] || \
+     git show "HEAD:supabase/migrations/20260525180000_puls_workflow_leave_type_lifecycle.sql" >/dev/null 2>&1; then
+    : # PR10.12 lifecycle branch: deactivate/restore adapters are expected in src
+  else
+    scan_forbidden_in_src 'deactivate_leave_type|restore_leave_type' 'leave-lifecycle-rpc'
+  fi
 fi
 
 echo "OK: PR10.11 leave type guardrails checks passed for ${REF}"

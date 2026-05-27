@@ -14,6 +14,18 @@ import {
 
 export type LeaveTypesOverview = DemoLeaveTypesOverview
 
+export type LeaveTypeLifecycleFilter = 'active' | 'inactive' | 'all'
+
+export type LeaveTypeLifecycleResult =
+  | { status: 'deactivated'; leaveTypeId: string; hasHistory: boolean }
+  | { status: 'already_inactive'; leaveTypeId: string }
+  | { status: 'restored'; leaveTypeId: string }
+  | { status: 'already_active'; leaveTypeId: string }
+
+export type LeaveTypeLifecycleErrorMapping = {
+  toastKey: string
+}
+
 export type LeaveTypeMutationInput = {
   name: string
   code: string
@@ -73,6 +85,108 @@ const PULS_LEAVE_TYPE_ERROR_MAP: Record<
     field: 'approvalPolicyId',
     i18nKey: 'leaveTypeSetup.validation.policyModuleInvalid',
   },
+}
+
+const PULS_LEAVE_TYPE_LIFECYCLE_ERROR_MAP: Record<string, string> = {
+  PULS_LEAVE_TYPE_IN_USE_ACTIVE_REQUESTS: 'leaveTypeSetup.lifecycle.errors.activeRequests',
+  PULS_LEAVE_TYPE_NOT_FOUND: 'leaveTypeSetup.lifecycle.errors.notFound',
+  PULS_LEAVE_TYPE_FORBIDDEN: 'leaveTypeSetup.lifecycle.errors.forbidden',
+}
+
+export function applyLeaveTypeLifecycleFilter<
+  T extends { isActive: boolean },
+>(items: T[], filter: LeaveTypeLifecycleFilter): T[] {
+  switch (filter) {
+    case 'active':
+      return items.filter((item) => item.isActive)
+    case 'inactive':
+      return items.filter((item) => !item.isActive)
+    default:
+      return items
+  }
+}
+
+export function mapLeaveTypeLifecycleError(error: unknown): LeaveTypeLifecycleErrorMapping {
+  const fallback: LeaveTypeLifecycleErrorMapping = {
+    toastKey: 'leaveTypeSetup.lifecycle.errors.generic',
+  }
+
+  if (!isDataAdapterError(error)) {
+    return fallback
+  }
+
+  const pulsCode = parseRpcErrorCode(error.message)
+  if (pulsCode) {
+    const mapped = PULS_LEAVE_TYPE_LIFECYCLE_ERROR_MAP[pulsCode]
+    if (mapped) {
+      return { toastKey: mapped }
+    }
+  }
+
+  return fallback
+}
+
+export function parseLeaveTypeLifecycleRpcResult(data: unknown): LeaveTypeLifecycleResult {
+  const row = data as Record<string, unknown>
+  const status = row.status as LeaveTypeLifecycleResult['status']
+  const leaveTypeId = row.leave_type_id as string
+
+  switch (status) {
+    case 'deactivated':
+      return {
+        status: 'deactivated',
+        leaveTypeId,
+        hasHistory: Boolean(row.has_history),
+      }
+    case 'restored':
+      return { status: 'restored', leaveTypeId }
+    case 'already_inactive':
+      return { status: 'already_inactive', leaveTypeId }
+    case 'already_active':
+      return { status: 'already_active', leaveTypeId }
+    default:
+      throw new Error(`Unexpected lifecycle RPC status: ${String(status)}`)
+  }
+}
+
+export async function deactivateLeaveType(
+  userId: string,
+  leaveTypeId: string,
+): Promise<LeaveTypeLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsWorkflow().rpc('deactivate_leave_type', {
+    p_leave_type_id: leaveTypeId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(error, 'deactivateLeaveType', 'puls_workflow', 'leave_types')
+  }
+
+  return parseLeaveTypeLifecycleRpcResult(data)
+}
+
+export async function restoreLeaveType(
+  userId: string,
+  leaveTypeId: string,
+): Promise<LeaveTypeLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsWorkflow().rpc('restore_leave_type', {
+    p_leave_type_id: leaveTypeId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(error, 'restoreLeaveType', 'puls_workflow', 'leave_types')
+  }
+
+  return parseLeaveTypeLifecycleRpcResult(data)
 }
 
 export { normalizeLeaveTypeCode }
@@ -147,6 +261,7 @@ function mapLeaveTypeRow(
     carry_over_allowed: boolean
     max_carry_over_days: number | null
     approval_policy_id: string | null
+    is_active: boolean
     approval_policies:
       | { name: string; module: string; is_active: boolean }
       | { name: string; module: string; is_active: boolean }[]
@@ -185,6 +300,7 @@ function mapLeaveTypeRow(
       policyIsActive: policyMeta.policyIsActive,
       requiredStepCount,
     }),
+    isActive: Boolean(row.is_active),
   }
 }
 
@@ -195,10 +311,9 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
   const { data, error } = await pulsWorkflow()
     .from('leave_types')
     .select(
-      'id, code, name, default_entitlement_days, is_paid, requires_document, carry_over_allowed, max_carry_over_days, approval_policy_id, approval_policies ( name, module, is_active )',
+      'id, code, name, default_entitlement_days, is_paid, requires_document, carry_over_allowed, max_carry_over_days, approval_policy_id, is_active, approval_policies ( name, module, is_active )',
     )
     .eq('tenant_id', ctx.tenantId)
-    .eq('is_active', true)
     .order('name', { ascending: true })
 
   if (error) {
@@ -252,6 +367,7 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
         carry_over_allowed: row.carry_over_allowed as boolean,
         max_carry_over_days: row.max_carry_over_days as number | null,
         approval_policy_id: row.approval_policy_id as string | null,
+        is_active: row.is_active as boolean,
         approval_policies: row.approval_policies as
           | { name: string; module: string; is_active: boolean }
           | { name: string; module: string; is_active: boolean }[]
@@ -261,13 +377,16 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
     ),
   )
 
+  const activeLeaveTypes = leaveTypes.filter((row) => row.isActive)
   const maxApprovalStepCount =
-    leaveTypes.length > 0 ? Math.max(...leaveTypes.map((row) => row.approvalStepCount)) : 0
+    activeLeaveTypes.length > 0
+      ? Math.max(...activeLeaveTypes.map((row) => row.approvalStepCount))
+      : 0
 
   return {
-    typeCount: leaveTypes.length,
-    paidCount: leaveTypes.filter((row) => row.paid).length,
-    docRequiredCount: leaveTypes.filter((row) => row.doc).length,
+    typeCount: activeLeaveTypes.length,
+    paidCount: activeLeaveTypes.filter((row) => row.paid).length,
+    docRequiredCount: activeLeaveTypes.filter((row) => row.doc).length,
     maxApprovalStepCount,
     leaveTypes,
   }

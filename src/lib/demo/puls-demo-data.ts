@@ -16,6 +16,7 @@ export type DemoLeaveBalance = {
 export type DemoLeaveRequest = {
   id: string
   typeLabel: string
+  typeIsActive: boolean
   startDate: string
   endDate: string
   businessDays: number
@@ -29,6 +30,7 @@ export type DemoUpcomingLeave = {
   whoName: string
   isSelf?: boolean
   typeLabel: string
+  typeIsActive: boolean
   startDate: string
   endDate: string
   businessDays: number
@@ -40,6 +42,7 @@ export type DemoLeaveApproval = {
   employeeName: string
   initials: string
   typeLabel: string
+  typeIsActive: boolean
   startDate: string
   endDate: string
   businessDays: number
@@ -135,6 +138,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
     {
       id: 'lr-1',
       typeLabel: 'Yıllık İzin',
+      typeIsActive: true,
       startDate: '2026-05-12',
       endDate: '2026-05-14',
       businessDays: 3,
@@ -145,6 +149,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
     {
       id: 'lr-2',
       typeLabel: 'Mazeret İzni',
+      typeIsActive: true,
       startDate: '2026-04-28',
       endDate: '2026-04-28',
       businessDays: 1,
@@ -154,6 +159,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
     {
       id: 'lr-3',
       typeLabel: 'Yıllık İzin',
+      typeIsActive: true,
       startDate: '2026-06-02',
       endDate: '2026-06-06',
       businessDays: 5,
@@ -162,10 +168,21 @@ const demoLeaveOverview: DemoLeaveOverview = {
     {
       id: 'lr-4',
       typeLabel: 'Yıllık İzin',
+      typeIsActive: true,
       startDate: '2026-03-20',
       endDate: '2026-03-22',
       businessDays: 3,
       status: 'rejected',
+      approverName: 'Demo İK Yöneticisi',
+    },
+    {
+      id: 'lr-5',
+      typeLabel: 'Eski İdari İzin',
+      typeIsActive: false,
+      startDate: '2025-11-10',
+      endDate: '2025-11-11',
+      businessDays: 1,
+      status: 'approved',
       approverName: 'Demo İK Yöneticisi',
     },
   ],
@@ -175,6 +192,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
       whoName: 'Sen',
       isSelf: true,
       typeLabel: 'Yıllık izin',
+      typeIsActive: true,
       startDate: '2026-06-02',
       endDate: '2026-06-06',
       businessDays: 5,
@@ -184,6 +202,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
       id: 'ul-2',
       whoName: 'Ayşe K.',
       typeLabel: 'Mazeret',
+      typeIsActive: true,
       startDate: '2026-05-25',
       endDate: '2026-05-25',
       businessDays: 1,
@@ -193,6 +212,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
       id: 'ul-3',
       whoName: 'Murat T.',
       typeLabel: 'Yıllık',
+      typeIsActive: true,
       startDate: '2026-06-10',
       endDate: '2026-06-12',
       businessDays: 3,
@@ -205,6 +225,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
       employeeName: 'Ayşe Kaya',
       initials: 'AK',
       typeLabel: 'Yıllık',
+      typeIsActive: true,
       startDate: '2026-06-02',
       endDate: '2026-06-06',
       businessDays: 5,
@@ -214,6 +235,7 @@ const demoLeaveOverview: DemoLeaveOverview = {
       employeeName: 'Murat Tan',
       initials: 'MT',
       typeLabel: 'Mazeret',
+      typeIsActive: true,
       startDate: '2026-05-28',
       endDate: '2026-05-28',
       businessDays: 1,
@@ -597,14 +619,16 @@ export type DemoLeaveTypeRule = {
   approvalPolicyName?: string | null
   approvalStepCount: number
   approvalPolicy: ApprovalPolicyBindingInfo
+  isActive: boolean
 }
 
 function attachLeaveApprovalPolicy(
-  rule: Omit<DemoLeaveTypeRule, 'approvalPolicy' | 'days'>,
+  rule: Omit<DemoLeaveTypeRule, 'approvalPolicy' | 'days' | 'isActive'> & { isActive?: boolean },
 ): DemoLeaveTypeRule {
   const policyId = rule.approvalPolicyId ?? null
   return {
     ...rule,
+    isActive: rule.isActive ?? true,
     days: rule.defaultEntitlementDays ?? 0,
     approvalPolicy: buildApprovalPolicyBindingInfo({
       expectedModule: 'leave',
@@ -740,6 +764,19 @@ const demoLeaveTypesOverview: DemoLeaveTypesOverview = {
       approvalPolicyId: 'demo-leave-policy',
       approvalPolicyName: 'İzin onay — standart',
       approvalStepCount: 1,
+    }),
+    attachLeaveApprovalPolicy({
+      id: 'eski-idari',
+      code: 'legacy_admin',
+      name: 'Eski İdari İzin',
+      labelKey: 'leaveTypeSetup.types.administrative',
+      defaultEntitlementDays: 5,
+      paid: true,
+      doc: false,
+      carryOver: false,
+      maxCarryOverDays: null,
+      approvalStepCount: 1,
+      isActive: false,
     }),
   ],
 }

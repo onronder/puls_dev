@@ -105,6 +105,32 @@ function formatUpcomingBadge(isoDate: string, locale: string): { month: string; 
   return { month, day }
 }
 
+function LeaveTypeLine({
+  typeLabel,
+  typeIsActive,
+  suffix,
+  t,
+}: {
+  typeLabel: string
+  typeIsActive: boolean
+  suffix?: string
+  t: ReturnType<typeof useTranslation>['t']
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="truncate text-[14px] font-medium text-foreground">
+        {typeLabel}
+        {suffix ? ` · ${suffix}` : null}
+      </span>
+      {typeIsActive === false ? (
+        <StatusPill tone="neutral" className="text-[10px]">
+          {t('leaveSetup.typeLifecycle.inactiveTypeBadge')}
+        </StatusPill>
+      ) : null}
+    </div>
+  )
+}
+
 function computeRequestedDays(startDate: string, endDate: string, halfDay: boolean): number {
   if (!startDate || !endDate || endDate < startDate) return 0
   if (halfDay) {
@@ -309,9 +335,11 @@ function MineTab({ upcoming, requests, locale, t }: MineTabProps) {
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-medium text-foreground">
-                      {item.whoName} · {item.typeLabel}
-                    </div>
+                    <LeaveTypeLine
+                      typeLabel={`${item.whoName} · ${item.typeLabel}`}
+                      typeIsActive={item.typeIsActive}
+                      t={t}
+                    />
                     <div className="text-[12px] text-muted-foreground">
                       {formatDateRange(item.startDate, item.endDate, locale)} · {item.businessDays}{' '}
                       {t('common.days')}
@@ -341,14 +369,19 @@ function MineTab({ upcoming, requests, locale, t }: MineTabProps) {
                   <CalendarDays className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-medium text-foreground">
-                    {request.typeLabel} ·{' '}
-                    <span className="tabular">
-                      {request.businessDays} {t('common.days')}
-                    </span>
-                  </div>
+                  <LeaveTypeLine
+                    typeLabel={request.typeLabel}
+                    typeIsActive={request.typeIsActive}
+                    suffix={`${request.businessDays} ${t('common.days')}`}
+                    t={t}
+                  />
                   <div className="text-[12px] text-muted-foreground">
                     {formatDateRange(request.startDate, request.endDate, locale)}
+                    {request.typeIsActive === false ? (
+                      <span className="mt-0.5 block text-[11px] text-muted-foreground/80">
+                        {t('leaveSetup.typeLifecycle.inactiveTypeHint')}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <StatusPill tone={leaveStatusTone(request.status)}>
@@ -425,9 +458,11 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
                 {approval.initials}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-medium text-foreground">
-                  {approval.employeeName} · {approval.typeLabel}
-                </div>
+                <LeaveTypeLine
+                  typeLabel={`${approval.employeeName} · ${approval.typeLabel}`}
+                  typeIsActive={approval.typeIsActive}
+                  t={t}
+                />
                 <div className="text-[12px] text-muted-foreground">
                   {formatDateRange(approval.startDate, approval.endDate, locale)} ·{' '}
                   <span className="tabular">
@@ -559,6 +594,7 @@ function LeaveFormSheet({
   const isAnnualType = resolvedLeaveType?.code === 'annual'
   const balanceAfter = isAnnualType ? annualRemaining - requestedDays : annualRemaining
   const requiresDocument = resolvedLeaveType?.requiresDocument ?? false
+  const hasActiveLeaveTypes = (data?.leaveTypes.length ?? 0) > 0
   const selectedTypeLabel = resolvedLeaveType?.label ?? t('leave.types.annual')
   const balanceIsNegative = isAnnualType && balanceAfter < 0
 
@@ -627,7 +663,7 @@ function LeaveFormSheet({
             type="submit"
             form="new-leave-form"
             className="min-h-11 flex-1"
-            disabled={isSubmitting || !data || !resolvedLeaveType || requiresDocument || halfDayBlocked}
+            disabled={isSubmitting || !hasActiveLeaveTypes || !resolvedLeaveType || requiresDocument || halfDayBlocked}
           >
             {isSubmitting ? (
               <>
@@ -666,6 +702,11 @@ function LeaveFormSheet({
               </button>
             ))}
           </div>
+          {!hasActiveLeaveTypes ? (
+            <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+              {t('leaveSetup.typeLifecycle.noActiveLeaveTypes')}
+            </p>
+          ) : null}
         </FormField>
 
         {requiresDocument ? (

@@ -497,6 +497,11 @@
       "approvedDesc": "{{name}} leave request approved.",
       "rejectedTitle": "Rejected",
       "rejectedDesc": "{{name}} leave request rejected."
+    },
+    "typeLifecycle": {
+      "inactiveTypeBadge": "Inactive leave type",
+      "inactiveTypeHint": "This record belongs to a deactivated leave type.",
+      "noActiveLeaveTypes": "An active leave type must be configured before creating a new leave request."
     }
   },
   "expense": {
@@ -866,13 +871,15 @@
       "docRequiredCount": "Document required",
       "approvalFlow": "Approval flow",
       "approvalFlowValue": "{{count}} level",
-      "approvalFlowValue_other": "{{count}} levels"
+      "approvalFlowValue_other": "{{count}} levels",
+      "activeOnlyHint": "Active leave types only"
     },
     "sections": {
       "list": "Leave types"
     },
     "columns": {
       "label": "Leave type",
+      "status": "Status",
       "days": "Days",
       "paid": "Pay",
       "doc": "Document",
@@ -903,6 +910,43 @@
     },
     "actions": {
       "add": "Add leave type"
+    },
+    "lifecycle": {
+      "filter": {
+        "ariaLabel": "Leave type status filter",
+        "active": "Active",
+        "inactive": "Inactive",
+        "all": "All"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "deactivate": "Deactivate",
+        "restore": "Restore",
+        "restoring": "Restoring"
+      },
+      "confirm": {
+        "deactivate": "Deactivate this leave type? It will be hidden from new leave requests; historical records remain readable.",
+        "restore": "Restore this leave type?"
+      },
+      "toast": {
+        "deactivated": "Leave type deactivated.",
+        "alreadyInactive": "Leave type is already inactive.",
+        "restored": "Leave type restored.",
+        "alreadyActive": "Leave type is already active."
+      },
+      "errors": {
+        "activeRequests": "This leave type has draft, pending, or current approved leave requests. Close or move them first.",
+        "notFound": "Leave type not found.",
+        "forbidden": "You do not have permission for this action.",
+        "generic": "Could not update leave type status."
+      },
+      "sheet": {
+        "inactiveTitle": "Inactive leave type",
+        "inactiveDescription": "This leave type is inactive. Historical leave records remain readable; it cannot be selected for new requests."
+      }
     },
     "validation": {
       "nameRequired": "Leave type name is required.",

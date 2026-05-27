@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, Check, FileCheck2, Loader2, Plus, Save, Workflow, X } from 'lucide-react'
+import { CalendarDays, Check, FileCheck2, Loader2, Plus, Save, Workflow, X, Archive, RotateCcw } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { Segmented } from '#/components/puls/Segmented'
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { ApprovalPolicyBindingSection } from '#/components/puls/ApprovalPolicyBindingSection'
 import { DataList } from '#/components/puls/DataList'
@@ -20,19 +21,24 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  applyLeaveTypeLifecycleFilter,
   buildApprovalPolicyBindingInfo,
   createLeaveType,
+  deactivateLeaveType,
   fetchApprovalPoliciesOverview,
   fetchLeaveTypesOverview,
   isLeaveTypeFormDirty,
+  mapLeaveTypeLifecycleError,
   mapLeaveTypeMutationError,
   normalizeLeaveTypeCode,
+  restoreLeaveType,
   updateLeaveType,
   validateLeaveTypeForm,
   type ApprovalPolicyBindingInfo,
   type ApprovalPolicyOverviewItem,
   type LeaveTypeFieldKey,
   type LeaveTypeFormFields,
+  type LeaveTypeLifecycleFilter,
   type LeaveTypesOverview,
 } from '#/lib/data'
 import { cn } from '#/lib/utils'
@@ -60,7 +66,7 @@ function IzinTanimlariRoute() {
 
 const LEAVE_TYPE_SKELETON_COUNT = 4
 const LEAVE_TYPE_TABLE_GRID_COLS =
-  'grid-cols-[minmax(0,1.1fr)_56px_minmax(0,88px)_minmax(0,88px)_72px]'
+  'grid-cols-[minmax(0,1fr)_72px_56px_minmax(0,88px)_minmax(0,88px)_72px]'
 
 type LeaveTypeRule = LeaveTypesOverview['leaveTypes'][number]
 
@@ -177,6 +183,19 @@ function resolveFormBinding(
   })
 }
 
+function LeaveTypeStatusPill({ isActive }: { isActive: boolean }) {
+  const { t } = useTranslation()
+  return (
+    <StatusPill tone={isActive ? 'success' : 'neutral'}>
+      {t(
+        isActive
+          ? 'leaveTypeSetup.lifecycle.status.active'
+          : 'leaveTypeSetup.lifecycle.status.inactive',
+      )}
+    </StatusPill>
+  )
+}
+
 type LeaveTypeCellsProps = {
   rule: LeaveTypeRule
 }
@@ -229,6 +248,7 @@ function IzinTanimlariPage() {
   const [leaveTypeForm, setLeaveTypeForm] = useState<LeaveTypeFormFields>(EMPTY_LEAVE_TYPE_FORM)
   const [formBaseline, setFormBaseline] = useState<LeaveTypeFormFields | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<LeaveTypeFieldKey, string>>>({})
+  const [lifecycleFilter, setLifecycleFilter] = useState<LeaveTypeLifecycleFilter>('active')
 
   const { data, isLoading } = useQuery({
     queryKey: ['leave-types-overview', user?.id],
@@ -286,12 +306,64 @@ function IzinTanimlariPage() {
     },
   })
 
+  const deactivateMutation = useMutation({
+    mutationFn: (leaveTypeId: string) => {
+      if (!user?.id) throw new Error('Missing user')
+      return deactivateLeaveType(user.id, leaveTypeId)
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ['leave-types-overview', user?.id] })
+      resetLeaveTypeSheetState()
+      toast.success(
+        t(
+          result.status === 'deactivated'
+            ? 'leaveTypeSetup.lifecycle.toast.deactivated'
+            : 'leaveTypeSetup.lifecycle.toast.alreadyInactive',
+        ),
+      )
+    },
+    onError: (error) => {
+      const mapped = mapLeaveTypeLifecycleError(error)
+      toast.error(t(mapped.toastKey))
+    },
+  })
+
+  const restoreMutation = useMutation({
+    mutationFn: (leaveTypeId: string) => {
+      if (!user?.id) throw new Error('Missing user')
+      return restoreLeaveType(user.id, leaveTypeId)
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ['leave-types-overview', user?.id] })
+      resetLeaveTypeSheetState()
+      toast.success(
+        t(
+          result.status === 'restored'
+            ? 'leaveTypeSetup.lifecycle.toast.restored'
+            : 'leaveTypeSetup.lifecycle.toast.alreadyActive',
+        ),
+      )
+    },
+    onError: (error) => {
+      const mapped = mapLeaveTypeLifecycleError(error)
+      toast.error(t(mapped.toastKey))
+    },
+  })
+
   const sheetMode = editingLeaveType ? 'edit' : 'create'
+  const isInactiveLeaveTypeSheet = Boolean(editingLeaveType && !editingLeaveType.isActive)
+  const isDeactivatingLeaveType = deactivateMutation.isPending
+  const isRestoringLeaveType = restoreMutation.isPending
+  const isLifecyclePending = isDeactivatingLeaveType || isRestoringLeaveType
+  const filteredLeaveTypes = applyLeaveTypeLifecycleFilter(data?.leaveTypes ?? [], lifecycleFilter)
+  const metricsHint =
+    lifecycleFilter === 'active' ? undefined : t('leaveTypeSetup.metrics.activeOnlyHint')
   const dirtyBaseline = formBaseline ?? EMPTY_LEAVE_TYPE_FORM
   const isLeaveTypeFormDirtyState = isLeaveTypeFormDirty(leaveTypeForm, dirtyBaseline)
   const isSaving = leaveTypeMutation.isPending
+  const isFormReadOnly = isSaving || isLifecyclePending || isInactiveLeaveTypeSheet
   const isSaveDisabled =
-    isSaving || (sheetMode === 'edit' && !isLeaveTypeFormDirtyState)
+    isSaving || isLifecyclePending || (sheetMode === 'edit' && !isLeaveTypeFormDirtyState)
   const normalizedCodePreview = normalizeLeaveTypeCode(leaveTypeForm.code)
 
   const policySelectOptions = useMemo(
@@ -394,6 +466,22 @@ function IzinTanimlariPage() {
     leaveTypeMutation.mutate(leaveTypeForm)
   }
 
+  function handleDeactivateLeaveType() {
+    if (!editingLeaveType?.isActive) return
+    if (!window.confirm(t('leaveTypeSetup.lifecycle.confirm.deactivate'))) {
+      return
+    }
+    deactivateMutation.mutate(editingLeaveType.id)
+  }
+
+  function handleRestoreLeaveType() {
+    if (!editingLeaveType || editingLeaveType.isActive) return
+    if (!window.confirm(t('leaveTypeSetup.lifecycle.confirm.restore'))) {
+      return
+    }
+    restoreMutation.mutate(editingLeaveType.id)
+  }
+
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
@@ -428,18 +516,21 @@ function IzinTanimlariPage() {
             compact
             label={t('leaveTypeSetup.metrics.typeCount')}
             value={String(data.typeCount)}
+            hint={metricsHint}
             icon={CalendarDays}
           />
           <MetricCard
             compact
             label={t('leaveTypeSetup.metrics.paidCount')}
             value={String(data.paidCount)}
+            hint={metricsHint}
             icon={Check}
           />
           <MetricCard
             compact
             label={t('leaveTypeSetup.metrics.docRequiredCount')}
             value={String(data.docRequiredCount)}
+            hint={metricsHint}
             icon={FileCheck2}
           />
           <MetricCard
@@ -448,6 +539,7 @@ function IzinTanimlariPage() {
             value={t('leaveTypeSetup.metrics.approvalFlowValue', {
               count: data.maxApprovalStepCount,
             })}
+            hint={metricsHint}
             icon={Workflow}
           />
         </div>
@@ -455,6 +547,18 @@ function IzinTanimlariPage() {
 
       <section>
         <SectionHeader title={t('leaveTypeSetup.sections.list')} />
+        <div className="mt-3 max-w-md">
+          <Segmented
+            ariaLabel={t('leaveTypeSetup.lifecycle.filter.ariaLabel')}
+            value={lifecycleFilter}
+            onChange={setLifecycleFilter}
+            options={[
+              { value: 'active', label: t('leaveTypeSetup.lifecycle.filter.active') },
+              { value: 'inactive', label: t('leaveTypeSetup.lifecycle.filter.inactive') },
+              { value: 'all', label: t('leaveTypeSetup.lifecycle.filter.all') },
+            ]}
+          />
+        </div>
         <div className="mt-3 md:hidden">
           {isLoading ? (
             <div className="space-y-2">
@@ -464,7 +568,7 @@ function IzinTanimlariPage() {
             </div>
           ) : (
             <DataList
-              items={(data?.leaveTypes ?? []).map((rule) => ({
+              items={filteredLeaveTypes.map((rule) => ({
                 id: rule.id,
                 title: rule.name,
                 subtitle: [
@@ -473,7 +577,12 @@ function IzinTanimlariPage() {
                 ]
                   .filter(Boolean)
                   .join(' · '),
-                trailing: <MobileRuleTrailing rule={rule} />,
+                trailing: (
+                  <div className="flex flex-col items-end gap-1">
+                    <LeaveTypeStatusPill isActive={rule.isActive} />
+                    <MobileRuleTrailing rule={rule} />
+                  </div>
+                ),
                 onClick: () => openEditLeaveTypeSheet(rule),
               }))}
             />
@@ -488,6 +597,7 @@ function IzinTanimlariPage() {
             )}
           >
             <div>{t('leaveTypeSetup.columns.label')}</div>
+            <div>{t('leaveTypeSetup.columns.status')}</div>
             <div className="text-right">{t('leaveTypeSetup.columns.days')}</div>
             <div>{t('leaveTypeSetup.columns.paid')}</div>
             <div>{t('leaveTypeSetup.columns.doc')}</div>
@@ -501,23 +611,28 @@ function IzinTanimlariPage() {
                     className={cn('grid items-center gap-3 px-4 py-3', LEAVE_TYPE_TABLE_GRID_COLS)}
                   >
                     <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-7 w-16 rounded-full" />
                     <Skeleton className="ml-auto h-4 w-8" />
                     <Skeleton className="h-7 w-16 rounded-full" />
                     <Skeleton className="h-7 w-16 rounded-full" />
                     <Skeleton className="h-4 w-10" />
                   </li>
                 ))
-              : (data?.leaveTypes ?? []).map((rule) => (
+              : filteredLeaveTypes.map((rule) => (
                   <li key={rule.id}>
                     <button
                       type="button"
                       className={cn(
                         'grid w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-bg-elevated)]',
                         LEAVE_TYPE_TABLE_GRID_COLS,
+                        !rule.isActive && 'opacity-70',
                       )}
                       onClick={() => openEditLeaveTypeSheet(rule)}
                     >
                       <div className="truncate text-sm font-medium">{rule.name}</div>
+                      <div>
+                        <LeaveTypeStatusPill isActive={rule.isActive} />
+                      </div>
                       <div className="text-right text-sm tabular-nums">{rule.days}</div>
                       <div>
                         <PaidCell rule={rule} />
@@ -538,42 +653,118 @@ function IzinTanimlariPage() {
       <SheetShell
         open={sheetOpen}
         onOpenChange={handleLeaveTypeSheetOpenChange}
-        title={t(
-          sheetMode === 'edit'
-            ? 'leaveTypeSetup.sheet.edit.title'
-            : 'leaveTypeSetup.sheet.create.title',
-        )}
-        description={t(
-          sheetMode === 'edit'
-            ? 'leaveTypeSetup.sheet.edit.description'
-            : 'leaveTypeSetup.sheet.create.description',
-        )}
+        title={
+          isInactiveLeaveTypeSheet
+            ? t('leaveTypeSetup.lifecycle.sheet.inactiveTitle')
+            : t(
+                sheetMode === 'edit'
+                  ? 'leaveTypeSetup.sheet.edit.title'
+                  : 'leaveTypeSetup.sheet.create.title',
+              )
+        }
+        description={
+          isInactiveLeaveTypeSheet
+            ? t('leaveTypeSetup.lifecycle.sheet.inactiveDescription')
+            : t(
+                sheetMode === 'edit'
+                  ? 'leaveTypeSetup.sheet.edit.description'
+                  : 'leaveTypeSetup.sheet.create.description',
+              )
+        }
         footer={
-          <div className="flex w-full flex-col gap-3 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              className="touch-target w-full sm:w-auto"
-              onClick={requestCloseLeaveTypeSheet}
-              disabled={isSaving}
-            >
-              <X className="h-4 w-4" />
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="leave-type-form"
-              className="touch-target w-full sm:flex-1"
-              disabled={isSaveDisabled}
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {t('leaveTypeSetup.sheet.submit')}
-            </Button>
-          </div>
+          isInactiveLeaveTypeSheet ? (
+            <div className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="touch-target min-h-11 flex-1"
+                onClick={requestCloseLeaveTypeSheet}
+                disabled={isRestoringLeaveType}
+              >
+                <X className="h-4 w-4" />
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                className="touch-target min-h-11 flex-1"
+                onClick={handleRestoreLeaveType}
+                disabled={isRestoringLeaveType}
+              >
+                {isRestoringLeaveType ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('leaveTypeSetup.lifecycle.actions.restoring')}
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4" />
+                    {t('leaveTypeSetup.lifecycle.actions.restore')}
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : sheetMode === 'edit' ? (
+            <div className="flex w-full flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                className="touch-target min-h-11 flex-1 border-[var(--color-danger)]/40 text-[var(--color-danger)] hover:bg-[color-mix(in_srgb,var(--color-danger)_8%,transparent)]"
+                onClick={handleDeactivateLeaveType}
+                disabled={isDeactivatingLeaveType || isSaving}
+              >
+                {isDeactivatingLeaveType ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('leaveTypeSetup.lifecycle.actions.deactivate')}
+                  </>
+                ) : (
+                  <>
+                    <Archive className="h-4 w-4" />
+                    {t('leaveTypeSetup.lifecycle.actions.deactivate')}
+                  </>
+                )}
+              </Button>
+              <Button
+                type="submit"
+                form="leave-type-form"
+                className="touch-target min-h-11 flex-1"
+                disabled={isSaveDisabled}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {t('leaveTypeSetup.sheet.submit')}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex w-full flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                className="touch-target w-full sm:w-auto"
+                onClick={requestCloseLeaveTypeSheet}
+                disabled={isSaving}
+              >
+                <X className="h-4 w-4" />
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                form="leave-type-form"
+                className="touch-target w-full sm:flex-1"
+                disabled={isSaveDisabled}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {t('leaveTypeSetup.sheet.submit')}
+              </Button>
+            </div>
+          )
         }
       >
         <form id="leave-type-form" className="space-y-4" onSubmit={handleLeaveTypeSubmit}>
@@ -589,6 +780,7 @@ function IzinTanimlariPage() {
               placeholder={t('leaveTypeSetup.sheet.placeholders.label')}
               value={leaveTypeForm.name}
               onChange={(event) => updateLeaveTypeForm('name', event.target.value)}
+              disabled={isFormReadOnly}
               aria-invalid={Boolean(fieldErrors.name) || undefined}
             />
           </FormField>
@@ -610,6 +802,7 @@ function IzinTanimlariPage() {
               placeholder={t('leaveTypeSetup.sheet.placeholders.code')}
               value={leaveTypeForm.code}
               onChange={(event) => updateLeaveTypeForm('code', event.target.value)}
+              disabled={isFormReadOnly}
               aria-invalid={Boolean(fieldErrors.code) || undefined}
             />
           </FormField>
@@ -628,6 +821,7 @@ function IzinTanimlariPage() {
               onChange={(event) =>
                 updateLeaveTypeForm('defaultEntitlementDays', event.target.value)
               }
+              disabled={isFormReadOnly}
               aria-invalid={Boolean(fieldErrors.defaultEntitlementDays) || undefined}
             />
           </FormField>
@@ -640,6 +834,7 @@ function IzinTanimlariPage() {
               onChange={(event) =>
                 updateLeaveTypeForm('requiresDocument', event.target.checked)
               }
+              disabled={isFormReadOnly}
               className="h-5 w-5 shrink-0 rounded border-[var(--color-border)] accent-[color:var(--color-primary)]"
             />
           </label>
@@ -652,6 +847,7 @@ function IzinTanimlariPage() {
               onChange={(event) =>
                 updateLeaveTypeForm('carryOverAllowed', event.target.checked)
               }
+              disabled={isFormReadOnly}
               className="h-5 w-5 shrink-0 rounded border-[var(--color-border)] accent-[color:var(--color-primary)]"
             />
           </label>
@@ -668,37 +864,40 @@ function IzinTanimlariPage() {
               placeholder={t('leaveTypeSetup.sheet.placeholders.maxCarryOverDays')}
               value={leaveTypeForm.maxCarryOverDays}
               onChange={(event) => updateLeaveTypeForm('maxCarryOverDays', event.target.value)}
-              disabled={!leaveTypeForm.carryOverAllowed}
+              disabled={isFormReadOnly || !leaveTypeForm.carryOverAllowed}
               aria-invalid={Boolean(fieldErrors.maxCarryOverDays) || undefined}
             />
           </FormField>
 
-          <FormField
-            label={t('leaveTypeSetup.sheet.fields.approvalPolicy')}
-            htmlFor="leave-type-policy"
-            error={translateFieldError(t, fieldErrors, 'approvalPolicyId')}
-          >
-            <select
-              id="leave-type-policy"
-              value={leaveTypeForm.approvalPolicyId ?? ''}
-              onChange={(event) =>
-                updateLeaveTypeForm(
-                  'approvalPolicyId',
-                  event.target.value ? event.target.value : null,
-                )
-              }
-              className="h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 text-base text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)]"
-              aria-invalid={Boolean(fieldErrors.approvalPolicyId) || undefined}
+          {!isInactiveLeaveTypeSheet ? (
+            <FormField
+              label={t('leaveTypeSetup.sheet.fields.approvalPolicy')}
+              htmlFor="leave-type-policy"
+              error={translateFieldError(t, fieldErrors, 'approvalPolicyId')}
             >
-              {policySelectOptions.map((option) => (
-                <option key={option.value || '__unbound__'} value={option.value} disabled={option.disabled}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </FormField>
+              <select
+                id="leave-type-policy"
+                value={leaveTypeForm.approvalPolicyId ?? ''}
+                onChange={(event) =>
+                  updateLeaveTypeForm(
+                    'approvalPolicyId',
+                    event.target.value ? event.target.value : null,
+                  )
+                }
+                disabled={isFormReadOnly}
+                className="h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 text-base text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)]"
+                aria-invalid={Boolean(fieldErrors.approvalPolicyId) || undefined}
+              >
+                {policySelectOptions.map((option) => (
+                  <option key={option.value || '__unbound__'} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+          ) : null}
 
-          <ApprovalPolicyBindingSection binding={formBinding} />
+          <ApprovalPolicyBindingSection binding={isInactiveLeaveTypeSheet ? editingLeaveType!.approvalPolicy : formBinding} />
         </form>
       </SheetShell>
     </div>

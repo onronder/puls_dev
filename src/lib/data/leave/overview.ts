@@ -16,6 +16,22 @@ export type LeaveOverview = Omit<DemoLeaveOverview, 'leaveTypes'> & {
 }
 export type { LeaveStatus }
 
+type LeaveTypeLookupJoin = { name?: string; is_active?: boolean } | null | undefined
+
+export function mapLeaveTypeFromLookup(join: LeaveTypeLookupJoin): {
+  typeLabel: string
+  typeIsActive: boolean
+} {
+  if (!join?.name) {
+    return { typeLabel: '—', typeIsActive: true }
+  }
+
+  return {
+    typeLabel: join.name,
+    typeIsActive: join.is_active !== false,
+  }
+}
+
 const LEAVE_TYPE_LABEL_KEYS: Record<string, string> = {
   annual: 'leave.types.annual',
   excuse: 'leave.types.excuse',
@@ -182,12 +198,12 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
     ...(leaveRequestRows.data ?? []).map((row) => row.leave_type_id as string | null),
   ])
 
-  const leaveTypeNameMap =
+  const leaveTypeMetaMap =
     leaveTypeIds.length > 0
       ? await (async () => {
           const { data, error } = await pulsWorkflow()
             .from('leave_types')
-            .select('id, name')
+            .select('id, name, is_active')
             .eq('tenant_id', ctx.tenantId)
             .in('id', leaveTypeIds)
 
@@ -195,9 +211,26 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
             throw fromSupabaseError(error, 'fetchLeaveOverview', 'puls_workflow', 'leave_types')
           }
 
-          return new Map((data ?? []).map((row) => [row.id as string, row.name as string]))
+          return new Map(
+            (data ?? []).map((row) => [
+              row.id as string,
+              mapLeaveTypeFromLookup({
+                name: row.name as string,
+                is_active: row.is_active as boolean,
+              }),
+            ]),
+          )
         })()
-      : new Map<string, string>()
+      : new Map<string, { typeLabel: string; typeIsActive: boolean }>()
+
+  function resolveLeaveTypeMeta(leaveTypeId: string | null | undefined) {
+    return (
+      leaveTypeMetaMap.get(leaveTypeId as string) ?? {
+        typeLabel: '—',
+        typeIsActive: true,
+      }
+    )
+  }
 
   const leaveRequestById = new Map(
     (leaveRequestRows.data ?? []).map((row) => [row.id as string, row]),
@@ -233,44 +266,53 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
     })
   }
 
-  const requests: DemoLeaveRequest[] = historyRows.map((row) => ({
-    id: row.id as string,
-    typeLabel: leaveTypeNameMap.get(row.leave_type_id as string) ?? '—',
-    startDate: row.start_date as string,
-    endDate: row.end_date as string,
-    businessDays: Number(row.business_days ?? 0),
-    delegateName: historyDelegateNameMap.get(row.delegate_employee_id as string) ?? undefined,
-    status: row.status as LeaveStatus,
-  }))
+  const requests: DemoLeaveRequest[] = historyRows.map((row) => {
+    const typeMeta = resolveLeaveTypeMeta(row.leave_type_id as string)
+    return {
+      id: row.id as string,
+      typeLabel: typeMeta.typeLabel,
+      typeIsActive: typeMeta.typeIsActive,
+      startDate: row.start_date as string,
+      endDate: row.end_date as string,
+      businessDays: Number(row.business_days ?? 0),
+      delegateName: historyDelegateNameMap.get(row.delegate_employee_id as string) ?? undefined,
+      status: row.status as LeaveStatus,
+    }
+  })
 
   const today = new Date().toISOString().slice(0, 10)
   const upcoming: DemoUpcomingLeave[] = historyRows
     .filter((row) => (row.start_date as string) >= today && row.status !== 'rejected')
     .slice(0, 5)
-    .map((row) => ({
-      id: row.id as string,
-      whoName: ctx.employeeName ?? 'Sen',
-      isSelf: true,
-      typeLabel: leaveTypeNameMap.get(row.leave_type_id as string) ?? '—',
-      startDate: row.start_date as string,
-      endDate: row.end_date as string,
-      businessDays: Number(row.business_days ?? 0),
-      status: row.status as LeaveStatus,
-    }))
+    .map((row) => {
+      const typeMeta = resolveLeaveTypeMeta(row.leave_type_id as string)
+      return {
+        id: row.id as string,
+        whoName: ctx.employeeName ?? 'Sen',
+        isSelf: true,
+        typeLabel: typeMeta.typeLabel,
+        typeIsActive: typeMeta.typeIsActive,
+        startDate: row.start_date as string,
+        endDate: row.end_date as string,
+        businessDays: Number(row.business_days ?? 0),
+        status: row.status as LeaveStatus,
+      }
+    })
 
   const pendingApprovals: DemoLeaveApproval[] = approvalRows.flatMap((row) => {
     const leaveRequest = leaveRequestById.get(row.leave_request_id as string)
     if (!leaveRequest) return []
 
     const employeeName = requesterNameMap.get(row.requester_employee_id as string) ?? '—'
-    const typeLabel = leaveTypeNameMap.get(leaveRequest.leave_type_id as string) ?? '—'
+    const typeMeta = resolveLeaveTypeMeta(leaveRequest.leave_type_id as string)
 
     return [
       {
         id: row.id as string,
         employeeName,
         initials: getInitials(employeeName),
-        typeLabel,
+        typeLabel: typeMeta.typeLabel,
+        typeIsActive: typeMeta.typeIsActive,
         startDate: leaveRequest.start_date as string,
         endDate: leaveRequest.end_date as string,
         businessDays: Number(leaveRequest.business_days ?? 0),
