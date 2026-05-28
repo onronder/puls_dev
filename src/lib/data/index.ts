@@ -209,6 +209,7 @@ export {
 } from '#/lib/data/setup/setup-readiness-dashboard'
 
 export {
+  buildExpenseCreationReadiness,
   buildLeaveCreationReadiness,
   fetchRequestCreationReadiness,
   fetchRequestCreationReadinessWithMeta,
