@@ -776,6 +776,55 @@
       "crudDeferred": "Create and edit actions will arrive in a later release."
     }
   },
+  "employeeAssignmentReadiness": {
+    "status": {
+      "ready": "Ready",
+      "missing_department": "Missing department",
+      "missing_position": "Missing position",
+      "missing_cost_center": "Missing cost center",
+      "missing_manager": "Missing manager",
+      "inactive_reference": "Inactive reference",
+      "partial": "Inactive employee",
+      "unknown": "Unknown"
+    },
+    "filters": {
+      "all": "All",
+      "ready": "Ready",
+      "missingDepartment": "Missing department",
+      "missingPosition": "Missing position",
+      "missingCostCenter": "Missing cost center",
+      "missingManager": "Missing manager",
+      "ariaLabel": "Assignment readiness filter"
+    },
+    "metrics": {
+      "activeEmployees": "Active employees",
+      "readyAssignments": "Ready assignments",
+      "missingDepartment": "Missing department",
+      "missingPosition": "Missing position",
+      "missingCostCenter": "Missing cost center",
+      "missingManager": "Missing manager"
+    },
+    "empty": {
+      "employees": "No employees found. Assignment readiness requires employee master data.",
+      "filtered": "No employees match the selected readiness filter."
+    },
+    "labels": {
+      "department": "Department",
+      "position": "Position",
+      "costCenter": "Cost center",
+      "manager": "Manager",
+      "readiness": "Readiness",
+      "departmentMissing": "No department",
+      "positionMissing": "No position",
+      "costCenterMissing": "No cost center",
+      "managerMissing": "No manager"
+    },
+    "boundary": {
+      "readOnly": "This view audits employee assignments; editing flows will open in a later release.",
+      "erpNoWrite":
+        "PULS does not modify ERP master data; the source system remains finance/ERP."
+    }
+  },
   "companySetup": {
     "eyebrow": "Setup & Configuration",
     "title": "Company Setup",

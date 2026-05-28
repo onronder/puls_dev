@@ -50,3 +50,4 @@ Required artifact documenting canonical org master-data sources, current CRUD/re
 - `fetchDepartmentsOverview` / `fetchPositionsOverview` as read foundation
 - `fetchOrgSetupReadiness` summary for setup dashboard signals
 - Cost center readiness from PR10.3 unchanged
+- Employee assignment readiness: see [`docs/data/10_employee_assignment_readiness_matrix.md`](10_employee_assignment_readiness_matrix.md) (PR10.15)

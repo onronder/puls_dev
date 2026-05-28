@@ -2,6 +2,7 @@ import {
   buildApprovalPolicyBindingInfo,
   type ApprovalPolicyBindingInfo,
 } from '#/lib/data/workflow/policy-binding-readiness'
+import type { EmployeeAssignmentReadinessOverview } from '#/lib/data/setup/employee-assignment-readiness'
 
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
 
@@ -2027,4 +2028,169 @@ const demoMenuTenantFallback: DemoMenuTenantFallback = {
 
 export async function fetchDemoMenuTenantFallback(): Promise<DemoMenuTenantFallback> {
   return demoMenuTenantFallback
+}
+
+const demoEmployeeAssignmentReadiness: EmployeeAssignmentReadinessOverview = {
+  employees: [
+    {
+      id: 'demo-e-ready',
+      displayName: 'Murat Tan',
+      email: 'murat.tan@mertteknik.com',
+      employeeNumber: 'MT-001',
+      isActive: true,
+      department: { id: 'd1', name: 'Mühendislik', code: 'engineering', isActive: true },
+      position: { id: 'p2', name: 'Saha Mühendisi', code: 'field_engineer', isActive: true },
+      costCenter: { id: 'cc1', name: 'Merkez Masraf', code: 'CC-HQ', isActive: true },
+      manager: {
+        id: 'demo-mgr-1',
+        displayName: 'Demo İK Yöneticisi',
+        email: 'ik@mertteknik.com',
+        isActive: true,
+      },
+      readiness: {
+        status: 'ready',
+        flags: {
+          hasDepartment: true,
+          hasPosition: true,
+          hasCostCenter: true,
+          hasManager: true,
+          hasInactiveReference: false,
+        },
+      },
+    },
+    {
+      id: 'demo-e-no-dept',
+      displayName: 'Ayşe Kaya',
+      email: 'ayse.kaya@mertteknik.com',
+      employeeNumber: 'AK-002',
+      isActive: true,
+      department: null,
+      position: { id: 'p2', name: 'Saha Mühendisi', code: 'field_engineer', isActive: true },
+      costCenter: { id: 'cc1', name: 'Merkez Masraf', code: 'CC-HQ', isActive: true },
+      manager: {
+        id: 'demo-mgr-2',
+        displayName: 'Murat Tan',
+        email: 'murat.tan@mertteknik.com',
+        isActive: true,
+      },
+      readiness: {
+        status: 'missing_department',
+        flags: {
+          hasDepartment: false,
+          hasPosition: true,
+          hasCostCenter: true,
+          hasManager: true,
+          hasInactiveReference: false,
+        },
+      },
+    },
+    {
+      id: 'demo-e-no-cc',
+      displayName: 'Elif Demir',
+      email: 'elif.demir@mertteknik.com',
+      employeeNumber: 'ED-003',
+      isActive: true,
+      department: { id: 'd2', name: 'Operasyon', code: 'operations', isActive: true },
+      position: { id: 'p3', name: 'Operasyon Uzmanı', code: 'ops_specialist', isActive: true },
+      costCenter: null,
+      manager: {
+        id: 'demo-mgr-1',
+        displayName: 'Demo İK Yöneticisi',
+        email: 'ik@mertteknik.com',
+        isActive: true,
+      },
+      readiness: {
+        status: 'missing_cost_center',
+        flags: {
+          hasDepartment: true,
+          hasPosition: true,
+          hasCostCenter: false,
+          hasManager: true,
+          hasInactiveReference: false,
+        },
+      },
+    },
+    {
+      id: 'demo-e-no-manager',
+      displayName: 'Yeni Çalışan',
+      email: 'yeni@mertteknik.com',
+      employeeNumber: 'YC-004',
+      isActive: true,
+      department: { id: 'd1', name: 'Mühendislik', code: 'engineering', isActive: true },
+      position: { id: 'p2', name: 'Saha Mühendisi', code: 'field_engineer', isActive: true },
+      costCenter: { id: 'cc1', name: 'Merkez Masraf', code: 'CC-HQ', isActive: true },
+      manager: null,
+      readiness: {
+        status: 'missing_manager',
+        flags: {
+          hasDepartment: true,
+          hasPosition: true,
+          hasCostCenter: true,
+          hasManager: false,
+          hasInactiveReference: false,
+        },
+      },
+    },
+    {
+      id: 'demo-e-inactive-ref',
+      displayName: 'Pasif Departmanlı',
+      email: 'pasif.dept@mertteknik.com',
+      employeeNumber: 'PD-005',
+      isActive: true,
+      department: { id: 'd-inactive', name: 'Eski Departman', code: 'legacy', isActive: false },
+      position: { id: 'p2', name: 'Saha Mühendisi', code: 'field_engineer', isActive: true },
+      costCenter: { id: 'cc1', name: 'Merkez Masraf', code: 'CC-HQ', isActive: true },
+      manager: null,
+      readiness: {
+        status: 'inactive_reference',
+        flags: {
+          hasDepartment: true,
+          hasPosition: true,
+          hasCostCenter: true,
+          hasManager: false,
+          hasInactiveReference: true,
+        },
+      },
+    },
+    {
+      id: 'demo-e-partial',
+      displayName: 'İzinli Çalışan',
+      email: 'izinli@mertteknik.com',
+      employeeNumber: 'IZ-006',
+      isActive: false,
+      department: { id: 'd1', name: 'Mühendislik', code: 'engineering', isActive: true },
+      position: { id: 'p2', name: 'Saha Mühendisi', code: 'field_engineer', isActive: true },
+      costCenter: { id: 'cc1', name: 'Merkez Masraf', code: 'CC-HQ', isActive: true },
+      manager: {
+        id: 'demo-mgr-1',
+        displayName: 'Demo İK Yöneticisi',
+        email: 'ik@mertteknik.com',
+        isActive: true,
+      },
+      readiness: {
+        status: 'partial',
+        flags: {
+          hasDepartment: true,
+          hasPosition: true,
+          hasCostCenter: true,
+          hasManager: true,
+          hasInactiveReference: false,
+        },
+      },
+    },
+  ],
+  summary: {
+    total: 6,
+    active: 5,
+    ready: 1,
+    missingDepartment: 1,
+    missingPosition: 0,
+    missingCostCenter: 1,
+    missingManager: 1,
+    inactiveReferences: 1,
+  },
+}
+
+export async function fetchDemoEmployeeAssignmentReadiness(): Promise<EmployeeAssignmentReadinessOverview> {
+  return demoEmployeeAssignmentReadiness
 }
