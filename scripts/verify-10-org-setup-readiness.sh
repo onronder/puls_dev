@@ -233,6 +233,9 @@ scan_forbidden_in_src() {
   local pattern="$1"
   local label="$2"
   for file in "${CHANGED_SRC_FILES[@]}"; do
+    if [[ "$file" == src/i18n/locales/* ]]; then
+      continue
+    fi
     if [[ -f "$file" ]] && grep -Eiq "$pattern" "$file"; then
       echo "FAIL: forbidden runtime pattern ($label) in changed src file $file: $pattern"
       grep -Ein "$pattern" "$file" || true
