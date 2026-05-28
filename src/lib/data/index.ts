@@ -53,6 +53,8 @@ export {
 export {
   fetchDepartmentsOverview,
   fetchPositionsOverview,
+  fetchDepartmentsOverviewWithMeta,
+  fetchPositionsOverviewWithMeta,
   type DepartmentsOverview,
   type PositionsOverview,
 } from '#/lib/data/core/organization'
@@ -144,12 +146,27 @@ export {
 
 export {
   fetchCostCenterReadinessOverview,
+  fetchCostCenterReadinessOverviewWithMeta,
   type CostCenterReadinessItem,
   type CostCenterReadinessOverview,
   type CostCenterReadinessStatus,
   type ExpenseRoutingReadinessWarning,
   type ExportSourceType,
 } from '#/lib/data/setup/cost-center-readiness'
+
+export {
+  buildOrgSetupReadinessSummary,
+  computeCostCenterReadinessSummaryStatus,
+  computeDepartmentReadinessStatus,
+  computePositionReadinessStatus,
+  fetchOrgSetupReadiness,
+  type OrgSetupReadinessDomainSummary,
+  type OrgSetupReadinessOverview,
+  type OrgSetupReadinessStatus,
+  type OrgSetupReadinessSummary,
+} from '#/lib/data/setup/org-setup-readiness'
+
+export { mapOrgEntitySource, type OrgSetupEntitySource } from '#/lib/data/setup/org-entity-source'
 
 export {
   fetchPerformanceParametersOverview,

@@ -521,13 +521,19 @@ export type DemoDepartmentStatus = 'active'
 export type DemoDepartment = {
   id: string
   name: string
+  code: string | null
   manager: string
   count: number
-  status: DemoDepartmentStatus
+  isActive: boolean
+  source: 'puls' | 'erp' | 'demo' | 'unknown'
+  /** @deprecated use isActive */
+  status?: DemoDepartmentStatus
 }
 
 export type DemoDepartmentsOverview = {
   departmentCount: number
+  totalCount: number
+  activeCount: number
   activeEmployees: number
   assignedManagers: number
   emptyManagers: number
@@ -536,13 +542,42 @@ export type DemoDepartmentsOverview = {
 
 const demoDepartmentsOverview: DemoDepartmentsOverview = {
   departmentCount: 3,
+  totalCount: 3,
+  activeCount: 3,
   activeEmployees: 4,
   assignedManagers: 3,
   emptyManagers: 0,
   departments: [
-    { id: 'd1', name: 'Mühendislik', manager: 'Murat Tan', count: 2, status: 'active' },
-    { id: 'd2', name: 'Operasyon', manager: 'Elif Demir', count: 1, status: 'active' },
-    { id: 'd3', name: 'İK & Finans', manager: 'Demo İK Yöneticisi', count: 1, status: 'active' },
+    {
+      id: 'd1',
+      name: 'Mühendislik',
+      code: 'engineering',
+      manager: 'Murat Tan',
+      count: 2,
+      isActive: true,
+      source: 'demo',
+      status: 'active',
+    },
+    {
+      id: 'd2',
+      name: 'Operasyon',
+      code: 'operations',
+      manager: 'Elif Demir',
+      count: 1,
+      isActive: true,
+      source: 'demo',
+      status: 'active',
+    },
+    {
+      id: 'd3',
+      name: 'İK & Finans',
+      code: 'hr_finance',
+      manager: 'Demo İK Yöneticisi',
+      count: 1,
+      isActive: true,
+      source: 'demo',
+      status: 'active',
+    },
   ],
 }
 
@@ -553,49 +588,67 @@ export async function fetchDemoDepartmentsOverview(): Promise<DemoDepartmentsOve
 export type DemoPosition = {
   id: string
   name: string
+  code: string | null
   department: string
   template: string
   evaluation: number
   open: number
+  isActive: boolean
+  source: 'puls' | 'erp' | 'demo' | 'unknown'
 }
 
 export type DemoPositionsOverview = {
   positionCount: number
+  totalCount: number
+  activeCount: number
   openPositions: number
   templateLinked: number
   evaluationComplete: number
+  showsTemplateMetrics: boolean
   positions: DemoPosition[]
 }
 
 const demoPositionsOverview: DemoPositionsOverview = {
   positionCount: 3,
+  totalCount: 3,
+  activeCount: 3,
   openPositions: 0,
   templateLinked: 3,
   evaluationComplete: 3,
+  showsTemplateMetrics: true,
   positions: [
     {
       id: 'p1',
       name: 'İK Yöneticisi',
+      code: 'hr_manager',
       department: 'İK & Finans',
       template: 'Yönetici',
       evaluation: 855,
       open: 0,
+      isActive: true,
+      source: 'demo',
     },
     {
       id: 'p2',
       name: 'Saha Mühendisi',
+      code: 'field_engineer',
       department: 'Mühendislik',
       template: 'Saha Mühendisi',
       evaluation: 720,
       open: 0,
+      isActive: true,
+      source: 'demo',
     },
     {
       id: 'p3',
       name: 'Operasyon Uzmanı',
+      code: 'ops_specialist',
       department: 'Operasyon',
       template: 'Ofis & Operasyon',
       evaluation: 645,
       open: 0,
+      isActive: true,
+      source: 'demo',
     },
   ],
 }

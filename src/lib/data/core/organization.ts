@@ -12,7 +12,8 @@ import {
   fetchNamesByIds,
   uniqueNonNullIds,
 } from '#/lib/data/core/lookups'
-import { resolveAdapterData } from '#/lib/data/result'
+import { mapOrgEntitySource, type OrgSetupEntitySource } from '#/lib/data/setup/org-entity-source'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type DepartmentsOverview = DemoDepartmentsOverview
 export type PositionsOverview = DemoPositionsOverview
@@ -20,6 +21,8 @@ export type PositionsOverview = DemoPositionsOverview
 function emptyDepartmentsOverview(): DepartmentsOverview {
   return {
     departmentCount: 0,
+    totalCount: 0,
+    activeCount: 0,
     activeEmployees: 0,
     assignedManagers: 0,
     emptyManagers: 0,
@@ -30,9 +33,12 @@ function emptyDepartmentsOverview(): DepartmentsOverview {
 function emptyPositionsOverview(): PositionsOverview {
   return {
     positionCount: 0,
+    totalCount: 0,
+    activeCount: 0,
     openPositions: 0,
     templateLinked: 0,
     evaluationComplete: 0,
+    showsTemplateMetrics: false,
     positions: [],
   }
 }
@@ -52,9 +58,8 @@ async function fetchRealDepartmentsOverview(userId: string): Promise<Departments
         .maybeSingle(),
       pulsCore()
         .from('departments')
-        .select('id, name, manager_employee_id')
+        .select('id, name, code, manager_employee_id, is_active, external_source')
         .eq('tenant_id', ctx.tenantId)
-        .eq('is_active', true)
         .order('name', { ascending: true }),
     ])
 
@@ -65,34 +70,39 @@ async function fetchRealDepartmentsOverview(userId: string): Promise<Departments
     throw fromSupabaseError(deptError, 'fetchDepartmentsOverview', 'puls_core', 'departments')
   }
 
-  const managerIds = uniqueNonNullIds(
-    (departments ?? []).map((row) => row.manager_employee_id as string | null),
-  )
+  const rows = departments ?? []
+  const managerIds = uniqueNonNullIds(rows.map((row) => row.manager_employee_id as string | null))
 
   const [countByDept, managerNameMap] = await Promise.all([
     countActiveEmployeesByDepartment(ctx.tenantId),
     fetchNamesByIds('employees', ctx.tenantId, managerIds),
   ])
 
-  const mappedDepartments = (departments ?? []).map((row) => {
+  const mappedDepartments = rows.map((row) => {
     const managerId = row.manager_employee_id as string | null
+    const isActive = Boolean(row.is_active)
     return {
       id: row.id as string,
       name: row.name as string,
+      code: (row.code as string | null) ?? null,
       manager: managerId ? (managerNameMap.get(managerId) ?? '—') : '—',
       count: countByDept.get(row.id as string) ?? 0,
-      status: 'active' as const,
+      isActive,
+      source: mapOrgEntitySource(row.external_source as string | null) as OrgSetupEntitySource,
     }
   })
 
-  const total = Number(orgOverview?.department_total_count ?? mappedDepartments.length)
+  const totalCount = mappedDepartments.length
+  const activeCount = mappedDepartments.filter((row) => row.isActive).length
   const withManager = Number(orgOverview?.department_with_manager_count ?? 0)
 
   return {
-    departmentCount: total,
+    departmentCount: Number(orgOverview?.department_total_count ?? activeCount),
+    totalCount,
+    activeCount,
     activeEmployees: Number(orgOverview?.active_employee_count ?? 0),
     assignedManagers: withManager,
-    emptyManagers: Math.max(0, total - withManager),
+    emptyManagers: Math.max(0, activeCount - withManager),
     departments: mappedDepartments,
   }
 }
@@ -110,9 +120,8 @@ async function fetchRealPositionsOverview(userId: string): Promise<PositionsOver
         .maybeSingle(),
       pulsCore()
         .from('positions')
-        .select('id, name, norm_headcount, department_id')
+        .select('id, name, code, norm_headcount, department_id, is_active, external_source')
         .eq('tenant_id', ctx.tenantId)
-        .eq('is_active', true)
         .order('name', { ascending: true }),
     ])
 
@@ -123,16 +132,15 @@ async function fetchRealPositionsOverview(userId: string): Promise<PositionsOver
     throw fromSupabaseError(posError, 'fetchPositionsOverview', 'puls_core', 'positions')
   }
 
-  const departmentIds = uniqueNonNullIds(
-    (positions ?? []).map((row) => row.department_id as string | null),
-  )
+  const rows = positions ?? []
+  const departmentIds = uniqueNonNullIds(rows.map((row) => row.department_id as string | null))
 
   const [countByPosition, departmentNameMap] = await Promise.all([
     countActiveEmployeesByPosition(ctx.tenantId),
     fetchNamesByIds('departments', ctx.tenantId, departmentIds),
   ])
 
-  const mappedPositions = (positions ?? []).map((row) => {
+  const mappedPositions = rows.map((row) => {
     const positionId = row.id as string
     const departmentId = row.department_id as string | null
     const normHeadcount = Number(row.norm_headcount ?? 0)
@@ -141,18 +149,27 @@ async function fetchRealPositionsOverview(userId: string): Promise<PositionsOver
     return {
       id: positionId,
       name: row.name as string,
+      code: (row.code as string | null) ?? null,
       department: departmentId ? (departmentNameMap.get(departmentId) ?? '—') : '—',
       template: '—',
       evaluation: 0,
       open: computeOpenHeadcount(normHeadcount, filledCount),
+      isActive: Boolean(row.is_active),
+      source: mapOrgEntitySource(row.external_source as string | null) as OrgSetupEntitySource,
     }
   })
 
+  const totalCount = mappedPositions.length
+  const activeCount = mappedPositions.filter((row) => row.isActive).length
+
   return {
-    positionCount: Number(orgOverview?.position_total_count ?? mappedPositions.length),
+    positionCount: Number(orgOverview?.position_total_count ?? activeCount),
+    totalCount,
+    activeCount,
     openPositions: Number(orgOverview?.open_position_count ?? 0),
     templateLinked: 0,
     evaluationComplete: 0,
+    showsTemplateMetrics: false,
     positions: mappedPositions,
   }
 }
@@ -168,6 +185,24 @@ export async function fetchDepartmentsOverview(userId: string): Promise<Departme
 
 export async function fetchPositionsOverview(userId: string): Promise<PositionsOverview> {
   return resolveAdapterData({
+    operation: 'fetchPositionsOverview',
+    fetchReal: () => fetchRealPositionsOverview(userId),
+    fetchDemo: fetchDemoPositionsOverview,
+    isEmpty: (data) => data.positions.length === 0,
+  })
+}
+
+export function fetchDepartmentsOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchDepartmentsOverview',
+    fetchReal: () => fetchRealDepartmentsOverview(userId),
+    fetchDemo: fetchDemoDepartmentsOverview,
+    isEmpty: (data) => data.departments.length === 0,
+  })
+}
+
+export function fetchPositionsOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchPositionsOverview',
     fetchReal: () => fetchRealPositionsOverview(userId),
     fetchDemo: fetchDemoPositionsOverview,

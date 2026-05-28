@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { ApprovalPolicyBindingSection } from '#/components/puls/ApprovalPolicyBindingSection'
 import { DataList } from '#/components/puls/DataList'
+import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
@@ -639,7 +640,7 @@ function MasrafKategorileriPage() {
           description={t('expenseCategorySetup.costCenterMappings.description')}
         />
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          {t('expenseCategorySetup.costCenterMappings.boundaryNote')}
+          {t('orgSetupReadiness.boundary.erpNoWrite')}
         </p>
         {readinessData ? (
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">
@@ -656,6 +657,15 @@ function MasrafKategorileriPage() {
           </div>
         ) : null}
 
+        {!readinessLoading && (readinessData?.items.length ?? 0) === 0 ? (
+          <EmptyState
+            className="mt-3"
+            icon={Wallet}
+            title={t('orgSetupReadiness.empty.costCentersTitle')}
+            description={t('orgSetupReadiness.empty.costCenters')}
+          />
+        ) : (
+          <>
         <div className="mt-3 md:hidden">
           {readinessLoading ? (
             <div className="space-y-2">
@@ -725,6 +735,8 @@ function MasrafKategorileriPage() {
                 ))}
           </ul>
         </div>
+          </>
+        )}
       </section>
 
       <SheetShell

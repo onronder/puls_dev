@@ -9,17 +9,23 @@ import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Skeleton } from '#/components/ui/skeleton'
+import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchCompanySetupOverview, type CompanySetupOverview } from '#/lib/data'
+import {
+  fetchCompanySetupOverview,
+  fetchOrgSetupReadiness,
+  type CompanySetupOverview,
+  type OrgSetupReadinessStatus,
+} from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/sirket-kurulum')({
   head: () => ({
     meta: [
-      { title: 'Şirket Kurulum — PULS' },
+      { title: i18n.t('companySetup.meta.title') },
       {
         name: 'description',
-        content: 'Tenant, şirket bilgileri ve varsayılan çalışma ayarları.',
+        content: i18n.t('companySetup.meta.description'),
       },
     ],
   }),
@@ -70,12 +76,32 @@ function formatLocaleLanguage(code: string, uiLocale: string): string {
 const COMPANY_FIELD_COUNT = 7
 const CHECKLIST_SKELETON_COUNT = 4
 
+function readinessPillTone(status: OrgSetupReadinessStatus): 'success' | 'warning' | 'neutral' {
+  switch (status) {
+    case 'ready':
+      return 'success'
+    case 'empty':
+    case 'partial':
+    case 'unmapped':
+    case 'unknown':
+      return 'warning'
+    default:
+      return 'neutral'
+  }
+}
+
 function SirketKurulumPage() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const { data, isLoading } = useQuery({
     queryKey: ['company-setup-overview', user?.id],
     queryFn: () => fetchCompanySetupOverview(user!.id),
+    enabled: Boolean(user?.id),
+  })
+
+  const { data: orgReadiness, isLoading: orgReadinessLoading } = useQuery({
+    queryKey: ['org-setup-readiness', user?.id],
+    queryFn: () => fetchOrgSetupReadiness(user!.id),
     enabled: Boolean(user?.id),
   })
 
@@ -157,6 +183,54 @@ function SirketKurulumPage() {
                 <InfoRow key={field.label} label={field.label} value={field.value} />
               ))}
         </dl>
+      </section>
+
+      <section className="mb-6">
+        <SectionHeader title={t('orgSetupReadiness.sections.summary')} />
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+          {t('orgSetupReadiness.boundary.erpNoWrite')}
+        </p>
+        <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          {orgReadinessLoading ? (
+            Array.from({ length: 3 }, (_, index) => (
+              <li key={index} className="flex min-h-[52px] items-center gap-3 p-4">
+                <Skeleton className="h-4 min-w-0 flex-1" />
+                <Skeleton className="h-7 w-20 shrink-0 rounded-full" />
+              </li>
+            ))
+          ) : orgReadiness ? (
+            <>
+              {(
+                [
+                  ['departments', orgReadiness.summary.departments] as const,
+                  ['positions', orgReadiness.summary.positions] as const,
+                  ['costCenters', orgReadiness.summary.costCenters] as const,
+                ] as const
+              ).map(([key, domain]) => (
+                <li key={key} className="flex min-h-[52px] flex-wrap items-center justify-between gap-3 p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium">{t(`orgSetupReadiness.metrics.${key}`)}</div>
+                    <div className="text-xs text-[var(--color-text-muted)]">
+                      {key === 'costCenters'
+                        ? t('orgSetupReadiness.metrics.costCentersDetail', {
+                            total: domain.total,
+                            mapped: domain.mapped ?? 0,
+                            unmapped: domain.unmapped ?? 0,
+                          })
+                        : t('orgSetupReadiness.metrics.entityDetail', {
+                            total: domain.total,
+                            active: domain.active,
+                          })}
+                    </div>
+                  </div>
+                  <StatusPill tone={readinessPillTone(domain.status)}>
+                    {t(`orgSetupReadiness.status.${domain.status}`)}
+                  </StatusPill>
+                </li>
+              ))}
+            </>
+          ) : null}
+        </ul>
       </section>
 
       <section>
