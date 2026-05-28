@@ -108,14 +108,19 @@ route_needles=(
   "fetchSetupReadinessDashboard"
   "setupReadinessDashboard"
   "StatusPill"
-  "/masraf-kategorileri"
-  "/izin-tanimlari"
-  "/calisanlar"
+  "setupReadinessDashboard.actions.open"
 )
 
 for needle in "${route_needles[@]}"; do
   if ! grep -Fq "$needle" <<< "$COMPANY_ROUTE_CONTENT"; then
     echo "FAIL: sirket-kurulum route missing required fragment: $needle"
+    exit 1
+  fi
+done
+
+for needle in "/masraf-kategorileri" "/izin-tanimlari" "/calisanlar"; do
+  if ! grep -Fq "$needle" <<< "$DASHBOARD_CONTENT"; then
+    echo "FAIL: setup-readiness-dashboard must define navigation target: $needle"
     exit 1
   fi
 done
@@ -170,12 +175,12 @@ if ! grep -Fq "costCenters.unmapped" <<< "$DASHBOARD_TEST_CONTENT"; then
   exit 1
 fi
 
-if ! grep -Fq "Masraf merkezi eşleşmeleri tamamlanmadan" <<< "$I18N_TR"; then
+if ! grep -Fq "Masraf merkezi eşleşmeleri tamamlanmadan" "$I18N_TR"; then
   echo "FAIL: TR i18n must include export-readiness copy for costCenters.unmapped"
   exit 1
 fi
 
-if ! grep -Fq "No active records" <<< "$I18N_EN"; then
+if ! grep -Fq "No active records" "$I18N_EN"; then
   echo "FAIL: EN i18n must include counts.noneActive label"
   exit 1
 fi
