@@ -169,6 +169,25 @@ export {
 export { mapOrgEntitySource, type OrgSetupEntitySource } from '#/lib/data/setup/org-entity-source'
 
 export {
+  applyEmployeeAssignmentReadinessFilter,
+  buildEmployeeAssignmentReadinessFlags,
+  buildEmployeeAssignmentReadinessSummary,
+  computeEmployeeAssignmentReadiness,
+  fetchEmployeeAssignmentReadiness,
+  fetchEmployeeAssignmentReadinessWithMeta,
+  pickCurrentCostCenterAssignment,
+  pickCurrentPrimaryManager,
+  type EmployeeAssignmentEntityRef,
+  type EmployeeAssignmentManagerRef,
+  type EmployeeAssignmentReadinessEmployee,
+  type EmployeeAssignmentReadinessFilter,
+  type EmployeeAssignmentReadinessFlags,
+  type EmployeeAssignmentReadinessOverview,
+  type EmployeeAssignmentReadinessStatus,
+  type EmployeeAssignmentReadinessSummary,
+} from '#/lib/data/setup/employee-assignment-readiness'
+
+export {
   fetchPerformanceParametersOverview,
   type PerformanceParametersOverview,
 } from '#/lib/data/setup/performance-parameters'

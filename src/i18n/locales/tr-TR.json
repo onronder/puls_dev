@@ -776,6 +776,55 @@
       "crudDeferred": "Oluşturma ve düzenleme işlemleri sonraki sürümde gelecek."
     }
   },
+  "employeeAssignmentReadiness": {
+    "status": {
+      "ready": "Hazır",
+      "missing_department": "Departman yok",
+      "missing_position": "Pozisyon yok",
+      "missing_cost_center": "Masraf merkezi yok",
+      "missing_manager": "Yönetici yok",
+      "inactive_reference": "Pasif referans",
+      "partial": "Pasif çalışan",
+      "unknown": "Bilinmiyor"
+    },
+    "filters": {
+      "all": "Tümü",
+      "ready": "Hazır",
+      "missingDepartment": "Eksik departman",
+      "missingPosition": "Eksik pozisyon",
+      "missingCostCenter": "Eksik masraf merkezi",
+      "missingManager": "Eksik yönetici",
+      "ariaLabel": "Atama hazırlığı filtresi"
+    },
+    "metrics": {
+      "activeEmployees": "Aktif çalışan",
+      "readyAssignments": "Hazır atama",
+      "missingDepartment": "Eksik departman",
+      "missingPosition": "Eksik pozisyon",
+      "missingCostCenter": "Eksik masraf merkezi",
+      "missingManager": "Eksik yönetici"
+    },
+    "empty": {
+      "employees": "Çalışan bulunamadı. Atama hazırlığı için çalışan ana verisi gerekir.",
+      "filtered": "Seçilen hazırlık filtresine uyan çalışan yok."
+    },
+    "labels": {
+      "department": "Departman",
+      "position": "Pozisyon",
+      "costCenter": "Masraf merkezi",
+      "manager": "Yönetici",
+      "readiness": "Hazırlık",
+      "departmentMissing": "Departman yok",
+      "positionMissing": "Pozisyon yok",
+      "costCenterMissing": "Masraf merkezi yok",
+      "managerMissing": "Yönetici yok"
+    },
+    "boundary": {
+      "readOnly": "Bu görünüm çalışan atamalarını denetlemek içindir; düzenleme akışı ayrı adımda açılacaktır.",
+      "erpNoWrite":
+        "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
+    }
+  },
   "companySetup": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Şirket Kurulum",

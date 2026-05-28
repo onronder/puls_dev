@@ -1,20 +1,23 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
+  AlertCircle,
   Briefcase,
   Building2,
-  CalendarDays,
   Mail,
   Search,
   UserCheck,
   Users,
+  Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '#/components/puls/EmptyState'
+import { MetricCard } from '#/components/puls/MetricCard'
 import { SectionHeader } from '#/components/puls/SectionHeader'
+import { Segmented } from '#/components/puls/Segmented'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
@@ -24,12 +27,14 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
-  fetchEmployeeList,
-  fetchEmployeeListStats,
+  applyEmployeeAssignmentReadinessFilter,
+  fetchEmployeeAssignmentReadiness,
   fetchEmployeesOverview,
-  type DemoEmployeeStatus,
-  type EmployeeListItem,
-  type EmployeesOverview,
+  type EmployeeAssignmentEntityRef,
+  type EmployeeAssignmentManagerRef,
+  type EmployeeAssignmentReadinessEmployee,
+  type EmployeeAssignmentReadinessFilter,
+  type EmployeeAssignmentReadinessStatus,
 } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
@@ -47,19 +52,9 @@ export const Route = createFileRoute('/_app/calisanlar')({
 })
 
 const EMPLOYEE_TABLE_GRID_COLS =
-  'lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,120px)]'
+  'xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,0.85fr)_120px]'
 
-type EnrichedEmployee = EmployeeListItem & {
-  initials: string
-  department: string
-  position: string
-  status: DemoEmployeeStatus
-  manager: string
-  joinedLabel: string
-  leaveUsed: number
-  leaveTotal: number
-  performanceScopeKey: string
-}
+type FilterOption = string | { value: string; label: string }
 
 function getInitials(fullName: string): string {
   return (fullName || '?')
@@ -71,53 +66,61 @@ function getInitials(fullName: string): string {
     .toUpperCase()
 }
 
-function formatHireDate(isoDate: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(`${isoDate}T12:00:00`))
-}
-
-function enrichEmployee(
-  employee: EmployeeListItem,
-  demo: EmployeesOverview,
-  locale: string,
-): EnrichedEmployee {
-  const emailKey = employee.email?.toLowerCase() ?? ''
-  const fallback = demo.byEmail[emailKey]
-
-  const department = employee.departmentName ?? '—'
-  const position = employee.positionName ?? employee.jobTitle ?? '—'
-  const status = fallback?.status ?? demo.defaultStatus
-  const manager = fallback?.manager ?? demo.defaultManager
-  const leaveUsed = fallback?.leaveUsed ?? demo.defaultLeave.used
-  const leaveTotal = fallback?.leaveTotal ?? demo.defaultLeave.total
-  const joinedLabel = employee.hireDate
-    ? formatHireDate(employee.hireDate, locale)
-    : (fallback?.joinedLabel ?? '—')
-
-  return {
-    ...employee,
-    initials: getInitials(employee.fullName),
-    department,
-    position,
-    status,
-    manager,
-    joinedLabel,
-    leaveUsed,
-    leaveTotal,
-    performanceScopeKey: demo.performanceScopePendingKey,
+function readinessPillTone(status: EmployeeAssignmentReadinessStatus): StatusTone {
+  switch (status) {
+    case 'ready':
+      return 'success'
+    case 'inactive_reference':
+    case 'missing_department':
+    case 'missing_position':
+    case 'missing_cost_center':
+    case 'missing_manager':
+      return 'warning'
+    case 'partial':
+      return 'neutral'
+    default:
+      return 'neutral'
   }
 }
 
-function statusTone(status: DemoEmployeeStatus): StatusTone {
-  if (status === 'active') return 'success'
-  if (status === 'onleave') return 'warning'
-  return 'neutral'
+function entityLabel(ref: EmployeeAssignmentEntityRef | null, missingKey: string, t: (key: string) => string) {
+  if (!ref) {
+    return (
+      <StatusPill tone="neutral" className="max-w-full truncate">
+        {t(missingKey)}
+      </StatusPill>
+    )
+  }
+  if (!ref.isActive) {
+    return (
+      <StatusPill tone="warning" className="max-w-full truncate">
+        {ref.name}
+      </StatusPill>
+    )
+  }
+  return <span className="truncate text-sm">{ref.name}</span>
 }
 
-type FilterOption = string | { value: string; label: string }
+function managerLabel(
+  ref: EmployeeAssignmentManagerRef | null,
+  t: (key: string) => string,
+) {
+  if (!ref) {
+    return (
+      <StatusPill tone="neutral" className="max-w-full truncate">
+        {t('employeeAssignmentReadiness.labels.managerMissing')}
+      </StatusPill>
+    )
+  }
+  if (!ref.isActive) {
+    return (
+      <StatusPill tone="warning" className="max-w-full truncate">
+        {ref.displayName}
+      </StatusPill>
+    )
+  }
+  return <span className="truncate text-sm">{ref.displayName}</span>
+}
 
 function FilterSelect({
   label,
@@ -180,76 +183,95 @@ function DetailRow({
   )
 }
 
+function assignmentDetailValue(
+  ref: EmployeeAssignmentEntityRef | EmployeeAssignmentManagerRef | null,
+  missingLabel: string,
+  nameKey: 'name' | 'displayName' = 'name',
+): string {
+  if (!ref) return missingLabel
+  const label = nameKey === 'displayName' ? (ref as EmployeeAssignmentManagerRef).displayName : (ref as EmployeeAssignmentEntityRef).name
+  if (!ref.isActive) return `${label} (${missingLabel})`
+  return label
+}
+
 function CalisanlarPage() {
-  const { t, i18n: i18nInstance } = useTranslation()
+  const { t } = useTranslation()
   const { user, activePersona } = useAuth()
 
+  const [readinessFilter, setReadinessFilter] = useState<EmployeeAssignmentReadinessFilter>('all')
   const [departmentFilter, setDepartmentFilter] = useState('')
   const [positionFilter, setPositionFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['employee-list-stats', user?.id],
-    queryFn: () => fetchEmployeeListStats(user!.id),
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['employee-assignment-readiness', user?.id],
+    queryFn: () => fetchEmployeeAssignmentReadiness(user!.id),
     enabled: Boolean(user?.id) && activePersona === 'manager',
   })
 
-  const { data: employees, isLoading, isError, refetch } = useQuery({
-    queryKey: ['employee-list', user?.id],
-    queryFn: () => fetchEmployeeList(user!.id),
-    enabled: Boolean(user?.id) && activePersona === 'manager',
-  })
-
-  const { data: demoOverview } = useQuery({
-    queryKey: ['employees-overview', user?.id],
+  const { data: leaveOverview } = useQuery({
+    queryKey: ['employees-overview-leave', user?.id],
     queryFn: () => fetchEmployeesOverview(user!.id),
     enabled: Boolean(user?.id) && activePersona === 'manager',
   })
 
-  const enrichedEmployees = useMemo(() => {
-    if (!employees || !demoOverview) return []
-    return employees.map((employee) =>
-      enrichEmployee(employee, demoOverview, i18nInstance.language),
-    )
-  }, [employees, demoOverview, i18nInstance.language])
+  const employees = data?.employees ?? []
+  const summary = data?.summary
+
+  const readinessFiltered = useMemo(
+    () => applyEmployeeAssignmentReadinessFilter(employees, readinessFilter),
+    [employees, readinessFilter],
+  )
 
   const departmentOptions = useMemo(
     () =>
-      [...new Set(enrichedEmployees.map((employee) => employee.department).filter(Boolean))].sort(),
-    [enrichedEmployees],
+      [
+        ...new Set(
+          employees.map((employee) => employee.department?.name).filter(Boolean) as string[],
+        ),
+      ].sort(),
+    [employees],
   )
 
   const positionOptions = useMemo(
     () =>
-      [...new Set(enrichedEmployees.map((employee) => employee.position).filter(Boolean))].sort(),
-    [enrichedEmployees],
+      [
+        ...new Set(
+          employees.map((employee) => employee.position?.name).filter(Boolean) as string[],
+        ),
+      ].sort(),
+    [employees],
   )
 
   const filteredEmployees = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    return enrichedEmployees.filter((employee) => {
-      if (departmentFilter && employee.department !== departmentFilter) return false
-      if (positionFilter && employee.position !== positionFilter) return false
-      if (statusFilter && employee.status !== statusFilter) return false
+    return readinessFiltered.filter((employee) => {
+      if (departmentFilter && employee.department?.name !== departmentFilter) return false
+      if (positionFilter && employee.position?.name !== positionFilter) return false
       if (query) {
-        const haystack = `${employee.fullName} ${employee.email ?? ''}`.toLowerCase()
+        const haystack =
+          `${employee.displayName} ${employee.email ?? ''} ${employee.employeeNumber ?? ''}`.toLowerCase()
         if (!haystack.includes(query)) return false
       }
       return true
     })
-  }, [enrichedEmployees, departmentFilter, positionFilter, statusFilter, searchQuery])
+  }, [readinessFiltered, departmentFilter, positionFilter, searchQuery])
 
   const selectedEmployee = useMemo(
-    () => enrichedEmployees.find((employee) => employee.id === selectedEmployeeId) ?? null,
-    [enrichedEmployees, selectedEmployeeId],
+    () => employees.find((employee) => employee.id === selectedEmployeeId) ?? null,
+    [employees, selectedEmployeeId],
   )
 
+  const selectedLeave = useMemo(() => {
+    if (!selectedEmployee?.email || !leaveOverview) return null
+    return leaveOverview.byEmail[selectedEmployee.email.toLowerCase()] ?? null
+  }, [selectedEmployee, leaveOverview])
+
   const resetFilters = () => {
+    setReadinessFilter('all')
     setDepartmentFilter('')
     setPositionFilter('')
-    setStatusFilter('')
     setSearchQuery('')
   }
 
@@ -271,7 +293,7 @@ function CalisanlarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
+    <div className="mx-auto max-w-6xl overflow-x-hidden p-4 md:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
@@ -280,22 +302,90 @@ function CalisanlarPage() {
           <h1 className="mt-1 text-[26px] font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
             {t('employees.title')}
           </h1>
-          {statsLoading ? (
-            <Skeleton className="mt-2 h-5 w-56 max-w-full" />
-          ) : (
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              {t('employeesSetup.summary', {
-                employees: stats?.employeeCount ?? enrichedEmployees.length,
-                departments: stats?.departmentCount ?? departmentOptions.length,
-              })}
-            </p>
-          )}
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            {t('employeeAssignmentReadiness.boundary.readOnly')}
+          </p>
         </div>
         <StatusPill tone="info">{t('employees.managerOnly')}</StatusPill>
       </div>
 
-      <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,160px)_minmax(0,160px)_minmax(0,140px)]">
+      {isLoading ? (
+        <div className="-mx-4 mb-6 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 lg:grid-cols-6">
+          {Array.from({ length: 6 }, (_, index) => (
+            <Skeleton key={index} className="h-28 min-w-[140px] rounded-xl" />
+          ))}
+        </div>
+      ) : summary ? (
+        <div className="-mx-4 mb-6 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 lg:grid-cols-6">
+          <MetricCard
+            compact
+            label={t('employeeAssignmentReadiness.metrics.activeEmployees')}
+            value={String(summary.active)}
+            icon={Users}
+          />
+          <MetricCard
+            compact
+            label={t('employeeAssignmentReadiness.metrics.readyAssignments')}
+            value={String(summary.ready)}
+            icon={UserCheck}
+          />
+          <MetricCard
+            compact
+            label={t('employeeAssignmentReadiness.metrics.missingDepartment')}
+            value={String(summary.missingDepartment)}
+            icon={Building2}
+          />
+          <MetricCard
+            compact
+            label={t('employeeAssignmentReadiness.metrics.missingPosition')}
+            value={String(summary.missingPosition)}
+            icon={Briefcase}
+          />
+          <MetricCard
+            compact
+            label={t('employeeAssignmentReadiness.metrics.missingCostCenter')}
+            value={String(summary.missingCostCenter)}
+            icon={Wallet}
+          />
+          <MetricCard
+            compact
+            label={t('employeeAssignmentReadiness.metrics.missingManager')}
+            value={String(summary.missingManager)}
+            icon={AlertCircle}
+          />
+        </div>
+      ) : null}
+
+      <div className="mt-3 max-w-3xl">
+        <Segmented
+          ariaLabel={t('employeeAssignmentReadiness.filters.ariaLabel')}
+          value={readinessFilter}
+          onChange={(value) => setReadinessFilter(value as EmployeeAssignmentReadinessFilter)}
+          options={[
+            { value: 'all', label: t('employeeAssignmentReadiness.filters.all') },
+            { value: 'ready', label: t('employeeAssignmentReadiness.filters.ready') },
+            {
+              value: 'missing_department',
+              label: t('employeeAssignmentReadiness.filters.missingDepartment'),
+            },
+            {
+              value: 'missing_position',
+              label: t('employeeAssignmentReadiness.filters.missingPosition'),
+            },
+            {
+              value: 'missing_cost_center',
+              label: t('employeeAssignmentReadiness.filters.missingCostCenter'),
+            },
+            {
+              value: 'missing_manager',
+              label: t('employeeAssignmentReadiness.filters.missingManager'),
+            },
+          ]}
+        />
+      </div>
+
+      <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,160px)_minmax(0,160px)]">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
             <label className="sr-only" htmlFor="employee-search">
@@ -327,19 +417,6 @@ function CalisanlarPage() {
               label: t('employeesSetup.filters.position'),
             })}
           />
-          <FilterSelect
-            label={t('employeesSetup.filters.status')}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={[
-              { value: 'active', label: t('employees.status.active') },
-              { value: 'onleave', label: t('employees.status.onleave') },
-              { value: 'inactive', label: t('employees.status.inactive') },
-            ]}
-            allLabel={t('employeesSetup.filters.all', {
-              label: t('employeesSetup.filters.status'),
-            })}
-          />
         </div>
       </div>
 
@@ -361,80 +438,47 @@ function CalisanlarPage() {
             <Skeleton className="h-16 w-full rounded-xl" />
             <Skeleton className="h-16 w-full rounded-xl" />
           </div>
-        ) : enrichedEmployees.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-            <EmptyState
-              icon={Users}
-              title={t('employees.empty.title')}
-              description={t('employees.empty.description')}
-            />
-          </div>
+        ) : employees.length === 0 ? (
+          <EmptyState
+            className="mt-3"
+            icon={Users}
+            title={t('employees.empty.title')}
+            description={t('employeeAssignmentReadiness.empty.employees')}
+          />
         ) : filteredEmployees.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-            <EmptyState
-              icon={Users}
-              title={t('employeesSetup.emptyFilter.title')}
-              description={t('employeesSetup.emptyFilter.description')}
-              action={
-                <Button type="button" variant="outline" className="touch-target" onClick={resetFilters}>
-                  {t('employeesSetup.emptyFilter.reset')}
-                </Button>
-              }
-            />
-          </div>
+          <EmptyState
+            className="mt-3"
+            icon={Users}
+            title={t('employeesSetup.emptyFilter.title')}
+            description={t('employeeAssignmentReadiness.empty.filtered')}
+            action={
+              <Button type="button" variant="outline" className="touch-target" onClick={resetFilters}>
+                {t('employeesSetup.emptyFilter.reset')}
+              </Button>
+            }
+          />
         ) : (
-          <div className="mt-3 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
             <div
               className={cn(
-                'hidden gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)] lg:grid',
+                'hidden min-w-[960px] gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)] xl:grid',
                 EMPLOYEE_TABLE_GRID_COLS,
               )}
             >
               <div>{t('employeesSetup.columns.employee')}</div>
-              <div>{t('employeesSetup.columns.department')}</div>
-              <div>{t('employeesSetup.columns.position')}</div>
-              <div className="text-right">{t('employeesSetup.columns.status')}</div>
+              <div>{t('employeeAssignmentReadiness.labels.department')}</div>
+              <div>{t('employeeAssignmentReadiness.labels.position')}</div>
+              <div>{t('employeeAssignmentReadiness.labels.costCenter')}</div>
+              <div>{t('employeeAssignmentReadiness.labels.manager')}</div>
+              <div className="text-right">{t('employeeAssignmentReadiness.labels.readiness')}</div>
             </div>
-            <ul className="divide-y divide-[var(--color-border)]">
+            <ul className="min-w-[960px] divide-y divide-[var(--color-border)] xl:min-w-0">
               {filteredEmployees.map((employee) => (
-                <li key={employee.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedEmployeeId(employee.id)}
-                    className={cn(
-                      'grid w-full min-h-[64px] min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4 text-left transition-colors hover:bg-[var(--color-bg-elevated)] lg:grid',
-                      EMPLOYEE_TABLE_GRID_COLS,
-                    )}
-                  >
-                    <div className="flex min-w-0 items-center gap-3 lg:col-span-1">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-xs font-semibold text-[var(--color-primary)]">
-                        {employee.initials}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-[var(--color-text-primary)]">
-                          {employee.fullName}
-                        </div>
-                        <div className="truncate text-xs text-[var(--color-text-muted)] lg:hidden">
-                          {employee.department} · {employee.position}
-                        </div>
-                        <div className="hidden truncate text-xs text-[var(--color-text-muted)] lg:block">
-                          {employee.email ?? '—'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="hidden truncate text-sm text-[var(--color-text-primary)] lg:block">
-                      {employee.department}
-                    </div>
-                    <div className="hidden truncate text-sm text-[var(--color-text-primary)] lg:block">
-                      {employee.position}
-                    </div>
-                    <div className="justify-self-end lg:text-right">
-                      <StatusPill tone={statusTone(employee.status)}>
-                        {t(`employees.status.${employee.status}`)}
-                      </StatusPill>
-                    </div>
-                  </button>
-                </li>
+                <EmployeeRow
+                  key={employee.id}
+                  employee={employee}
+                  onSelect={() => setSelectedEmployeeId(employee.id)}
+                />
               ))}
             </ul>
           </div>
@@ -446,95 +490,164 @@ function CalisanlarPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedEmployeeId(null)
         }}
-        title={selectedEmployee?.fullName ?? ''}
+        title={selectedEmployee?.displayName ?? ''}
         description={selectedEmployee?.email ?? t('employeesSetup.detail.description')}
       >
         {selectedEmployee ? (
           <div className="space-y-5">
             <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-sm font-semibold text-[var(--color-primary)]">
-                {selectedEmployee.initials}
+                {getInitials(selectedEmployee.displayName)}
               </span>
-              <div className="min-w-0">
-                <StatusPill tone={statusTone(selectedEmployee.status)}>
-                  {t(`employees.status.${selectedEmployee.status}`)}
-                </StatusPill>
-              </div>
+              <StatusPill tone={readinessPillTone(selectedEmployee.readiness.status)}>
+                {t(`employeeAssignmentReadiness.status.${selectedEmployee.readiness.status}`)}
+              </StatusPill>
             </div>
 
             <DetailRow
               icon={Building2}
-              label={t('employeesSetup.detail.department')}
-              value={selectedEmployee.department}
+              label={t('employeeAssignmentReadiness.labels.department')}
+              value={assignmentDetailValue(
+                selectedEmployee.department,
+                t('employeeAssignmentReadiness.labels.departmentMissing'),
+              )}
             />
             <DetailRow
               icon={Briefcase}
-              label={t('employeesSetup.detail.position')}
-              value={selectedEmployee.position}
+              label={t('employeeAssignmentReadiness.labels.position')}
+              value={assignmentDetailValue(
+                selectedEmployee.position,
+                t('employeeAssignmentReadiness.labels.positionMissing'),
+              )}
+            />
+            <DetailRow
+              icon={Wallet}
+              label={t('employeeAssignmentReadiness.labels.costCenter')}
+              value={assignmentDetailValue(
+                selectedEmployee.costCenter,
+                t('employeeAssignmentReadiness.labels.costCenterMissing'),
+              )}
             />
             <DetailRow
               icon={UserCheck}
-              label={t('employeesSetup.detail.manager')}
-              value={selectedEmployee.manager}
+              label={t('employeeAssignmentReadiness.labels.manager')}
+              value={assignmentDetailValue(
+                selectedEmployee.manager,
+                t('employeeAssignmentReadiness.labels.managerMissing'),
+                'displayName',
+              )}
             />
             <DetailRow
               icon={Mail}
               label={t('employeesSetup.detail.email')}
               value={selectedEmployee.email ?? '—'}
             />
-            <DetailRow
-              icon={CalendarDays}
-              label={t('employeesSetup.detail.joined')}
-              value={selectedEmployee.joinedLabel}
-            />
 
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                {t('employeesSetup.detail.leaveBalance')}
-              </div>
-              <div className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="text-sm font-medium text-[var(--color-text-primary)]">
-                    {t('employeesSetup.detail.leaveAnnual')}
-                  </div>
-                  <div className="text-xs tabular-nums text-[var(--color-text-muted)]">
-                    {t('employeesSetup.detail.leaveValue', {
-                      remaining: selectedEmployee.leaveTotal - selectedEmployee.leaveUsed,
-                      total: selectedEmployee.leaveTotal,
-                    })}
-                  </div>
+            {selectedLeave ? (
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {t('employeesSetup.detail.leaveBalance')}
                 </div>
-                <Progress
-                  className="mt-2 h-1.5"
-                  value={
-                    selectedEmployee.leaveTotal > 0
-                      ? (selectedEmployee.leaveUsed / selectedEmployee.leaveTotal) * 100
-                      : 0
-                  }
-                />
+                <div className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="text-sm font-medium text-[var(--color-text-primary)]">
+                      {t('employeesSetup.detail.leaveAnnual')}
+                    </div>
+                    <div className="text-xs tabular-nums text-[var(--color-text-muted)]">
+                      {t('employeesSetup.detail.leaveValue', {
+                        remaining:
+                          (selectedLeave.leaveTotal ?? 0) - (selectedLeave.leaveUsed ?? 0),
+                        total: selectedLeave.leaveTotal ?? 0,
+                      })}
+                    </div>
+                  </div>
+                  <Progress
+                    className="mt-2 h-1.5"
+                    value={
+                      (selectedLeave.leaveTotal ?? 0) > 0
+                        ? ((selectedLeave.leaveUsed ?? 0) / (selectedLeave.leaveTotal ?? 1)) * 100
+                        : 0
+                    }
+                  />
+                </div>
               </div>
-            </div>
+            ) : null}
 
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                {t('employeesSetup.detail.performanceScope')}
-              </div>
-              <div className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-3 text-sm text-[var(--color-text-muted)]">
-                {t(selectedEmployee.performanceScopeKey)}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                {t('employeesSetup.detail.recentActivity')}
-              </div>
-              <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-                {t('employeesSetup.detail.noActivity')}
-              </p>
-            </div>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {t('employeeAssignmentReadiness.boundary.erpNoWrite')}
+            </p>
           </div>
         ) : null}
       </SheetShell>
     </div>
+  )
+}
+
+function EmployeeRow({
+  employee,
+  onSelect,
+}: {
+  employee: EmployeeAssignmentReadinessEmployee
+  onSelect: () => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onSelect}
+        className={cn(
+          'grid w-full min-h-[64px] min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4 text-left transition-colors hover:bg-[var(--color-bg-elevated)] xl:grid',
+          EMPLOYEE_TABLE_GRID_COLS,
+          !employee.isActive && 'opacity-70',
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-3 xl:col-span-1">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-xs font-semibold text-[var(--color-primary)]">
+            {getInitials(employee.displayName)}
+          </span>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+              {employee.displayName}
+            </div>
+            <div className="truncate text-xs text-[var(--color-text-muted)] xl:hidden">
+              {employee.department?.name ?? t('employeeAssignmentReadiness.labels.departmentMissing')} ·{' '}
+              {employee.position?.name ?? t('employeeAssignmentReadiness.labels.positionMissing')}
+            </div>
+            <div className="hidden truncate text-xs text-[var(--color-text-muted)] xl:block">
+              {[employee.email, employee.employeeNumber].filter(Boolean).join(' · ') || '—'}
+            </div>
+          </div>
+        </div>
+        <div className="hidden min-w-0 xl:block">
+          {entityLabel(
+            employee.department,
+            'employeeAssignmentReadiness.labels.departmentMissing',
+            t,
+          )}
+        </div>
+        <div className="hidden min-w-0 xl:block">
+          {entityLabel(
+            employee.position,
+            'employeeAssignmentReadiness.labels.positionMissing',
+            t,
+          )}
+        </div>
+        <div className="hidden min-w-0 xl:block">
+          {entityLabel(
+            employee.costCenter,
+            'employeeAssignmentReadiness.labels.costCenterMissing',
+            t,
+          )}
+        </div>
+        <div className="hidden min-w-0 xl:block">{managerLabel(employee.manager, t)}</div>
+        <div className="justify-self-end xl:text-right">
+          <StatusPill tone={readinessPillTone(employee.readiness.status)}>
+            {t(`employeeAssignmentReadiness.status.${employee.readiness.status}`)}
+          </StatusPill>
+        </div>
+      </button>
+    </li>
   )
 }
