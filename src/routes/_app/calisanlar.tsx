@@ -307,6 +307,9 @@ function CalisanlarPage() {
           </p>
         </div>
         <StatusPill tone="info">{t('employees.managerOnly')}</StatusPill>
+        {data?.source === 'demo' ? (
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        ) : null}
       </div>
 
       {isLoading ? (

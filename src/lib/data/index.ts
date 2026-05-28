@@ -44,9 +44,17 @@ export {
   fetchEmployeesOverview,
   fetchEmployeeList,
   fetchEmployeeListStats,
+  fetchEmployeesOverviewWithMeta,
+  fetchEmployeeListWithMeta,
+  fetchEmployeeListStatsWithMeta,
+  buildEmployeeListStats,
+  emptyEmployeeListStats,
+  isActiveEmployeeStatus,
+  mapEmployeeRow,
   type DemoEmployeeStatus,
   type EmployeeListItem,
   type EmployeeListStats,
+  type EmployeeRowForList,
   type EmployeesOverview,
 } from '#/lib/data/core/employees'
 
