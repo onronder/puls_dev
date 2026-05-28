@@ -89,11 +89,10 @@ if ! grep -Fq "fetchCurrentEmployeeAssignmentReadiness" <<< "$ASSIGN_READINESS_C
   exit 1
 fi
 
-if grep -Eq "'missing_manager'|'policy_not_ready'" <<< "$READINESS_CONTENT"; then
-  if grep -A20 "RequestCreationBlocker" <<< "$READINESS_CONTENT" | grep -Eq "'missing_manager'|'policy_not_ready'"; then
-    echo "FAIL: RequestCreationBlocker must not include missing_manager or policy_not_ready"
-    exit 1
-  fi
+BLOCKER_UNION="$(awk '/export type RequestCreationBlocker =/,/^$/' "$READINESS" | head -n 10)"
+if grep -Eq "'missing_manager'|'policy_not_ready'" <<< "$BLOCKER_UNION"; then
+  echo "FAIL: RequestCreationBlocker must not include missing_manager or policy_not_ready"
+  exit 1
 fi
 
 if ! grep -Fq ".eq('is_active', true)" <<< "$EXPENSE_OVERVIEW_CONTENT"; then
