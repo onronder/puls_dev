@@ -1,29 +1,165 @@
-import { fetchDemoEmployeesOverview } from '#/lib/demo/puls-demo-data'
+import {
+  fetchDemoEmployeeAssignmentReadiness,
+  fetchDemoEmployeesOverview,
+} from '#/lib/demo/puls-demo-data'
 import type { DemoEmployeeStatus, DemoEmployeesOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
+import type { EmployeeAssignmentReadinessEmployee } from '#/lib/data/setup/employee-assignment-readiness'
 
 export type EmployeeListItem = {
   id: string
   fullName: string
   email: string | null
+  employeeNumber: string | null
+  employmentStatus: string | null
+  isActive: boolean
   jobTitle: string | null
+  departmentId: string | null
   departmentName: string | null
+  positionId: string | null
   positionName: string | null
+  managerEmployeeId: string | null
+  managerName: string | null
   personaRole: string | null
   hireDate: string | null
 }
 
 export type EmployeeListStats = {
-  employeeCount: number
-  departmentCount: number
-  positionCount: number | null
+  total: number
+  active: number
+  inactive: number
+  missingDepartment: number
+  missingPosition: number
+  missingManager: number
+}
+
+export type EmployeeRowForList = {
+  id: string
+  full_name: string | null
+  email: string | null
+  employee_code: string | null
+  employment_status: string | null
+  job_title: string | null
+  persona_role: string | null
+  hire_date: string | null
+  department_id: string | null
+  position_id: string | null
+  manager_employee_id: string | null
 }
 
 export type EmployeesOverview = DemoEmployeesOverview
 export type { DemoEmployeeStatus }
+
+export function isActiveEmployeeStatus(status: string | null | undefined): boolean {
+  return status === 'active'
+}
+
+export function mapEmployeeRow(
+  row: EmployeeRowForList,
+  lookups: {
+    departmentNameMap: Map<string, string>
+    positionNameMap: Map<string, string>
+    managerNameMap: Map<string, string>
+  },
+): EmployeeListItem {
+  const departmentId = row.department_id
+  const positionId = row.position_id
+  const managerEmployeeId = row.manager_employee_id
+  const employmentStatus = row.employment_status
+
+  return {
+    id: row.id,
+    fullName: row.full_name ?? '',
+    email: row.email ?? null,
+    employeeNumber: row.employee_code ?? null,
+    employmentStatus,
+    isActive: isActiveEmployeeStatus(employmentStatus),
+    jobTitle: row.job_title ?? null,
+    departmentId,
+    departmentName: departmentId ? (lookups.departmentNameMap.get(departmentId) ?? null) : null,
+    positionId,
+    positionName: positionId ? (lookups.positionNameMap.get(positionId) ?? null) : null,
+    managerEmployeeId,
+    managerName: managerEmployeeId ? (lookups.managerNameMap.get(managerEmployeeId) ?? null) : null,
+    personaRole: row.persona_role ?? null,
+    hireDate: row.hire_date ?? null,
+  }
+}
+
+export function buildEmployeeListStats(items: EmployeeListItem[]): EmployeeListStats {
+  let active = 0
+  let inactive = 0
+  let missingDepartment = 0
+  let missingPosition = 0
+  let missingManager = 0
+
+  for (const item of items) {
+    if (item.isActive) active++
+    else inactive++
+    if (!item.departmentId) missingDepartment++
+    if (!item.positionId) missingPosition++
+    if (!item.managerEmployeeId) missingManager++
+  }
+
+  return {
+    total: items.length,
+    active,
+    inactive,
+    missingDepartment,
+    missingPosition,
+    missingManager,
+  }
+}
+
+export function emptyEmployeeListStats(): EmployeeListStats {
+  return {
+    total: 0,
+    active: 0,
+    inactive: 0,
+    missingDepartment: 0,
+    missingPosition: 0,
+    missingManager: 0,
+  }
+}
+
+function isEmployeeListStatsEmpty(stats: EmployeeListStats): boolean {
+  return stats.total === 0
+}
+
+function mapDemoAssignmentEmployeeToListItem(
+  employee: EmployeeAssignmentReadinessEmployee,
+): EmployeeListItem {
+  return {
+    id: employee.id,
+    fullName: employee.displayName,
+    email: employee.email,
+    employeeNumber: employee.employeeNumber,
+    employmentStatus: employee.isActive ? 'active' : 'inactive',
+    isActive: employee.isActive,
+    jobTitle: null,
+    departmentId: employee.department?.id ?? null,
+    departmentName: employee.department?.name ?? null,
+    positionId: employee.position?.id ?? null,
+    positionName: employee.position?.name ?? null,
+    managerEmployeeId: employee.manager?.id ?? null,
+    managerName: employee.manager?.displayName ?? null,
+    personaRole: null,
+    hireDate: null,
+  }
+}
+
+async function fetchDemoEmployeeList(): Promise<EmployeeListItem[]> {
+  const overview = await fetchDemoEmployeeAssignmentReadiness()
+  return overview.employees.map(mapDemoAssignmentEmployeeToListItem)
+}
+
+async function fetchDemoEmployeeListStats(): Promise<EmployeeListStats> {
+  const items = await fetchDemoEmployeeList()
+  return buildEmployeeListStats(items)
+}
 
 function emptyEmployeesOverview(): EmployeesOverview {
   return {
@@ -107,7 +243,7 @@ async function fetchRealEmployeeList(userId: string): Promise<EmployeeListItem[]
   const { data, error } = await pulsCore()
     .from('employees')
     .select(
-      'id, full_name, email, job_title, persona_role, hire_date, department_id, position_id',
+      'id, full_name, email, employee_code, employment_status, job_title, persona_role, hire_date, department_id, position_id, manager_employee_id',
     )
     .eq('tenant_id', ctx.tenantId)
     .order('full_name', { ascending: true })
@@ -116,52 +252,52 @@ async function fetchRealEmployeeList(userId: string): Promise<EmployeeListItem[]
     throw fromSupabaseError(error, 'fetchEmployeeList', 'puls_core', 'employees')
   }
 
-  const rows = data ?? []
-  const departmentIds = uniqueNonNullIds(rows.map((row) => row.department_id as string | null))
-  const positionIds = uniqueNonNullIds(rows.map((row) => row.position_id as string | null))
+  const rows = (data ?? []) as EmployeeRowForList[]
+  const departmentIds = uniqueNonNullIds(rows.map((row) => row.department_id))
+  const positionIds = uniqueNonNullIds(rows.map((row) => row.position_id))
+  const managerIds = uniqueNonNullIds(rows.map((row) => row.manager_employee_id))
 
-  const [departmentNameMap, positionNameMap] = await Promise.all([
+  const [departmentNameMap, positionNameMap, managerNameMap] = await Promise.all([
     fetchNamesByIds('departments', ctx.tenantId, departmentIds),
     fetchNamesByIds('positions', ctx.tenantId, positionIds),
+    fetchNamesByIds('employees', ctx.tenantId, managerIds),
   ])
 
-  return rows.map((row) => ({
-    id: row.id as string,
-    fullName: (row.full_name as string | null) ?? '',
-    email: (row.email as string | null) ?? null,
-    jobTitle: (row.job_title as string | null) ?? null,
-    departmentName: row.department_id
-      ? (departmentNameMap.get(row.department_id as string) ?? null)
-      : null,
-    positionName: row.position_id
-      ? (positionNameMap.get(row.position_id as string) ?? null)
-      : null,
-    personaRole: (row.persona_role as string | null) ?? null,
-    hireDate: (row.hire_date as string | null) ?? null,
-  }))
+  return rows.map((row) =>
+    mapEmployeeRow(row, { departmentNameMap, positionNameMap, managerNameMap }),
+  )
 }
 
 async function fetchRealEmployeeListStats(userId: string): Promise<EmployeeListStats> {
-  const ctx = await resolveTenantContext(userId)
-  if (!ctx.tenantId) {
-    return { employeeCount: 0, departmentCount: 0, positionCount: null }
-  }
+  const items = await fetchRealEmployeeList(userId)
+  return buildEmployeeListStats(items)
+}
 
-  const { data, error } = await pulsCalc()
-    .from('employee_list_overview')
-    .select('active_employee_count, department_count, position_count')
-    .eq('tenant_id', ctx.tenantId)
-    .maybeSingle()
+export function fetchEmployeesOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchEmployeesOverview',
+    fetchReal: () => fetchRealEmployeesOverview(userId),
+    fetchDemo: fetchDemoEmployeesOverview,
+    isEmpty: isEmployeesOverviewEmpty,
+  })
+}
 
-  if (error) {
-    throw fromSupabaseError(error, 'fetchEmployeeListStats', 'puls_calc', 'employee_list_overview')
-  }
+export function fetchEmployeeListWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchEmployeeList',
+    fetchReal: () => fetchRealEmployeeList(userId),
+    fetchDemo: fetchDemoEmployeeList,
+    isEmpty: (items) => items.length === 0,
+  })
+}
 
-  return {
-    employeeCount: Number(data?.active_employee_count ?? 0),
-    departmentCount: Number(data?.department_count ?? 0),
-    positionCount: data?.position_count == null ? null : Number(data.position_count),
-  }
+export function fetchEmployeeListStatsWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchEmployeeListStats',
+    fetchReal: () => fetchRealEmployeeListStats(userId),
+    fetchDemo: fetchDemoEmployeeListStats,
+    isEmpty: isEmployeeListStatsEmpty,
+  })
 }
 
 export async function fetchEmployeesOverview(userId: string): Promise<EmployeesOverview> {
@@ -177,7 +313,7 @@ export async function fetchEmployeeList(userId: string): Promise<EmployeeListIte
   return resolveAdapterData({
     operation: 'fetchEmployeeList',
     fetchReal: () => fetchRealEmployeeList(userId),
-    fetchDemo: async () => [],
+    fetchDemo: fetchDemoEmployeeList,
     isEmpty: (items) => items.length === 0,
   })
 }
@@ -186,8 +322,7 @@ export async function fetchEmployeeListStats(userId: string): Promise<EmployeeLi
   return resolveAdapterData({
     operation: 'fetchEmployeeListStats',
     fetchReal: () => fetchRealEmployeeListStats(userId),
-    fetchDemo: async () => ({ employeeCount: 4, departmentCount: 3, positionCount: 3 }),
-    isEmpty: (stats) =>
-      stats.employeeCount === 0 && stats.departmentCount === 0 && (stats.positionCount ?? 0) === 0,
+    fetchDemo: fetchDemoEmployeeListStats,
+    isEmpty: isEmployeeListStatsEmpty,
   })
 }

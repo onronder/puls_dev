@@ -3,6 +3,10 @@ import type { DemoProfileOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds } from '#/lib/data/core/lookups'
+import {
+  mapProfileEmployeeFields,
+  resolveProfileStatusKey,
+} from '#/lib/data/profile/mapping'
 import { resolveAdapterData } from '#/lib/data/result'
 
 export type ProfileOverview = DemoProfileOverview
@@ -99,6 +103,7 @@ async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview
   const departmentId = employeeRow.data?.department_id as string | null
   const positionId = employeeRow.data?.position_id as string | null
   const pendingCount = Number(performanceRow.data?.pending_review_count ?? 0)
+  const profileFields = mapProfileEmployeeFields(employeeRow.data)
 
   const [departmentNameMap, positionNameMap, pendingExpenseCountResult] = await Promise.all([
     departmentId
@@ -127,14 +132,11 @@ async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview
   const cycleName = performanceRow.data?.active_cycle_name as string | null
 
   return {
-    fallbackEmail: (employeeRow.data?.email as string | null) ?? '—',
+    fallbackEmail: profileFields.email ?? '—',
     departmentKey: departmentId ? (departmentNameMap.get(departmentId) ?? '—') : '—',
     positionKey: positionId ? (positionNameMap.get(positionId) ?? '—') : '—',
-    roleKey: mapPersonaRoleKey(employeeRow.data?.persona_role as string | null),
-    statusKey:
-      employeeRow.data?.employment_status === 'active'
-        ? 'profileSetup.status.active'
-        : 'profileSetup.status.inactive',
+    roleKey: mapPersonaRoleKey(profileFields.personaRole),
+    statusKey: resolveProfileStatusKey(profileFields.employmentStatus),
     leaveRemaining: Number(leaveRow.data?.annual_leave_remaining ?? 0),
     leaveTotal: Number(leaveRow.data?.annual_leave_total ?? 0),
     leaveHintKey: 'profileSetup.selfHr.leaveHint',
