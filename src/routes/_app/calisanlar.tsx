@@ -555,16 +555,17 @@ function CalisanlarPage() {
                     </div>
                     <div className="text-xs tabular-nums text-[var(--color-text-muted)]">
                       {t('employeesSetup.detail.leaveValue', {
-                        remaining: selectedLeave.leaveTotal - selectedLeave.leaveUsed,
-                        total: selectedLeave.leaveTotal,
+                        remaining:
+                          (selectedLeave.leaveTotal ?? 0) - (selectedLeave.leaveUsed ?? 0),
+                        total: selectedLeave.leaveTotal ?? 0,
                       })}
                     </div>
                   </div>
                   <Progress
                     className="mt-2 h-1.5"
                     value={
-                      selectedLeave.leaveTotal > 0
-                        ? (selectedLeave.leaveUsed / selectedLeave.leaveTotal) * 100
+                      (selectedLeave.leaveTotal ?? 0) > 0
+                        ? ((selectedLeave.leaveUsed ?? 0) / (selectedLeave.leaveTotal ?? 1)) * 100
                         : 0
                     }
                   />
