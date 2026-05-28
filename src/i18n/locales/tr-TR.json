@@ -734,10 +734,56 @@
       "pending": "Bekliyor"
     }
   },
+  "orgSetupReadiness": {
+    "sections": {
+      "summary": "Organizasyon kurulum hazırlığı"
+    },
+    "status": {
+      "ready": "Hazır",
+      "empty": "Boş",
+      "partial": "Kısmi",
+      "unmapped": "Eşleşmemiş",
+      "demo_only": "Demo veri",
+      "unknown": "Bilinmiyor"
+    },
+    "source": {
+      "puls": "PULS",
+      "erp": "ERP",
+      "demo": "Demo",
+      "unknown": "Bilinmiyor"
+    },
+    "empty": {
+      "departmentsTitle": "Departman yok",
+      "departments": "Departman verisi bulunamadı. Çalışan atamaları ve onay rotaları departman ana verisine bağlıdır.",
+      "positionsTitle": "Pozisyon yok",
+      "positions": "Pozisyon verisi bulunamadı. Çalışan atamaları pozisyon ana verisine bağlıdır.",
+      "costCentersTitle": "Masraf merkezi yok",
+      "costCenters": "Masraf merkezi verisi bulunamadı. Masraf yönlendirme ve dışa aktarma hazırlığı masraf merkezi ana verisine bağlıdır."
+    },
+    "metrics": {
+      "departments": "Departman",
+      "positions": "Pozisyon",
+      "costCenters": "Masraf merkezi",
+      "mappedCostCenters": "Eşleşmiş masraf merkezi",
+      "unmappedCostCenters": "Eşleşmemiş masraf merkezi",
+      "entityDetail": "{{active}} aktif / {{total}} toplam",
+      "costCentersDetail": "{{mapped}} eşleşmiş · {{unmapped}} eşleşmemiş · {{total}} toplam"
+    },
+    "boundary": {
+      "erpNoWrite":
+        "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır.",
+      "readOnly": "Salt okunur kurulum görünümü.",
+      "crudDeferred": "Oluşturma ve düzenleme işlemleri sonraki sürümde gelecek."
+    }
+  },
   "companySetup": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Şirket Kurulum",
     "description": "Tenant, şirket bilgileri ve varsayılan çalışma ayarlarını yönet.",
+    "meta": {
+      "title": "Şirket Kurulum — PULS",
+      "description": "Tenant, şirket bilgileri ve varsayılan çalışma ayarları."
+    },
     "metrics": {
       "completion": "Tamamlanma",
       "missing": "Eksik alan",
@@ -787,13 +833,15 @@
     },
     "columns": {
       "name": "Departman",
+      "code": "Kod",
       "manager": "Yönetici",
       "count": "Çalışan",
       "status": "Durum"
     },
     "employeeCount": "{{count}} çalışan",
     "status": {
-      "active": "Aktif"
+      "active": "Aktif",
+      "inactive": "Pasif"
     },
     "actions": {
       "add": "Departman ekle"
@@ -832,9 +880,17 @@
     },
     "columns": {
       "name": "Pozisyon",
+      "code": "Kod",
       "department": "Departman",
+      "open": "Açık",
+      "status": "Durum",
       "template": "Şablon",
       "evaluation": "İş değerleme"
+    },
+    "openCount": "{{count}} açık",
+    "status": {
+      "active": "Aktif",
+      "inactive": "Pasif"
     },
     "evaluationScore": "{{score}} puan",
     "actions": {

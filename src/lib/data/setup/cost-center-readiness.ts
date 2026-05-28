@@ -2,7 +2,7 @@ import { fetchDemoCostCenterReadinessOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoCostCenterReadinessOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCore, pulsIntegration, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type CostCenterReadinessStatus = 'export_ready' | 'needs_mapping' | 'puls_only' | 'inactive'
 
@@ -450,6 +450,15 @@ export async function fetchCostCenterReadinessOverview(
   userId: string,
 ): Promise<CostCenterReadinessOverview> {
   return resolveAdapterData({
+    operation: 'fetchCostCenterReadinessOverview',
+    fetchReal: () => fetchRealCostCenterReadinessOverview(userId),
+    fetchDemo: fetchDemoCostCenterReadinessOverview,
+    isEmpty: isCostCenterReadinessEmpty,
+  })
+}
+
+export function fetchCostCenterReadinessOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchCostCenterReadinessOverview',
     fetchReal: () => fetchRealCostCenterReadinessOverview(userId),
     fetchDemo: fetchDemoCostCenterReadinessOverview,

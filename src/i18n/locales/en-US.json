@@ -734,10 +734,56 @@
       "pending": "Pending"
     }
   },
+  "orgSetupReadiness": {
+    "sections": {
+      "summary": "Organization setup readiness"
+    },
+    "status": {
+      "ready": "Ready",
+      "empty": "Empty",
+      "partial": "Partial",
+      "unmapped": "Unmapped",
+      "demo_only": "Demo data",
+      "unknown": "Unknown"
+    },
+    "source": {
+      "puls": "PULS",
+      "erp": "ERP",
+      "demo": "Demo",
+      "unknown": "Unknown"
+    },
+    "empty": {
+      "departmentsTitle": "No departments",
+      "departments": "No department data found. Employee assignments and approval routes require department master data.",
+      "positionsTitle": "No positions",
+      "positions": "No position data found. Employee assignments require position master data.",
+      "costCentersTitle": "No cost centers",
+      "costCenters": "No cost center data found. Expense routing and export readiness depend on cost center master data."
+    },
+    "metrics": {
+      "departments": "Departments",
+      "positions": "Positions",
+      "costCenters": "Cost centers",
+      "mappedCostCenters": "Mapped cost centers",
+      "unmappedCostCenters": "Unmapped cost centers",
+      "entityDetail": "{{active}} active / {{total}} total",
+      "costCentersDetail": "{{mapped}} mapped · {{unmapped}} unmapped · {{total}} total"
+    },
+    "boundary": {
+      "erpNoWrite":
+        "PULS does not modify ERP master data; the source system remains finance/ERP.",
+      "readOnly": "Read-only setup view.",
+      "crudDeferred": "Create and edit actions will arrive in a later release."
+    }
+  },
   "companySetup": {
     "eyebrow": "Setup & Configuration",
     "title": "Company Setup",
     "description": "Manage tenant, company details, and default work settings.",
+    "meta": {
+      "title": "Company Setup — PULS",
+      "description": "Tenant, company details, and default work settings."
+    },
     "metrics": {
       "completion": "Completion",
       "missing": "Missing fields",
@@ -787,13 +833,15 @@
     },
     "columns": {
       "name": "Department",
+      "code": "Code",
       "manager": "Manager",
       "count": "Employees",
       "status": "Status"
     },
     "employeeCount": "{{count}} employees",
     "status": {
-      "active": "Active"
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "actions": {
       "add": "Add department"
@@ -832,9 +880,17 @@
     },
     "columns": {
       "name": "Position",
+      "code": "Code",
       "department": "Department",
+      "open": "Open",
+      "status": "Status",
       "template": "Template",
       "evaluation": "Job evaluation"
+    },
+    "openCount": "{{count}} open",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "evaluationScore": "{{score}} pts",
     "actions": {
