@@ -7,6 +7,7 @@ Bu klasor, UI migration sonrasinda production veri katmanina gecis icin alan baz
 - `PULS_DATA_SOURCE_CALCULATION_OWNERSHIP_CONTRACT.md`: PULS'un ERP/HR replacement olmadigini, veri siniflarini, source-of-truth kararlarini, hesaplama sahipligini ve ekran bazli veri sahipligini tanimlar.
 - `PULS_TECHNICAL_IMPLEMENTATION_PLAN.md`: Supabase schema, RLS, frontend data adapter, Railway ERP connector, migration sirasi ve QA stratejisini tanimlar.
 - `PULS_FIELD_OWNERSHIP_MATRIX.csv`: Route ve ekran bloklarina gore her alanin source-of-truth, canonical tablo, calculation owner, RLS scope, demo fallback ve write-back kararlarini listeler.
+- `11_sidebar_data_api_inventory.md`: Sidebar ve setup route veri/API envanteri, demo sinirlari, mutation/RPC katalogu ve PR11.1–PR11.9 sahiplik haritasi.
 
 ## Ana Ilkeler
 
