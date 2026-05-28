@@ -114,7 +114,7 @@ for needle in "${adapter_needles[@]}"; do
   fi
 done
 
-for adapter_content in "$ORG_ADAPTER_CONTENT" "$ORG_READINESS_CONTENT" "$CC_ADAPTER_CONTENT"; do
+for adapter_content in "$ORG_ADAPTER_CONTENT" "$CC_ADAPTER_CONTENT"; do
   if ! grep -Fq "resolveTenantContext" <<< "$adapter_content"; then
     echo "FAIL: adapter must use resolveTenantContext"
     exit 1
@@ -124,6 +124,11 @@ for adapter_content in "$ORG_ADAPTER_CONTENT" "$ORG_READINESS_CONTENT" "$CC_ADAP
     exit 1
   fi
 done
+
+if ! grep -Fq "resolveTenantContext" <<< "$ORG_READINESS_CONTENT"; then
+  echo "FAIL: fetchOrgSetupReadiness must use resolveTenantContext"
+  exit 1
+fi
 
 if ! grep -Fq "fetchDepartmentsOverviewWithMeta" <<< "$ORG_ADAPTER_CONTENT"; then
   echo "FAIL: organization adapter must expose fetchDepartmentsOverviewWithMeta"
