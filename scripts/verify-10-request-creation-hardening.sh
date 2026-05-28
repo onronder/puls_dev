@@ -94,6 +94,21 @@ if ! grep -Fq 'create_leave_request(uuid, date, date, boolean, uuid, text)' <<< 
   exit 1
 fi
 
+if ! grep -Fq 'request.jwt.claim.sub' <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must set request.jwt.claim.sub for authenticated create RPC context"
+  exit 1
+fi
+
+if ! grep -Fq 'user_id IS NOT NULL' <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must select employee with user_id IS NOT NULL"
+  exit 1
+fi
+
+if ! grep -Fq "request.jwt.claim.role', 'authenticated'" <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must set authenticated role before create RPC calls"
+  exit 1
+fi
+
 adapter_needles=(
   "RequestCreationBlocker"
   "buildExpenseCreationReadiness"

@@ -6,6 +6,9 @@
 --     (category_id, title, amount, currency, vat_amount, vat_included, expense_date, description)
 --   puls_workflow.create_leave_request(uuid, date, date, boolean, uuid, text)
 --     (leave_type_id, start_date, end_date, half_day, delegate_employee_id, description)
+--
+-- Auth context: create RPCs require auth.uid(), current_tenant_id(), current_employee_id().
+-- Set authenticated role + sub before each create call; restore service_role after.
 
 BEGIN;
 
@@ -17,10 +20,12 @@ DECLARE
   v_active_leave_type_id UUID;
   v_inactive_leave_type_id UUID;
   v_employee_id UUID;
+  v_user_id UUID;
   v_active_picker_count INTEGER;
   v_inactive_historical_count INTEGER;
 BEGIN
   PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+  PERFORM set_config('request.jwt.claim.sub', '', true);
 
   SELECT id INTO v_tenant_id
   FROM puls_core.tenants
@@ -31,6 +36,17 @@ BEGIN
   IF v_tenant_id IS NULL THEN
     RAISE NOTICE 'SKIP: demo tenant not found';
     RETURN;
+  END IF;
+
+  SELECT e.id, e.user_id
+  INTO v_employee_id, v_user_id
+  FROM puls_core.employees e
+  WHERE e.tenant_id = v_tenant_id
+    AND e.user_id IS NOT NULL
+  LIMIT 1;
+
+  IF v_employee_id IS NULL OR v_user_id IS NULL THEN
+    RAISE EXCEPTION 'SMOKE_SETUP_FAIL: expected employee with user_id for request creation smoke';
   END IF;
 
   SELECT id INTO v_active_category_id
@@ -80,6 +96,9 @@ BEGIN
   END IF;
 
   IF v_inactive_category_id IS NOT NULL THEN
+    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+    PERFORM set_config('request.jwt.claim.sub', v_user_id::text, true);
+
     BEGIN
       PERFORM puls_workflow.create_expense_claim(
         v_inactive_category_id,
@@ -94,15 +113,24 @@ BEGIN
       RAISE EXCEPTION 'SMOKE_FAIL inactive expense category create: expected PULS_INVALID_EXPENSE_CATEGORY';
     EXCEPTION
       WHEN OTHERS THEN
+        IF SQLERRM ILIKE '%PULS_AUTH_REQUIRED%' THEN
+          RAISE EXCEPTION 'SMOKE_FAIL inactive expense category create: auth context missing (got PULS_AUTH_REQUIRED)';
+        END IF;
         IF SQLERRM NOT ILIKE '%PULS_INVALID_EXPENSE_CATEGORY%' THEN
           RAISE EXCEPTION 'SMOKE_FAIL inactive expense category create: got %', SQLERRM;
         END IF;
     END;
+
+    PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+    PERFORM set_config('request.jwt.claim.sub', '', true);
   ELSE
     RAISE NOTICE 'NOTICE: no inactive expense category on tenant; skipping inactive reject case';
   END IF;
 
   IF v_inactive_leave_type_id IS NOT NULL THEN
+    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+    PERFORM set_config('request.jwt.claim.sub', v_user_id::text, true);
+
     BEGIN
       PERFORM puls_workflow.create_leave_request(
         v_inactive_leave_type_id,
@@ -115,33 +143,30 @@ BEGIN
       RAISE EXCEPTION 'SMOKE_FAIL inactive leave type create: expected PULS_INVALID_LEAVE_TYPE';
     EXCEPTION
       WHEN OTHERS THEN
+        IF SQLERRM ILIKE '%PULS_AUTH_REQUIRED%' THEN
+          RAISE EXCEPTION 'SMOKE_FAIL inactive leave type create: auth context missing (got PULS_AUTH_REQUIRED)';
+        END IF;
         IF SQLERRM NOT ILIKE '%PULS_INVALID_LEAVE_TYPE%' THEN
           RAISE EXCEPTION 'SMOKE_FAIL inactive leave type create: got %', SQLERRM;
         END IF;
     END;
+
+    PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+    PERFORM set_config('request.jwt.claim.sub', '', true);
   ELSE
     RAISE NOTICE 'NOTICE: no inactive leave type on tenant; skipping inactive reject case';
   END IF;
 
-  SELECT e.id INTO v_employee_id
-  FROM puls_core.employees e
-  WHERE e.tenant_id = v_tenant_id
-  LIMIT 1;
+  PERFORM 1
+  FROM puls_core.employee_cost_center_assignments
+  WHERE tenant_id = v_tenant_id
+    AND employee_id = v_employee_id;
 
-  IF v_employee_id IS NOT NULL THEN
-    PERFORM 1
-    FROM puls_core.employee_cost_center_assignments
-    WHERE tenant_id = v_tenant_id
-      AND employee_id = v_employee_id;
-
-    PERFORM 1
-    FROM puls_core.employee_reporting_lines
-    WHERE tenant_id = v_tenant_id
-      AND employee_id = v_employee_id
-      AND relationship_type = 'primary_manager';
-  ELSE
-    RAISE NOTICE 'NOTICE: no employee fixture for assignment readability checks';
-  END IF;
+  PERFORM 1
+  FROM puls_core.employee_reporting_lines
+  WHERE tenant_id = v_tenant_id
+    AND employee_id = v_employee_id
+    AND relationship_type = 'primary_manager';
 
   RAISE NOTICE 'demo_request_creation_hardening smoke completed for tenant %', v_tenant_id;
 END $$;
