@@ -1,5 +1,11 @@
 -- 10 PR10.16 Request Creation Hardening — executable smoke (single transaction; rolls back)
 -- Asserts active-only create guards, inactive rejections, and historical inactive readability.
+--
+-- Real RPC signatures (positional — do NOT call with jsonb):
+--   puls_workflow.create_expense_claim(uuid, text, numeric, text, numeric, boolean, date, text)
+--     (category_id, title, amount, currency, vat_amount, vat_included, expense_date, description)
+--   puls_workflow.create_leave_request(uuid, date, date, boolean, uuid, text)
+--     (leave_type_id, start_date, end_date, half_day, delegate_employee_id, description)
 
 BEGIN;
 
@@ -76,12 +82,14 @@ BEGIN
   IF v_inactive_category_id IS NOT NULL THEN
     BEGIN
       PERFORM puls_workflow.create_expense_claim(
-        jsonb_build_object(
-          'category_id', v_inactive_category_id,
-          'amount', 100,
-          'currency', 'TRY',
-          'expense_date', CURRENT_DATE
-        )
+        v_inactive_category_id,
+        'Smoke inactive category',
+        100,
+        'TRY',
+        NULL,
+        TRUE,
+        CURRENT_DATE,
+        'request creation hardening smoke'
       );
       RAISE EXCEPTION 'SMOKE_FAIL inactive expense category create: expected PULS_INVALID_EXPENSE_CATEGORY';
     EXCEPTION
@@ -97,11 +105,12 @@ BEGIN
   IF v_inactive_leave_type_id IS NOT NULL THEN
     BEGIN
       PERFORM puls_workflow.create_leave_request(
-        jsonb_build_object(
-          'leave_type_id', v_inactive_leave_type_id,
-          'start_date', CURRENT_DATE + 7,
-          'end_date', CURRENT_DATE + 7
-        )
+        v_inactive_leave_type_id,
+        CURRENT_DATE + 7,
+        CURRENT_DATE + 7,
+        FALSE,
+        NULL,
+        'request creation hardening smoke'
       );
       RAISE EXCEPTION 'SMOKE_FAIL inactive leave type create: expected PULS_INVALID_LEAVE_TYPE';
     EXCEPTION

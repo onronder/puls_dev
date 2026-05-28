@@ -69,6 +69,31 @@ for needle in "${smoke_needles[@]}"; do
   fi
 done
 
+if grep -Fiq 'create_expense_claim(jsonb' <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must not call create_expense_claim with jsonb signature"
+  exit 1
+fi
+
+if grep -Fiq 'create_leave_request(jsonb' <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must not call create_leave_request with jsonb signature"
+  exit 1
+fi
+
+if grep -Fq 'jsonb_build_object' <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must not use jsonb_build_object for create RPC calls"
+  exit 1
+fi
+
+if ! grep -Fq 'create_expense_claim(uuid, text, numeric, text, numeric, boolean, date, text)' <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must document positional create_expense_claim signature"
+  exit 1
+fi
+
+if ! grep -Fq 'create_leave_request(uuid, date, date, boolean, uuid, text)' <<< "$SMOKE_CONTENT"; then
+  echo "FAIL: smoke must document positional create_leave_request signature"
+  exit 1
+fi
+
 adapter_needles=(
   "RequestCreationBlocker"
   "buildExpenseCreationReadiness"
