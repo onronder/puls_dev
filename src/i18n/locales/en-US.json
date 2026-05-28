@@ -776,6 +776,177 @@
       "crudDeferred": "Create and edit actions will arrive in a later release."
     }
   },
+  "setupReadinessDashboard": {
+    "title": "Setup readiness checklist",
+    "subtitle": "Review expense, leave, organization, and assignment readiness in one place.",
+    "overall": "Overall status",
+    "generatedAt": "Last updated: {{time}}",
+    "severity": {
+      "ready": "Ready",
+      "warning": "Warning",
+      "blocking": "Blocking",
+      "unknown": "Unknown"
+    },
+    "sections": {
+      "expense": "Expense categories",
+      "leave": "Leave types",
+      "approvalPolicies": "Approval policy bindings",
+      "org": "Organization",
+      "assignments": "Employee assignments",
+      "costCenters": "Cost center mappings",
+      "requestCreation": "Request creation readiness"
+    },
+    "counts": {
+      "readyRatio": "{{ready}} / {{total}} ready",
+      "noneActive": "No active records"
+    },
+    "empty": {
+      "ready": "All setup areas appear ready."
+    },
+    "actions": {
+      "open": "Open details"
+    },
+    "boundary": {
+      "erpNoWrite":
+        "PULS does not modify ERP master data; the source system remains finance/ERP."
+    },
+    "issues": {
+      "sourceUnknown": {
+        "title": "Data source unavailable",
+        "description": "Readiness signals could not be loaded for this area. Refresh the page or open the related setup screen."
+      },
+      "expense": {
+        "noActiveCategories": {
+          "title": "No active expense categories",
+          "description": "At least one active category is required to create expense requests."
+        },
+        "inactiveCategories": {
+          "title": "Inactive expense categories present",
+          "description": "Inactive categories are not used for request creation; review lifecycle settings."
+        },
+        "policyNotReady": {
+          "title": "Expense approval policy not ready",
+          "description": "Some active categories have unbound policies or missing steps; RPC/resolver remains authoritative."
+        }
+      },
+      "leave": {
+        "noActiveLeaveTypes": {
+          "title": "No active leave types",
+          "description": "At least one active leave type is required to create leave requests."
+        },
+        "inactiveLeaveTypes": {
+          "title": "Inactive leave types present",
+          "description": "Inactive types are not used for request creation; review definitions."
+        },
+        "policyNotReady": {
+          "title": "Leave approval policy not ready",
+          "description": "Some active leave types have unbound policies or missing steps; RPC/resolver remains authoritative."
+        }
+      },
+      "approvalPolicies": {
+        "notReady": {
+          "title": "Approval policy bindings incomplete",
+          "description": "Unbound, inactive, or incomplete policies exist; they warn on request creation but do not alone block the dashboard."
+        }
+      },
+      "org": {
+        "departmentsEmpty": {
+          "title": "No departments defined",
+          "description": "Department master data is required for organization setup."
+        },
+        "departmentsPartial": {
+          "title": "Department setup is partial",
+          "description": "Not all departments are active or some records are missing."
+        },
+        "positionsEmpty": {
+          "title": "No positions defined",
+          "description": "Position master data is required for employee assignments."
+        },
+        "positionsPartial": {
+          "title": "Position setup is partial",
+          "description": "Not all positions are active or some records are missing."
+        },
+        "costCentersUnmapped": {
+          "title": "Organization cost center mapping gaps",
+          "description": "Some cost centers are not yet mapped for export readiness."
+        },
+        "costCentersEmpty": {
+          "title": "No cost centers defined",
+          "description": "Expense routing and export readiness depend on cost center master data."
+        }
+      },
+      "assignments": {
+        "inactiveReferences": {
+          "title": "Inactive assignment references",
+          "description": "Active employees reference inactive departments, positions, cost centers, or managers."
+        },
+        "missingCostCenter": {
+          "title": "Missing cost center assignments",
+          "description": "Some active employees have no cost center assignment."
+        },
+        "missingManager": {
+          "title": "Missing manager assignments",
+          "description": "Some active employees have no primary manager defined."
+        },
+        "missingDepartment": {
+          "title": "Missing department assignments",
+          "description": "Some active employees have no department assignment."
+        },
+        "missingPosition": {
+          "title": "Missing position assignments",
+          "description": "Some active employees have no position assignment."
+        }
+      },
+      "costCenters": {
+        "unmapped": {
+          "title": "Cost center mappings incomplete",
+          "description": "Some export and finance flows are not considered ready until cost center mappings are complete."
+        },
+        "routingWarnings": {
+          "title": "Expense routing warnings",
+          "description": "Approval policy routing has cost center readiness warnings."
+        }
+      },
+      "requestCreation": {
+        "expenseBlocked": {
+          "title": "Expense request creation blocked",
+          "description": "Current setup or assignment state prevents creating expense requests."
+        },
+        "leaveBlocked": {
+          "title": "Leave request creation blocked",
+          "description": "Current setup or assignment state prevents creating leave requests."
+        },
+        "missingManager": {
+          "title": "Manager assignment missing",
+          "description": "Request creation may continue; approval routing may depend on manager assignment."
+        },
+        "missingCostCenter": {
+          "title": "Cost center assignment missing (warning)",
+          "description": "Leave request creation may continue; cost center assignment may still be missing."
+        },
+        "policyUnbound": {
+          "title": "Approval policy unbound",
+          "description": "Selected target has no policy binding; RPC/resolver remains authoritative."
+        },
+        "policyInactive": {
+          "title": "Approval policy inactive",
+          "description": "Bound policy is inactive or unavailable; RPC/resolver remains authoritative."
+        },
+        "policyMissingSteps": {
+          "title": "Approval steps missing",
+          "description": "Policy is missing required approval steps; RPC/resolver remains authoritative."
+        },
+        "policyModuleMismatch": {
+          "title": "Approval policy module mismatch",
+          "description": "Policy module does not match the target type; RPC/resolver remains authoritative."
+        },
+        "policyNotReady": {
+          "title": "Approval policy not ready",
+          "description": "Policy binding is incomplete; RPC/resolver remains authoritative."
+        }
+      }
+    }
+  },
   "employeeAssignmentReadiness": {
     "status": {
       "ready": "Ready",

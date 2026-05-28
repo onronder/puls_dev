@@ -776,6 +776,177 @@
       "crudDeferred": "Oluşturma ve düzenleme işlemleri sonraki sürümde gelecek."
     }
   },
+  "setupReadinessDashboard": {
+    "title": "Kurulum kontrol listesi",
+    "subtitle": "Masraf, izin, organizasyon ve atama hazırlığını tek ekranda görüntüleyin.",
+    "overall": "Genel durum",
+    "generatedAt": "Son güncelleme: {{time}}",
+    "severity": {
+      "ready": "Hazır",
+      "warning": "Uyarı",
+      "blocking": "Engelleyici",
+      "unknown": "Bilinmiyor"
+    },
+    "sections": {
+      "expense": "Masraf kategorileri",
+      "leave": "İzin tanımları",
+      "approvalPolicies": "Onay politikası bağlantıları",
+      "org": "Organizasyon",
+      "assignments": "Çalışan atamaları",
+      "costCenters": "Masraf merkezi eşleşmeleri",
+      "requestCreation": "Talep oluşturma hazırlığı"
+    },
+    "counts": {
+      "readyRatio": "{{ready}} / {{total}} hazır",
+      "noneActive": "0 aktif kayıt"
+    },
+    "empty": {
+      "ready": "Tüm kurulum alanları hazır görünüyor."
+    },
+    "actions": {
+      "open": "Detaya git"
+    },
+    "boundary": {
+      "erpNoWrite":
+        "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
+    },
+    "issues": {
+      "sourceUnknown": {
+        "title": "Veri kaynağı okunamadı",
+        "description": "Bu alan için hazırlık sinyalleri alınamadı. Sayfayı yenileyin veya ilgili kurulum ekranını kontrol edin."
+      },
+      "expense": {
+        "noActiveCategories": {
+          "title": "Aktif masraf kategorisi yok",
+          "description": "Masraf talebi oluşturmak için en az bir aktif kategori gerekir."
+        },
+        "inactiveCategories": {
+          "title": "Pasif masraf kategorileri var",
+          "description": "Pasif kategoriler talep oluşturmada kullanılmaz; yaşam döngüsünü gözden geçirin."
+        },
+        "policyNotReady": {
+          "title": "Masraf onay politikası hazır değil",
+          "description": "Bazı aktif kategorilerde onay politikası bağlantısı veya adım eksikliği var; RPC/çözümleyici nihai otoritedir."
+        }
+      },
+      "leave": {
+        "noActiveLeaveTypes": {
+          "title": "Aktif izin türü yok",
+          "description": "İzin talebi oluşturmak için en az bir aktif izin türü gerekir."
+        },
+        "inactiveLeaveTypes": {
+          "title": "Pasif izin türleri var",
+          "description": "Pasif türler talep oluşturmada kullanılmaz; tanımları gözden geçirin."
+        },
+        "policyNotReady": {
+          "title": "İzin onay politikası hazır değil",
+          "description": "Bazı aktif izin türlerinde onay politikası bağlantısı veya adım eksikliği var; RPC/çözümleyici nihai otoritedir."
+        }
+      },
+      "approvalPolicies": {
+        "notReady": {
+          "title": "Onay politikası bağlantıları tamamlanmadı",
+          "description": "Bağlanmamış, pasif veya eksik adımlı politikalar var; talep oluşturma uyarısı üretir, tek başına genel engel sayılmaz."
+        }
+      },
+      "org": {
+        "departmentsEmpty": {
+          "title": "Departman tanımı yok",
+          "description": "Organizasyon kurulumu için departman ana verisi gerekir."
+        },
+        "departmentsPartial": {
+          "title": "Departman kurulumu kısmi",
+          "description": "Tüm departmanlar aktif değil veya eksik kayıtlar var."
+        },
+        "positionsEmpty": {
+          "title": "Pozisyon tanımı yok",
+          "description": "Çalışan atamaları için pozisyon ana verisi gerekir."
+        },
+        "positionsPartial": {
+          "title": "Pozisyon kurulumu kısmi",
+          "description": "Tüm pozisyonlar aktif değil veya eksik kayıtlar var."
+        },
+        "costCentersUnmapped": {
+          "title": "Organizasyon masraf merkezi eşleşmesi eksik",
+          "description": "Bazı masraf merkezleri henüz dışa aktarım için eşleşmemiş."
+        },
+        "costCentersEmpty": {
+          "title": "Masraf merkezi tanımı yok",
+          "description": "Masraf yönlendirme ve dışa aktarma hazırlığı masraf merkezi ana verisine bağlıdır."
+        }
+      },
+      "assignments": {
+        "inactiveReferences": {
+          "title": "Pasif atama referansları",
+          "description": "Aktif çalışanlarda pasif departman, pozisyon, masraf merkezi veya yönetici referansı var."
+        },
+        "missingCostCenter": {
+          "title": "Eksik masraf merkezi ataması",
+          "description": "Bazı aktif çalışanların masraf merkezi ataması yok."
+        },
+        "missingManager": {
+          "title": "Eksik yönetici ataması",
+          "description": "Bazı aktif çalışanların birincil yöneticisi tanımlı değil."
+        },
+        "missingDepartment": {
+          "title": "Eksik departman ataması",
+          "description": "Bazı aktif çalışanların departman ataması yok."
+        },
+        "missingPosition": {
+          "title": "Eksik pozisyon ataması",
+          "description": "Bazı aktif çalışanların pozisyon ataması yok."
+        }
+      },
+      "costCenters": {
+        "unmapped": {
+          "title": "Masraf merkezi eşleşmeleri eksik",
+          "description": "Masraf merkezi eşleşmeleri tamamlanmadan bazı dışa aktarım ve finans akışları hazır sayılmaz."
+        },
+        "routingWarnings": {
+          "title": "Masraf yönlendirme uyarıları",
+          "description": "Onay politikası yönlendirmesinde masraf merkezi hazırlığı ile ilgili uyarılar var."
+        }
+      },
+      "requestCreation": {
+        "expenseBlocked": {
+          "title": "Masraf talebi oluşturma engelli",
+          "description": "Mevcut kurulum veya atama durumu masraf talebi oluşturmayı engelliyor."
+        },
+        "leaveBlocked": {
+          "title": "İzin talebi oluşturma engelli",
+          "description": "Mevcut kurulum veya atama durumu izin talebi oluşturmayı engelliyor."
+        },
+        "missingManager": {
+          "title": "Yönetici ataması eksik",
+          "description": "Talep oluşturma devam edebilir; onay rotası yönetici atamasına bağlı olabilir."
+        },
+        "missingCostCenter": {
+          "title": "Masraf merkezi ataması eksik (uyarı)",
+          "description": "İzin talebi oluşturma devam edebilir; masraf merkezi ataması eksik olabilir."
+        },
+        "policyUnbound": {
+          "title": "Onay politikası bağlı değil",
+          "description": "Seçili hedefte onay politikası bağlantısı yok; RPC/çözümleyici nihai otoritedir."
+        },
+        "policyInactive": {
+          "title": "Onay politikası pasif",
+          "description": "Bağlı politika pasif veya kullanılamıyor; RPC/çözümleyici nihai otoritedir."
+        },
+        "policyMissingSteps": {
+          "title": "Onay adımları eksik",
+          "description": "Politikada gerekli onay adımı tanımı eksik; RPC/çözümleyici nihai otoritedir."
+        },
+        "policyModuleMismatch": {
+          "title": "Onay politikası modül uyumsuzluğu",
+          "description": "Politika modülü hedef türü ile eşleşmiyor; RPC/çözümleyici nihai otoritedir."
+        },
+        "policyNotReady": {
+          "title": "Onay politikası hazır değil",
+          "description": "Politika bağlantısı tamamlanmamış; RPC/çözümleyici nihai otoritedir."
+        }
+      }
+    }
+  },
   "employeeAssignmentReadiness": {
     "status": {
       "ready": "Hazır",
