@@ -825,6 +825,47 @@
         "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
     }
   },
+  "requestCreationReadiness": {
+    "common": {
+      "blockingTitle": "Talep oluşturulamıyor",
+      "warningTitle": "Onay süreci uyarısı",
+      "assignmentPartial": "Çalışan aktif değil; yeni talep oluşturulamaz.",
+      "inactiveAssignmentReference": "Pasif departman, pozisyon veya masraf merkezi referansı var; yeni talep oluşturulamaz.",
+      "missingCostCenter": "Masraf merkezi ataması eksik; masraf talebi oluşturulamaz.",
+      "missingCostCenterWarn": "Masraf merkezi ataması eksik; onay süreci etkilenebilir.",
+      "missingManager": "Birincil yönetici atanmamış; onay süreci gecikebilir.",
+      "policyNotReady": "Onay politikası hazır değil; gönderim sırasında hata alabilirsiniz.",
+      "policyUnbound": "Seçili kategori veya izin türüne onay politikası bağlı değil.",
+      "policyInactive": "Bağlı onay politikası pasif.",
+      "policyMissingSteps": "Onay politikasında gerekli adımlar eksik.",
+      "policyModuleMismatch": "Onay politikası modülü uyumsuz.",
+      "unknown": "Çalışan kaydı doğrulanamadı; talep oluşturulamıyor."
+    },
+    "expense": {
+      "noActiveCategories": "Aktif masraf kategorisi yok; yeni masraf talebi oluşturulamaz.",
+      "invalidCategory": "Seçilen masraf kategorisi geçersiz veya pasif."
+    },
+    "leave": {
+      "noActiveLeaveTypes": "Aktif izin türü yok; yeni izin talebi oluşturulamaz.",
+      "invalidLeaveType": "Seçilen izin türü geçersiz veya pasif."
+    },
+    "blockers": {
+      "no_active_expense_categories": "Aktif masraf kategorisi yok.",
+      "no_active_leave_types": "Aktif izin türü yok.",
+      "missing_cost_center": "Masraf merkezi ataması eksik.",
+      "inactive_assignment_reference": "Pasif atama referansı var.",
+      "assignment_partial": "Çalışan aktif değil; yeni talep oluşturulamaz.",
+      "unknown": "Çalışan kaydı doğrulanamadı."
+    },
+    "warnings": {
+      "missing_manager": "Birincil yönetici atanmamış.",
+      "missing_cost_center": "Masraf merkezi ataması eksik.",
+      "policy_unbound": "Onay politikası bağlı değil.",
+      "policy_inactive": "Onay politikası pasif.",
+      "policy_missing_steps": "Onay adımları eksik.",
+      "policy_module_mismatch": "Onay politikası modülü uyumsuz."
+    }
+  },
   "companySetup": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Şirket Kurulum",

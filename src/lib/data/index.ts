@@ -173,6 +173,8 @@ export {
   buildEmployeeAssignmentReadinessFlags,
   buildEmployeeAssignmentReadinessSummary,
   computeEmployeeAssignmentReadiness,
+  fetchCurrentEmployeeAssignmentReadiness,
+  fetchCurrentEmployeeAssignmentReadinessWithMeta,
   fetchEmployeeAssignmentReadiness,
   fetchEmployeeAssignmentReadinessWithMeta,
   pickCurrentCostCenterAssignment,
@@ -186,6 +188,25 @@ export {
   type EmployeeAssignmentReadinessStatus,
   type EmployeeAssignmentReadinessSummary,
 } from '#/lib/data/setup/employee-assignment-readiness'
+
+export {
+  buildExpenseCreationReadiness,
+  buildLeaveCreationReadiness,
+  fetchRequestCreationReadiness,
+  fetchRequestCreationReadinessWithMeta,
+  getPrimaryRequestCreationBlocker,
+  getRequestCreationBlockerI18nKey,
+  getRequestCreationWarningI18nKey,
+  mapPolicyStatusToWarning,
+  type BuildExpenseCreationReadinessInput,
+  type BuildLeaveCreationReadinessInput,
+  type PolicyTarget,
+  type RequestCreationBlocker,
+  type RequestCreationDomain,
+  type RequestCreationReadiness,
+  type RequestCreationReadinessResult,
+  type RequestCreationWarning,
+} from '#/lib/data/setup/request-creation-readiness'
 
 export {
   fetchPerformanceParametersOverview,

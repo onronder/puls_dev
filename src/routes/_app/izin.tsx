@@ -13,10 +13,11 @@ import {
   Plus,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { RequestCreationReadinessBanners } from '#/components/puls/RequestCreationReadinessBanners'
 import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -32,9 +33,11 @@ import { Textarea } from '#/components/ui/textarea'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  buildLeaveCreationReadiness,
   createLeaveRequest,
   decideApprovalRequest,
   fetchLeaveOverview,
+  fetchRequestCreationReadiness,
   isDataAdapterError,
   type LeaveOverview,
   type LeaveStatus,
@@ -568,6 +571,22 @@ function LeaveFormSheet({
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
 
+  const { data: creationContext } = useQuery({
+    queryKey: ['request-creation-readiness', 'leave', userId],
+    queryFn: () => fetchRequestCreationReadiness(userId!, 'leave'),
+    enabled: Boolean(userId) && open,
+  })
+
+  const readiness = useMemo(() => {
+    if (!creationContext) return null
+    return buildLeaveCreationReadiness({
+      activeLeaveTypeCount: creationContext.activeTargetCount,
+      assignment: creationContext.assignment,
+      policyTargets: creationContext.policyTargets,
+      selectedLeaveTypeId: leaveTypeId || null,
+    })
+  }, [creationContext, leaveTypeId])
+
   const resolvedLeaveType =
     data?.leaveTypes.find((item) => item.id === leaveTypeId) ??
     data?.leaveTypes.find((item) => item.id === defaultLeaveTypeId) ??
@@ -641,6 +660,7 @@ function LeaveFormSheet({
   }
 
   const isSubmitting = createMutation.isPending
+  const canCreate = readiness?.canCreate ?? false
 
   return (
     <SheetShell
@@ -663,7 +683,14 @@ function LeaveFormSheet({
             type="submit"
             form="new-leave-form"
             className="min-h-11 flex-1"
-            disabled={isSubmitting || !hasActiveLeaveTypes || !resolvedLeaveType || requiresDocument || halfDayBlocked}
+            disabled={
+              isSubmitting ||
+              !hasActiveLeaveTypes ||
+              !resolvedLeaveType ||
+              requiresDocument ||
+              halfDayBlocked ||
+              !canCreate
+            }
           >
             {isSubmitting ? (
               <>
@@ -681,6 +708,8 @@ function LeaveFormSheet({
       }
     >
       <form id="new-leave-form" className="space-y-5" onSubmit={handleSubmit}>
+        {readiness ? <RequestCreationReadinessBanners readiness={readiness} t={t} /> : null}
+
         <FormField label={t('leave.form.type')} required>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {(data?.leaveTypes ?? []).map((type) => (
@@ -704,7 +733,7 @@ function LeaveFormSheet({
           </div>
           {!hasActiveLeaveTypes ? (
             <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-              {t('leaveSetup.typeLifecycle.noActiveLeaveTypes')}
+              {t('requestCreationReadiness.leave.noActiveLeaveTypes')}
             </p>
           ) : null}
         </FormField>

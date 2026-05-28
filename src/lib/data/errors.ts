@@ -73,24 +73,30 @@ const OPERATION_AWARE_RPC_ERROR_I18N: Record<
     decideApprovalRequest: 'approval.error.authRequired',
   },
   PULS_NO_APPROVER: {
-    createLeaveRequest: 'leave.error.noApprover',
-    createExpenseClaim: 'expense.error.noApprover',
+    createLeaveRequest: 'requestCreationReadiness.common.policyNotReady',
+    createExpenseClaim: 'requestCreationReadiness.common.policyNotReady',
     decideApprovalRequest: 'approval.error.forbidden',
   },
   PULS_POLICY_STEP_UNRESOLVED: {
-    createLeaveRequest: 'leave.error.policyStepUnresolved',
-    createExpenseClaim: 'expense.error.policyStepUnresolved',
+    createLeaveRequest: 'requestCreationReadiness.common.policyNotReady',
+    createExpenseClaim: 'requestCreationReadiness.common.policyNotReady',
     decideApprovalRequest: 'approval.error.policyStepUnresolved',
   },
   PULS_POLICY_NOT_FOUND: {
-    createLeaveRequest: 'leave.error.policyNotFound',
-    createExpenseClaim: 'expense.error.policyNotFound',
+    createLeaveRequest: 'requestCreationReadiness.common.policyNotReady',
+    createExpenseClaim: 'requestCreationReadiness.common.policyNotReady',
     decideApprovalRequest: 'approval.error.policyNotFound',
   },
   PULS_POLICY_STEP_NOT_FOUND: {
-    createLeaveRequest: 'leave.error.policyNotFound',
-    createExpenseClaim: 'expense.error.policyNotFound',
+    createLeaveRequest: 'requestCreationReadiness.common.policyNotReady',
+    createExpenseClaim: 'requestCreationReadiness.common.policyNotReady',
     decideApprovalRequest: 'approval.error.policyChainInvalid',
+  },
+  PULS_INVALID_LEAVE_TYPE: {
+    createLeaveRequest: 'requestCreationReadiness.leave.invalidLeaveType',
+  },
+  PULS_INVALID_EXPENSE_CATEGORY: {
+    createExpenseClaim: 'requestCreationReadiness.expense.invalidCategory',
   },
   PULS_APPROVAL_CHAIN_INVALID: {
     createLeaveRequest: 'leave.error.submitFailed',
