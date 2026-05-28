@@ -770,7 +770,8 @@
       "costCentersDetail": "{{mapped}} mapped · {{unmapped}} unmapped · {{total}} total"
     },
     "boundary": {
-      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP.",
+      "erpNoWrite":
+        "PULS does not modify ERP master data; the source system remains finance/ERP.",
       "readOnly": "Read-only setup view.",
       "crudDeferred": "Create and edit actions will arrive in a later release."
     }

@@ -770,7 +770,8 @@
       "costCentersDetail": "{{mapped}} eşleşmiş · {{unmapped}} eşleşmemiş · {{total}} toplam"
     },
     "boundary": {
-      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır.",
+      "erpNoWrite":
+        "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır.",
       "readOnly": "Salt okunur kurulum görünümü.",
       "crudDeferred": "Oluşturma ve düzenleme işlemleri sonraki sürümde gelecek."
     }
