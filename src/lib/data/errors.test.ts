@@ -104,7 +104,7 @@ describe('fromRpcError', () => {
         'leave.error.submitFailed',
         'createLeaveRequest',
       ),
-    ).toBe('leave.error.invalidLeaveType')
+    ).toBe('requestCreationReadiness.leave.invalidLeaveType')
 
     expect(
       mapRpcErrorToI18nKey(
@@ -112,7 +112,7 @@ describe('fromRpcError', () => {
         'expense.error.submitFailed',
         'createExpenseClaim',
       ),
-    ).toBe('expense.error.invalidCategory')
+    ).toBe('requestCreationReadiness.expense.invalidCategory')
   })
 
   it('maps shared codes using operation context', () => {
@@ -122,7 +122,7 @@ describe('fromRpcError', () => {
         'leave.error.submitFailed',
         'createLeaveRequest',
       ),
-    ).toBe('leave.error.noApprover')
+    ).toBe('requestCreationReadiness.common.policyNotReady')
 
     expect(
       mapRpcErrorToI18nKey(
@@ -130,6 +130,6 @@ describe('fromRpcError', () => {
         'expense.error.submitFailed',
         'createExpenseClaim',
       ),
-    ).toBe('expense.error.noApprover')
+    ).toBe('requestCreationReadiness.common.policyNotReady')
   })
 })

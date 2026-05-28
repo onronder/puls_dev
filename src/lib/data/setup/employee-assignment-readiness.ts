@@ -268,31 +268,11 @@ function mapManagerRef(
   }
 }
 
-async function fetchRealEmployeeAssignmentReadiness(
-  userId: string,
-): Promise<EmployeeAssignmentReadinessOverview> {
-  const ctx = await resolveTenantContext(userId)
-  if (!ctx.tenantId) return emptyOverview()
-
-  const { data: employeeRows, error: employeeError } = await pulsCore()
-    .from('employees')
-    .select(
-      'id, full_name, email, employee_code, employment_status, department_id, position_id, manager_employee_id',
-    )
-    .eq('tenant_id', ctx.tenantId)
-    .order('full_name', { ascending: true })
-
-  if (employeeError) {
-    throw fromSupabaseError(
-      employeeError,
-      'fetchEmployeeAssignmentReadiness',
-      'puls_core',
-      'employees',
-    )
-  }
-
-  const rows = (employeeRows ?? []) as EmployeeRow[]
-  if (rows.length === 0) return emptyOverview()
+async function buildEmployeeAssignmentReadinessFromRows(
+  tenantId: string,
+  rows: EmployeeRow[],
+): Promise<EmployeeAssignmentReadinessEmployee[]> {
+  if (rows.length === 0) return []
 
   const employeeIds = rows.map((row) => row.id)
   const departmentIds = [...new Set(rows.map((row) => row.department_id).filter(Boolean))] as string[]
@@ -308,26 +288,26 @@ async function fetchRealEmployeeAssignmentReadiness(
       ? pulsCore()
           .from('departments')
           .select('id, name, code, is_active')
-          .eq('tenant_id', ctx.tenantId)
+          .eq('tenant_id', tenantId)
           .in('id', departmentIds)
       : Promise.resolve({ data: [], error: null }),
     positionIds.length > 0
       ? pulsCore()
           .from('positions')
           .select('id, name, code, is_active')
-          .eq('tenant_id', ctx.tenantId)
+          .eq('tenant_id', tenantId)
           .in('id', positionIds)
       : Promise.resolve({ data: [], error: null }),
     pulsCore()
       .from('employee_cost_center_assignments')
       .select('id, employee_id, cost_center_id, starts_on, updated_at, is_active')
-      .eq('tenant_id', ctx.tenantId)
+      .eq('tenant_id', tenantId)
       .in('employee_id', employeeIds)
       .eq('is_active', true),
     pulsCore()
       .from('employee_reporting_lines')
       .select('id, employee_id, manager_employee_id, starts_on, created_at, is_active, relationship_type')
-      .eq('tenant_id', ctx.tenantId)
+      .eq('tenant_id', tenantId)
       .in('employee_id', employeeIds)
       .eq('is_active', true)
       .eq('relationship_type', 'primary_manager'),
@@ -421,14 +401,14 @@ async function fetchRealEmployeeAssignmentReadiness(
       ? pulsCore()
           .from('cost_centers')
           .select('id, name, code, is_active')
-          .eq('tenant_id', ctx.tenantId)
+          .eq('tenant_id', tenantId)
           .in('id', costCenterIds)
       : Promise.resolve({ data: [], error: null }),
     managerIds.size > 0
       ? pulsCore()
           .from('employees')
           .select('id, full_name, email, employment_status')
-          .eq('tenant_id', ctx.tenantId)
+          .eq('tenant_id', tenantId)
           .in('id', [...managerIds])
       : Promise.resolve({ data: [], error: null }),
   ])
@@ -471,7 +451,7 @@ async function fetchRealEmployeeAssignmentReadiness(
     ]),
   )
 
-  const employees: EmployeeAssignmentReadinessEmployee[] = rows.map((row) => {
+  return rows.map((row) => {
     const isActiveEmployee = row.employment_status === 'active'
     const department = row.department_id
       ? mapEntityRef(departmentMap.get(row.department_id))
@@ -510,11 +490,88 @@ async function fetchRealEmployeeAssignmentReadiness(
       readiness: { status, flags },
     }
   })
+}
 
+async function fetchEmployeeRowsForReadiness(
+  tenantId: string,
+  employeeId?: string | null,
+): Promise<EmployeeRow[]> {
+  let query = pulsCore()
+    .from('employees')
+    .select(
+      'id, full_name, email, employee_code, employment_status, department_id, position_id, manager_employee_id',
+    )
+    .eq('tenant_id', tenantId)
+
+  if (employeeId) {
+    query = query.eq('id', employeeId)
+  } else {
+    query = query.order('full_name', { ascending: true })
+  }
+
+  const { data: employeeRows, error: employeeError } = await query
+
+  if (employeeError) {
+    throw fromSupabaseError(
+      employeeError,
+      'fetchEmployeeAssignmentReadiness',
+      'puls_core',
+      'employees',
+    )
+  }
+
+  return (employeeRows ?? []) as EmployeeRow[]
+}
+
+async function fetchRealEmployeeAssignmentReadiness(
+  userId: string,
+): Promise<EmployeeAssignmentReadinessOverview> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) return emptyOverview()
+
+  const rows = await fetchEmployeeRowsForReadiness(ctx.tenantId)
+  if (rows.length === 0) return emptyOverview()
+
+  const employees = await buildEmployeeAssignmentReadinessFromRows(ctx.tenantId, rows)
   return {
     employees,
     summary: buildEmployeeAssignmentReadinessSummary(employees),
   }
+}
+
+async function fetchRealCurrentEmployeeAssignmentReadiness(
+  userId: string,
+): Promise<EmployeeAssignmentReadinessEmployee | null> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId || !ctx.employeeId) return null
+
+  const rows = await fetchEmployeeRowsForReadiness(ctx.tenantId, ctx.employeeId)
+  if (rows.length === 0) return null
+
+  const employees = await buildEmployeeAssignmentReadinessFromRows(ctx.tenantId, rows)
+  return employees[0] ?? null
+}
+
+export function fetchCurrentEmployeeAssignmentReadinessWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchCurrentEmployeeAssignmentReadiness',
+    fetchReal: () => fetchRealCurrentEmployeeAssignmentReadiness(userId),
+    fetchDemo: async () => {
+      const overview = await fetchDemoEmployeeAssignmentReadiness()
+      return overview.employees.find((employee) => employee.id === 'demo-e-ready') ?? null
+    },
+    isEmpty: (data) => data === null,
+  })
+}
+
+export async function fetchCurrentEmployeeAssignmentReadiness(
+  userId: string,
+): Promise<EmployeeAssignmentReadinessEmployee | null> {
+  const result = await fetchCurrentEmployeeAssignmentReadinessWithMeta(userId)
+  if (result.status === 'error' && result.error) {
+    throw result.error
+  }
+  return result.data
 }
 
 export function fetchEmployeeAssignmentReadinessWithMeta(userId: string) {

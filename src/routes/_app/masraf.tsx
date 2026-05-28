@@ -12,10 +12,11 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { RequestCreationReadinessBanners } from '#/components/puls/RequestCreationReadinessBanners'
 import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -31,9 +32,11 @@ import { Textarea } from '#/components/ui/textarea'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  buildExpenseCreationReadiness,
   createExpenseClaim,
   decideApprovalRequest,
   fetchExpenseOverview,
+  fetchRequestCreationReadiness,
   isDataAdapterError,
   type ExpenseOverview,
 } from '#/lib/data'
@@ -584,6 +587,22 @@ function ExpenseFormSheet({
   const [note, setNote] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
 
+  const { data: creationContext } = useQuery({
+    queryKey: ['request-creation-readiness', 'expense', userId],
+    queryFn: () => fetchRequestCreationReadiness(userId!, 'expense'),
+    enabled: Boolean(userId) && open,
+  })
+
+  const readiness = useMemo(() => {
+    if (!creationContext) return null
+    return buildExpenseCreationReadiness({
+      activeCategoryCount: creationContext.activeTargetCount,
+      assignment: creationContext.assignment,
+      policyTargets: creationContext.policyTargets,
+      selectedCategoryId: category || null,
+    })
+  }, [creationContext, category])
+
   const createMutation = useMutation({
     mutationFn: (payload: Parameters<typeof createExpenseClaim>[1]) => {
       if (!userId) throw new Error('missing user')
@@ -648,6 +667,7 @@ function ExpenseFormSheet({
 
   const isSubmitting = createMutation.isPending
   const hasActiveCategories = (data?.categoryLimits.length ?? 0) > 0
+  const canCreate = readiness?.canCreate ?? false
 
   return (
     <SheetShell
@@ -670,7 +690,7 @@ function ExpenseFormSheet({
             type="submit"
             form="new-expense-form"
             className="min-h-11 flex-1"
-            disabled={isSubmitting || !data || !hasActiveCategories}
+            disabled={isSubmitting || !data || !hasActiveCategories || !canCreate}
           >
             {isSubmitting ? (
               <>
@@ -688,6 +708,8 @@ function ExpenseFormSheet({
       }
     >
       <form id="new-expense-form" className="space-y-5" onSubmit={handleSubmit}>
+        {readiness ? <RequestCreationReadinessBanners readiness={readiness} t={t} /> : null}
+
         <div className="rounded-md border border-ai/20 bg-ai-soft p-3 opacity-90">
           <div className="flex items-start gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-ai/15 text-ai">
@@ -723,7 +745,7 @@ function ExpenseFormSheet({
           </select>
           {!hasActiveCategories ? (
             <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-              {t('expenseSetup.categoryLifecycle.noActiveCategories')}
+              {t('requestCreationReadiness.expense.noActiveCategories')}
             </p>
           ) : null}
         </FormField>

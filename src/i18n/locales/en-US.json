@@ -825,6 +825,47 @@
         "PULS does not modify ERP master data; the source system remains finance/ERP."
     }
   },
+  "requestCreationReadiness": {
+    "common": {
+      "blockingTitle": "Request cannot be created",
+      "warningTitle": "Approval process warning",
+      "assignmentPartial": "Employee is inactive; new requests cannot be created.",
+      "inactiveAssignmentReference": "An inactive department, position, or cost center reference blocks new requests.",
+      "missingCostCenter": "Cost center assignment is missing; expense requests cannot be created.",
+      "missingCostCenterWarn": "Cost center assignment is missing; approval routing may be affected.",
+      "missingManager": "Primary manager is not assigned; approval may be delayed.",
+      "policyNotReady": "Approval policy is not ready; submission may fail.",
+      "policyUnbound": "The selected category or leave type has no approval policy bound.",
+      "policyInactive": "The bound approval policy is inactive.",
+      "policyMissingSteps": "The approval policy is missing required steps.",
+      "policyModuleMismatch": "The approval policy module does not match.",
+      "unknown": "Employee record could not be verified; request creation is blocked."
+    },
+    "expense": {
+      "noActiveCategories": "No active expense categories; new expense requests cannot be created.",
+      "invalidCategory": "The selected expense category is invalid or inactive."
+    },
+    "leave": {
+      "noActiveLeaveTypes": "No active leave types; new leave requests cannot be created.",
+      "invalidLeaveType": "The selected leave type is invalid or inactive."
+    },
+    "blockers": {
+      "no_active_expense_categories": "No active expense categories.",
+      "no_active_leave_types": "No active leave types.",
+      "missing_cost_center": "Cost center assignment is missing.",
+      "inactive_assignment_reference": "An inactive assignment reference exists.",
+      "assignment_partial": "Employee is inactive; new requests cannot be created.",
+      "unknown": "Employee record could not be verified."
+    },
+    "warnings": {
+      "missing_manager": "Primary manager is not assigned.",
+      "missing_cost_center": "Cost center assignment is missing.",
+      "policy_unbound": "Approval policy is not bound.",
+      "policy_inactive": "Approval policy is inactive.",
+      "policy_missing_steps": "Approval steps are missing.",
+      "policy_module_mismatch": "Approval policy module mismatch."
+    }
+  },
   "companySetup": {
     "eyebrow": "Setup & Configuration",
     "title": "Company Setup",
