@@ -57,6 +57,8 @@ smoke_needles=(
   "demo_request_creation_hardening"
   "PULS_INVALID_EXPENSE_CATEGORY"
   "PULS_INVALID_LEAVE_TYPE"
+  "request.jwt.claim.sub"
+  "user_id IS NOT NULL"
   "historical inactive readability"
   "employee_cost_center_assignments"
   "employee_reporting_lines"
