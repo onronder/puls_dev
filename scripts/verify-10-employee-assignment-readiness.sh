@@ -51,7 +51,7 @@ matrix_needles=(
   "department"
   "position"
   "cost center"
-  "manager/reporting line"
+  "reporting line"
   "No ERP writes"
   "no resolver/decide"
 )
