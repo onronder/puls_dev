@@ -13,6 +13,8 @@ DECLARE
   v_pos_join_count INTEGER;
   v_manager_lookup_count INTEGER;
   v_user_linked_employee_id UUID;
+  v_user_id UUID;
+  v_current_employee_id UUID;
   v_cross_tenant_count INTEGER;
 BEGIN
   PERFORM set_config('request.jwt.claim.role', 'service_role', true);
@@ -76,14 +78,28 @@ BEGIN
     RAISE EXCEPTION 'SMOKE_FAIL employees: manager_employee_id lookup failed';
   END IF;
 
-  SELECT e.id INTO v_user_linked_employee_id
+  SELECT e.id, e.user_id
+  INTO v_user_linked_employee_id, v_user_id
   FROM puls_core.employees e
   WHERE e.tenant_id = v_tenant_id
     AND e.user_id IS NOT NULL
   LIMIT 1;
 
   IF v_user_linked_employee_id IS NOT NULL THEN
-    RAISE NOTICE 'OK: auth context — employee with user_id exists; request.jwt.claim.sub maps to puls_core.current_employee_id() when JWT matches';
+    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+    PERFORM set_config('request.jwt.claim.sub', v_user_id::TEXT, true);
+
+    SELECT puls_core.current_employee_id()
+    INTO v_current_employee_id;
+
+    IF v_current_employee_id IS DISTINCT FROM v_user_linked_employee_id THEN
+      RAISE EXCEPTION 'SMOKE_FAIL auth context: current_employee_id mismatch (expected %, got %)',
+        v_user_linked_employee_id, v_current_employee_id;
+    END IF;
+
+    PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+
+    RAISE NOTICE 'OK: auth context — request.jwt.claim.sub maps to puls_core.current_employee_id()';
   ELSE
     RAISE NOTICE 'SKIP: no employee with user_id in tenant — auth→employee mapping not asserted on live data';
   END IF;

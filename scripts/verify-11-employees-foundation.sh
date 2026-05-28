@@ -72,8 +72,9 @@ done
 smoke_needles=(
   "BEGIN;"
   "ROLLBACK;"
-  "current_employee_id"
-  "request.jwt.claim.sub"
+  "puls_core.current_employee_id()"
+  "set_config('request.jwt.claim.sub'"
+  "SMOKE_FAIL auth context"
   "department_id"
   "position_id"
   "manager_employee_id"
