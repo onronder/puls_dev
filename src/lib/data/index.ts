@@ -190,6 +190,25 @@ export {
 } from '#/lib/data/setup/employee-assignment-readiness'
 
 export {
+  buildApprovalPolicyReadinessSection,
+  buildCostCenterReadinessSection,
+  buildEmployeeAssignmentReadinessSection,
+  buildExpenseReadinessSection,
+  buildLeaveReadinessSection,
+  buildOrgReadinessSection,
+  buildRequestCreationReadinessSection,
+  combineSetupReadinessSeverity,
+  fetchSetupReadinessDashboard,
+  rankSetupReadinessSeverity,
+  type SetupReadinessActionTarget,
+  type SetupReadinessDashboard,
+  type SetupReadinessIssue,
+  type SetupReadinessSection,
+  type SetupReadinessSectionId,
+  type SetupReadinessSeverity,
+} from '#/lib/data/setup/setup-readiness-dashboard'
+
+export {
   buildExpenseCreationReadiness,
   buildLeaveCreationReadiness,
   fetchRequestCreationReadiness,

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, Building2, CheckCircle2, Clock, Plug } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -7,15 +7,18 @@ import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
-import { StatusPill } from '#/components/puls/StatusPill'
+import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
+import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
   fetchCompanySetupOverview,
-  fetchOrgSetupReadiness,
+  fetchSetupReadinessDashboard,
   type CompanySetupOverview,
-  type OrgSetupReadinessStatus,
+  type SetupReadinessIssue,
+  type SetupReadinessSection,
+  type SetupReadinessSeverity,
 } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
@@ -73,21 +76,97 @@ function formatLocaleLanguage(code: string, uiLocale: string): string {
   }
 }
 
-const COMPANY_FIELD_COUNT = 7
-const CHECKLIST_SKELETON_COUNT = 4
-
-function readinessPillTone(status: OrgSetupReadinessStatus): 'success' | 'warning' | 'neutral' {
-  switch (status) {
+function setupSeverityTone(severity: SetupReadinessSeverity): StatusTone {
+  switch (severity) {
     case 'ready':
       return 'success'
-    case 'empty':
-    case 'partial':
-    case 'unmapped':
-    case 'unknown':
+    case 'warning':
       return 'warning'
+    case 'blocking':
+      return 'danger'
+    case 'unknown':
+      return 'neutral'
     default:
       return 'neutral'
   }
+}
+
+function issueTextTone(severity: SetupReadinessSeverity): string {
+  switch (severity) {
+    case 'blocking':
+      return 'text-[var(--color-danger)]'
+    case 'warning':
+      return 'text-[var(--color-warning)]'
+    case 'unknown':
+      return 'text-[var(--color-text-muted)]'
+    default:
+      return 'text-[var(--color-text-secondary)]'
+  }
+}
+
+function formatGeneratedAt(value: string, locale: string): string {
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value))
+  } catch {
+    return value
+  }
+}
+
+const COMPANY_FIELD_COUNT = 7
+const CHECKLIST_SKELETON_COUNT = 4
+const DASHBOARD_SECTION_SKELETON_COUNT = 7
+const MAX_VISIBLE_ISSUES = 4
+
+function SetupReadinessIssueRow({ issue }: { issue: SetupReadinessIssue }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className={cn('text-xs leading-relaxed', issueTextTone(issue.severity))}>
+      <span className="font-medium">{t(issue.titleKey)}</span>
+      {issue.count != null ? (
+        <span className="ml-1 text-[var(--color-text-muted)]">({issue.count})</span>
+      ) : null}
+    </div>
+  )
+}
+
+function SetupReadinessSectionRow({ section }: { section: SetupReadinessSection }) {
+  const { t } = useTranslation()
+  const visibleIssues = section.issues.slice(0, MAX_VISIBLE_ISSUES)
+  const countLabel =
+    section.totalCount === 0
+      ? t('setupReadinessDashboard.counts.noneActive')
+      : t('setupReadinessDashboard.counts.readyRatio', {
+          ready: section.readyCount,
+          total: section.totalCount,
+        })
+
+  return (
+    <li className="flex min-h-[52px] flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-sm font-medium">{t(section.titleKey)}</div>
+          <StatusPill tone={setupSeverityTone(section.severity)}>
+            {t(`setupReadinessDashboard.severity.${section.severity}`)}
+          </StatusPill>
+        </div>
+        <div className="mt-1 text-xs text-[var(--color-text-muted)]">{countLabel}</div>
+        {visibleIssues.length > 0 ? (
+          <div className="mt-2 space-y-1">
+            {visibleIssues.map((issue) => (
+              <SetupReadinessIssueRow key={issue.id} issue={issue} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <Button asChild variant="outline" size="sm" className="shrink-0 self-start">
+        <Link to={section.target}>{t('setupReadinessDashboard.actions.open')}</Link>
+      </Button>
+    </li>
+  )
 }
 
 function SirketKurulumPage() {
@@ -99,9 +178,9 @@ function SirketKurulumPage() {
     enabled: Boolean(user?.id),
   })
 
-  const { data: orgReadiness, isLoading: orgReadinessLoading } = useQuery({
-    queryKey: ['org-setup-readiness', user?.id],
-    queryFn: () => fetchOrgSetupReadiness(user!.id),
+  const { data: setupDashboard, isLoading: setupDashboardLoading } = useQuery({
+    queryKey: ['setup-readiness-dashboard', user?.id],
+    queryFn: () => fetchSetupReadinessDashboard(user!.id),
     enabled: Boolean(user?.id),
   })
 
@@ -186,49 +265,46 @@ function SirketKurulumPage() {
       </section>
 
       <section className="mb-6">
-        <SectionHeader title={t('orgSetupReadiness.sections.summary')} />
+        <SectionHeader
+          title={t('setupReadinessDashboard.title')}
+          description={t('setupReadinessDashboard.subtitle')}
+        />
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          {t('orgSetupReadiness.boundary.erpNoWrite')}
+          {t('setupReadinessDashboard.boundary.erpNoWrite')}
         </p>
+        {setupDashboard ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+              {t('setupReadinessDashboard.overall')}
+            </span>
+            <StatusPill tone={setupSeverityTone(setupDashboard.severity)}>
+              {t(`setupReadinessDashboard.severity.${setupDashboard.severity}`)}
+            </StatusPill>
+            <span className="text-xs text-[var(--color-text-muted)]">
+              {t('setupReadinessDashboard.generatedAt', {
+                time: formatGeneratedAt(setupDashboard.generatedAt, i18n.language),
+              })}
+            </span>
+          </div>
+        ) : null}
         <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-          {orgReadinessLoading ? (
-            Array.from({ length: 3 }, (_, index) => (
+          {setupDashboardLoading ? (
+            Array.from({ length: DASHBOARD_SECTION_SKELETON_COUNT }, (_, index) => (
               <li key={index} className="flex min-h-[52px] items-center gap-3 p-4">
                 <Skeleton className="h-4 min-w-0 flex-1" />
                 <Skeleton className="h-7 w-20 shrink-0 rounded-full" />
               </li>
             ))
-          ) : orgReadiness ? (
-            <>
-              {(
-                [
-                  ['departments', orgReadiness.summary.departments] as const,
-                  ['positions', orgReadiness.summary.positions] as const,
-                  ['costCenters', orgReadiness.summary.costCenters] as const,
-                ] as const
-              ).map(([key, domain]) => (
-                <li key={key} className="flex min-h-[52px] flex-wrap items-center justify-between gap-3 p-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium">{t(`orgSetupReadiness.metrics.${key}`)}</div>
-                    <div className="text-xs text-[var(--color-text-muted)]">
-                      {key === 'costCenters'
-                        ? t('orgSetupReadiness.metrics.costCentersDetail', {
-                            total: domain.total,
-                            mapped: domain.mapped ?? 0,
-                            unmapped: domain.unmapped ?? 0,
-                          })
-                        : t('orgSetupReadiness.metrics.entityDetail', {
-                            total: domain.total,
-                            active: domain.active,
-                          })}
-                    </div>
-                  </div>
-                  <StatusPill tone={readinessPillTone(domain.status)}>
-                    {t(`orgSetupReadiness.status.${domain.status}`)}
-                  </StatusPill>
-                </li>
-              ))}
-            </>
+          ) : setupDashboard ? (
+            setupDashboard.severity === 'ready' && setupDashboard.sections.every((s) => s.issues.length === 0) ? (
+              <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                {t('setupReadinessDashboard.empty.ready')}
+              </li>
+            ) : (
+              setupDashboard.sections.map((section) => (
+                <SetupReadinessSectionRow key={section.id} section={section} />
+              ))
+            )
           ) : null}
         </ul>
       </section>
