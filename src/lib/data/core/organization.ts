@@ -3,7 +3,13 @@ import {
   fetchDemoPositionsOverview,
 } from '#/lib/demo/puls-demo-data'
 import type { DemoDepartmentsOverview, DemoPositionsOverview } from '#/lib/demo/puls-demo-data'
-import { fromSupabaseError } from '#/lib/data/errors'
+import {
+  DataAdapterError,
+  fromSupabaseError,
+  isDataAdapterError,
+  parseRpcErrorCode,
+} from '#/lib/data/errors'
+import type { DepartmentFieldKey, PositionFieldKey } from '#/lib/data/setup/org-setup-validation'
 import { pulsCalc, pulsCore, resolveTenantContext } from '#/lib/data/client'
 import {
   computeOpenHeadcount,
@@ -12,11 +18,88 @@ import {
   fetchNamesByIds,
   uniqueNonNullIds,
 } from '#/lib/data/core/lookups'
-import { mapOrgEntitySource, type OrgSetupEntitySource } from '#/lib/data/setup/org-entity-source'
+import { mapOrgEntitySource, isOrgEntityEditable, type OrgSetupEntitySource } from '#/lib/data/setup/org-entity-source'
+import { normalizeOrgSetupCode } from '#/lib/data/setup/org-setup-validation'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type DepartmentsOverview = DemoDepartmentsOverview
 export type PositionsOverview = DemoPositionsOverview
+
+export type DepartmentMutationInput = {
+  name: string
+  code: string
+}
+
+export type PositionMutationInput = {
+  name: string
+  code: string
+  departmentId: string | null
+  normHeadcount: number | null
+}
+
+export type DepartmentMutationErrorMapping = {
+  fieldErrors: Partial<Record<DepartmentFieldKey, string>>
+  toastKey?: string
+}
+
+export type PositionMutationErrorMapping = {
+  fieldErrors: Partial<Record<PositionFieldKey, string>>
+  toastKey?: string
+}
+
+const PULS_DEPARTMENT_ERROR_MAP: Record<string, { field: DepartmentFieldKey; i18nKey: string }> = {
+  PULS_ORG_DEPARTMENT_NAME_REQUIRED: {
+    field: 'name',
+    i18nKey: 'orgSetupCrud.validation.nameRequired',
+  },
+  PULS_ORG_DEPARTMENT_CODE_REQUIRED: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.codeRequired',
+  },
+  PULS_ORG_DEPARTMENT_CODE_INVALID: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.codeInvalid',
+  },
+  PULS_ORG_DEPARTMENT_MANAGER_INVALID: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.generic',
+  },
+  PULS_ORG_DEPARTMENT_COST_CENTER_INVALID: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.generic',
+  },
+  PULS_ORG_DEPARTMENT_SOURCE_READ_ONLY: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.sourceReadOnly',
+  },
+}
+
+const PULS_POSITION_ERROR_MAP: Record<string, { field: PositionFieldKey; i18nKey: string }> = {
+  PULS_ORG_POSITION_NAME_REQUIRED: {
+    field: 'name',
+    i18nKey: 'orgSetupCrud.validation.nameRequired',
+  },
+  PULS_ORG_POSITION_CODE_REQUIRED: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.codeRequired',
+  },
+  PULS_ORG_POSITION_CODE_INVALID: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.codeInvalid',
+  },
+  PULS_ORG_POSITION_DEPARTMENT_INVALID: {
+    field: 'departmentId',
+    i18nKey: 'orgSetupCrud.validation.departmentInvalid',
+  },
+  PULS_ORG_POSITION_NORM_INVALID: {
+    field: 'normHeadcount',
+    i18nKey: 'orgSetupCrud.validation.normInvalid',
+  },
+  PULS_ORG_POSITION_SOURCE_READ_ONLY: {
+    field: 'code',
+    i18nKey: 'orgSetupCrud.validation.sourceReadOnly',
+  },
+}
 
 function emptyDepartmentsOverview(): DepartmentsOverview {
   return {
@@ -81,6 +164,7 @@ async function fetchRealDepartmentsOverview(userId: string): Promise<Departments
   const mappedDepartments = rows.map((row) => {
     const managerId = row.manager_employee_id as string | null
     const isActive = Boolean(row.is_active)
+    const source = mapOrgEntitySource(row.external_source as string | null) as OrgSetupEntitySource
     return {
       id: row.id as string,
       name: row.name as string,
@@ -88,7 +172,8 @@ async function fetchRealDepartmentsOverview(userId: string): Promise<Departments
       manager: managerId ? (managerNameMap.get(managerId) ?? '—') : '—',
       count: countByDept.get(row.id as string) ?? 0,
       isActive,
-      source: mapOrgEntitySource(row.external_source as string | null) as OrgSetupEntitySource,
+      source,
+      isEditable: isOrgEntityEditable(source),
     }
   })
 
@@ -145,17 +230,21 @@ async function fetchRealPositionsOverview(userId: string): Promise<PositionsOver
     const departmentId = row.department_id as string | null
     const normHeadcount = Number(row.norm_headcount ?? 0)
     const filledCount = countByPosition.get(positionId) ?? 0
+    const source = mapOrgEntitySource(row.external_source as string | null) as OrgSetupEntitySource
 
     return {
       id: positionId,
       name: row.name as string,
       code: (row.code as string | null) ?? null,
       department: departmentId ? (departmentNameMap.get(departmentId) ?? '—') : '—',
+      departmentId,
+      normHeadcount,
       template: '—',
       evaluation: 0,
       open: computeOpenHeadcount(normHeadcount, filledCount),
       isActive: Boolean(row.is_active),
-      source: mapOrgEntitySource(row.external_source as string | null) as OrgSetupEntitySource,
+      source,
+      isEditable: isOrgEntityEditable(source),
     }
   })
 
@@ -208,4 +297,203 @@ export function fetchPositionsOverviewWithMeta(userId: string) {
     fetchDemo: fetchDemoPositionsOverview,
     isEmpty: (data) => data.positions.length === 0,
   })
+}
+
+function duplicateDepartment23505Mapping(
+  error: DataAdapterError,
+): DepartmentMutationErrorMapping | null {
+  const haystack = `${error.message} ${error.hint ?? ''} ${error.details ?? ''}`.toLowerCase()
+  if (haystack.includes('(tenant_id, code)') || haystack.includes('departments')) {
+    return { fieldErrors: { code: 'orgSetupCrud.validation.duplicateCode' } }
+  }
+  return null
+}
+
+function duplicatePosition23505Mapping(error: DataAdapterError): PositionMutationErrorMapping | null {
+  const haystack = `${error.message} ${error.hint ?? ''} ${error.details ?? ''}`.toLowerCase()
+  if (haystack.includes('(tenant_id, code)') || haystack.includes('positions')) {
+    return { fieldErrors: { code: 'orgSetupCrud.validation.duplicateCode' } }
+  }
+  return null
+}
+
+export function mapDepartmentMutationError(error: unknown): DepartmentMutationErrorMapping {
+  const fallback: DepartmentMutationErrorMapping = {
+    fieldErrors: {},
+    toastKey: 'orgSetupCrud.validation.generic',
+  }
+
+  if (!isDataAdapterError(error)) {
+    return fallback
+  }
+
+  const pulsCode = parseRpcErrorCode(error.message)
+  if (pulsCode) {
+    const mapped = PULS_DEPARTMENT_ERROR_MAP[pulsCode]
+    if (mapped) {
+      return { fieldErrors: { [mapped.field]: mapped.i18nKey } }
+    }
+  }
+
+  if (error.code === '23505') {
+    const duplicateMapping = duplicateDepartment23505Mapping(error)
+    if (duplicateMapping) return duplicateMapping
+  }
+
+  return fallback
+}
+
+export function mapPositionMutationError(error: unknown): PositionMutationErrorMapping {
+  const fallback: PositionMutationErrorMapping = {
+    fieldErrors: {},
+    toastKey: 'orgSetupCrud.validation.generic',
+  }
+
+  if (!isDataAdapterError(error)) {
+    return fallback
+  }
+
+  const pulsCode = parseRpcErrorCode(error.message)
+  if (pulsCode) {
+    const mapped = PULS_POSITION_ERROR_MAP[pulsCode]
+    if (mapped) {
+      return { fieldErrors: { [mapped.field]: mapped.i18nKey } }
+    }
+  }
+
+  if (error.code === '23505') {
+    const duplicateMapping = duplicatePosition23505Mapping(error)
+    if (duplicateMapping) return duplicateMapping
+  }
+
+  return fallback
+}
+
+function buildDepartmentWritePayload(input: DepartmentMutationInput) {
+  return {
+    name: input.name.trim(),
+    code: normalizeOrgSetupCode(input.code),
+  }
+}
+
+function buildPositionWritePayload(input: PositionMutationInput) {
+  return {
+    name: input.name.trim(),
+    code: normalizeOrgSetupCode(input.code),
+    department_id: input.departmentId,
+    norm_headcount: input.normHeadcount ?? 1,
+  }
+}
+
+export async function createDepartment(
+  userId: string,
+  input: DepartmentMutationInput,
+): Promise<void> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { error } = await pulsCore()
+    .from('departments')
+    .insert({
+      tenant_id: ctx.tenantId,
+      ...buildDepartmentWritePayload(input),
+      is_active: true,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    throw fromSupabaseError(error, 'createDepartment', 'puls_core', 'departments')
+  }
+}
+
+export async function updateDepartment(
+  userId: string,
+  departmentId: string,
+  input: DepartmentMutationInput,
+): Promise<void> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsCore()
+    .from('departments')
+    .update(buildDepartmentWritePayload(input))
+    .eq('tenant_id', ctx.tenantId)
+    .eq('id', departmentId)
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    throw fromSupabaseError(error, 'updateDepartment', 'puls_core', 'departments')
+  }
+
+  if (!data) {
+    throw new DataAdapterError({
+      code: 'not_found',
+      message: 'Department was not updated',
+      source: 'adapter',
+      operation: 'updateDepartment',
+      schema: 'puls_core',
+      table: 'departments',
+    })
+  }
+}
+
+export async function createPosition(userId: string, input: PositionMutationInput): Promise<void> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { error } = await pulsCore()
+    .from('positions')
+    .insert({
+      tenant_id: ctx.tenantId,
+      ...buildPositionWritePayload(input),
+      is_active: true,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    throw fromSupabaseError(error, 'createPosition', 'puls_core', 'positions')
+  }
+}
+
+export async function updatePosition(
+  userId: string,
+  positionId: string,
+  input: PositionMutationInput,
+): Promise<void> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsCore()
+    .from('positions')
+    .update(buildPositionWritePayload(input))
+    .eq('tenant_id', ctx.tenantId)
+    .eq('id', positionId)
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    throw fromSupabaseError(error, 'updatePosition', 'puls_core', 'positions')
+  }
+
+  if (!data) {
+    throw new DataAdapterError({
+      code: 'not_found',
+      message: 'Position was not updated',
+      source: 'adapter',
+      operation: 'updatePosition',
+      schema: 'puls_core',
+      table: 'positions',
+    })
+  }
 }

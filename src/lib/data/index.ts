@@ -63,6 +63,16 @@ export {
   fetchPositionsOverview,
   fetchDepartmentsOverviewWithMeta,
   fetchPositionsOverviewWithMeta,
+  createDepartment,
+  updateDepartment,
+  createPosition,
+  updatePosition,
+  mapDepartmentMutationError,
+  mapPositionMutationError,
+  type DepartmentMutationInput,
+  type DepartmentMutationErrorMapping,
+  type PositionMutationInput,
+  type PositionMutationErrorMapping,
   type DepartmentsOverview,
   type PositionsOverview,
 } from '#/lib/data/core/organization'
@@ -174,7 +184,23 @@ export {
   type OrgSetupReadinessSummary,
 } from '#/lib/data/setup/org-setup-readiness'
 
-export { mapOrgEntitySource, type OrgSetupEntitySource } from '#/lib/data/setup/org-entity-source'
+export {
+  mapOrgEntitySource,
+  isOrgEntityEditable,
+  type OrgSetupEntitySource,
+} from '#/lib/data/setup/org-entity-source'
+
+export {
+  isDepartmentFormDirty,
+  isPositionFormDirty,
+  normalizeOrgSetupCode,
+  validateDepartmentForm,
+  validatePositionForm,
+  type DepartmentFieldKey,
+  type DepartmentFormFields,
+  type PositionFieldKey,
+  type PositionFormFields,
+} from '#/lib/data/setup/org-setup-validation'
 
 export {
   applyEmployeeAssignmentReadinessFilter,

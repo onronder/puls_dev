@@ -9,3 +9,7 @@ export function mapOrgEntitySource(externalSource: string | null | undefined): O
   if (normalized === 'demo') return 'demo'
   return 'unknown'
 }
+
+export function isOrgEntityEditable(source: OrgSetupEntitySource): boolean {
+  return source === 'puls'
+}
