@@ -1954,6 +1954,14 @@
       "fiveHoursAgo": "5 saat önce",
       "yesterday": "Dün"
     },
+    "accountReadiness": {
+      "linked": "Çalışan kaydı bağlı",
+      "tenantWithoutEmployee": "Kiracı üyesi — çalışan kaydı yok",
+      "noTenant": "Kiracı bağlamı yok",
+      "title": "Hesap bağlantısı eksik",
+      "description": "Oturumunuz henüz bir PULS çalışan kaydına bağlı değil; Self-HR metrikleri ve aktivite gösterilemiyor.",
+      "employeeMissingActionHint": "Yöneticinizden hesabınızı organizasyon dizininde bir çalışan kaydına bağlamasını isteyin."
+    },
     "actions": {
       "edit": "Bilgileri düzenle",
       "security": "Güvenlik ayarları",

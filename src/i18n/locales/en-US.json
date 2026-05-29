@@ -1954,6 +1954,14 @@
       "fiveHoursAgo": "5 hours ago",
       "yesterday": "Yesterday"
     },
+    "accountReadiness": {
+      "linked": "Employee record linked",
+      "tenantWithoutEmployee": "Tenant member — no employee record",
+      "noTenant": "No tenant context",
+      "title": "Account link incomplete",
+      "description": "Your sign-in is not linked to a PULS employee record yet, so Self-HR metrics and activity cannot be shown.",
+      "employeeMissingActionHint": "Ask an administrator to link your account to an employee record in the organization directory."
+    },
     "actions": {
       "edit": "Edit information",
       "security": "Security settings",
