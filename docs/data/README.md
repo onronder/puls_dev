@@ -8,6 +8,7 @@ Bu klasor, UI migration sonrasinda production veri katmanina gecis icin alan baz
 - `PULS_TECHNICAL_IMPLEMENTATION_PLAN.md`: Supabase schema, RLS, frontend data adapter, Railway ERP connector, migration sirasi ve QA stratejisini tanimlar.
 - `PULS_FIELD_OWNERSHIP_MATRIX.csv`: Route ve ekran bloklarina gore her alanin source-of-truth, canonical tablo, calculation owner, RLS scope, demo fallback ve write-back kararlarini listeler.
 - `11_sidebar_data_api_inventory.md`: Sidebar ve setup route veri/API envanteri, demo sinirlari, mutation/RPC katalogu ve PR11.1–PR11.9 sahiplik haritasi.
+- `12_app_api_boundary_inventory.md`: App-wide API boundary inventory for PR12 OpenAPI planning, including app-exposed mutations, read models, internal-only surfaces, and inclusion decisions.
 
 ## Ana Ilkeler
 
