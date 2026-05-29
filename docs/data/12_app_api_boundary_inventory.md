@@ -156,6 +156,8 @@ Reference: [`11_sidebar_data_api_inventory.md`](./11_sidebar_data_api_inventory.
 
 ## 5. Direct table-write contract details
 
+**PR12.1 note:** OpenAPI request schemas must use **client-writable fields** only. **Adapter-set fields** are written by the adapter on create/update and must not appear as public input properties.
+
 ### `puls_workflow.expense_categories`
 
 | Field | Detail |
@@ -163,8 +165,9 @@ Reference: [`11_sidebar_data_api_inventory.md`](./11_sidebar_data_api_inventory.
 | Create adapter | `createExpenseCategory` |
 | Update adapter | `updateExpenseCategory` |
 | Route | `/masraf-kategorileri` |
-| Writable fields | `name`, `code`, `monthly_limit`, `receipt_required_over`, `erp_account_code`, `is_active` (create default true) |
-| Forbidden fields | `tenant_id` set by adapter only; no direct lifecycle flags |
+| Client-writable fields | `name`, `code`, `monthly_limit`, `receipt_required_over`, `erp_account_code` |
+| Adapter-set fields | `tenant_id`; `is_active: true` on create (lifecycle RPCs handle deactivate/restore) |
+| Forbidden fields | Direct lifecycle flags via table write |
 | Tenant guard | `resolveTenantContext` + `.eq('tenant_id', ctx.tenantId)` on update |
 | RLS/trigger | Category guardrails migration; inactive category blocks new claims |
 | Duplicate behavior | `23505` on `(tenant_id, code)` or active accounting code → `mapExpenseCategoryMutationError` |
@@ -173,24 +176,39 @@ Reference: [`11_sidebar_data_api_inventory.md`](./11_sidebar_data_api_inventory.
 
 ### `puls_workflow.leave_types`
 
-| Create/update | `createLeaveType`, `updateLeaveType` | Route | `/izin-tanimlari` |
-| Writable | `name`, `code`, `default_entitlement_days`, `requires_document`, `carry_over_allowed`, `max_carry_over_days`, `approval_policy_id` |
+| Field | Detail |
+|-------|--------|
+| Create/update | `createLeaveType`, `updateLeaveType` |
+| Route | `/izin-tanimlari` |
+| Client-writable fields | `name`, `code`, `default_entitlement_days`, `requires_document`, `carry_over_allowed`, `max_carry_over_days`, `approval_policy_id` |
+| Adapter-set fields | `tenant_id`; `is_active: true` on create (lifecycle RPCs handle deactivate/restore) |
 | Tenant guard | Same pattern as expense categories |
-| Smoke | PR11.3 leave setup parity | OpenAPI | `include_in_openapi: yes` |
+| Smoke | PR11.3 leave setup parity |
+| OpenAPI | `include_in_openapi: yes` |
 
 ### `puls_core.departments`
 
-| Create/update | `createDepartment`, `updateDepartment` | Route | `/departmanlar` |
-| Writable | `name`, `code`, `is_active` (create) |
+| Field | Detail |
+|-------|--------|
+| Create/update | `createDepartment`, `updateDepartment` |
+| Route | `/departmanlar` |
+| Client-writable fields | `name`, `code` |
+| Adapter-set fields | `tenant_id`; `is_active: true` on create only |
 | Source guard | ERP/import rows with `external_source` read-only unless import apply context |
-| Smoke | PR11.2 org CRUD smoke | OpenAPI | `include_in_openapi: yes` |
+| Smoke | PR11.2 org CRUD smoke |
+| OpenAPI | `include_in_openapi: yes` |
 
 ### `puls_core.positions`
 
-| Create/update | `createPosition`, `updatePosition` | Route | `/pozisyonlar` |
-| Writable | `name`, `code`, `department_id`, `norm_headcount`, `is_active` (create) |
+| Field | Detail |
+|-------|--------|
+| Create/update | `createPosition`, `updatePosition` |
+| Route | `/pozisyonlar` |
+| Client-writable fields | `name`, `code`, `department_id`, `norm_headcount` |
+| Adapter-set fields | `tenant_id`; `is_active: true` on create only |
 | Source guard | Same as departments |
-| Smoke | PR11.2 org CRUD smoke | OpenAPI | `include_in_openapi: yes` |
+| Smoke | PR11.2 org CRUD smoke |
+| OpenAPI | `include_in_openapi: yes` |
 
 ### `puls_performance.performance_cycles`
 
