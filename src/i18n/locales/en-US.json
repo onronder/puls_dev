@@ -817,7 +817,7 @@
     },
     "boundary": {
       "sourceReadOnly": "This record is owned by an external source and is read-only in PULS.",
-      "noErpWrite": "PULS does not write to ERP master data."
+      "noErpWrite": "ERP-owned master data remains read-only in PULS."
     },
     "discardConfirm": "Discard unsaved changes?"
   },

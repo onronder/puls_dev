@@ -817,7 +817,7 @@
     },
     "boundary": {
       "sourceReadOnly": "Bu kayıt harici bir kaynağa aittir ve PULS'ta salt okunurdur.",
-      "noErpWrite": "PULS ERP ana verisine yazmaz."
+      "noErpWrite": "ERP kaynaklı ana veriler PULS'ta salt okunur kalır."
     },
     "discardConfirm": "Kaydedilmemiş değişiklikler silinsin mi?"
   },
