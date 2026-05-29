@@ -6,7 +6,7 @@ import type {
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsPerformance, resolveTenantContext } from '#/lib/data/client'
 import { mapPerformanceStatusBandTone } from '#/lib/data/mappers'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 import type { StatusTone } from '#/components/puls/StatusPill'
 
 export type PerformanceParametersOverview = DemoPerformanceParametersOverview
@@ -149,6 +149,18 @@ export async function fetchPerformanceParametersOverview(
   userId: string,
 ): Promise<PerformanceParametersOverview> {
   return resolveAdapterData({
+    operation: 'fetchPerformanceParametersOverview',
+    fetchReal: () => fetchRealPerformanceParametersOverview(userId),
+    fetchDemo: fetchDemoPerformanceParametersOverview,
+    isEmpty: (data) =>
+      data.competencyTemplates.length === 0 &&
+      data.kpiCategories.length === 0 &&
+      data.scoreBands.length === 0,
+  })
+}
+
+export function fetchPerformanceParametersOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchPerformanceParametersOverview',
     fetchReal: () => fetchRealPerformanceParametersOverview(userId),
     fetchDemo: fetchDemoPerformanceParametersOverview,

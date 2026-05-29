@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { ApprovalPolicyBindingSection } from '#/components/puls/ApprovalPolicyBindingSection'
 import { DataList } from '#/components/puls/DataList'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -38,8 +39,8 @@ import {
   applyExpenseCategoryLifecycleFilter,
   createExpenseCategory,
   deactivateExpenseCategory,
-  fetchCostCenterReadinessOverview,
-  fetchExpenseCategoriesOverview,
+  fetchCostCenterReadinessOverviewWithMeta,
+  fetchExpenseCategoriesOverviewWithMeta,
   fetchExpenseCategoryLifecycleEvents,
   isDeactivateReasonTooLong,
   isExpenseCategoryFormDirty,
@@ -226,17 +227,20 @@ function MasrafKategorileriPage() {
   const [lifecycleFilter, setLifecycleFilter] = useState<ExpenseCategoryLifecycleFilter>('active')
   const [deactivateReason, setDeactivateReason] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data: categoriesResult, isLoading } = useQuery({
     queryKey: ['expense-categories-overview', user?.id],
-    queryFn: () => fetchExpenseCategoriesOverview(user!.id),
+    queryFn: () => fetchExpenseCategoriesOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
 
-  const { data: readinessData, isLoading: readinessLoading } = useQuery({
+  const { data: readinessResult, isLoading: readinessLoading } = useQuery({
     queryKey: ['cost-center-readiness', user?.id],
-    queryFn: () => fetchCostCenterReadinessOverview(user!.id),
+    queryFn: () => fetchCostCenterReadinessOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = categoriesResult?.data
+  const readinessData = readinessResult?.data
 
   const inactiveCategoryId =
     categorySheetOpen && editingCategory && !editingCategory.isActive ? editingCategory.id : null
@@ -491,6 +495,12 @@ function MasrafKategorileriPage() {
             <Plus className="h-4 w-4" />
             {t('expenseCategorySetup.actions.add')}
           </Button>
+        }
+      />
+
+      <DemoSourcePill
+        visible={
+          categoriesResult?.source === 'demo' || readinessResult?.source === 'demo'
         }
       />
 

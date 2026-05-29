@@ -4,6 +4,7 @@ import { AlertCircle, Layers, SlidersHorizontal, Target } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -14,7 +15,7 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
-  fetchPerformanceParametersOverview,
+  fetchPerformanceParametersOverviewWithMeta,
   type PerformanceParametersOverview,
 } from '#/lib/data'
 
@@ -58,11 +59,13 @@ function PerformansParametreleriPage() {
   const { t, i18n: i18nInstance } = useTranslation()
   const { user } = useAuth()
 
-  const { data, isLoading } = useQuery({
+  const { data: performanceParamsResult, isLoading } = useQuery({
     queryKey: ['performance-parameters-overview', user?.id],
-    queryFn: () => fetchPerformanceParametersOverview(user!.id),
+    queryFn: () => fetchPerformanceParametersOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = performanceParamsResult?.data
 
   const activeCycleLabel = data?.hasActiveCycle
     ? t('performanceParamsSetup.metrics.activeCycle')
@@ -78,6 +81,8 @@ function PerformansParametreleriPage() {
         title={t('performanceParamsSetup.title')}
         subtitle={t('performanceParamsSetup.description')}
       />
+
+      <DemoSourcePill visible={performanceParamsResult?.source === 'demo'} />
 
       {isLoading ? (
         <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">

@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DataList } from '#/components/puls/DataList'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -21,8 +22,8 @@ import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
   createPosition,
-  fetchDepartmentsOverview,
-  fetchPositionsOverview,
+  fetchDepartmentsOverviewWithMeta,
+  fetchPositionsOverviewWithMeta,
   isPositionFormDirty,
   mapPositionMutationError,
   normalizeOrgSetupCode,
@@ -107,17 +108,20 @@ function PozisyonlarPage() {
   const [formBaseline, setFormBaseline] = useState<PositionFormFields | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<PositionFieldKey, string>>>({})
 
-  const { data, isLoading } = useQuery({
+  const { data: positionsResult, isLoading } = useQuery({
     queryKey: ['positions-overview', user?.id],
-    queryFn: () => fetchPositionsOverview(user!.id),
+    queryFn: () => fetchPositionsOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
 
-  const { data: departmentsOverview } = useQuery({
+  const { data: departmentsResult } = useQuery({
     queryKey: ['departments-overview', user?.id],
-    queryFn: () => fetchDepartmentsOverview(user!.id),
+    queryFn: () => fetchDepartmentsOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = positionsResult?.data
+  const departmentsOverview = departmentsResult?.data
 
   const departmentOptions = useMemo(() => {
     const departments = departmentsOverview?.departments ?? []
@@ -260,6 +264,12 @@ function PozisyonlarPage() {
           {t('orgSetupCrud.actions.createPosition')}
         </Button>
       </div>
+
+      <DemoSourcePill
+        visible={
+          positionsResult?.source === 'demo' || departmentsResult?.source === 'demo'
+        }
+      />
 
       {isLoading ? (
         <div className="-mx-4 mb-6 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">

@@ -2,7 +2,7 @@ import { fetchDemoCompanySetup } from '#/lib/demo/puls-demo-data'
 import type { DemoCompanySetup } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, pulsIntegration, pulsPerformance, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type CompanySetupOverview = DemoCompanySetup
 
@@ -155,6 +155,15 @@ async function fetchRealCompanySetupOverview(userId: string): Promise<CompanySet
 
 export async function fetchCompanySetupOverview(userId: string): Promise<CompanySetupOverview> {
   return resolveAdapterData({
+    operation: 'fetchCompanySetupOverview',
+    fetchReal: () => fetchRealCompanySetupOverview(userId),
+    fetchDemo: fetchDemoCompanySetup,
+    isEmpty: isCompanySetupEmpty,
+  })
+}
+
+export function fetchCompanySetupOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchCompanySetupOverview',
     fetchReal: () => fetchRealCompanySetupOverview(userId),
     fetchDemo: fetchDemoCompanySetup,

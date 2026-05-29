@@ -2,7 +2,7 @@ import { fetchDemoErpOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoErpOverview, DemoErpSyncLevel } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsIntegration, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type ErpOverview = DemoErpOverview
 
@@ -151,6 +151,15 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
 
 export async function fetchErpOverview(userId: string): Promise<ErpOverview> {
   return resolveAdapterData({
+    operation: 'fetchErpOverview',
+    fetchReal: () => fetchRealErpOverview(userId),
+    fetchDemo: fetchDemoErpOverview,
+    isEmpty: isErpOverviewEmpty,
+  })
+}
+
+export function fetchErpOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchErpOverview',
     fetchReal: () => fetchRealErpOverview(userId),
     fetchDemo: fetchDemoErpOverview,

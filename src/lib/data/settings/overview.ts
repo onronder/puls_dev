@@ -1,7 +1,7 @@
 import { fetchDemoSettingsOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoSettingsOverview } from '#/lib/demo/puls-demo-data'
 import { resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type SettingsOverview = DemoSettingsOverview
 
@@ -77,6 +77,15 @@ async function fetchRealSettingsOverview(userId: string): Promise<SettingsOvervi
 
 export async function fetchSettingsOverview(userId: string): Promise<SettingsOverview> {
   return resolveAdapterData({
+    operation: 'fetchSettingsOverview',
+    fetchReal: () => fetchRealSettingsOverview(userId),
+    fetchDemo: fetchDemoSettingsOverview,
+    isEmpty: () => false,
+  })
+}
+
+export function fetchSettingsOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchSettingsOverview',
     fetchReal: () => fetchRealSettingsOverview(userId),
     fetchDemo: fetchDemoSettingsOverview,

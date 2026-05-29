@@ -16,6 +16,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
@@ -23,7 +24,7 @@ import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchAiCoachOverview, type AiCoachOverview } from '#/lib/data'
+import { fetchAiCoachOverviewWithMeta, type AiCoachOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/ai-koc')({
@@ -87,11 +88,13 @@ function AiKocPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
 
-  const { data, isLoading } = useQuery({
+  const { data: aiCoachResult, isLoading } = useQuery({
     queryKey: ['ai-coach-overview', user?.id],
-    queryFn: () => fetchAiCoachOverview(user!.id),
+    queryFn: () => fetchAiCoachOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = aiCoachResult?.data
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -103,6 +106,8 @@ function AiKocPage() {
         title={t('aiCoachSetup.title')}
         subtitle={t('aiCoachSetup.description')}
       />
+
+      <DemoSourcePill visible={aiCoachResult?.source === 'demo'} />
 
       <div className="mb-6 overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--color-ai)_25%,transparent)] bg-[var(--color-ai-soft)] p-5">
         <div className="flex items-start gap-3">

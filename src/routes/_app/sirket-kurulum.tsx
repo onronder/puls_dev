@@ -4,6 +4,7 @@ import { AlertCircle, Building2, CheckCircle2, Clock, Plug } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -13,7 +14,7 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
-  fetchCompanySetupOverview,
+  fetchCompanySetupOverviewWithMeta,
   fetchSetupReadinessDashboard,
   type CompanySetupOverview,
   type SetupReadinessIssue,
@@ -172,11 +173,13 @@ function SetupReadinessSectionRow({ section }: { section: SetupReadinessSection 
 function SirketKurulumPage() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
-  const { data, isLoading } = useQuery({
+  const { data: companySetupResult, isLoading } = useQuery({
     queryKey: ['company-setup-overview', user?.id],
-    queryFn: () => fetchCompanySetupOverview(user!.id),
+    queryFn: () => fetchCompanySetupOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = companySetupResult?.data
 
   const { data: setupDashboard, isLoading: setupDashboardLoading } = useQuery({
     queryKey: ['setup-readiness-dashboard', user?.id],
@@ -208,6 +211,8 @@ function SirketKurulumPage() {
         title={t('companySetup.title')}
         subtitle={t('companySetup.description')}
       />
+
+      <DemoSourcePill visible={companySetupResult?.source === 'demo'} />
 
       {isLoading ? (
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

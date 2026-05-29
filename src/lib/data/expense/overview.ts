@@ -7,7 +7,7 @@ import type {
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type ExpenseOverview = DemoExpenseOverview
 
@@ -290,6 +290,15 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
 
 export async function fetchExpenseOverview(userId: string): Promise<ExpenseOverview> {
   return resolveAdapterData({
+    operation: 'fetchExpenseOverview',
+    fetchReal: () => fetchRealExpenseOverview(userId),
+    fetchDemo: fetchDemoExpenseOverview,
+    isEmpty: isExpenseOverviewEmpty,
+  })
+}
+
+export function fetchExpenseOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchExpenseOverview',
     fetchReal: () => fetchRealExpenseOverview(userId),
     fetchDemo: fetchDemoExpenseOverview,
