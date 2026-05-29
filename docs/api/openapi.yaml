@@ -1,0 +1,1361 @@
+openapi: 3.1.0
+info:
+  title: PULS App API Boundary
+  version: 12.1.0
+  description: |
+    PR12.1 contract-path OpenAPI draft derived from PR12.0 boundary inventory.
+    Current transport is supabase-js (Postgres RPC + table writes), not public HTTP REST.
+servers:
+  - url: supabase-js://local
+    description: Current in-app Supabase client transport, not public HTTP
+security:
+  - SupabaseJwt: []
+x-puls-source-inventory: docs/data/12_app_api_boundary_inventory.md
+x-puls-public-http: false
+x-puls-current-transport: supabase-js
+x-puls-generated-from: PR12.0 boundary inventory
+
+paths:
+  /mutations/expense-claims:
+    post:
+      operationId: createExpenseClaim
+      summary: Create expense claim via workflow RPC
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_rpc
+      x-puls-backend: puls_workflow.create_expense_claim
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresEmployeeContext: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExpenseClaimRequest'
+      responses:
+        '200':
+          description: Expense claim created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateExpenseClaimResponse'
+        default:
+          description: Adapter or RPC error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/leave-requests:
+    post:
+      operationId: createLeaveRequest
+      summary: Create leave request via workflow RPC
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_rpc
+      x-puls-backend: puls_workflow.create_leave_request
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresEmployeeContext: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeaveRequestRequest'
+      responses:
+        '200':
+          description: Leave request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateLeaveRequestResponse'
+        default:
+          description: Adapter or RPC error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/approval-decisions:
+    post:
+      operationId: decideApprovalRequest
+      summary: Approve or reject an approval request
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_rpc
+      x-puls-backend: puls_workflow.decide_approval_request
+      x-puls-coverage: partial
+      x-puls-follow-up: PR12.3 decide approval smoke hardening
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresEmployeeContext: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecideApprovalRequestRequest'
+      responses:
+        '200':
+          description: Approval decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecideApprovalRequestResponse'
+        default:
+          description: Adapter or RPC error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/expense-categories:
+    post:
+      operationId: createExpenseCategory
+      summary: Create expense category (table INSERT)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_insert
+      x-puls-backend: puls_workflow.expense_categories
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCategoryMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/expense-categories/{categoryId}:
+    patch:
+      operationId: updateExpenseCategory
+      summary: Update expense category (table UPDATE)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_update
+      x-puls-backend: puls_workflow.expense_categories
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCategoryMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/expense-categories/{categoryId}:deactivate:
+    post:
+      operationId: deactivateExpenseCategory
+      summary: Deactivate expense category via lifecycle RPC
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_lifecycle
+      x-puls-backend: puls_workflow.deactivate_expense_category
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCategoryLifecycleRequest'
+      responses:
+        '200':
+          description: Lifecycle result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseCategoryLifecycleResponse'
+        default:
+          description: Adapter or RPC error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/expense-categories/{categoryId}:restore:
+    post:
+      operationId: restoreExpenseCategory
+      summary: Restore expense category via lifecycle RPC
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_lifecycle
+      x-puls-backend: puls_workflow.restore_expense_category
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lifecycle result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseCategoryLifecycleResponse'
+        default:
+          description: Adapter or RPC error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/leave-types:
+    post:
+      operationId: createLeaveType
+      summary: Create leave type (table INSERT)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_insert
+      x-puls-backend: puls_workflow.leave_types
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveTypeMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/leave-types/{leaveTypeId}:
+    patch:
+      operationId: updateLeaveType
+      summary: Update leave type (table UPDATE)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_update
+      x-puls-backend: puls_workflow.leave_types
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      parameters:
+        - name: leaveTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveTypeMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/leave-types/{leaveTypeId}:deactivate:
+    post:
+      operationId: deactivateLeaveType
+      summary: Deactivate leave type via lifecycle RPC
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_lifecycle
+      x-puls-backend: puls_workflow.deactivate_leave_type
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      parameters:
+        - name: leaveTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveTypeLifecycleRequest'
+      responses:
+        '200':
+          description: Lifecycle result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveTypeLifecycleResponse'
+        default:
+          description: Adapter or RPC error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/leave-types/{leaveTypeId}:restore:
+    post:
+      operationId: restoreLeaveType
+      summary: Restore leave type via lifecycle RPC
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_lifecycle
+      x-puls-backend: puls_workflow.restore_leave_type
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      parameters:
+        - name: leaveTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lifecycle result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveTypeLifecycleResponse'
+        default:
+          description: Adapter or RPC error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/departments:
+    post:
+      operationId: createDepartment
+      summary: Create department (table INSERT)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_insert
+      x-puls-backend: puls_core.departments
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      x-puls-source-ownership: PULS-owned rows only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/departments/{departmentId}:
+    patch:
+      operationId: updateDepartment
+      summary: Update department (table UPDATE)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_update
+      x-puls-backend: puls_core.departments
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      x-puls-source-ownership: PULS-owned rows only
+      parameters:
+        - name: departmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/positions:
+    post:
+      operationId: createPosition
+      summary: Create position (table INSERT)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_insert
+      x-puls-backend: puls_core.positions
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      x-puls-source-ownership: PULS-owned rows only
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/setup/positions/{positionId}:
+    patch:
+      operationId: updatePosition
+      summary: Update position (table UPDATE)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_update
+      x-puls-backend: puls_core.positions
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      x-puls-source-ownership: PULS-owned rows only
+      parameters:
+        - name: positionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionMutationRequest'
+      responses:
+        '200':
+          description: Mutation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationAcceptedResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/performance/cycles:
+    post:
+      operationId: createPerformanceCycle
+      summary: Create performance cycle (table INSERT)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_insert
+      x-puls-backend: puls_performance.performance_cycles
+      x-puls-coverage: partial
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerformanceCycleMutationRequest'
+      responses:
+        '200':
+          description: Performance cycle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceCycleMutationResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mutations/performance/cycles/{cycleId}:
+    patch:
+      operationId: updatePerformanceCycle
+      summary: Update performance cycle (table UPDATE)
+      x-puls-current-transport: supabase-js
+      x-puls-public-http: false
+      x-puls-boundary-class: app_exposed_mutation
+      x-puls-transport: supabase_table_update
+      x-puls-backend: puls_performance.performance_cycles
+      x-puls-coverage: partial
+      x-puls-auth:
+        type: SupabaseJwt
+        requiresTenantContext: true
+        requiresAdminOrSetupRole: true
+      x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      parameters:
+        - name: cycleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerformanceCycleMutationRequest'
+      responses:
+        '200':
+          description: Performance cycle updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceCycleMutationResponse'
+        default:
+          description: Adapter or PostgREST error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    SupabaseJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          oneOf:
+            - $ref: '#/components/schemas/DataAdapterError'
+            - $ref: '#/components/schemas/RpcError'
+            - $ref: '#/components/schemas/ValidationError'
+
+    DataAdapterError:
+      type: object
+      required:
+        - code
+        - message
+        - source
+        - operation
+      properties:
+        code:
+          type: string
+          description: |
+            Domain error code. Examples include PULS_AUTH_REQUIRED, PULS_EXPENSE_CATEGORY_NOT_FOUND,
+            PULS_LEAVE_TYPE_IN_USE_ACTIVE_REQUESTS, and invalid_rpc_result when RPC return shape is invalid.
+          examples:
+            - PULS_AUTH_REQUIRED
+            - invalid_rpc_result
+        message:
+          type: string
+        source:
+          type: string
+          enum:
+            - adapter
+            - rpc
+            - supabase
+        operation:
+          type: string
+        i18nKey:
+          type: string
+          nullable: true
+
+    RpcError:
+      type: object
+      description: PostgREST/RPC failure shape surfaced via fromRpcError
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+          nullable: true
+        hint:
+          type: string
+          nullable: true
+
+    ValidationError:
+      type: object
+      description: Field-level validation errors
+      properties:
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: string
+
+    CreateExpenseClaimRequest:
+      type: object
+      required:
+        - categoryId
+        - amount
+        - expenseDate
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+        amount:
+          type: number
+        currency:
+          type: string
+          default: TRY
+        vatRate:
+          type: number
+          nullable: true
+        vatIncluded:
+          type: boolean
+          default: true
+        expenseDate:
+          type: string
+          format: date
+        description:
+          type: string
+          nullable: true
+
+    CreateExpenseClaimResponse:
+      type: object
+      required:
+        - expenseClaimId
+        - approvalRequestId
+        - policyStatus
+        - status
+        - title
+      properties:
+        expenseClaimId:
+          type: string
+          format: uuid
+        approvalRequestId:
+          type: string
+          format: uuid
+        policyStatus:
+          type: string
+        status:
+          type: string
+        title:
+          type: string
+
+    CreateLeaveRequestRequest:
+      type: object
+      required:
+        - leaveTypeId
+        - startDate
+        - endDate
+      properties:
+        leaveTypeId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        halfDay:
+          type: boolean
+          default: false
+        delegateEmployeeId:
+          type: string
+          format: uuid
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    CreateLeaveRequestResponse:
+      type: object
+      required:
+        - leaveRequestId
+        - approvalRequestId
+        - businessDays
+        - status
+        - approverEmployeeId
+        - approverName
+      properties:
+        leaveRequestId:
+          type: string
+          format: uuid
+        approvalRequestId:
+          type: string
+          format: uuid
+        businessDays:
+          type: number
+        status:
+          type: string
+        approverEmployeeId:
+          type: string
+          format: uuid
+        approverName:
+          type: string
+          nullable: true
+
+    DecideApprovalRequestRequest:
+      type: object
+      required:
+        - approvalRequestId
+        - decision
+      properties:
+        approvalRequestId:
+          type: string
+          format: uuid
+        decision:
+          type: string
+          enum:
+            - approved
+            - rejected
+        note:
+          type: string
+          nullable: true
+
+    DecideApprovalRequestResponse:
+      type: object
+      required:
+        - module
+        - parentId
+        - status
+        - approvalRequestId
+        - final
+      properties:
+        module:
+          type: string
+          enum:
+            - leave
+            - expense
+        parentId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        approvalRequestId:
+          type: string
+          format: uuid
+        final:
+          type: boolean
+        nextApprovalRequestId:
+          type: string
+          format: uuid
+          nullable: true
+        currentStepOrder:
+          type: integer
+          nullable: true
+
+    ExpenseCategoryMutationRequest:
+      type: object
+      required:
+        - name
+        - code
+        - monthlyLimit
+        - receiptRequiredOver
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        monthlyLimit:
+          type: number
+        receiptRequiredOver:
+          type: number
+        erpAccountCode:
+          type: string
+          nullable: true
+
+    ExpenseCategoryLifecycleRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+
+    ExpenseCategoryLifecycleResponse:
+      oneOf:
+        - type: object
+          required:
+            - status
+            - categoryId
+            - hasHistory
+            - eventId
+          properties:
+            status:
+              type: string
+              const: deactivated
+            categoryId:
+              type: string
+              format: uuid
+            hasHistory:
+              type: boolean
+            eventId:
+              type: string
+              format: uuid
+        - type: object
+          required:
+            - status
+            - categoryId
+            - eventId
+          properties:
+            status:
+              type: string
+              const: restored
+            categoryId:
+              type: string
+              format: uuid
+            eventId:
+              type: string
+              format: uuid
+        - type: object
+          required:
+            - status
+            - categoryId
+          properties:
+            status:
+              type: string
+              enum:
+                - already_inactive
+                - already_active
+            categoryId:
+              type: string
+              format: uuid
+
+    LeaveTypeMutationRequest:
+      type: object
+      required:
+        - name
+        - code
+        - requiresDocument
+        - carryOverAllowed
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        defaultEntitlementDays:
+          type: number
+          nullable: true
+        requiresDocument:
+          type: boolean
+        carryOverAllowed:
+          type: boolean
+        maxCarryOverDays:
+          type: number
+          nullable: true
+        approvalPolicyId:
+          type: string
+          format: uuid
+          nullable: true
+
+    LeaveTypeLifecycleRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+
+    LeaveTypeLifecycleResponse:
+      oneOf:
+        - type: object
+          required:
+            - status
+            - leaveTypeId
+            - hasHistory
+            - eventId
+          properties:
+            status:
+              type: string
+              const: deactivated
+            leaveTypeId:
+              type: string
+              format: uuid
+            hasHistory:
+              type: boolean
+            eventId:
+              type: string
+              format: uuid
+        - type: object
+          required:
+            - status
+            - leaveTypeId
+            - eventId
+          properties:
+            status:
+              type: string
+              const: restored
+            leaveTypeId:
+              type: string
+              format: uuid
+            eventId:
+              type: string
+              format: uuid
+        - type: object
+          required:
+            - status
+            - leaveTypeId
+          properties:
+            status:
+              type: string
+              enum:
+                - already_inactive
+                - already_active
+            leaveTypeId:
+              type: string
+              format: uuid
+
+    DepartmentMutationRequest:
+      type: object
+      required:
+        - name
+        - code
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+
+    PositionMutationRequest:
+      type: object
+      required:
+        - name
+        - code
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        departmentId:
+          type: string
+          format: uuid
+          nullable: true
+        normHeadcount:
+          type: number
+          nullable: true
+
+    PerformanceCycleMutationRequest:
+      type: object
+      required:
+        - name
+        - startsAt
+        - endsAt
+      x-puls-adapter-field-map:
+        startsAt: starts_at
+        endsAt: ends_at
+      properties:
+        name:
+          type: string
+        startsAt:
+          type: string
+          format: date
+        endsAt:
+          type: string
+          format: date
+        status:
+          type: string
+          enum:
+            - draft
+            - active
+            - closed
+          default: draft
+
+    PerformanceCycleMutationResponse:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - startsAt
+        - endsAt
+        - createdAt
+      x-puls-adapter-field-map:
+        startsAt: starts_at
+        endsAt: ends_at
+        createdAt: created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+            - draft
+            - active
+            - closed
+        startsAt:
+          type: string
+          format: date
+        endsAt:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+
+    MutationAcceptedResponse:
+      type: object
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+          const: true
+
+x-puls-read-models:
+  - route: /dashboard
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchDashboardOverviewWithMeta
+    notes: WithMeta + demo source pill
+  - route: /profil
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchProfileOverviewWithMeta
+    notes: WithMeta + demo source pill
+  - route: /calisanlar
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchEmployeesOverview
+      - fetchEmployeeAssignmentReadiness
+    notes: Plain adapters; WithMeta variants exist but unused
+  - route: /sirket-kurulum
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchCompanySetupOverviewWithMeta
+      - fetchSetupReadinessDashboard
+    notes: Mixed WithMeta; company pill only
+  - route: /departmanlar
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchDepartmentsOverviewWithMeta
+    notes: WithMeta + DemoSourcePill; mutations documented separately
+  - route: /pozisyonlar
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchPositionsOverviewWithMeta
+      - fetchDepartmentsOverviewWithMeta
+    notes: WithMeta; mutations documented separately
+  - route: /izin
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchLeaveOverviewWithMeta
+      - fetchRequestCreationReadiness
+    notes: Mixed WithMeta; mutations documented separately
+  - route: /izin-tanimlari
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchLeaveTypesOverviewWithMeta
+    notes: Policies read via plain adapters; mutations documented separately
+  - route: /masraf
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchExpenseOverviewWithMeta
+      - fetchRequestCreationReadiness
+    notes: Mixed WithMeta; mutations documented separately
+  - route: /masraf-kategorileri
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchExpenseCategoriesOverviewWithMeta
+      - fetchCostCenterReadinessOverviewWithMeta
+    notes: WithMeta; mutations documented separately
+  - route: /performans
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchPerformanceOverviewWithMeta
+      - fetchPerformanceCyclesWithMeta
+    notes: Templates via plain adapter; mutations documented separately
+  - route: /kariyer
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchCareerOverviewWithMeta
+    notes: WithMeta + demo source pill
+  - route: /egitim
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchTrainingOverviewWithMeta
+    notes: WithMeta + demo source pill
+  - route: /is-degerleme
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchJobEvaluationOverviewWithMeta
+    notes: Empty scaffold on real path
+  - route: /sozlesmeler
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchContractsOverviewWithMeta
+    notes: WithMeta + demo source pill
+  - route: /erp
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchErpOverviewWithMeta
+    notes: WithMeta + demo source pill
+  - route: /ayarlar
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchSettingsOverviewWithMeta
+    notes: Static sections in real mode
+  - route: /ai-koc
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchAiCoachOverviewWithMeta
+    notes: Static placeholder payload
+  - route: /performans-parametreleri
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    adapters:
+      - fetchPerformanceParametersOverviewWithMeta
+    notes: WithMeta + demo source pill
+  - route: /menu
+    boundaryClass: app_read_model
+    openapiDecision: read_model_appendix
+    shellException: true
+    adapters:
+      - fetchMenuOverview
+    notes: No WithMeta, no demo pill; shell exception
+
+x-puls-internal-backend-surfaces:
+  - name: puls_integration.apply_import_batch
+    schema: puls_integration
+    openapiDecision: internal_appendix
+    publicHttp: false
+    appExposed: false
+    notes: Import pipeline; DB may grant authenticated but app never calls
+  - name: puls_integration.validate_import_batch
+    schema: puls_integration
+    openapiDecision: internal_appendix
+    publicHttp: false
+    appExposed: false
+    notes: Import pre-check; smoke 09_import_apply_smoke.sql
+  - name: puls_integration.preview_import_diff
+    schema: puls_integration
+    openapiDecision: internal_appendix
+    publicHttp: false
+    appExposed: false
+    notes: Import preview; smoke 09_import_apply_smoke.sql
+  - name: puls_workflow.resolve_approver
+    schema: puls_workflow
+    openapiDecision: internal_appendix
+    publicHttp: false
+    appExposed: false
+    notes: Policy engine inside create/decide RPCs; REVOKED from authenticated
+  - name: puls_workflow.resolve_policy_step_approver
+    schema: puls_workflow
+    openapiDecision: internal_appendix
+    publicHttp: false
+    appExposed: false
+    notes: Resolver v3 chain; service-role smokes only
+  - name: org_guardrail_triggers
+    schema: puls_core
+    openapiDecision: internal_appendix
+    publicHttp: false
+    appExposed: false
+    notes: Department/position UPDATE guardrails block ERP source overwrite
+  - name: lifecycle_guard_triggers
+    schema: puls_workflow
+    openapiDecision: internal_appendix
+    publicHttp: false
+    appExposed: false
+    notes: Category/leave type consumption guardrails from PR10 migrations
+
+x-puls-not-exposed:
+  - surface: ERP sync/write
+    boundaryClass: not_app_exposed
+    openapiDecision: no
+    evidence: src/lib/data/setup/erp.ts read-only; no puls_integration writes in src/
+  - surface: Edge functions
+    boundaryClass: not_app_exposed
+    openapiDecision: no
+    evidence: Zero supabase.functions.invoke in src/
+  - surface: Employee CRUD/editor
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: /calisanlar read-only; no create/update employee adapter
+  - surface: Assignment editor
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Readiness banners only
+  - surface: Manager hierarchy editor
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Not implemented
+  - surface: Policy step editor
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Policies read-only in UI
+  - surface: Contract upload/storage/e-sign
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Contracts read-only
+  - surface: Profile edit
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Disabled UI on /profil
+  - surface: Password/security settings
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Disabled on /ayarlar
+  - surface: Notification preferences
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Settings sections read-only
+  - surface: AI coach execution API
+    boundaryClass: future_candidate
+    openapiDecision: future
+    evidence: Static placeholder on /ai-koc
+  - surface: External public API
+    boundaryClass: not_app_exposed
+    openapiDecision: no
+    evidence: No public REST layer
