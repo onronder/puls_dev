@@ -86,7 +86,8 @@ Overview reads preserve `resolveAdapterData*` / `WithMeta`. Demo rows are not ed
 - Employee CRUD/assignment editing, manager hierarchy editor, cost center assignment editing
 - Lifecycle deactivate/restore/audit for departments/positions
 - Hard delete
-- Resolver/decide/import runtime changes, ERP writes/sync
+- Resolver/decide runtime changes, ERP writes/sync
+- Import: no behavior changes except a scoped transaction-local context flag in `apply_import_batch` so org guardrails do not block legitimate re-import/post-pass writes
 - `(tenant_id, code)` unique index (document gap; add only after duplicate preflight)
 - Swagger/OpenAPI
 
