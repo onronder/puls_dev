@@ -135,6 +135,9 @@ ALLOWED=(
   "$VALIDATOR"
   "scripts/verify-12-openapi-draft.sh"
   "scripts/verify-12-mutation-contract-smoke.sh"
+  "docs/api/openapi-examples.yaml"
+  "docs/api/puls-error-catalog.md"
+  "scripts/verify-12-contract-examples-errors.sh"
 )
 
 is_allowed() {

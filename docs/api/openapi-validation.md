@@ -19,19 +19,25 @@ PR12.1 authored an honest contract-path OpenAPI draft from the PR12.0 boundary i
 | Restore ops | No `requestBody`; `requestSchema: null` in allowlist |
 | Direct table writes | `x-puls-tenant-guard` present |
 | Org dept/position writes | `x-puls-source-ownership` present |
-| Partial coverage | `x-puls-coverage: partial` on decide approval + performance cycles |
+| Partial coverage | `x-puls-coverage: partial` on `decideApprovalRequest` only (performance cycles are `contract_smoke` since PR12.3) |
 | Paths | No internal-only backend needles under `paths:` |
 | Appendices | `x-puls-read-models`, `x-puls-internal-backend-surfaces`, `x-puls-not-exposed` |
 | Read models | All 20 PR12.0 routes; `/menu` includes `shellException: true` |
 | Request schemas | **Exact** property-set match to allowlist; forbidden adapter-set fields absent |
 | Adapter drift | Each mutation adapter: exactly once as `operationId` in OpenAPI; present in inventory |
 | Backend drift | Each backend object: in inventory + **at least once** in OpenAPI (shared backends intentional) |
+| **PR12.4 examples** | All 17 ops in [`openapi-examples.yaml`](./openapi-examples.yaml); strict two-space op block parsing |
+| **PR12.4 request examples** | Example request keys ⊆ `requestSchemaAllowlist`; forbidden fields absent |
+| **PR12.4 error codes** | Example `code:` values ∈ `knownErrorCodes` in allowlist |
+| **PR12.4 accepted shape** | Setup table CRUD `accepted:` blocks must include `ok: true` |
+| **PR12.4 metadata** | OpenAPI `x-puls-examples-doc` + `x-puls-error-catalog` present and files exist |
 
 Run validation:
 
 ```bash
 node scripts/validate-openapi-contract.mjs
 ./scripts/verify-12-openapi-draft.sh HEAD
+./scripts/verify-12-contract-examples-errors.sh HEAD
 ```
 
 ## What is intentionally not validated
@@ -101,6 +107,16 @@ Not enforced by PR12.2 validator.
 | Read models (20 routes) | Appendix-only — not public mutation paths |
 
 Performance cycle mutations (`createPerformanceCycle`, `updatePerformanceCycle`) moved to `contract_smoke` in PR12.3. See [`12_mutation_contract_smoke_hardening.md`](./12_mutation_contract_smoke_hardening.md).
+
+## PR12.4 handoff
+
+PR12.4 adds illustrative mutation examples and an error catalog:
+
+- [`openapi-examples.yaml`](./openapi-examples.yaml) — request/response/error examples for all 17 operations
+- [`puls-error-catalog.md`](./puls-error-catalog.md) — PULS and adapter error codes, mapper inventory, i18n posture
+- [`scripts/verify-12-contract-examples-errors.sh`](../../scripts/verify-12-contract-examples-errors.sh)
+
+Example request fields are client-writable only (allowlist-guarded). Error codes in examples must appear in `knownErrorCodes`. Examples are reference material for supabase-js transport, not a live HTTP API.
 
 ## PR12.3 handoff
 

@@ -1,0 +1,257 @@
+x-puls-examples-version: 12.4.0
+x-puls-source-openapi: docs/api/openapi.yaml
+x-puls-public-http: false
+x-puls-current-transport: supabase-js
+
+operations:
+  createExpenseClaim:
+    request:
+      categoryId: "00000000-0000-0000-0000-000000000001"
+      title: "Client meeting taxi"
+      amount: 420.5
+      currency: "TRY"
+      vatRate: 20
+      vatIncluded: true
+      expenseDate: "2026-05-30"
+      description: "Airport transfer"
+    response:
+      expenseClaimId: "00000000-0000-0000-0000-000000000101"
+      approvalRequestId: "00000000-0000-0000-0000-000000000201"
+      policyStatus: "ready"
+      status: "pending"
+      title: "Client meeting taxi"
+    errors:
+      - code: PULS_AUTH_REQUIRED
+      - code: PULS_INVALID_EXPENSE_CATEGORY
+      - code: PULS_INVALID_AMOUNT
+
+  createLeaveRequest:
+    request:
+      leaveTypeId: "00000000-0000-0000-0000-000000000002"
+      startDate: "2026-06-02"
+      endDate: "2026-06-06"
+      halfDay: false
+      delegateEmployeeId: "00000000-0000-0000-0000-000000000302"
+      description: "Summer break"
+    response:
+      leaveRequestId: "00000000-0000-0000-0000-000000000102"
+      approvalRequestId: "00000000-0000-0000-0000-000000000202"
+      businessDays: 5
+      status: "pending"
+      approverEmployeeId: "00000000-0000-0000-0000-000000000301"
+      approverName: "Ayşe Yılmaz"
+    errors:
+      - code: PULS_AUTH_REQUIRED
+      - code: PULS_INVALID_DATES
+      - code: PULS_INSUFFICIENT_BALANCE
+      - code: invalid_rpc_result
+
+  decideApprovalRequest:
+    request:
+      approvalRequestId: "00000000-0000-0000-0000-000000000201"
+      decision: "approved"
+      note: "Approved per policy"
+    response:
+      module: "leave"
+      parentId: "00000000-0000-0000-0000-000000000102"
+      status: "approved"
+      approvalRequestId: "00000000-0000-0000-0000-000000000201"
+      final: true
+      nextApprovalRequestId: null
+      currentStepOrder: 1
+    errors:
+      - code: PULS_INVALID_DECISION
+      - code: PULS_APPROVAL_NOT_FOUND
+      - code: PULS_SELF_APPROVAL
+      - code: PULS_APPROVAL_FORBIDDEN
+
+  createExpenseCategory:
+    request:
+      name: "Travel"
+      code: "travel"
+      monthlyLimit: 5000
+      receiptRequiredOver: 250
+      erpAccountCode: "770.01"
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_EXPENSE_CATEGORY_NAME_REQUIRED
+      - code: PULS_EXPENSE_CATEGORY_CODE_INVALID
+      - code: "23505"
+
+  updateExpenseCategory:
+    request:
+      name: "Travel & Transport"
+      code: "travel"
+      monthlyLimit: 6000
+      receiptRequiredOver: 300
+      erpAccountCode: "770.01"
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_EXPENSE_CATEGORY_MONTHLY_LIMIT_INVALID
+      - code: PULS_EXPENSE_CATEGORY_ACCOUNT_CODE_INVALID
+      - code: "23505"
+
+  deactivateExpenseCategory:
+    request:
+      reason: "Consolidating categories"
+    response:
+      status: "deactivated"
+      categoryId: "00000000-0000-0000-0000-000000000001"
+      hasHistory: true
+      eventId: "00000000-0000-0000-0000-000000000401"
+    errors:
+      - code: PULS_EXPENSE_CATEGORY_IN_USE_ACTIVE_CLAIMS
+      - code: PULS_EXPENSE_CATEGORY_FORBIDDEN
+      - code: PULS_EXPENSE_CATEGORY_LIFECYCLE_REASON_TOO_LONG
+
+  restoreExpenseCategory:
+    request: null
+    response:
+      status: "restored"
+      categoryId: "00000000-0000-0000-0000-000000000001"
+      eventId: "00000000-0000-0000-0000-000000000402"
+    errors:
+      - code: PULS_EXPENSE_CATEGORY_NOT_FOUND
+      - code: PULS_EXPENSE_CATEGORY_FORBIDDEN
+      - code: "23505"
+
+  createLeaveType:
+    request:
+      name: "Annual leave"
+      code: "annual"
+      defaultEntitlementDays: 14
+      requiresDocument: false
+      carryOverAllowed: true
+      maxCarryOverDays: 5
+      approvalPolicyId: "00000000-0000-0000-0000-000000000501"
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_LEAVE_TYPE_NAME_REQUIRED
+      - code: PULS_LEAVE_TYPE_POLICY_INVALID
+      - code: PULS_LEAVE_TYPE_POLICY_MODULE_INVALID
+
+  updateLeaveType:
+    request:
+      name: "Annual leave"
+      code: "annual"
+      defaultEntitlementDays: 16
+      requiresDocument: false
+      carryOverAllowed: true
+      maxCarryOverDays: 7
+      approvalPolicyId: "00000000-0000-0000-0000-000000000501"
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_LEAVE_TYPE_CODE_INVALID
+      - code: PULS_LEAVE_TYPE_ENTITLEMENT_INVALID
+      - code: "23505"
+
+  deactivateLeaveType:
+    request:
+      reason: "Policy change"
+    response:
+      status: "deactivated"
+      leaveTypeId: "00000000-0000-0000-0000-000000000002"
+      hasHistory: true
+      eventId: "00000000-0000-0000-0000-000000000403"
+    errors:
+      - code: PULS_LEAVE_TYPE_IN_USE_ACTIVE_REQUESTS
+      - code: PULS_LEAVE_TYPE_FORBIDDEN
+      - code: PULS_LEAVE_TYPE_LIFECYCLE_REASON_TOO_LONG
+
+  restoreLeaveType:
+    request: null
+    response:
+      status: "restored"
+      leaveTypeId: "00000000-0000-0000-0000-000000000002"
+      eventId: "00000000-0000-0000-0000-000000000404"
+    errors:
+      - code: PULS_LEAVE_TYPE_NOT_FOUND
+      - code: PULS_LEAVE_TYPE_FORBIDDEN
+      - code: "23505"
+
+  createDepartment:
+    request:
+      name: "Engineering"
+      code: "eng"
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_ORG_DEPARTMENT_NAME_REQUIRED
+      - code: PULS_ORG_DEPARTMENT_CODE_INVALID
+      - code: "23505"
+
+  updateDepartment:
+    request:
+      name: "Engineering & Platform"
+      code: "eng"
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_ORG_DEPARTMENT_SOURCE_READ_ONLY
+      - code: PULS_ORG_DEPARTMENT_CODE_REQUIRED
+      - code: "23505"
+
+  createPosition:
+    request:
+      name: "Senior Engineer"
+      code: "senior-eng"
+      departmentId: "00000000-0000-0000-0000-000000000601"
+      normHeadcount: 3
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_ORG_POSITION_DEPARTMENT_INVALID
+      - code: PULS_ORG_POSITION_NORM_INVALID
+      - code: "23505"
+
+  updatePosition:
+    request:
+      name: "Staff Engineer"
+      code: "staff-eng"
+      departmentId: "00000000-0000-0000-0000-000000000601"
+      normHeadcount: 2
+    accepted:
+      ok: true
+    errors:
+      - code: PULS_ORG_POSITION_SOURCE_READ_ONLY
+      - code: PULS_ORG_POSITION_CODE_INVALID
+      - code: "23505"
+
+  createPerformanceCycle:
+    request:
+      name: "H1 2026"
+      startsAt: "2026-01-01"
+      endsAt: "2026-06-30"
+      status: "draft"
+    response:
+      id: "00000000-0000-0000-0000-000000000701"
+      name: "H1 2026"
+      status: "draft"
+      startsAt: "2026-01-01"
+      endsAt: "2026-06-30"
+      createdAt: "2026-05-20T10:00:00Z"
+    errors:
+      - code: invalid_input
+      - code: no_tenant
+
+  updatePerformanceCycle:
+    request:
+      name: "H1 2026 (revised)"
+      startsAt: "2026-01-01"
+      endsAt: "2026-06-30"
+      status: "active"
+    response:
+      id: "00000000-0000-0000-0000-000000000701"
+      name: "H1 2026 (revised)"
+      status: "active"
+      startsAt: "2026-01-01"
+      endsAt: "2026-06-30"
+      createdAt: "2026-05-20T10:00:00Z"
+    errors:
+      - code: empty_patch
+      - code: invalid_row
+      - code: no_tenant

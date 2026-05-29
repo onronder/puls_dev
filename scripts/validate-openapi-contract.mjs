@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PR12.2 OpenAPI contract validation — Node built-ins only, no YAML parser.
+ * PR12.2 OpenAPI contract validation + PR12.4 examples/error catalog — Node built-ins only, no YAML parser.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -9,6 +9,7 @@ const root = path.resolve(import.meta.dirname, '..')
 const OPENAPI_PATH = path.join(root, 'docs/api/openapi.yaml')
 const INVENTORY_PATH = path.join(root, 'docs/data/12_app_api_boundary_inventory.md')
 const ALLOWLIST_PATH = path.join(root, 'docs/api/openapi-contract-allowlist.json')
+const EXAMPLES_PATH = path.join(root, 'docs/api/openapi-examples.yaml')
 
 const failures = []
 
@@ -190,6 +191,200 @@ function setsEqual(actual, expected) {
     }
   }
   return true
+}
+
+function sliceExamplesOperationsSection(content) {
+  const startIdx = content.indexOf('operations:\n')
+  if (startIdx === -1) {
+    return ''
+  }
+  return content.slice(startIdx + 'operations:\n'.length)
+}
+
+function extractExamplesOperationBlocks(opsSection) {
+  const blocks = new Map()
+  const lines = opsSection.split('\n')
+  let currentId = null
+  let currentLines = []
+
+  for (const line of lines) {
+    const match = line.match(/^  ([A-Za-z0-9]+):$/)
+    if (match) {
+      if (currentId) {
+        blocks.set(currentId, currentLines.join('\n'))
+      }
+      currentId = match[1]
+      currentLines = [line]
+      continue
+    }
+    if (currentId) {
+      currentLines.push(line)
+    }
+  }
+  if (currentId) {
+    blocks.set(currentId, currentLines.join('\n'))
+  }
+  return blocks
+}
+
+function extractExamplesRequestFieldKeys(opBlock) {
+  const lines = opBlock.split('\n')
+  const keys = []
+  let inRequest = false
+
+  for (const line of lines) {
+    if (/^    request:\s*$/.test(line)) {
+      inRequest = true
+      continue
+    }
+    if (/^    request: null\s*$/.test(line)) {
+      return []
+    }
+    if (inRequest && /^    (response|accepted|errors):/.test(line)) {
+      break
+    }
+    if (inRequest) {
+      const match = line.match(/^      ([A-Za-z0-9]+):/)
+      if (match) {
+        keys.push(match[1])
+      }
+    }
+  }
+
+  return keys
+}
+
+function extractExamplesErrorCodes(opBlock) {
+  const codes = []
+  const re = /^\s+-\s+code:\s+(?:"([^"]+)"|([A-Za-z0-9_]+))\s*$/
+  for (const line of opBlock.split('\n')) {
+    const match = line.match(re)
+    if (match) {
+      codes.push(match[1] ?? match[2])
+    }
+  }
+  return codes
+}
+
+function validateExamples(openapi, allowlist) {
+  const examples = readFile(EXAMPLES_PATH)
+  if (!examples) {
+    return
+  }
+
+  for (const needle of [
+    'x-puls-public-http: false',
+    'x-puls-current-transport: supabase-js',
+    'operations:',
+  ]) {
+    if (!examples.includes(needle)) {
+      fail(`examples file missing needle: ${needle}`)
+    }
+  }
+
+  if (!openapi.includes('x-puls-examples-doc:')) {
+    fail('openapi missing x-puls-examples-doc')
+  }
+  if (!openapi.includes('x-puls-error-catalog:')) {
+    fail('openapi missing x-puls-error-catalog')
+  }
+
+  const examplesDocMatch = openapi.match(/^x-puls-examples-doc: (.+)$/m)
+  if (examplesDocMatch) {
+    const docPath = path.join(root, examplesDocMatch[1].trim())
+    if (!fs.existsSync(docPath)) {
+      fail(`x-puls-examples-doc file missing: ${examplesDocMatch[1].trim()}`)
+    }
+  }
+
+  const catalogMatch = openapi.match(/^x-puls-error-catalog: (.+)$/m)
+  if (catalogMatch) {
+    const docPath = path.join(root, catalogMatch[1].trim())
+    if (!fs.existsSync(docPath)) {
+      fail(`x-puls-error-catalog file missing: ${catalogMatch[1].trim()}`)
+    }
+  }
+
+  const knownCodes = new Set(allowlist.knownErrorCodes ?? [])
+  if (knownCodes.size === 0) {
+    fail('allowlist missing knownErrorCodes')
+  }
+
+  const opsSection = sliceExamplesOperationsSection(examples)
+  if (!opsSection) {
+    fail('examples missing operations section')
+    return
+  }
+
+  const exampleBlocks = extractExamplesOperationBlocks(opsSection)
+  const restoreIds = new Set(allowlist.restoreOperationIds ?? [])
+
+  for (const opId of allowlist.operationIds) {
+    const block = exampleBlocks.get(opId)
+    if (!block) {
+      fail(`examples missing operation block: ${opId}`)
+      continue
+    }
+
+    if (restoreIds.has(opId)) {
+      if (!/^    request: null\s*$/m.test(block)) {
+        fail(`restore operation ${opId} must have request: null in examples`)
+      }
+    } else {
+      if (!/^    request:/m.test(block)) {
+        fail(`operation ${opId} missing request in examples`)
+      }
+      if (/^    request: null\s*$/m.test(block)) {
+        fail(`non-restore operation ${opId} must not have request: null`)
+      }
+    }
+
+    const hasResponse = /^    response:/m.test(block)
+    const hasAccepted = /^    accepted:/m.test(block)
+    if (!hasResponse && !hasAccepted) {
+      fail(`operation ${opId} must have response or accepted in examples`)
+    }
+    if (hasAccepted && !block.includes('ok: true')) {
+      fail(`operation ${opId} accepted block must include ok: true`)
+    }
+
+    if (!/^    errors:/m.test(block)) {
+      fail(`operation ${opId} missing errors in examples`)
+    }
+
+    const errorCodes = extractExamplesErrorCodes(block)
+    if (errorCodes.length === 0) {
+      fail(`operation ${opId} must include at least one error code`)
+    }
+    for (const code of errorCodes) {
+      if (!knownCodes.has(code)) {
+        fail(`operation ${opId} error code not in knownErrorCodes: ${code}`)
+      }
+    }
+
+    if (!restoreIds.has(opId)) {
+      const opMeta = allowlist.operations?.[opId]
+      const schemaName = opMeta?.requestSchema
+      if (schemaName && allowlist.requestSchemaAllowlist?.[schemaName]) {
+        const allowedFields = allowlist.requestSchemaAllowlist[schemaName]
+        const requestKeys = extractExamplesRequestFieldKeys(block)
+        for (const key of requestKeys) {
+          if (!allowedFields.includes(key)) {
+            fail(`operation ${opId} example request field not in allowlist: ${key}`)
+          }
+          if (allowlist.forbiddenRequestFields.includes(key)) {
+            fail(`operation ${opId} example request contains forbidden field: ${key}`)
+          }
+        }
+      }
+    }
+  }
+
+  for (const [opId] of exampleBlocks) {
+    if (!allowlist.operationIds.includes(opId)) {
+      fail(`unexpected operation in examples: ${opId}`)
+    }
+  }
 }
 
 function validate() {
@@ -450,6 +645,8 @@ function validate() {
       fail(`backend ${backend} must appear at least once in OpenAPI`)
     }
   }
+
+  validateExamples(openapi, allowlist)
 }
 
 validate()
