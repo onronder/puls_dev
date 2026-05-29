@@ -96,7 +96,7 @@ paths:
       x-puls-transport: supabase_rpc
       x-puls-backend: puls_workflow.decide_approval_request
       x-puls-coverage: partial
-      x-puls-follow-up: PR12.3 decide approval smoke hardening
+      x-puls-follow-up: success path skipped when no pending approver fixture; JWT and error-path contract smoke in docs/data/12_decide_approval_contract_smoke.sql
       x-puls-auth:
         type: SupabaseJwt
         requiresTenantContext: true
@@ -608,7 +608,8 @@ paths:
       x-puls-boundary-class: app_exposed_mutation
       x-puls-transport: supabase_table_insert
       x-puls-backend: puls_performance.performance_cycles
-      x-puls-coverage: partial
+      x-puls-coverage: contract_smoke
+      x-puls-coverage-doc: docs/data/12_performance_cycle_contract_smoke.sql
       x-puls-auth:
         type: SupabaseJwt
         requiresTenantContext: true
@@ -645,7 +646,8 @@ paths:
       x-puls-boundary-class: app_exposed_mutation
       x-puls-transport: supabase_table_update
       x-puls-backend: puls_performance.performance_cycles
-      x-puls-coverage: partial
+      x-puls-coverage: contract_smoke
+      x-puls-coverage-doc: docs/data/12_performance_cycle_contract_smoke.sql
       x-puls-auth:
         type: SupabaseJwt
         requiresTenantContext: true
