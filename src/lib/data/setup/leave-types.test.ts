@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { fromSupabaseError } from '#/lib/data/errors'
 import {
   applyLeaveTypeLifecycleFilter,
+  fetchLeaveTypesOverviewWithMeta,
   isDeactivateLeaveTypeReasonTooLong,
   mapLeaveTypeLifecycleError,
   mapLeaveTypeLifecycleEventRow,
@@ -11,10 +12,43 @@ import {
   parseLeaveTypeLifecycleRpcResult,
 } from '#/lib/data/setup/leave-types'
 
+vi.mock('#/lib/data/demo-mode', () => ({
+  isPulsDemoModeEnabled: vi.fn(),
+}))
+
 vi.mock('#/lib/data/client', () => ({
   pulsWorkflow: vi.fn(),
   resolveTenantContext: vi.fn(),
 }))
+
+import { isPulsDemoModeEnabled } from '#/lib/data/demo-mode'
+import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
+
+const demoEnabled = vi.mocked(isPulsDemoModeEnabled)
+const resolveTenant = vi.mocked(resolveTenantContext)
+const pulsWorkflowMock = vi.mocked(pulsWorkflow)
+
+function mockEmptyLeaveTypesQuery() {
+  const chain = {
+    select: vi.fn(),
+    eq: vi.fn(),
+    order: vi.fn(),
+  }
+  chain.select.mockReturnValue(chain)
+  chain.eq.mockReturnValue(chain)
+  chain.order.mockResolvedValue({ data: [], error: null })
+  pulsWorkflowMock.mockReturnValue({ from: vi.fn().mockReturnValue(chain) } as never)
+}
+
+function mockTenantContext() {
+  return {
+    tenantId: 'tenant-1',
+    tenantName: 'Tenant',
+    employeeId: null,
+    employeeName: null,
+    personaRole: 'manager' as const,
+  }
+}
 
 const sampleLeaveTypes = [
   { id: '1', isActive: true, name: 'Annual' },
@@ -271,5 +305,39 @@ describe('mapLeaveTypeMutationError', () => {
         code: 'leaveTypeSetup.validation.duplicateCode',
       },
     })
+  })
+})
+
+describe('fetchLeaveTypesOverviewWithMeta', () => {
+  afterEach(() => {
+    demoEnabled.mockReset()
+    resolveTenant.mockReset()
+    pulsWorkflowMock.mockReset()
+  })
+
+  it('real empty tenant returns source real and status empty', async () => {
+    demoEnabled.mockReturnValue(false)
+    mockEmptyLeaveTypesQuery()
+    resolveTenant.mockResolvedValue(mockTenantContext())
+
+    const result = await fetchLeaveTypesOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('real')
+    expect(result.status).toBe('empty')
+    expect(result.data.leaveTypes).toEqual([])
+    expect(result.data.typeCount).toBe(0)
+  })
+
+  it('uses demo fixture when demo mode is on and real is empty', async () => {
+    demoEnabled.mockReturnValue(true)
+    mockEmptyLeaveTypesQuery()
+    resolveTenant.mockResolvedValue(mockTenantContext())
+
+    const result = await fetchLeaveTypesOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('demo')
+    expect(result.status).toBe('success')
+    expect(result.data.typeCount).toBe(8)
+    expect(result.data.leaveTypes.length).toBeGreaterThan(0)
   })
 })

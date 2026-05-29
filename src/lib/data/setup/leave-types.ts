@@ -2,7 +2,7 @@ import { fetchDemoLeaveTypesOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoLeaveTypesOverview } from '#/lib/demo/puls-demo-data'
 import { DataAdapterError, fromSupabaseError, isDataAdapterError, parseRpcErrorCode } from '#/lib/data/errors'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 import {
   buildApprovalPolicyBindingInfo,
   parseApprovalPolicyJoin,
@@ -474,6 +474,15 @@ async function fetchRealLeaveTypesOverview(userId: string): Promise<LeaveTypesOv
     maxApprovalStepCount,
     leaveTypes,
   }
+}
+
+export function fetchLeaveTypesOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchLeaveTypesOverview',
+    fetchReal: () => fetchRealLeaveTypesOverview(userId),
+    fetchDemo: fetchDemoLeaveTypesOverview,
+    isEmpty: (data) => data.leaveTypes.length === 0,
+  })
 }
 
 export async function fetchLeaveTypesOverview(userId: string): Promise<LeaveTypesOverview> {

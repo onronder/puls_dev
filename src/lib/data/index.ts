@@ -98,6 +98,7 @@ export {
 
 export {
   fetchLeaveTypesOverview,
+  fetchLeaveTypesOverviewWithMeta,
   createLeaveType,
   updateLeaveType,
   deactivateLeaveType,
