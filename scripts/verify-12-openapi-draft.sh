@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifies 12 PR12.1 OpenAPI draft (documentation-only PR).
+# Verifies PR12.1 OpenAPI draft + PR12.2 contract validation (documentation-only PR).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,6 +9,9 @@ REF="${1:-HEAD}"
 OPENAPI="docs/api/openapi.yaml"
 API_README="docs/api/README.md"
 DATA_README="docs/data/README.md"
+ALLOWLIST="docs/api/openapi-contract-allowlist.json"
+VALIDATION_DOC="docs/api/openapi-validation.md"
+VALIDATOR="scripts/validate-openapi-contract.mjs"
 
 file_at_ref() {
   local path="$1"
@@ -17,7 +20,7 @@ file_at_ref() {
 
 OPENAPI_CONTENT="$(file_at_ref "$OPENAPI")"
 
-echo "Checking ${REF}: PR12.1 OpenAPI draft ..."
+echo "Checking ${REF}: PR12.1 OpenAPI draft + PR12.2 contract validation ..."
 
 if [[ ! -f "$OPENAPI" ]]; then
   echo "FAIL: missing required file: $OPENAPI"
@@ -26,6 +29,21 @@ fi
 
 if [[ ! -f "scripts/verify-12-openapi-draft.sh" ]]; then
   echo "FAIL: missing required file: scripts/verify-12-openapi-draft.sh"
+  exit 1
+fi
+
+if [[ ! -f "$VALIDATOR" ]]; then
+  echo "FAIL: missing required file: $VALIDATOR"
+  exit 1
+fi
+
+if [[ ! -f "$ALLOWLIST" ]]; then
+  echo "FAIL: missing required file: $ALLOWLIST"
+  exit 1
+fi
+
+if [[ ! -f "$VALIDATION_DOC" ]]; then
+  echo "FAIL: missing required file: $VALIDATION_DOC"
   exit 1
 fi
 
@@ -245,6 +263,9 @@ for needle in "${internal_path_needles[@]}"; do
   fi
 done
 
+# --- PR12.2 semantic contract validation ---
+node "$VALIDATOR"
+
 # --- Docs-only diff guard ---
 CHANGED_FILES=()
 while IFS= read -r file; do
@@ -254,6 +275,9 @@ done < <(git diff --name-only origin/main...HEAD 2>/dev/null || true)
 ALLOWED=(
   "$OPENAPI"
   "scripts/verify-12-openapi-draft.sh"
+  "$VALIDATOR"
+  "$ALLOWLIST"
+  "$VALIDATION_DOC"
   "$API_README"
   "$DATA_README"
 )
@@ -277,7 +301,7 @@ FORBIDDEN_EXACT=(
 if ((${#CHANGED_FILES[@]} > 0)); then
   for file in "${CHANGED_FILES[@]}"; do
     if ! is_allowed "$file"; then
-      echo "FAIL: PR12.1 must not change implementation files: $file"
+      echo "FAIL: PR12.1/PR12.2 must not change implementation files: $file"
       exit 1
     fi
 
@@ -299,4 +323,4 @@ fi
 
 chmod +x "$0" 2>/dev/null || true
 
-echo "OK: PR12.1 OpenAPI draft checks passed for ${REF}"
+echo "OK: PR12.1 OpenAPI draft + PR12.2 contract validation checks passed for ${REF}"
