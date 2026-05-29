@@ -19,6 +19,8 @@ DECLARE
   v_contract_type TEXT;
   v_fixture_external_source TEXT := 'demo_contracts_data_readiness_';
   v_fixture_external_contract_id TEXT := 'demo_contracts_data_readiness_smoke_fixture';
+  v_jwt_fixture_external_contract_id TEXT := 'demo_contracts_data_readiness_jwt_self';
+  v_self_contract_count INTEGER;
 BEGIN
   PERFORM set_config('request.jwt.claim.role', 'service_role', true);
 
@@ -137,6 +139,35 @@ BEGIN
   LIMIT 1;
 
   IF v_employee_id IS NOT NULL AND v_user_id IS NOT NULL THEN
+    INSERT INTO puls_workflow.contracts (
+      tenant_id,
+      employee_id,
+      contract_type,
+      start_date,
+      end_date,
+      status,
+      signature_status,
+      risk_band,
+      metadata_only,
+      external_source,
+      external_contract_id
+    ) VALUES (
+      v_tenant_id,
+      v_employee_id,
+      'indefinite',
+      CURRENT_DATE,
+      NULL,
+      'active',
+      'not_required',
+      'low',
+      TRUE,
+      v_fixture_external_source,
+      v_jwt_fixture_external_contract_id
+    )
+    ON CONFLICT (tenant_id, external_source, external_contract_id)
+      WHERE external_source IS NOT NULL AND external_contract_id IS NOT NULL
+    DO NOTHING;
+
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
     PERFORM set_config('request.jwt.claim.sub', v_user_id::text, true);
 
@@ -148,16 +179,21 @@ BEGIN
         v_employee_id, v_current_employee_id;
     END IF;
 
-    PERFORM 1
+    SELECT COUNT(*)::INTEGER
+    INTO v_self_contract_count
     FROM puls_workflow.contracts c
     WHERE c.tenant_id = v_tenant_id
-      AND c.employee_id = v_current_employee_id
-    LIMIT 1;
+      AND c.employee_id = v_current_employee_id;
+
+    IF v_self_contract_count IS NULL OR v_self_contract_count <= 0 THEN
+      RAISE EXCEPTION 'SMOKE_FAIL self contract metadata not selectable';
+    END IF;
 
     PERFORM set_config('request.jwt.claim.role', 'service_role', true);
     PERFORM set_config('request.jwt.claim.sub', '', true);
 
-    RAISE NOTICE 'OK: JWT sub maps to current_employee_id(); self contract metadata selectable';
+    RAISE NOTICE 'OK: JWT sub maps to current_employee_id(); self contract metadata selectable (count=%)',
+      v_self_contract_count;
   ELSE
     RAISE NOTICE 'SKIP: no user-linked employee — JWT self-read not asserted on live data';
   END IF;

@@ -73,6 +73,8 @@ smoke_needles=(
   "external_contract_id"
   "request.jwt.claim.sub"
   "puls_core.current_employee_id()"
+  "SMOKE_FAIL self contract metadata not selectable"
+  "v_self_contract_count"
 )
 
 for needle in "${smoke_needles[@]}"; do
