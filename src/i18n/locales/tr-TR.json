@@ -816,8 +816,7 @@
       "generic": "Değişiklikler kaydedilemedi"
     },
     "boundary": {
-      "sourceReadOnly": "Bu kayıt harici bir kaynağa aittir ve PULS'ta salt okunurdur.",
-      "noErpWrite": "ERP kaynaklı ana veriler PULS'ta salt okunur kalır."
+      "sourceReadOnly": "Bu kayıt harici bir kaynağa aittir ve PULS'ta salt okunurdur."
     },
     "discardConfirm": "Kaydedilmemiş değişiklikler silinsin mi?"
   },
