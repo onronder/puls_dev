@@ -29,6 +29,8 @@ paths:
         type: SupabaseJwt
         requiresTenantContext: true
         requiresEmployeeContext: true
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -62,6 +64,8 @@ paths:
         type: SupabaseJwt
         requiresTenantContext: true
         requiresEmployeeContext: true
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -97,6 +101,8 @@ paths:
         type: SupabaseJwt
         requiresTenantContext: true
         requiresEmployeeContext: true
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -131,6 +137,8 @@ paths:
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -165,6 +173,8 @@ paths:
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: categoryId
           in: path
@@ -205,6 +215,8 @@ paths:
         type: SupabaseJwt
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: categoryId
           in: path
@@ -245,6 +257,8 @@ paths:
         type: SupabaseJwt
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: categoryId
           in: path
@@ -280,6 +294,8 @@ paths:
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -314,6 +330,8 @@ paths:
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: leaveTypeId
           in: path
@@ -354,6 +372,8 @@ paths:
         type: SupabaseJwt
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: leaveTypeId
           in: path
@@ -394,6 +414,8 @@ paths:
         type: SupabaseJwt
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: leaveTypeId
           in: path
@@ -430,6 +452,8 @@ paths:
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
       x-puls-source-ownership: PULS-owned rows only
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -465,6 +489,8 @@ paths:
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
       x-puls-source-ownership: PULS-owned rows only
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: departmentId
           in: path
@@ -507,6 +533,8 @@ paths:
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
       x-puls-source-ownership: PULS-owned rows only
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -542,6 +570,8 @@ paths:
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
       x-puls-source-ownership: PULS-owned rows only
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: positionId
           in: path
@@ -584,6 +614,8 @@ paths:
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      security:
+        - SupabaseJwt: []
       requestBody:
         required: true
         content:
@@ -619,6 +651,8 @@ paths:
         requiresTenantContext: true
         requiresAdminOrSetupRole: true
       x-puls-tenant-guard: resolveTenantContext + tenant_id equality
+      security:
+        - SupabaseJwt: []
       parameters:
         - name: cycleId
           in: path

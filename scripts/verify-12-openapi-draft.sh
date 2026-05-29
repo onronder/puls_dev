@@ -82,7 +82,23 @@ for op_id in "${operation_ids[@]}"; do
     echo "FAIL: operationId ${op_id} must appear exactly once under paths (found ${count})"
     exit 1
   fi
+
+  block="$(awk "/operationId: ${op_id}/{flag=1} flag{print} flag && /^      responses:/{exit}" "$OPENAPI")"
+  if ! grep -Fq "security:" <<< "$block"; then
+    echo "FAIL: operation ${op_id} missing operation-level security"
+    exit 1
+  fi
+  if ! grep -Fq "SupabaseJwt: []" <<< "$block"; then
+    echo "FAIL: operation ${op_id} missing SupabaseJwt security requirement"
+    exit 1
+  fi
 done
+
+operation_security_count="$(grep -Ec "^      security:$" "$OPENAPI")"
+if [[ "$operation_security_count" -ne 17 ]]; then
+  echo "FAIL: expected 17 operation-level security blocks (found ${operation_security_count})"
+  exit 1
+fi
 
 # --- Path parameter needles under paths: ---
 paths_section="$(awk '/^paths:/{flag=1;next} /^components:/{flag=0} flag' "$OPENAPI")"
