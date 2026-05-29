@@ -90,6 +90,7 @@ BEGIN
   END;
 
   -- imported department update (source-read-only)
+  -- Boundary: UPDATE blocked when NULLIF(BTRIM(OLD.external_source), '') IS NOT NULL
   INSERT INTO puls_core.departments (tenant_id, name, code, external_source, is_active)
   VALUES (v_tenant_id, 'Imported Dept', 'demo_org_setup_crud_imported_dept', 'canias_erp', TRUE)
   RETURNING id INTO v_imported_dept_id;
