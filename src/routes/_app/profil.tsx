@@ -10,10 +10,16 @@ import { SectionHeader } from '#/components/puls/SectionHeader'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
+import { Card, CardContent } from '#/components/ui/card'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchProfileOverview, type ProfileOverview } from '#/lib/data'
+import {
+  fetchProfileOverviewWithMeta,
+  type ProfileEmployeeLinkStatus,
+  type ProfileOverview,
+} from '#/lib/data'
+import { resolveProfileDisplayName } from '#/lib/data/profile/mapping'
 import { formatCurrency } from '#/lib/format'
 
 export const Route = createFileRoute('/_app/profil')({
@@ -61,20 +67,56 @@ function formatActivityWhat(
   return t(activity.whatKey, activity.whatParams)
 }
 
+function accountReadinessLabel(
+  status: ProfileEmployeeLinkStatus,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
+  switch (status) {
+    case 'linked_employee':
+      return t('profileSetup.accountReadiness.linked')
+    case 'tenant_without_employee':
+      return t('profileSetup.accountReadiness.tenantWithoutEmployee')
+    default:
+      return t('profileSetup.accountReadiness.noTenant')
+  }
+}
+
+function accountReadinessTone(
+  status: ProfileEmployeeLinkStatus,
+): 'success' | 'warning' | 'neutral' {
+  switch (status) {
+    case 'linked_employee':
+      return 'success'
+    case 'tenant_without_employee':
+      return 'warning'
+    default:
+      return 'neutral'
+  }
+}
+
 function ProfilPage() {
   const { t, i18n: i18nInstance } = useTranslation()
   const { user, activePersona, signOut } = useAuth()
   const [logoutSheetOpen, setLogoutSheetOpen] = useState(false)
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profileResult, isLoading } = useQuery({
     queryKey: ['profile-overview', user?.id],
-    queryFn: () => fetchProfileOverview(user!.id),
+    queryFn: () => fetchProfileOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
 
-  const displayName =
-    (user?.user_metadata?.full_name as string | undefined) ?? t('menu.profileFallback')
-  const tenantName = t('dashboard.noTenant')
+  const profile = profileResult?.data
+  const authFullName = user?.user_metadata?.full_name as string | undefined
+
+  const displayName = useMemo(() => {
+    const resolved = resolveProfileDisplayName(
+      profile?.employeeName?.trim() || authFullName,
+      user?.email,
+    )
+    return resolved === '—' ? t('menu.profileFallback') : resolved
+  }, [authFullName, profile?.employeeName, t, user?.email])
+
+  const tenantName = profile?.tenantName ?? t('dashboard.noTenant')
   const email = user?.email ?? profile?.fallbackEmail ?? '—'
   const personaLabel =
     activePersona === 'manager' ? t('persona.manager') : t('persona.employee')
@@ -95,6 +137,9 @@ function ProfilPage() {
     void signOut()
   }
 
+  const showAccountReadinessCard =
+    profileResult?.source === 'real' && profile != null && !profile.employeeLinked
+
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
@@ -105,6 +150,12 @@ function ProfilPage() {
         title={t('profileSetup.title')}
         subtitle={t('profileSetup.description')}
       />
+
+      {profileResult?.source === 'demo' ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <Skeleton className="mb-6 h-28 w-full rounded-xl" />
@@ -120,8 +171,13 @@ function ProfilPage() {
                 <div className="truncate text-sm text-[var(--color-text-muted)]">
                   {t(profile.roleKey)} · {tenantName}
                 </div>
-                <div className="mt-2">
-                  <StatusPill tone="success">{t(profile.statusKey)}</StatusPill>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <StatusPill tone={accountReadinessTone(profile.accountLinkStatus)}>
+                    {accountReadinessLabel(profile.accountLinkStatus, t)}
+                  </StatusPill>
+                  {profile.employeeLinked ? (
+                    <StatusPill tone="success">{t(profile.statusKey)}</StatusPill>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -136,6 +192,22 @@ function ProfilPage() {
               {t('profileSetup.actions.edit')}
             </Button>
           </div>
+
+          {showAccountReadinessCard ? (
+            <Card className="mb-6 border-dashed border-[var(--color-border-strong)]">
+              <CardContent className="p-6">
+                <p className="font-semibold">{t('profileSetup.accountReadiness.title')}</p>
+                <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                  {t('profileSetup.accountReadiness.description')}
+                </p>
+                {profile.accountLinkStatus === 'tenant_without_employee' ? (
+                  <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                    {t('profileSetup.accountReadiness.employeeMissingActionHint')}
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
 
           <section className="mb-6">
             <SectionHeader title={t('profileSetup.sections.personalInfo')} />

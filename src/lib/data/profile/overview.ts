@@ -1,17 +1,33 @@
 import { fetchDemoProfileOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoProfileOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
-import { pulsCalc, pulsCore, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
+import {
+  pulsCalc,
+  pulsCore,
+  pulsWorkflow,
+  resolveTenantContext,
+  type TenantContext,
+} from '#/lib/data/client'
 import { fetchNamesByIds } from '#/lib/data/core/lookups'
 import {
   mapProfileEmployeeFields,
   resolveProfileStatusKey,
 } from '#/lib/data/profile/mapping'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
-export type ProfileOverview = DemoProfileOverview
+export type ProfileEmployeeLinkStatus =
+  | 'linked_employee'
+  | 'tenant_without_employee'
+  | 'no_tenant'
 
-function mapPersonaRoleKey(role: string | null | undefined): string {
+export type ProfileOverview = DemoProfileOverview & {
+  tenantName: string | null
+  employeeName: string | null
+  employeeLinked: boolean
+  accountLinkStatus: ProfileEmployeeLinkStatus
+}
+
+export function mapPersonaRoleKey(role: string | null | undefined): string {
   switch (role) {
     case 'superadmin':
     case 'hr_admin':
@@ -23,7 +39,15 @@ function mapPersonaRoleKey(role: string | null | undefined): string {
   }
 }
 
-function emptyProfileOverview(fallbackEmail = '—'): ProfileOverview {
+export function buildProfileAccountLinkStatus(
+  ctx: Pick<TenantContext, 'tenantId' | 'employeeId'>,
+): ProfileEmployeeLinkStatus {
+  if (!ctx.tenantId) return 'no_tenant'
+  if (!ctx.employeeId) return 'tenant_without_employee'
+  return 'linked_employee'
+}
+
+function baseEmptyProfileFields(fallbackEmail = '—'): DemoProfileOverview {
   return {
     fallbackEmail,
     departmentKey: '—',
@@ -41,19 +65,47 @@ function emptyProfileOverview(fallbackEmail = '—'): ProfileOverview {
   }
 }
 
-function isProfileOverviewEmpty(data: ProfileOverview): boolean {
-  return (
-    data.leaveTotal === 0 &&
-    data.pendingExpenseCount === 0 &&
-    data.recentActivities.length === 0 &&
-    data.departmentKey === '—'
-  )
+export function buildEmptyProfileOverview(
+  ctx?: Pick<TenantContext, 'tenantId' | 'tenantName' | 'employeeId' | 'employeeName'>,
+  fallbackEmail = '—',
+): ProfileOverview {
+  const accountLinkStatus = buildProfileAccountLinkStatus({
+    tenantId: ctx?.tenantId ?? null,
+    employeeId: ctx?.employeeId ?? null,
+  })
+
+  return {
+    ...baseEmptyProfileFields(fallbackEmail),
+    tenantName: ctx?.tenantName ?? null,
+    employeeName: ctx?.employeeName ?? null,
+    employeeLinked: accountLinkStatus === 'linked_employee',
+    accountLinkStatus,
+  }
+}
+
+export function buildProfileOverviewFromDemo(demo: DemoProfileOverview): ProfileOverview {
+  return {
+    ...demo,
+    tenantName: 'Mert Teknik A.Ş.',
+    employeeName: null,
+    employeeLinked: true,
+    accountLinkStatus: 'linked_employee',
+  }
+}
+
+export async function fetchDemoProfileOverviewData(): Promise<ProfileOverview> {
+  const demo = await fetchDemoProfileOverview()
+  return buildProfileOverviewFromDemo(demo)
+}
+
+export function isProfileOverviewEmpty(data: ProfileOverview): boolean {
+  return data.accountLinkStatus === 'no_tenant'
 }
 
 async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.employeeId) {
-    return emptyProfileOverview()
+    return buildEmptyProfileOverview(ctx)
   }
 
   const [employeeRow, leaveRow, expenseRow, performanceRow] = await Promise.all([
@@ -148,6 +200,10 @@ async function fetchRealProfileOverview(userId: string): Promise<ProfileOverview
         ? 'profileSetup.selfHr.performanceHintPending'
         : 'profileSetup.selfHr.performanceHint',
     recentActivities: [],
+    tenantName: ctx.tenantName,
+    employeeName: ctx.employeeName,
+    employeeLinked: true,
+    accountLinkStatus: 'linked_employee',
   }
 }
 
@@ -155,7 +211,16 @@ export async function fetchProfileOverview(userId: string): Promise<ProfileOverv
   return resolveAdapterData({
     operation: 'fetchProfileOverview',
     fetchReal: () => fetchRealProfileOverview(userId),
-    fetchDemo: fetchDemoProfileOverview,
+    fetchDemo: fetchDemoProfileOverviewData,
+    isEmpty: isProfileOverviewEmpty,
+  })
+}
+
+export function fetchProfileOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchProfileOverview',
+    fetchReal: () => fetchRealProfileOverview(userId),
+    fetchDemo: fetchDemoProfileOverviewData,
     isEmpty: isProfileOverviewEmpty,
   })
 }

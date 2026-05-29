@@ -90,7 +90,16 @@ export {
 
 export { fetchMenuOverview, type MenuOverview } from '#/lib/data/menu/overview'
 
-export { fetchProfileOverview, type ProfileOverview } from '#/lib/data/profile/overview'
+export {
+  buildEmptyProfileOverview,
+  buildProfileAccountLinkStatus,
+  buildProfileOverviewFromDemo,
+  fetchProfileOverview,
+  fetchProfileOverviewWithMeta,
+  isProfileOverviewEmpty,
+  type ProfileEmployeeLinkStatus,
+  type ProfileOverview,
+} from '#/lib/data/profile/overview'
 
 export { fetchSettingsOverview, type SettingsOverview } from '#/lib/data/settings/overview'
 
