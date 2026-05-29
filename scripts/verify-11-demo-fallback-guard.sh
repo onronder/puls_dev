@@ -165,21 +165,27 @@ if ! grep -Fq "fetchExpenseOverviewWithMeta" <<< "$EXPENSE_OVERVIEW_TEST_CONTENT
   exit 1
 fi
 
-declare -A ROUTE_WITH_META=(
-  ["src/routes/_app/masraf.tsx"]="fetchExpenseOverviewWithMeta"
-  ["src/routes/_app/masraf-kategorileri.tsx"]="fetchExpenseCategoriesOverviewWithMeta"
-  ["src/routes/_app/departmanlar.tsx"]="fetchDepartmentsOverviewWithMeta"
-  ["src/routes/_app/pozisyonlar.tsx"]="fetchPositionsOverviewWithMeta"
-  ["src/routes/_app/erp.tsx"]="fetchErpOverviewWithMeta"
-  ["src/routes/_app/ayarlar.tsx"]="fetchSettingsOverviewWithMeta"
-  ["src/routes/_app/ai-koc.tsx"]="fetchAiCoachOverviewWithMeta"
-  ["src/routes/_app/performans-parametreleri.tsx"]="fetchPerformanceParametersOverviewWithMeta"
-  ["src/routes/_app/sirket-kurulum.tsx"]="fetchCompanySetupOverviewWithMeta"
-)
+route_with_meta() {
+  case "$1" in
+    src/routes/_app/masraf.tsx) printf '%s' 'fetchExpenseOverviewWithMeta' ;;
+    src/routes/_app/masraf-kategorileri.tsx) printf '%s' 'fetchExpenseCategoriesOverviewWithMeta' ;;
+    src/routes/_app/departmanlar.tsx) printf '%s' 'fetchDepartmentsOverviewWithMeta' ;;
+    src/routes/_app/pozisyonlar.tsx) printf '%s' 'fetchPositionsOverviewWithMeta' ;;
+    src/routes/_app/erp.tsx) printf '%s' 'fetchErpOverviewWithMeta' ;;
+    src/routes/_app/ayarlar.tsx) printf '%s' 'fetchSettingsOverviewWithMeta' ;;
+    src/routes/_app/ai-koc.tsx) printf '%s' 'fetchAiCoachOverviewWithMeta' ;;
+    src/routes/_app/performans-parametreleri.tsx) printf '%s' 'fetchPerformanceParametersOverviewWithMeta' ;;
+    src/routes/_app/sirket-kurulum.tsx) printf '%s' 'fetchCompanySetupOverviewWithMeta' ;;
+    *)
+      echo "FAIL: unknown route in ROUTES: $1" >&2
+      return 1
+      ;;
+  esac
+}
 
 for route in "${ROUTES[@]}"; do
   ROUTE_CONTENT="$(file_at_ref "$route")"
-  with_meta="${ROUTE_WITH_META[$route]}"
+  with_meta="$(route_with_meta "$route")"
 
   if ! grep -Fq "$with_meta" <<< "$ROUTE_CONTENT"; then
     echo "FAIL: route $route must use $with_meta"
