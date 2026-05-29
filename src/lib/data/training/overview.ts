@@ -2,7 +2,7 @@ import { fetchDemoTrainingOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoTrainingOverview, DemoTrainingStatus } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsPerformance, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type TrainingOverview = DemoTrainingOverview
 
@@ -76,6 +76,15 @@ async function fetchRealTrainingOverview(userId: string): Promise<TrainingOvervi
     averageCompletionPercent,
     trainings,
   }
+}
+
+export function fetchTrainingOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchTrainingOverview',
+    fetchReal: () => fetchRealTrainingOverview(userId),
+    fetchDemo: fetchDemoTrainingOverview,
+    isEmpty: (data) => data.trainings.length === 0,
+  })
 }
 
 export async function fetchTrainingOverview(userId: string): Promise<TrainingOverview> {

@@ -11,7 +11,7 @@ import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchTrainingOverview, type TrainingOverview } from '#/lib/data'
+import { fetchTrainingOverviewWithMeta, type TrainingOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/egitim')({
@@ -41,11 +41,13 @@ function EgitimPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
 
-  const { data, isLoading } = useQuery({
+  const { data: trainingOverviewResult, isLoading } = useQuery({
     queryKey: ['training-overview', user?.id],
-    queryFn: () => fetchTrainingOverview(user!.id),
+    queryFn: () => fetchTrainingOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = trainingOverviewResult?.data
 
   const renderStatusPill = (status: TrainingOverview['trainings'][number]['status']) => (
     <StatusPill tone={trainingStatusTone(status)}>{t(`trainingSetup.status.${status}`)}</StatusPill>
@@ -61,6 +63,12 @@ function EgitimPage() {
         title={t('trainingSetup.title')}
         subtitle={t('trainingSetup.description')}
       />
+
+      {trainingOverviewResult?.source === 'demo' ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">

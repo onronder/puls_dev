@@ -2,7 +2,7 @@ import { fetchDemoCareerOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoCareerOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCore, pulsPerformance, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type CareerOverview = DemoCareerOverview
 
@@ -137,6 +137,15 @@ async function fetchRealCareerOverview(userId: string): Promise<CareerOverview> 
     careerGaps,
     developmentPlan: { d30: [], d90: [], d180: [] },
   }
+}
+
+export function fetchCareerOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchCareerOverview',
+    fetchReal: () => fetchRealCareerOverview(userId),
+    fetchDemo: fetchDemoCareerOverview,
+    isEmpty: isCareerOverviewEmpty,
+  })
 }
 
 export async function fetchCareerOverview(userId: string): Promise<CareerOverview> {

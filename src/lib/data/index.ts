@@ -314,6 +314,7 @@ export {
 
 export {
   fetchPerformanceOverview,
+  fetchPerformanceOverviewWithMeta,
   type PerformanceOverview,
 } from '#/lib/data/performance/overview'
 
@@ -321,15 +322,29 @@ export {
   createPerformanceCycle,
   fetchCompetencyTemplates,
   fetchPerformanceCycles,
+  fetchPerformanceCyclesWithMeta,
+  normalizePerformanceCycleName,
+  parsePerformanceCycleMutationResult,
+  parsePerformanceCycleRow,
   updatePerformanceCycle,
+  validatePerformanceCycleInput,
   type CompetencyTemplate,
   type CreateCycleInput,
+  type PerformanceCycleValidationErrors,
   type PerformansCycle,
 } from '#/lib/data/performance/cycles'
 
-export { fetchCareerOverview, type CareerOverview } from '#/lib/data/career/overview'
+export {
+  fetchCareerOverview,
+  fetchCareerOverviewWithMeta,
+  type CareerOverview,
+} from '#/lib/data/career/overview'
 
-export { fetchTrainingOverview, type TrainingOverview } from '#/lib/data/training/overview'
+export {
+  fetchTrainingOverview,
+  fetchTrainingOverviewWithMeta,
+  type TrainingOverview,
+} from '#/lib/data/training/overview'
 
 export {
   fetchContractsOverview,
@@ -338,6 +353,7 @@ export {
 
 export {
   fetchJobEvaluationOverview,
+  fetchJobEvaluationOverviewWithMeta,
   type JobEvaluationOverview,
 } from '#/lib/data/job-evaluation/overview'
 

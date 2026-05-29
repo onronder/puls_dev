@@ -23,7 +23,7 @@ import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchCareerOverview, type CareerOverview } from '#/lib/data'
+import { fetchCareerOverviewWithMeta, type CareerOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/kariyer')({
@@ -49,11 +49,13 @@ function KariyerPage() {
   const [planTab, setPlanTab] = useState<DevelopmentPlanHorizon>('d30')
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const { data: careerOverviewResult, isLoading } = useQuery({
     queryKey: ['career-overview', user?.id],
-    queryFn: () => fetchCareerOverview(user!.id),
+    queryFn: () => fetchCareerOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = careerOverviewResult?.data
 
   const planTabOptions = useMemo(
     () =>
@@ -78,6 +80,12 @@ function KariyerPage() {
         title={t('careerSetup.title')}
         subtitle={t('careerSetup.description')}
       />
+
+      {careerOverviewResult?.source === 'demo' ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <Skeleton className="mb-5 h-24 w-full rounded-xl" />

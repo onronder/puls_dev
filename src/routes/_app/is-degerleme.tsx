@@ -11,7 +11,7 @@ import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchJobEvaluationOverview } from '#/lib/data'
+import { fetchJobEvaluationOverviewWithMeta } from '#/lib/data'
 
 export const Route = createFileRoute('/_app/is-degerleme')({
   head: () => ({
@@ -34,11 +34,13 @@ function IsDegerlemePage() {
   const { t } = useTranslation()
   const { user } = useAuth()
 
-  const { data, isLoading } = useQuery({
+  const { data: jobEvaluationOverviewResult, isLoading } = useQuery({
     queryKey: ['job-evaluation-overview', user?.id],
-    queryFn: () => fetchJobEvaluationOverview(user!.id),
+    queryFn: () => fetchJobEvaluationOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = jobEvaluationOverviewResult?.data
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -50,6 +52,16 @@ function IsDegerlemePage() {
         title={t('jobEvaluationSetup.title')}
         subtitle={t('jobEvaluationSetup.description')}
       />
+
+      {jobEvaluationOverviewResult?.source === 'demo' ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : jobEvaluationOverviewResult?.source === 'real' ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('hrGrowthPerformance.placeholder')}</StatusPill>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="-mx-4 mb-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">

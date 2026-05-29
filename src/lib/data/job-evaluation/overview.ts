@@ -1,6 +1,6 @@
 import { fetchDemoJobEvaluationOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoJobEvaluationOverview } from '#/lib/demo/puls-demo-data'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type JobEvaluationOverview = DemoJobEvaluationOverview
 
@@ -50,6 +50,15 @@ function isJobEvaluationOverviewEmpty(data: JobEvaluationOverview): boolean {
 
 async function fetchRealJobEvaluationOverview(_userId: string): Promise<JobEvaluationOverview> {
   return emptyJobEvaluationOverview()
+}
+
+export function fetchJobEvaluationOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchJobEvaluationOverview',
+    fetchReal: () => fetchRealJobEvaluationOverview(userId),
+    fetchDemo: fetchDemoJobEvaluationOverview,
+    isEmpty: isJobEvaluationOverviewEmpty,
+  })
 }
 
 export async function fetchJobEvaluationOverview(userId: string): Promise<JobEvaluationOverview> {
