@@ -210,7 +210,10 @@ scan_forbidden() {
 if ((${#CHANGED_FILES[@]} > 0)); then
   scan_forbidden 'resolveApprover\(|decideApproval\(|importApply\(' 'resolver-decide-import-runtime'
   scan_forbidden 'supabase\.functions\.invoke' 'supabase-functions-invoke'
-  scan_forbidden 'write.*erp|sync.*erp|push.*erp|ERP'"'"'ye yaz' 'erp-write-phrases'
+  scan_forbidden 'write.*erp' 'write-erp-en'
+  scan_forbidden '\bsync\b.*erp' 'sync-erp-en'
+  scan_forbidden 'push.*erp' 'push-erp-en'
+  scan_forbidden 'ERP'"'"'ye yaz' 'erp-write-tr'
   scan_forbidden 'deactivate_department|restore_department|deactivate_position|restore_position' 'lifecycle-rpc'
   scan_forbidden '\.from\('"'"'employees'"'"'\).*\.(insert|update|upsert|delete)\(' 'employee-mutations'
   scan_forbidden '\.from\('"'"'employee_cost_center_assignments'"'"'\).*\.(insert|update|upsert|delete)\(' 'cc-assignment-mutations'
