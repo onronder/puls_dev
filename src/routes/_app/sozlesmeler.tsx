@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { DataList } from '#/components/puls/DataList'
+import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
@@ -24,7 +25,7 @@ import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchContractsOverview, type ContractsOverview } from '#/lib/data'
+import { fetchContractsOverviewWithMeta, type ContractsOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/sozlesmeler')({
@@ -77,11 +78,14 @@ function SozlesmelerPage() {
   const [detailSheetOpen, setDetailSheetOpen] = useState(false)
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const { data: contractsOverviewResult, isLoading } = useQuery({
     queryKey: ['contracts-overview', user?.id],
-    queryFn: () => fetchContractsOverview(user!.id),
+    queryFn: () => fetchContractsOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = contractsOverviewResult?.data
+  const isEmptyList = !isLoading && (data?.contracts.length ?? 0) === 0
 
   const selectedContract = useMemo(() => {
     if (!data?.contracts.length) return undefined
@@ -138,6 +142,12 @@ function SozlesmelerPage() {
         }
       />
 
+      {contractsOverviewResult?.source === 'demo' ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
+
       {isLoading ? (
         <div className="-mx-4 mb-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
           <Skeleton className="h-28 min-w-[140px] rounded-xl" />
@@ -183,6 +193,14 @@ function SozlesmelerPage() {
                 <Skeleton key={index} className="h-16 w-full rounded-xl" />
               ))}
             </div>
+          ) : isEmptyList ? (
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+              <EmptyState
+                icon={FileText}
+                title={t('contractsSetup.empty.title')}
+                description={t('contractsSetup.empty.description')}
+              />
+            </div>
           ) : (
             <DataList
               items={(data?.contracts ?? []).map((contract) => ({
@@ -226,6 +244,15 @@ function SozlesmelerPage() {
                     <Skeleton className="h-6 w-24 rounded-full" />
                   </li>
                 ))
+              : isEmptyList ? (
+                  <li className="px-4 py-6">
+                    <EmptyState
+                      icon={FileText}
+                      title={t('contractsSetup.empty.title')}
+                      description={t('contractsSetup.empty.description')}
+                    />
+                  </li>
+                )
               : (data?.contracts ?? []).map((contract) => {
                   const isSelected = selectedContract?.id === contract.id
 
@@ -262,6 +289,10 @@ function SozlesmelerPage() {
           </ul>
         </div>
       </section>
+
+      <p className="mb-4 text-xs leading-relaxed text-[var(--color-text-muted)]">
+        {t('contractsSetup.boundary.metadataOnly')}
+      </p>
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button
