@@ -97,10 +97,11 @@ Not enforced by PR12.2 validator.
 
 | Operation | Gap |
 |-----------|-----|
-| `decideApprovalRequest` | PR11.4 checks `pg_proc` only — no behavioral decide smoke |
-| `createPerformanceCycle`, `updatePerformanceCycle` | PR11.5 direct SQL smoke — no adapter-named contract smoke |
+| `decideApprovalRequest` | `partial` — JWT/error-path contract smoke; success path skipped when no pending approver fixture |
 | Read models (20 routes) | Appendix-only — not public mutation paths |
+
+Performance cycle mutations (`createPerformanceCycle`, `updatePerformanceCycle`) moved to `contract_smoke` in PR12.3. See [`12_mutation_contract_smoke_hardening.md`](./12_mutation_contract_smoke_hardening.md).
 
 ## PR12.3 handoff
 
-PR12.3 targets smoke/contract hardening for partial-coverage operations, starting with decide approval behavioral smoke.
+PR12.3 added contract smokes documented in [`12_mutation_contract_smoke_hardening.md`](./12_mutation_contract_smoke_hardening.md). Residual decide success-path coverage depends on environment fixtures.

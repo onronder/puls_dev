@@ -38,10 +38,16 @@
     "updatePerformanceCycle"
   ],
   "partialCoverageOperationIds": [
-    "decideApprovalRequest",
+    "decideApprovalRequest"
+  ],
+  "contractSmokeOperationIds": [
     "createPerformanceCycle",
     "updatePerformanceCycle"
   ],
+  "contractSmokeDocs": {
+    "createPerformanceCycle": "docs/data/12_performance_cycle_contract_smoke.sql",
+    "updatePerformanceCycle": "docs/data/12_performance_cycle_contract_smoke.sql"
+  },
   "restoreOperationIds": [
     "restoreExpenseCategory",
     "restoreLeaveType"

@@ -313,10 +313,60 @@ function validate() {
     }
   }
 
-  for (const opId of allowlist.partialCoverageOperationIds) {
+  for (const opId of allowlist.partialCoverageOperationIds ?? []) {
     const block = operationBlocks.get(opId)
-    if (block && !block.includes('x-puls-coverage: partial')) {
+    if (!block) {
+      continue
+    }
+    if (!block.includes('x-puls-coverage: partial')) {
       fail(`partial coverage operation ${opId} missing x-puls-coverage: partial`)
+    }
+    if (!block.includes('x-puls-follow-up:')) {
+      fail(`partial coverage operation ${opId} missing x-puls-follow-up`)
+    }
+    if (opId === 'decideApprovalRequest') {
+      const followUp = extractLineValue(block, 'x-puls-follow-up') ?? ''
+      const residualNeedle =
+        /success path|pending approver fixture|approver fixture/i.test(followUp)
+      if (!residualNeedle) {
+        fail(
+          `decideApprovalRequest x-puls-follow-up must mention success path or pending approver fixture`,
+        )
+      }
+    }
+  }
+
+  const contractSmokeIds = allowlist.contractSmokeOperationIds ?? []
+  const partialIds = allowlist.partialCoverageOperationIds ?? []
+  for (const opId of contractSmokeIds) {
+    if (partialIds.includes(opId)) {
+      fail(`operation ${opId} cannot be in both contractSmokeOperationIds and partialCoverageOperationIds`)
+    }
+    const block = operationBlocks.get(opId)
+    if (!block) {
+      continue
+    }
+    if (!block.includes('x-puls-coverage: contract_smoke')) {
+      fail(`contract smoke operation ${opId} missing x-puls-coverage: contract_smoke`)
+    }
+    const coverageDoc = extractLineValue(block, 'x-puls-coverage-doc')
+    if (!coverageDoc) {
+      fail(`contract smoke operation ${opId} missing x-puls-coverage-doc`)
+    } else {
+      const docPath = path.join(root, coverageDoc)
+      if (!fs.existsSync(docPath)) {
+        fail(`contract smoke doc missing for ${opId}: ${coverageDoc}`)
+      }
+    }
+    const expectedDoc = allowlist.contractSmokeDocs?.[opId]
+    if (expectedDoc && coverageDoc !== expectedDoc) {
+      fail(`contract smoke doc mismatch for ${opId}: expected ${expectedDoc}, got ${coverageDoc}`)
+    }
+  }
+
+  for (const opId of partialIds) {
+    if (contractSmokeIds.includes(opId)) {
+      fail(`operation ${opId} cannot be in both contractSmokeOperationIds and partialCoverageOperationIds`)
     }
   }
 
