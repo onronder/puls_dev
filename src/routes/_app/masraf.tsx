@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { RequestCreationReadinessBanners } from '#/components/puls/RequestCreationReadinessBanners'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -35,7 +36,7 @@ import {
   buildExpenseCreationReadiness,
   createExpenseClaim,
   decideApprovalRequest,
-  fetchExpenseOverview,
+  fetchExpenseOverviewWithMeta,
   fetchRequestCreationReadiness,
   isDataAdapterError,
   type ExpenseOverview,
@@ -169,11 +170,13 @@ function MasrafPage() {
   const [tab, setTab] = useState<ExpenseTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data: expenseResult, isLoading, isError, refetch } = useQuery({
     queryKey: ['expense-overview', user?.id],
-    queryFn: () => fetchExpenseOverview(user!.id),
+    queryFn: () => fetchExpenseOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = expenseResult?.data
 
   const usedPct =
     data && data.monthlyLimit > 0
@@ -197,6 +200,8 @@ function MasrafPage() {
           {t('expense.actions.new')}
         </Button>
       </div>
+
+      <DemoSourcePill visible={expenseResult?.source === 'demo'} />
 
       {isLoading ? (
         <div className="mt-5 space-y-3">

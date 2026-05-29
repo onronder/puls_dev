@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -19,7 +20,7 @@ import { Button } from '#/components/ui/button'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import { useAuth } from '#/lib/auth'
-import { fetchErpOverview, type ErpOverview } from '#/lib/data'
+import { fetchErpOverviewWithMeta, type ErpOverview } from '#/lib/data'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/erp')({
@@ -60,11 +61,13 @@ function SyncLogIcon({ level }: { level: DemoErpSyncLevel }) {
 function ErpPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const { data, isLoading } = useQuery({
+  const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],
-    queryFn: () => fetchErpOverview(user!.id),
+    queryFn: () => fetchErpOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = erpResult?.data
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -77,6 +80,8 @@ function ErpPage() {
         subtitle={t('erp.subtitle')}
         badge={<StatusPill tone="warning">{t('erp.badge')}</StatusPill>}
       />
+
+      <DemoSourcePill visible={erpResult?.source === 'demo'} />
 
       {isLoading ? (
         <div className="-mx-4 mt-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">

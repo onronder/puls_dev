@@ -2,7 +2,7 @@ import { DataAdapterError, fromSupabaseError, isDataAdapterError, parseRpcErrorC
 import { fetchDemoExpenseCategoriesOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoExpenseCategoriesOverview } from '#/lib/demo/puls-demo-data'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 import {
   buildApprovalPolicyBindingInfo,
   parseApprovalPolicyJoin,
@@ -490,6 +490,15 @@ export async function fetchExpenseCategoriesOverview(
   userId: string,
 ): Promise<ExpenseCategoriesOverview> {
   return resolveAdapterData({
+    operation: 'fetchExpenseCategoriesOverview',
+    fetchReal: () => fetchRealExpenseCategoriesOverview(userId),
+    fetchDemo: fetchDemoExpenseCategoriesOverview,
+    isEmpty: (data) => data.categories.length === 0,
+  })
+}
+
+export function fetchExpenseCategoriesOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchExpenseCategoriesOverview',
     fetchReal: () => fetchRealExpenseCategoriesOverview(userId),
     fetchDemo: fetchDemoExpenseCategoriesOverview,

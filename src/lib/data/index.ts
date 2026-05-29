@@ -1,4 +1,4 @@
-export { isPulsDemoModeEnabled } from '#/lib/data/demo-mode'
+export { isPulsDemoModeEnabled, readPulsDemoModeConfig, type PulsDemoModeConfig } from '#/lib/data/demo-mode'
 
 export {
   pulsAudit,
@@ -101,12 +101,13 @@ export {
   type ProfileOverview,
 } from '#/lib/data/profile/overview'
 
-export { fetchSettingsOverview, type SettingsOverview } from '#/lib/data/settings/overview'
+export { fetchSettingsOverview, fetchSettingsOverviewWithMeta, type SettingsOverview } from '#/lib/data/settings/overview'
 
-export { fetchErpOverview, type ErpOverview } from '#/lib/data/setup/erp'
+export { fetchErpOverview, fetchErpOverviewWithMeta, type ErpOverview } from '#/lib/data/setup/erp'
 
 export {
   fetchCompanySetupOverview,
+  fetchCompanySetupOverviewWithMeta,
   type CompanySetupOverview,
 } from '#/lib/data/setup/company'
 
@@ -150,6 +151,7 @@ export {
   deactivateExpenseCategory,
   fetchExpenseCategoryLifecycleEvents,
   fetchExpenseCategoriesOverview,
+  fetchExpenseCategoriesOverviewWithMeta,
   isDeactivateReasonTooLong,
   mapExpenseCategoryLifecycleEventRow,
   mapExpenseCategoryLifecycleError,
@@ -278,6 +280,7 @@ export {
 
 export {
   fetchPerformanceParametersOverview,
+  fetchPerformanceParametersOverviewWithMeta,
   type PerformanceParametersOverview,
 } from '#/lib/data/setup/performance-parameters'
 
@@ -295,7 +298,11 @@ export {
   type CreateLeaveRequestResult,
 } from '#/lib/data/leave/requests'
 
-export { fetchExpenseOverview, type ExpenseOverview } from '#/lib/data/expense/overview'
+export {
+  fetchExpenseOverview,
+  fetchExpenseOverviewWithMeta,
+  type ExpenseOverview,
+} from '#/lib/data/expense/overview'
 
 export {
   createExpenseClaim,
@@ -379,4 +386,8 @@ export {
   type JobEvaluationOverview,
 } from '#/lib/data/job-evaluation/overview'
 
-export { fetchAiCoachOverview, type AiCoachOverview } from '#/lib/data/ai-coach/overview'
+export {
+  fetchAiCoachOverview,
+  fetchAiCoachOverviewWithMeta,
+  type AiCoachOverview,
+} from '#/lib/data/ai-coach/overview'

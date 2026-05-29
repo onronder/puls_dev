@@ -1,6 +1,6 @@
 import { fetchDemoAiCoachOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoAiCoachOverview } from '#/lib/demo/puls-demo-data'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type AiCoachOverview = DemoAiCoachOverview
 
@@ -52,6 +52,15 @@ async function fetchRealAiCoachOverview(_userId: string): Promise<AiCoachOvervie
 
 export async function fetchAiCoachOverview(userId: string): Promise<AiCoachOverview> {
   return resolveAdapterData({
+    operation: 'fetchAiCoachOverview',
+    fetchReal: () => fetchRealAiCoachOverview(userId),
+    fetchDemo: fetchDemoAiCoachOverview,
+    isEmpty: () => false,
+  })
+}
+
+export function fetchAiCoachOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
     operation: 'fetchAiCoachOverview',
     fetchReal: () => fetchRealAiCoachOverview(userId),
     fetchDemo: fetchDemoAiCoachOverview,

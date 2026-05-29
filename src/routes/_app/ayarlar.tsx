@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { FormField } from '#/components/puls/FormField'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -17,7 +18,7 @@ import {
   adminSetupNavItems,
   type NavItem,
 } from '#/lib/navigation'
-import { fetchSettingsOverview, type SettingsOverview } from '#/lib/data'
+import { fetchSettingsOverviewWithMeta, type SettingsOverview } from '#/lib/data'
 import { canShowSetupHub, filterSettingsSectionsForRole } from '#/lib/setup-access'
 import i18n from '#/i18n'
 
@@ -60,11 +61,13 @@ function AyarlarPage() {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
   const showSetupHub = canShowSetupHub(personaRole, activePersona)
 
-  const { data, isLoading } = useQuery({
+  const { data: settingsResult, isLoading } = useQuery({
     queryKey: ['settings-overview', user?.id],
-    queryFn: () => fetchSettingsOverview(user!.id),
+    queryFn: () => fetchSettingsOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = settingsResult?.data
 
   const visibleSections = useMemo(
     () =>
@@ -99,6 +102,8 @@ function AyarlarPage() {
           showSetupHub ? 'settingsSetup.description' : 'settingsSetup.descriptionPersonal',
         )}
       />
+
+      <DemoSourcePill visible={settingsResult?.source === 'demo'} />
 
       {showSetupHub ? (
         <section className="mb-8">

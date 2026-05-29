@@ -96,5 +96,37 @@ describe('resolveAdapterData', () => {
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
     expect(result.data).toEqual([1])
+    expect(result.fallbackReason).toBeUndefined()
+  })
+
+  it('includes fallbackReason empty when demo fills empty real data', async () => {
+    demoEnabled.mockReturnValue(true)
+    const result = await resolveAdapterDataWithMeta({
+      operation: 'test',
+      fetchReal: async () => ({ count: 0 }),
+      fetchDemo: async () => ({ count: 99 }),
+      isEmpty: (value) => value.count === 0,
+    })
+
+    expect(result.source).toBe('demo')
+    expect(result.status).toBe('success')
+    expect(result.fallbackReason).toBe('empty')
+    expect(result.data).toEqual({ count: 99 })
+  })
+
+  it('includes fallbackReason error when demo fills failed real fetch', async () => {
+    demoEnabled.mockReturnValue(true)
+    const result = await resolveAdapterDataWithMeta({
+      operation: 'test',
+      fetchReal: async () => {
+        throw new Error('db down')
+      },
+      fetchDemo: async () => ({ count: 99 }),
+    })
+
+    expect(result.source).toBe('demo')
+    expect(result.status).toBe('success')
+    expect(result.fallbackReason).toBe('error')
+    expect(result.data).toEqual({ count: 99 })
   })
 })

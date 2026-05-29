@@ -6,6 +6,7 @@ export type DataResult<T> = {
   status: 'success' | 'empty' | 'error'
   data: T
   error?: DataAdapterError
+  fallbackReason?: 'empty' | 'error'
 }
 
 export type ResolveAdapterDataOptions<T> = {
@@ -46,7 +47,7 @@ export async function resolveAdapterDataWithMeta<T>({
 
     if (demoEnabled) {
       const demoData = await fetchDemo()
-      return { source: 'demo', status: 'success', data: demoData }
+      return { source: 'demo', status: 'success', data: demoData, fallbackReason: 'empty' }
     }
 
     return { source: 'real', status: 'empty', data }
@@ -54,7 +55,7 @@ export async function resolveAdapterDataWithMeta<T>({
     if (demoEnabled) {
       try {
         const demoData = await fetchDemo()
-        return { source: 'demo', status: 'success', data: demoData }
+        return { source: 'demo', status: 'success', data: demoData, fallbackReason: 'error' }
       } catch {
         // fall through to normalized error
       }

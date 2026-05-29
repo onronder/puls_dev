@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DataList } from '#/components/puls/DataList'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { EmptyState } from '#/components/puls/EmptyState'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -21,7 +22,7 @@ import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
   createDepartment,
-  fetchDepartmentsOverview,
+  fetchDepartmentsOverviewWithMeta,
   isDepartmentFormDirty,
   mapDepartmentMutationError,
   normalizeOrgSetupCode,
@@ -102,11 +103,13 @@ function DepartmanlarPage() {
   const [formBaseline, setFormBaseline] = useState<DepartmentFormFields | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<DepartmentFieldKey, string>>>({})
 
-  const { data, isLoading } = useQuery({
+  const { data: departmentsResult, isLoading } = useQuery({
     queryKey: ['departments-overview', user?.id],
-    queryFn: () => fetchDepartmentsOverview(user!.id),
+    queryFn: () => fetchDepartmentsOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = departmentsResult?.data
 
   const saveMutation = useMutation({
     mutationFn: async (form: DepartmentFormFields) => {
@@ -214,6 +217,8 @@ function DepartmanlarPage() {
           {t('orgSetupCrud.actions.createDepartment')}
         </Button>
       </div>
+
+      <DemoSourcePill visible={departmentsResult?.source === 'demo'} />
 
       {isLoading ? (
         <div className="-mx-4 mb-6 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
