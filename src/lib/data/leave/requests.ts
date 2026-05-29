@@ -47,13 +47,62 @@ export async function createLeaveRequest(
     throw fromRpcError(error, 'createLeaveRequest')
   }
 
+  return parseCreateLeaveRequestResult(data)
+}
+
+function invalidCreateLeaveRequestResult(message: string): DataAdapterError {
+  return new DataAdapterError({
+    code: 'invalid_rpc_result',
+    message,
+    source: 'adapter',
+    operation: 'createLeaveRequest',
+    i18nKey: 'leave.error.submitFailed',
+  })
+}
+
+function requireCreateResultString(value: unknown, field: string): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw invalidCreateLeaveRequestResult(`Missing or invalid ${field} in create_leave_request result`)
+  }
+  return value
+}
+
+function parseCreateResultBusinessDays(value: unknown): number {
+  if (value === null || value === undefined || value === '') {
+    throw invalidCreateLeaveRequestResult('Missing or invalid business_days in create_leave_request result')
+  }
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    throw invalidCreateLeaveRequestResult('Missing or invalid business_days in create_leave_request result')
+  }
+
+  return parsed
+}
+
+export function parseCreateLeaveRequestResult(data: unknown): CreateLeaveRequestResult {
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    throw invalidCreateLeaveRequestResult('create_leave_request result is not an object')
+  }
+
   const row = data as Record<string, unknown>
+  const approverNameRaw = row.approver_name
+
+  let approverName: string | null
+  if (approverNameRaw === null || approverNameRaw === undefined) {
+    approverName = null
+  } else if (typeof approverNameRaw === 'string') {
+    approverName = approverNameRaw
+  } else {
+    throw invalidCreateLeaveRequestResult('Missing or invalid approver_name in create_leave_request result')
+  }
+
   return {
-    leaveRequestId: row.leave_request_id as string,
-    approvalRequestId: row.approval_request_id as string,
-    businessDays: Number(row.business_days ?? 0),
-    status: row.status as string,
-    approverEmployeeId: row.approver_employee_id as string,
-    approverName: (row.approver_name as string | null) ?? null,
+    leaveRequestId: requireCreateResultString(row.leave_request_id, 'leave_request_id'),
+    approvalRequestId: requireCreateResultString(row.approval_request_id, 'approval_request_id'),
+    businessDays: parseCreateResultBusinessDays(row.business_days),
+    status: requireCreateResultString(row.status, 'status'),
+    approverEmployeeId: requireCreateResultString(row.approver_employee_id, 'approver_employee_id'),
+    approverName,
   }
 }

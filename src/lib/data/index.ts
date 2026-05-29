@@ -269,12 +269,14 @@ export {
 
 export {
   fetchLeaveOverview,
+  fetchLeaveOverviewWithMeta,
   type LeaveOverview,
   type LeaveStatus,
 } from '#/lib/data/leave/overview'
 
 export {
   createLeaveRequest,
+  parseCreateLeaveRequestResult,
   type CreateLeaveRequestPayload,
   type CreateLeaveRequestResult,
 } from '#/lib/data/leave/requests'
