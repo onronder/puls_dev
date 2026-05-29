@@ -133,6 +133,7 @@ ALLOWED=(
   "docs/api/README.md"
   "docs/data/README.md"
   "$VALIDATOR"
+  "scripts/verify-12-openapi-draft.sh"
   "scripts/verify-12-mutation-contract-smoke.sh"
 )
 
