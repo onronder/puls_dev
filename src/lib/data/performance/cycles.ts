@@ -1,6 +1,6 @@
 import { fromSupabaseError, DataAdapterError, adapterError } from '#/lib/data/errors'
 import { pulsPerformance, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type CompetencyTemplate = {
   id: string
@@ -26,15 +26,106 @@ export type CreateCycleInput = {
   status?: PerformansCycle['status']
 }
 
-function mapCycle(row: Record<string, unknown>): PerformansCycle {
-  return {
-    id: row.id as string,
-    name: row.name as string,
-    status: row.status as PerformansCycle['status'],
-    starts_at: row.starts_at as string,
-    ends_at: row.ends_at as string,
-    created_at: row.created_at as string,
+export type PerformanceCycleValidationErrors = {
+  name?: string
+  starts_at?: string
+  ends_at?: string
+  status?: string
+}
+
+const CYCLE_STATUSES: PerformansCycle['status'][] = ['draft', 'active', 'closed']
+
+function isIsoDateString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
+export function normalizePerformanceCycleName(value: string): string {
+  return value.trim()
+}
+
+export function validatePerformanceCycleInput(
+  input: CreateCycleInput,
+): { ok: true; value: CreateCycleInput } | { ok: false; errors: PerformanceCycleValidationErrors } {
+  const errors: PerformanceCycleValidationErrors = {}
+  const name = normalizePerformanceCycleName(input.name)
+
+  if (!name) {
+    errors.name = 'name_required'
   }
+
+  if (!input.starts_at) {
+    errors.starts_at = 'starts_at_required'
+  } else if (!isIsoDateString(input.starts_at)) {
+    errors.starts_at = 'starts_at_invalid'
+  }
+
+  if (!input.ends_at) {
+    errors.ends_at = 'ends_at_required'
+  } else if (!isIsoDateString(input.ends_at)) {
+    errors.ends_at = 'ends_at_invalid'
+  } else if (input.starts_at && input.ends_at <= input.starts_at) {
+    errors.ends_at = 'ends_at_before_start'
+  }
+
+  const status = input.status ?? 'draft'
+  if (!CYCLE_STATUSES.includes(status)) {
+    errors.status = 'status_invalid'
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { ok: false, errors }
+  }
+
+  return {
+    ok: true,
+    value: {
+      name,
+      starts_at: input.starts_at,
+      ends_at: input.ends_at,
+      status,
+    },
+  }
+}
+
+function invalidCycleRow(message: string): DataAdapterError {
+  return new DataAdapterError({
+    code: 'invalid_row',
+    message,
+    source: 'adapter',
+    operation: 'parsePerformanceCycleRow',
+  })
+}
+
+export function parsePerformanceCycleRow(row: unknown): PerformansCycle {
+  if (row === null || typeof row !== 'object' || Array.isArray(row)) {
+    throw invalidCycleRow('performance cycle row is not an object')
+  }
+
+  const data = row as Record<string, unknown>
+  const status = data.status as PerformansCycle['status']
+
+  if (!CYCLE_STATUSES.includes(status)) {
+    throw invalidCycleRow('performance cycle row has invalid status')
+  }
+
+  for (const field of ['id', 'name', 'starts_at', 'ends_at', 'created_at'] as const) {
+    if (typeof data[field] !== 'string' || (data[field] as string).trim().length === 0) {
+      throw invalidCycleRow(`performance cycle row missing ${field}`)
+    }
+  }
+
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    status,
+    starts_at: data.starts_at as string,
+    ends_at: data.ends_at as string,
+    created_at: data.created_at as string,
+  }
+}
+
+export function parsePerformanceCycleMutationResult(data: unknown): PerformansCycle {
+  return parsePerformanceCycleRow(data)
 }
 
 function mutationError(error: unknown, operation: string): string {
@@ -42,6 +133,10 @@ function mutationError(error: unknown, operation: string): string {
     return error.toUserMessage()
   }
   return adapterError(operation).toUserMessage()
+}
+
+function validationErrorMessage(): string {
+  return adapterError('createPerformanceCycle', 'invalid_input').toUserMessage()
 }
 
 async function fetchRealPerformanceCycles(userId: string): Promise<PerformansCycle[]> {
@@ -58,7 +153,16 @@ async function fetchRealPerformanceCycles(userId: string): Promise<PerformansCyc
     throw fromSupabaseError(error, 'fetchPerformanceCycles', 'puls_performance', 'performance_cycles')
   }
 
-  return (data ?? []).map((row) => mapCycle(row as Record<string, unknown>))
+  return (data ?? []).map((row) => parsePerformanceCycleRow(row))
+}
+
+export function fetchPerformanceCyclesWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchPerformanceCycles',
+    fetchReal: () => fetchRealPerformanceCycles(userId),
+    fetchDemo: async () => [],
+    isEmpty: (cycles) => cycles.length === 0,
+  })
 }
 
 export async function fetchPerformanceCycles(userId: string): Promise<PerformansCycle[]> {
@@ -104,6 +208,11 @@ export async function createPerformanceCycle(
   input: CreateCycleInput,
 ): Promise<{ data: PerformansCycle | null; error: string | null }> {
   try {
+    const validated = validatePerformanceCycleInput(input)
+    if (!validated.ok) {
+      return { data: null, error: validationErrorMessage() }
+    }
+
     const ctx = await resolveTenantContext(userId)
     if (!ctx.tenantId) {
       return { data: null, error: adapterError('createPerformanceCycle', 'no_tenant').toUserMessage() }
@@ -113,10 +222,10 @@ export async function createPerformanceCycle(
       .from('performance_cycles')
       .insert({
         tenant_id: ctx.tenantId,
-        name: input.name.trim(),
-        starts_at: input.starts_at,
-        ends_at: input.ends_at,
-        status: input.status ?? 'draft',
+        name: validated.value.name,
+        starts_at: validated.value.starts_at,
+        ends_at: validated.value.ends_at,
+        status: validated.value.status ?? 'draft',
       })
       .select('id, name, status, starts_at, ends_at, created_at')
       .single()
@@ -125,17 +234,23 @@ export async function createPerformanceCycle(
       throw fromSupabaseError(error, 'createPerformanceCycle', 'puls_performance', 'performance_cycles')
     }
 
-    return { data: mapCycle(data as Record<string, unknown>), error: null }
+    return { data: parsePerformanceCycleMutationResult(data), error: null }
   } catch (error) {
     return { data: null, error: mutationError(error, 'createPerformanceCycle') }
   }
 }
 
 export async function updatePerformanceCycle(
+  userId: string,
   cycleId: string,
   patch: Partial<Pick<PerformansCycle, 'status' | 'name' | 'starts_at' | 'ends_at'>>,
 ): Promise<{ data: PerformansCycle | null; error: string | null }> {
   try {
+    const ctx = await resolveTenantContext(userId)
+    if (!ctx.tenantId) {
+      return { data: null, error: adapterError('updatePerformanceCycle', 'no_tenant').toUserMessage() }
+    }
+
     const payload: Record<string, unknown> = {}
     if (patch.status != null) payload.status = patch.status
     if (patch.name != null) payload.name = patch.name.trim()
@@ -146,9 +261,34 @@ export async function updatePerformanceCycle(
       return { data: null, error: adapterError('updatePerformanceCycle', 'empty_patch').toUserMessage() }
     }
 
+    if (payload.status != null && !CYCLE_STATUSES.includes(payload.status as PerformansCycle['status'])) {
+      return { data: null, error: validationErrorMessage() }
+    }
+
+    if (payload.name != null && !normalizePerformanceCycleName(String(payload.name))) {
+      return { data: null, error: validationErrorMessage() }
+    }
+
+    if (payload.starts_at != null && !isIsoDateString(String(payload.starts_at))) {
+      return { data: null, error: validationErrorMessage() }
+    }
+
+    if (payload.ends_at != null && !isIsoDateString(String(payload.ends_at))) {
+      return { data: null, error: validationErrorMessage() }
+    }
+
+    if (
+      payload.starts_at != null &&
+      payload.ends_at != null &&
+      String(payload.ends_at) <= String(payload.starts_at)
+    ) {
+      return { data: null, error: validationErrorMessage() }
+    }
+
     const { data, error } = await pulsPerformance()
       .from('performance_cycles')
       .update(payload)
+      .eq('tenant_id', ctx.tenantId)
       .eq('id', cycleId)
       .select('id, name, status, starts_at, ends_at, created_at')
       .single()
@@ -157,7 +297,7 @@ export async function updatePerformanceCycle(
       throw fromSupabaseError(error, 'updatePerformanceCycle', 'puls_performance', 'performance_cycles')
     }
 
-    return { data: mapCycle(data as Record<string, unknown>), error: null }
+    return { data: parsePerformanceCycleMutationResult(data), error: null }
   } catch (error) {
     return { data: null, error: mutationError(error, 'updatePerformanceCycle') }
   }

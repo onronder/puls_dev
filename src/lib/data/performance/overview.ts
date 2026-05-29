@@ -2,7 +2,7 @@ import { fetchDemoPerformanceOverview } from '#/lib/demo/puls-demo-data'
 import type { DemoPerformanceOverview } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, pulsPerformance, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type PerformanceOverview = DemoPerformanceOverview
 
@@ -111,6 +111,15 @@ async function fetchRealPerformanceOverview(userId: string): Promise<Performance
     defaultCycleName: (dashboardRow.data?.active_cycle_name as string | null) ?? '—',
     templateDisplayByIndex,
   }
+}
+
+export function fetchPerformanceOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchPerformanceOverview',
+    fetchReal: () => fetchRealPerformanceOverview(userId),
+    fetchDemo: fetchDemoPerformanceOverview,
+    isEmpty: isPerformanceOverviewEmpty,
+  })
 }
 
 export async function fetchPerformanceOverview(userId: string): Promise<PerformanceOverview> {

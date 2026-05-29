@@ -1756,6 +1756,9 @@
       "description": "Yetkinlik boşluklarına ve performans verisine göre öğrenme yolu önerileri pilot sonrası gelecek."
     }
   },
+  "hrGrowthPerformance": {
+    "placeholder": "Yer tutucu"
+  },
   "jobEvaluationSetup": {
     "eyebrow": "İK Yönetimi",
     "title": "İş Değerleme",

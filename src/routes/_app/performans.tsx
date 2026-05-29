@@ -27,8 +27,8 @@ import { useAuth } from '#/lib/auth'
 import {
   createPerformanceCycle,
   fetchCompetencyTemplates,
-  fetchPerformanceCycles,
-  fetchPerformanceOverview,
+  fetchPerformanceCyclesWithMeta,
+  fetchPerformanceOverviewWithMeta,
   updatePerformanceCycle,
   type CompetencyTemplate,
   type CreateCycleInput,
@@ -402,17 +402,22 @@ function PerformansPage() {
     enabled: Boolean(user?.id),
   })
 
-  const { data: cycles, isLoading: cyclesLoading } = useQuery({
+  const { data: cyclesResult, isLoading: cyclesLoading } = useQuery({
     queryKey: ['performance-cycles', user?.id],
-    queryFn: () => fetchPerformanceCycles(user!.id),
+    queryFn: () => fetchPerformanceCyclesWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
 
-  const { data: demoOverview } = useQuery({
+  const { data: performanceOverviewResult } = useQuery({
     queryKey: ['performance-overview', user?.id],
-    queryFn: () => fetchPerformanceOverview(user!.id),
+    queryFn: () => fetchPerformanceOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const cycles = cyclesResult?.data
+  const overviewData = performanceOverviewResult?.data
+  const showDemoSourcePill =
+    performanceOverviewResult?.source === 'demo' || cyclesResult?.source === 'demo'
 
   const activeCycle = useMemo(
     () => cycles?.find((cycle) => cycle.status === 'active') ?? null,
@@ -443,7 +448,7 @@ function PerformansPage() {
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: PerformansCycle['status'] }) =>
-      updatePerformanceCycle(id, { status }),
+      updatePerformanceCycle(user!.id, id, { status }),
     onSuccess: (result) => {
       if (result.error) return
       void queryClient.invalidateQueries({ queryKey: ['performance-cycles'] })
@@ -513,37 +518,43 @@ function PerformansPage() {
         </div>
       </div>
 
+      {showDemoSourcePill ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
+
       {isLoading ? (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <Skeleton key={index} className="h-28 w-full rounded-xl" />
           ))}
         </div>
-      ) : activeCycle && demoOverview ? (
+      ) : activeCycle && overviewData ? (
         <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricCard
             label={t('performanceSetup.metrics.scope')}
-            value={String(demoOverview.employeeScopeCount)}
+            value={String(overviewData.employeeScopeCount)}
             hint={t('performanceSetup.metrics.scopeHint')}
             icon={Users}
           />
           <MetricCard
             label={t('performanceSetup.metrics.pending')}
-            value={String(demoOverview.pendingReviews)}
+            value={String(overviewData.pendingReviews)}
             hint={t('performanceSetup.metrics.pendingHint')}
           />
           <MetricCard
             label={t('performanceSetup.metrics.completed')}
-            value={String(demoOverview.completedThisWeek)}
+            value={String(overviewData.completedThisWeek)}
             hint={t('performanceSetup.metrics.completedHint')}
           />
           <MetricCard
             label={t('performanceSetup.metrics.overdue')}
-            value={String(demoOverview.overdueCount)}
+            value={String(overviewData.overdueCount)}
             hint={t('performanceSetup.metrics.overdueHint')}
           />
         </section>
-      ) : demoOverview ? (
+      ) : overviewData ? (
         <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricCard
             label={t('performanceSetup.metrics.noActiveCycle')}
@@ -559,12 +570,12 @@ function PerformansPage() {
           />
           <MetricCard
             label={t('performanceSetup.metrics.evaluators')}
-            value={String(demoOverview.evaluatorCount)}
+            value={String(overviewData.evaluatorCount)}
             hint={t('performanceSetup.metrics.evaluatorsHint')}
           />
           <MetricCard
             label={t('performanceSetup.metrics.scope')}
-            value={String(demoOverview.employeeScopeCount)}
+            value={String(overviewData.employeeScopeCount)}
             hint={t('performanceSetup.metrics.scopeHint')}
             icon={Users}
           />
@@ -650,7 +661,7 @@ function PerformansPage() {
         ) : templates && templates.length > 0 ? (
           <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
             {templates.map((template, index) => {
-              const displayMeta = demoOverview?.templateDisplayByIndex[index]
+              const displayMeta = overviewData?.templateDisplayByIndex[index]
               return (
                 <li key={template.id} className="flex min-h-[64px] items-center gap-3 p-4">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]">
@@ -689,9 +700,9 @@ function PerformansPage() {
           open={sheetOpen}
           onOpenChange={setSheetOpen}
           templates={templates}
-          defaultCycleName={demoOverview?.defaultCycleName ?? '2026 Q2'}
-          employeeScopeCount={demoOverview?.employeeScopeCount ?? 0}
-          evaluatorCount={demoOverview?.evaluatorCount ?? 0}
+          defaultCycleName={overviewData?.defaultCycleName ?? '2026 Q2'}
+          employeeScopeCount={overviewData?.employeeScopeCount ?? 0}
+          evaluatorCount={overviewData?.evaluatorCount ?? 0}
           isSubmitting={createMutation.isPending}
           submitMode={submitMode}
           formError={formError}
