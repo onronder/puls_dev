@@ -106,6 +106,21 @@ BEGIN
     END IF;
   END;
 
+  -- import re-apply context allows imported department update (mirrors apply_import_batch)
+  PERFORM set_config('puls.import_apply.active', 'true', true);
+  UPDATE puls_core.departments
+  SET
+    name = 'Re-imported Dept',
+    external_source = 'canias_erp',
+    last_synced_at = NOW()
+  WHERE id = v_imported_dept_id;
+
+  IF (SELECT name FROM puls_core.departments WHERE id = v_imported_dept_id) <> 'Re-imported Dept' THEN
+    RAISE EXCEPTION 'SMOKE_FAIL: import context department update failed';
+  END IF;
+
+  PERFORM set_config('puls.import_apply.active', 'false', true);
+
   -- valid position insert
   INSERT INTO puls_core.positions (tenant_id, name, code, department_id, norm_headcount, is_active)
   VALUES (v_tenant_id, '  Smoke Position  ', 'demo_org_setup_crud_pos', v_dept_id, 2, TRUE)
@@ -167,6 +182,21 @@ BEGIN
       RAISE;
     END IF;
   END;
+
+  -- import re-apply context allows imported position update (mirrors apply_import_batch)
+  PERFORM set_config('puls.import_apply.active', 'true', true);
+  UPDATE puls_core.positions
+  SET
+    name = 'Re-imported Pos',
+    external_source = 'canias_erp',
+    last_synced_at = NOW()
+  WHERE id = v_imported_pos_id;
+
+  IF (SELECT name FROM puls_core.positions WHERE id = v_imported_pos_id) <> 'Re-imported Pos' THEN
+    RAISE EXCEPTION 'SMOKE_FAIL: import context position update failed';
+  END IF;
+
+  PERFORM set_config('puls.import_apply.active', 'false', true);
 
   -- cross-tenant FK attempt
   SELECT id INTO v_other_tenant_id

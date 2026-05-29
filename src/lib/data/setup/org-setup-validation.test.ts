@@ -38,6 +38,17 @@ describe('validatePositionForm', () => {
     expect(result.normalized.normHeadcount).toBe(2)
   })
 
+  it('defaults empty norm headcount to 1 for NOT NULL DB column', () => {
+    const result = validatePositionForm({
+      name: 'Engineer',
+      code: 'engineer',
+      departmentId: null,
+      normHeadcount: '',
+    })
+    expect(result.isValid).toBe(true)
+    expect(result.normalized.normHeadcount).toBe(1)
+  })
+
   it('rejects invalid department and norm bounds', () => {
     const invalidDept = validatePositionForm(
       { name: 'Engineer', code: 'engineer', departmentId: 'missing', normHeadcount: '' },

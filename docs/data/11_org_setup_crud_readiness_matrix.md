@@ -33,7 +33,7 @@ PR11.2 adds tenant-safe, source-aware create/edit for PULS-owned `puls_core.depa
 | `demo` | `demo` | no |
 | other | `unknown` | no |
 
-DB source-read-only: `UPDATE` blocked when `NULLIF(BTRIM(OLD.external_source), '') IS NOT NULL`. INSERT with non-empty `external_source` is allowed for import/apply; PR11.2 adapters never set external metadata.
+DB source-read-only: `UPDATE` blocked when `NULLIF(BTRIM(OLD.external_source), '') IS NOT NULL` **unless** `puls.import_apply.active = true` (set by `apply_import_batch` for re-import/post-pass writes). INSERT with non-empty `external_source` is allowed for import/apply; PR11.2 adapters never set external metadata.
 
 ## Route behavior
 

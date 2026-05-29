@@ -86,6 +86,7 @@ smoke_needles=(
   "ROLLBACK;"
   "demo_org_setup_crud_"
   "NULLIF(BTRIM(OLD.external_source)"
+  "puls.import_apply.active"
   "PULS_ORG_DEPARTMENT_SOURCE_READ_ONLY"
   "PULS_ORG_POSITION_SOURCE_READ_ONLY"
   "cross-tenant"
@@ -101,6 +102,8 @@ done
 migration_needles=(
   "validate_department_setup_guardrails"
   "validate_position_setup_guardrails"
+  "is_org_import_apply_active"
+  "puls.import_apply.active"
   "puls_core_departments_validate_setup_guardrails"
   "puls_core_positions_validate_setup_guardrails"
   "PULS_ORG_DEPARTMENT_SOURCE_READ_ONLY"

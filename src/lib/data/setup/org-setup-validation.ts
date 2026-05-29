@@ -53,7 +53,7 @@ export function normalizeOrgSetupCode(value: string): string {
 
 export function parseOrgSetupNormHeadcount(raw: string): number | null {
   const trimmed = raw.trim()
-  if (trimmed === '') return null
+  if (trimmed === '') return 1
   const parsed = Number(trimmed)
   if (!Number.isFinite(parsed)) return NaN
   return parsed
