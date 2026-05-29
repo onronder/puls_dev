@@ -8,7 +8,7 @@ PR12.1 authored an honest contract-path OpenAPI draft from the PR12.0 boundary i
 
 - A machine-readable **allowlist** with per-operation backend/transport/requestSchema mapping
 - A **Node validator** (`scripts/validate-openapi-contract.mjs`) — no npm YAML dependency
-- Integration into [`scripts/verify-12-openapi-draft.sh`](../scripts/verify-12-openapi-draft.sh)
+- Integration into [`scripts/verify-12-openapi-draft.sh`](../../scripts/verify-12-openapi-draft.sh)
 
 ## What is validated
 

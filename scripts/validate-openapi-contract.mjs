@@ -230,6 +230,22 @@ function validate() {
     fail(`expected ${allowlist.operationIds.length} operations, found ${operationBlocks.size}`)
   }
 
+  const operationMapIds = Object.keys(allowlist.operations ?? {})
+  if (!setsEqual(operationMapIds, allowlist.operationIds)) {
+    const expectedSet = new Set(allowlist.operationIds)
+    const mapSet = new Set(operationMapIds)
+    const missingFromMap = allowlist.operationIds.filter((id) => !mapSet.has(id))
+    const extraInMap = operationMapIds.filter((id) => !expectedSet.has(id))
+    const details = []
+    if (missingFromMap.length > 0) {
+      details.push(`missing from operations map: ${missingFromMap.join(', ')}`)
+    }
+    if (extraInMap.length > 0) {
+      details.push(`extra in operations map: ${extraInMap.join(', ')}`)
+    }
+    fail(`allowlist operations map must match operationIds (${details.join('; ')})`)
+  }
+
   // --- Per-operation contract map + vendor extensions ---
   for (const [opId, expected] of Object.entries(allowlist.operations)) {
     const block = operationBlocks.get(opId)
