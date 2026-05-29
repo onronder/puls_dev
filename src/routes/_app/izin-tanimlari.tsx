@@ -28,7 +28,7 @@ import {
   deactivateLeaveType,
   fetchApprovalPoliciesOverview,
   fetchLeaveTypeLifecycleEvents,
-  fetchLeaveTypesOverview,
+  fetchLeaveTypesOverviewWithMeta,
   isDeactivateLeaveTypeReasonTooLong,
   isLeaveTypeFormDirty,
   mapLeaveTypeLifecycleError,
@@ -256,11 +256,13 @@ function IzinTanimlariPage() {
   const [lifecycleFilter, setLifecycleFilter] = useState<LeaveTypeLifecycleFilter>('active')
   const [deactivateReason, setDeactivateReason] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data: leaveTypesResult, isLoading } = useQuery({
     queryKey: ['leave-types-overview', user?.id],
-    queryFn: () => fetchLeaveTypesOverview(user!.id),
+    queryFn: () => fetchLeaveTypesOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = leaveTypesResult?.data
 
   const { data: policies = [] } = useQuery({
     queryKey: ['approval-policies-overview', user?.id],
@@ -534,6 +536,12 @@ function IzinTanimlariPage() {
           </Button>
         }
       />
+
+      {leaveTypesResult?.source === 'demo' ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
