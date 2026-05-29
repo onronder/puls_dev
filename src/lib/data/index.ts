@@ -348,7 +348,15 @@ export {
 
 export {
   fetchContractsOverview,
+  fetchContractsOverviewWithMeta,
+  getContractInitials,
+  mapContractRiskStatus,
+  mapContractRow,
+  mapContractSignatureStatus,
   type ContractsOverview,
+  type ContractRowInput,
+  type MapContractRiskStatusInput,
+  type MapContractRowOptions,
 } from '#/lib/data/contracts/overview'
 
 export {

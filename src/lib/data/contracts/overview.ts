@@ -7,7 +7,7 @@ import type {
 } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type ContractsOverview = DemoContractsOverview
 
@@ -17,7 +17,21 @@ const CONTRACT_TYPE_KEYS: Record<string, string> = {
   probation: 'contractsSetup.types.probation',
 }
 
-function getInitials(name: string): string {
+export type ContractRowInput = {
+  id: string
+  contract_type: string
+  start_date: string
+  end_date?: string | null
+  signature_status?: string | null
+  risk_band?: string | null
+  employees?: { full_name?: string } | null
+}
+
+export type MapContractRowOptions = {
+  now?: Date
+}
+
+export function getContractInitials(name: string): string {
   return name
     .split(' ')
     .filter(Boolean)
@@ -27,23 +41,56 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-function mapSignatureStatus(status: string | null | undefined): DemoContractSignedStatus {
+export function mapContractSignatureStatus(
+  status: string | null | undefined,
+): DemoContractSignedStatus {
   return status === 'awaiting' ? 'pending' : 'signed'
 }
 
-function mapRiskStatus(
-  riskBand: string | null | undefined,
-  signatureStatus: string | null | undefined,
-  endDate: string | null | undefined,
-): DemoContractRiskStatus {
+export type MapContractRiskStatusInput = {
+  riskBand?: string | null
+  signatureStatus?: string | null
+  endDate?: string | null
+  now?: Date
+}
+
+export function mapContractRiskStatus({
+  riskBand,
+  signatureStatus,
+  endDate,
+  now = new Date(),
+}: MapContractRiskStatusInput): DemoContractRiskStatus {
   if (signatureStatus === 'awaiting') return 'pending'
   if (endDate) {
-    const threshold = new Date()
+    const threshold = new Date(now)
     threshold.setDate(threshold.getDate() + 60)
     if (new Date(`${endDate}T12:00:00`) <= threshold) return 'expiring'
   }
   if (riskBand === 'medium' || riskBand === 'high') return 'expiring'
   return 'ok'
+}
+
+export function mapContractRow(row: ContractRowInput, options?: MapContractRowOptions): DemoContractItem {
+  const employeeName = row.employees?.full_name ?? '—'
+  const contractType = row.contract_type
+  const signatureStatus = row.signature_status ?? null
+  const endDate = row.end_date ?? null
+
+  return {
+    id: row.id,
+    employeeName,
+    initials: getContractInitials(employeeName),
+    typeKey: CONTRACT_TYPE_KEYS[contractType] ?? contractType,
+    startDate: row.start_date,
+    endDate,
+    signed: mapContractSignatureStatus(signatureStatus),
+    risk: mapContractRiskStatus({
+      riskBand: row.risk_band ?? null,
+      signatureStatus,
+      endDate,
+      now: options?.now,
+    }),
+  }
 }
 
 function emptyContractsOverview(): ContractsOverview {
@@ -97,24 +144,9 @@ async function fetchRealContractsOverview(userId: string): Promise<ContractsOver
     throw fromSupabaseError(contractsRow.error, 'fetchContractsOverview', 'puls_workflow', 'contracts')
   }
 
-  const contracts: DemoContractItem[] = (contractsRow.data ?? []).map((row) => {
-    const employee = row.employees as { full_name?: string } | null
-    const employeeName = employee?.full_name ?? '—'
-    const contractType = row.contract_type as string
-    const signatureStatus = row.signature_status as string | null
-    const endDate = (row.end_date as string | null) ?? null
-
-    return {
-      id: row.id as string,
-      employeeName,
-      initials: getInitials(employeeName),
-      typeKey: CONTRACT_TYPE_KEYS[contractType] ?? contractType,
-      startDate: row.start_date as string,
-      endDate,
-      signed: mapSignatureStatus(signatureStatus),
-      risk: mapRiskStatus(row.risk_band as string | null, signatureStatus, endDate),
-    }
-  })
+  const contracts = (contractsRow.data ?? []).map((row) =>
+    mapContractRow(row as ContractRowInput),
+  )
 
   const pendingSignatureCount = contracts.filter((row) => row.signed === 'pending').length
 
@@ -125,6 +157,15 @@ async function fetchRealContractsOverview(userId: string): Promise<ContractsOver
     kvkkMissingCount: 0,
     contracts,
   }
+}
+
+export function fetchContractsOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchContractsOverview',
+    fetchReal: () => fetchRealContractsOverview(userId),
+    fetchDemo: fetchDemoContractsOverview,
+    isEmpty: (data) => data.contracts.length === 0,
+  })
 }
 
 export async function fetchContractsOverview(userId: string): Promise<ContractsOverview> {
