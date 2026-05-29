@@ -9,7 +9,7 @@ import type {
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type LeaveOverview = Omit<DemoLeaveOverview, 'leaveTypes'> & {
   leaveTypes: { id: string; label: string; code: string; requiresDocument: boolean }[]
@@ -340,21 +340,31 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
   }
 }
 
+function mapDemoLeaveOverviewToOverview(demo: DemoLeaveOverview): LeaveOverview {
+  return {
+    ...demo,
+    leaveTypes: demo.leaveTypes.map((type) => ({
+      ...type,
+      code: type.id,
+      requiresDocument: type.id === 'sick' || type.id === 'maternity',
+    })),
+  }
+}
+
+export function fetchLeaveOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchLeaveOverview',
+    fetchReal: () => fetchRealLeaveOverview(userId),
+    fetchDemo: async () => mapDemoLeaveOverviewToOverview(await fetchDemoLeaveOverview()),
+    isEmpty: isLeaveOverviewEmpty,
+  })
+}
+
 export async function fetchLeaveOverview(userId: string): Promise<LeaveOverview> {
   return resolveAdapterData({
     operation: 'fetchLeaveOverview',
     fetchReal: () => fetchRealLeaveOverview(userId),
-    fetchDemo: async () => {
-      const demo = await fetchDemoLeaveOverview()
-      return {
-        ...demo,
-        leaveTypes: demo.leaveTypes.map((type) => ({
-          ...type,
-          code: type.id,
-          requiresDocument: type.id === 'sick' || type.id === 'maternity',
-        })),
-      }
-    },
+    fetchDemo: async () => mapDemoLeaveOverviewToOverview(await fetchDemoLeaveOverview()),
     isEmpty: isLeaveOverviewEmpty,
   })
 }

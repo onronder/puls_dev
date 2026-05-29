@@ -36,7 +36,7 @@ import {
   buildLeaveCreationReadiness,
   createLeaveRequest,
   decideApprovalRequest,
-  fetchLeaveOverview,
+  fetchLeaveOverviewWithMeta,
   fetchRequestCreationReadiness,
   isDataAdapterError,
   type LeaveOverview,
@@ -176,11 +176,13 @@ function IzinPage() {
   const [tab, setTab] = useState<LeaveTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data: leaveOverviewResult, isLoading, isError, refetch } = useQuery({
     queryKey: ['leave-overview', user?.id],
-    queryFn: () => fetchLeaveOverview(user!.id),
+    queryFn: () => fetchLeaveOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
+
+  const data = leaveOverviewResult?.data
 
   const historyCount = data?.requests.length ?? 0
   const approvalCount = data?.pendingApprovals.length ?? 0
@@ -202,6 +204,12 @@ function IzinPage() {
           {t('leave.actions.new')}
         </Button>
       </div>
+
+      {leaveOverviewResult?.source === 'demo' ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -296,6 +304,7 @@ function IzinPage() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         data={data}
+        isOverviewLoading={isLoading}
         userId={user?.id}
         queryClient={queryClient}
         t={t}
@@ -549,6 +558,7 @@ type LeaveFormSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   data: LeaveOverview | undefined
+  isOverviewLoading: boolean
   userId: string | undefined
   queryClient: ReturnType<typeof useQueryClient>
   t: ReturnType<typeof useTranslation>['t']
@@ -558,6 +568,7 @@ function LeaveFormSheet({
   open,
   onOpenChange,
   data,
+  isOverviewLoading,
   userId,
   queryClient,
   t,
@@ -685,6 +696,8 @@ function LeaveFormSheet({
             className="min-h-11 flex-1"
             disabled={
               isSubmitting ||
+              isOverviewLoading ||
+              creationContext === undefined ||
               !hasActiveLeaveTypes ||
               !resolvedLeaveType ||
               requiresDocument ||
