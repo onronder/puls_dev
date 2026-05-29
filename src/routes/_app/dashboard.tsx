@@ -27,7 +27,7 @@ import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchDashboardOverview, type DashboardPageData } from '#/lib/data'
+import { fetchDashboardOverviewWithMeta, isDashboardEmpty, type DashboardPageData } from '#/lib/data'
 import { formatCurrency } from '#/lib/format'
 import { cn } from '#/lib/utils'
 
@@ -166,18 +166,19 @@ function DashboardPage() {
   const { t, i18n: i18nInstance } = useTranslation()
   const { user } = useAuth()
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data: dashboardResult, isLoading, isError, refetch } = useQuery({
     queryKey: ['dashboard-overview', user?.id],
-    queryFn: () => fetchDashboardOverview(user!.id),
+    queryFn: () => fetchDashboardOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
   })
 
+  const data = dashboardResult?.data
   const stats = data?.stats
-  const demoOverview = data?.overview
-  const leaveDemo = data?.leaveSummary
-  const expenseDemo = data?.expenseSummary
+  const overview = data?.overview
+  const leaveSummary = data?.leaveSummary
+  const expenseSummary = data?.expenseSummary
 
-  const dataReadiness = stats?.dataReadinessPct ?? demoOverview?.erpStatus.readiness ?? 0
+  const dataReadiness = stats?.dataReadinessPct ?? overview?.erpStatus.readiness ?? 0
 
   const welcomeName = stats?.displayName?.split(' ')[0] ?? null
 
@@ -211,6 +212,12 @@ function DashboardPage() {
         )}
         <p className="text-sm text-[var(--color-text-muted)]">{t('dashboard.subtitle')}</p>
       </div>
+
+      {dashboardResult?.source === 'demo' ? (
+        <div className="mb-4 mt-4 flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
+        </div>
+      ) : null}
 
       {isError ? (
         <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
@@ -253,7 +260,7 @@ function DashboardPage() {
             />
             <MetricCard
               label={t('dashboard.stats.positions')}
-              value={String(demoOverview?.positionCount ?? 0)}
+              value={String(stats?.positionCount ?? overview?.positionCount ?? 0)}
               hint={t('dashboard.stats.positionsHint')}
               icon={Briefcase}
             />
@@ -285,7 +292,7 @@ function DashboardPage() {
         )}
       </section>
 
-      {demoOverview ? (
+      {overview ? (
         <section className="mt-8 grid gap-5 lg:grid-cols-3">
           <div className="min-w-0 lg:col-span-2">
             <SectionHeader
@@ -293,12 +300,12 @@ function DashboardPage() {
               description={t('dashboard.workQueue.description')}
               action={
                 <StatusPill tone="warning">
-                  {t('dashboard.workQueue.itemCount', { count: demoOverview.queue.length })}
+                  {t('dashboard.workQueue.itemCount', { count: overview.queue.length })}
                 </StatusPill>
               }
             />
             <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-              {demoOverview.queue.map((item) => (
+              {overview.queue.map((item) => (
                 <li key={item.id}>
                   <Link
                     to={item.to}
@@ -314,8 +321,8 @@ function DashboardPage() {
                           item,
                           t,
                           i18nInstance.language,
-                          demoOverview.erpStatus.mappedFields,
-                          demoOverview.erpStatus.totalFields,
+                          overview.erpStatus.mappedFields,
+                          overview.erpStatus.totalFields,
                         )}
                       </div>
                     </div>
@@ -339,24 +346,24 @@ function DashboardPage() {
                       {t('dashboardSetup.erpCard.title')}
                     </h2>
                     <StatusPill tone="warning">
-                      {t(demoOverview.erpStatus.statusLabelKey)}
+                      {t(overview.erpStatus.statusLabelKey)}
                     </StatusPill>
                   </div>
                   <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-muted)]">
-                    {t(demoOverview.erpStatus.descriptionKey)}
+                    {t(overview.erpStatus.descriptionKey)}
                   </p>
                   <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-5">
                     <ErpStat
                       label={t('dashboardSetup.erpCard.fieldMapping')}
-                      value={`${demoOverview.erpStatus.mappedFields} / ${demoOverview.erpStatus.totalFields}`}
+                      value={`${overview.erpStatus.mappedFields} / ${overview.erpStatus.totalFields}`}
                     />
                     <ErpStat
                       label={t('dashboardSetup.erpCard.dataReadiness')}
-                      value={`%${demoOverview.erpStatus.readiness}`}
+                      value={`%${overview.erpStatus.readiness}`}
                     />
                     <ErpStat
                       label={t('dashboardSetup.erpCard.lastAttempt')}
-                      value={t(demoOverview.erpStatus.lastAttemptKey)}
+                      value={t(overview.erpStatus.lastAttemptKey)}
                     />
                   </dl>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -381,7 +388,7 @@ function DashboardPage() {
               description={t('dashboardSetup.recentActivityDescription')}
             />
             <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-              {demoOverview.recentActivities.map((activity) => (
+              {overview.recentActivities.map((activity) => (
                 <li key={activity.id} className="flex items-start gap-3 p-3.5">
                   <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-bg-elevated)] text-xs font-semibold text-[var(--color-text-secondary)]">
                     {activity.who.charAt(0)}
@@ -432,7 +439,7 @@ function DashboardPage() {
             icon={CalendarCheck}
             title={t('dashboardSetup.quickActions.leaveTitle')}
             hint={t('dashboardSetup.quickActions.leaveHint', {
-              days: leaveDemo?.heroRemainingAnnual ?? 14,
+              days: leaveSummary?.heroRemainingAnnual ?? 14,
             })}
             tone="primary"
           />
@@ -441,7 +448,7 @@ function DashboardPage() {
             icon={Receipt}
             title={t('dashboardSetup.quickActions.expenseTitle')}
             hint={t('dashboardSetup.quickActions.expenseHint', {
-              amount: formatCurrency(expenseDemo?.monthlyLimit ?? 15000, i18nInstance.language),
+              amount: formatCurrency(expenseSummary?.monthlyLimit ?? 15000, i18nInstance.language),
             })}
             tone="info"
           />
@@ -455,12 +462,12 @@ function DashboardPage() {
         </div>
       </section>
 
-      {!isLoading && stats && stats.employeeCount === 0 ? (
+      {!isLoading && dashboardResult?.source === 'real' && data && isDashboardEmpty(data) ? (
         <Card className="mt-6 border-dashed border-[var(--color-border-strong)]">
           <CardContent className="p-6">
-            <p className="font-semibold">{t('dashboard.emptySeed.title')}</p>
+            <p className="font-semibold">{t('dashboard.emptyTenant.title')}</p>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-              {t('dashboard.emptySeed.description')}
+              {t('dashboard.emptyTenant.description')}
             </p>
           </CardContent>
         </Card>

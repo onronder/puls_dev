@@ -135,6 +135,10 @@
     "emptySeed": {
       "title": "No demo data",
       "description": "Run supabase/seed-demo.sql in Supabase SQL Editor (replace USER_UUID)."
+    },
+    "emptyTenant": {
+      "title": "No organization data yet",
+      "description": "Your tenant has no dashboard metrics to show. Complete company setup or import organization data to populate this overview."
     }
   },
   "dashboardSetup": {

@@ -10,7 +10,7 @@ import type {
 } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsIntegration, resolveTenantContext } from '#/lib/data/client'
-import { resolveAdapterData } from '#/lib/data/result'
+import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type DashboardStats = {
   tenantName: string | null
@@ -31,7 +31,22 @@ export type DashboardPageData = {
   expenseSummary: Pick<DemoExpenseOverview, 'monthlyLimit' | 'pendingAmount'>
 }
 
-function emptyDashboardOverview(): DemoDashboardOverview {
+export type BuildDashboardQueueInput = {
+  activeCycleName: string | null | undefined
+  mappedFields: number
+  totalFields: number
+  pendingLeave: number
+  pendingExpense: number
+}
+
+export type BuildDashboardErpStatusInput = {
+  isActive: boolean | null | undefined
+  mappedFields: number
+  totalFields: number
+  readiness: number
+}
+
+export function emptyDashboardOverview(): DemoDashboardOverview {
   return {
     positionCount: 0,
     queue: [],
@@ -47,7 +62,7 @@ function emptyDashboardOverview(): DemoDashboardOverview {
   }
 }
 
-function emptyDashboardPageData(): DashboardPageData {
+export function emptyDashboardPageData(): DashboardPageData {
   return {
     stats: {
       tenantName: null,
@@ -66,7 +81,7 @@ function emptyDashboardPageData(): DashboardPageData {
   }
 }
 
-function isDashboardEmpty(data: DashboardPageData): boolean {
+export function isDashboardEmpty(data: DashboardPageData): boolean {
   const { stats, overview } = data
   const hasRealData =
     stats.employeeCount > 0 ||
@@ -78,6 +93,111 @@ function isDashboardEmpty(data: DashboardPageData): boolean {
     stats.dataReadinessPct > 0
 
   return !hasRealData
+}
+
+export function buildDashboardQueue(input: BuildDashboardQueueInput): DemoDashboardOverview['queue'] {
+  const queue: DemoDashboardOverview['queue'] = []
+
+  if (input.activeCycleName == null) {
+    queue.push({
+      id: 'q1',
+      titleKey: 'dashboardSetup.queue.performancePeriod.title',
+      metaKey: 'dashboardSetup.queue.performancePeriod.meta',
+      to: '/performans',
+      tone: 'info',
+      icon: 'target',
+    })
+  }
+  if (input.totalFields > 0 && input.mappedFields < input.totalFields) {
+    queue.push({
+      id: 'q2',
+      titleKey: 'dashboardSetup.queue.fieldMapping.title',
+      metaKey: 'dashboardSetup.queue.fieldMapping.meta',
+      to: '/erp',
+      tone: 'warning',
+      icon: 'plug',
+    })
+  }
+  if (input.pendingLeave > 0) {
+    queue.push({
+      id: 'q3',
+      titleKey: 'dashboardSetup.queue.leaveApproval.title',
+      metaKey: 'dashboardSetup.queue.leaveApproval.meta',
+      to: '/izin',
+      tone: 'warning',
+      icon: 'calendarCheck',
+    })
+  }
+  if (input.pendingExpense > 0) {
+    queue.push({
+      id: 'q4',
+      titleKey: 'dashboardSetup.queue.expenseApproval.title',
+      metaKey: 'dashboardSetup.queue.expenseApproval.meta',
+      to: '/masraf',
+      tone: 'warning',
+      icon: 'receipt',
+    })
+  }
+
+  return queue
+}
+
+export function buildDashboardErpStatus(
+  input: BuildDashboardErpStatusInput,
+): DemoDashboardOverview['erpStatus'] {
+  return {
+    statusLabelKey: input.isActive
+      ? 'dashboard.erpConnected'
+      : 'dashboardSetup.erpCard.statusPending',
+    mappedFields: input.mappedFields,
+    totalFields: input.totalFields,
+    lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
+    readiness: input.readiness,
+    descriptionKey: 'dashboardSetup.erpCard.description',
+  }
+}
+
+export function buildDashboardPageDataFromDemo({
+  overview,
+  leave,
+  expense,
+}: {
+  overview: DemoDashboardOverview
+  leave: DemoLeaveOverview
+  expense: DemoExpenseOverview
+}): DashboardPageData {
+  return {
+    stats: {
+      tenantName: 'Mert Teknik A.Ş.',
+      displayName: null,
+      employeeCount: 4,
+      departmentCount: 3,
+      competencyCount: 6,
+      positionCount: overview.positionCount,
+      erpConnected: false,
+      erpProvider: 'Canias',
+      dataReadinessPct: overview.erpStatus.readiness,
+    },
+    overview,
+    leaveSummary: {
+      heroRemainingAnnual: leave.heroRemainingAnnual,
+      pendingCount: leave.pendingCount,
+    },
+    expenseSummary: {
+      monthlyLimit: expense.monthlyLimit,
+      pendingAmount: expense.pendingAmount,
+    },
+  }
+}
+
+export async function fetchDemoDashboardPageData(): Promise<DashboardPageData> {
+  const [overview, leave, expense] = await Promise.all([
+    fetchDemoDashboardOverview(),
+    fetchDemoLeaveOverview(),
+    fetchDemoExpenseOverview(),
+  ])
+
+  return buildDashboardPageDataFromDemo({ overview, leave, expense })
 }
 
 async function fetchRealDashboardOverview(userId: string): Promise<DashboardPageData> {
@@ -146,62 +266,22 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
   const pendingLeave = Number(dashboardRow.data?.pending_leave_count ?? 0)
   const pendingExpense = Number(dashboardRow.data?.pending_expense_count ?? 0)
 
-  const queue: DemoDashboardOverview['queue'] = []
-  if (dashboardRow.data?.active_cycle_name == null) {
-    queue.push({
-      id: 'q1',
-      titleKey: 'dashboardSetup.queue.performancePeriod.title',
-      metaKey: 'dashboardSetup.queue.performancePeriod.meta',
-      to: '/performans',
-      tone: 'info',
-      icon: 'target',
-    })
-  }
-  if (totalFields > 0 && mappedFields < totalFields) {
-    queue.push({
-      id: 'q2',
-      titleKey: 'dashboardSetup.queue.fieldMapping.title',
-      metaKey: 'dashboardSetup.queue.fieldMapping.meta',
-      to: '/erp',
-      tone: 'warning',
-      icon: 'plug',
-    })
-  }
-  if (pendingLeave > 0) {
-    queue.push({
-      id: 'q3',
-      titleKey: 'dashboardSetup.queue.leaveApproval.title',
-      metaKey: 'dashboardSetup.queue.leaveApproval.meta',
-      to: '/izin',
-      tone: 'warning',
-      icon: 'calendarCheck',
-    })
-  }
-  if (pendingExpense > 0) {
-    queue.push({
-      id: 'q4',
-      titleKey: 'dashboardSetup.queue.expenseApproval.title',
-      metaKey: 'dashboardSetup.queue.expenseApproval.meta',
-      to: '/masraf',
-      tone: 'warning',
-      icon: 'receipt',
-    })
-  }
-
   const overview: DemoDashboardOverview = {
     positionCount: Number(dashboardRow.data?.position_count ?? 0),
-    queue,
-    recentActivities: [],
-    erpStatus: {
-      statusLabelKey: erpRow.data?.is_active
-        ? 'dashboard.erpConnected'
-        : 'dashboardSetup.erpCard.statusPending',
+    queue: buildDashboardQueue({
+      activeCycleName: dashboardRow.data?.active_cycle_name,
       mappedFields,
       totalFields,
-      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
+      pendingLeave,
+      pendingExpense,
+    }),
+    recentActivities: [],
+    erpStatus: buildDashboardErpStatus({
+      isActive: erpRow.data?.is_active,
+      mappedFields,
+      totalFields,
       readiness,
-      descriptionKey: 'dashboardSetup.erpCard.description',
-    },
+    }),
   }
 
   return {
@@ -232,35 +312,16 @@ export async function fetchDashboardOverview(userId: string): Promise<DashboardP
   return resolveAdapterData({
     operation: 'fetchDashboardOverview',
     fetchReal: () => fetchRealDashboardOverview(userId),
-    fetchDemo: async () => {
-      const [overview, leave, expense] = await Promise.all([
-        fetchDemoDashboardOverview(),
-        fetchDemoLeaveOverview(),
-        fetchDemoExpenseOverview(),
-      ])
-      return {
-        stats: {
-          tenantName: 'Mert Teknik A.Ş.',
-          displayName: null,
-          employeeCount: 4,
-          departmentCount: 3,
-          competencyCount: 6,
-          positionCount: overview.positionCount,
-          erpConnected: false,
-          erpProvider: 'Canias',
-          dataReadinessPct: overview.erpStatus.readiness,
-        },
-        overview,
-        leaveSummary: {
-          heroRemainingAnnual: leave.heroRemainingAnnual,
-          pendingCount: leave.pendingCount,
-        },
-        expenseSummary: {
-          monthlyLimit: expense.monthlyLimit,
-          pendingAmount: expense.pendingAmount,
-        },
-      }
-    },
+    fetchDemo: fetchDemoDashboardPageData,
+    isEmpty: isDashboardEmpty,
+  })
+}
+
+export function fetchDashboardOverviewWithMeta(userId: string) {
+  return resolveAdapterDataWithMeta({
+    operation: 'fetchDashboardOverview',
+    fetchReal: () => fetchRealDashboardOverview(userId),
+    fetchDemo: fetchDemoDashboardPageData,
     isEmpty: isDashboardEmpty,
   })
 }

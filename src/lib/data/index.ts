@@ -78,7 +78,12 @@ export {
 } from '#/lib/data/core/organization'
 
 export {
+  buildDashboardErpStatus,
+  buildDashboardPageDataFromDemo,
+  buildDashboardQueue,
   fetchDashboardOverview,
+  fetchDashboardOverviewWithMeta,
+  isDashboardEmpty,
   type DashboardPageData,
   type DashboardStats,
 } from '#/lib/data/dashboard/overview'

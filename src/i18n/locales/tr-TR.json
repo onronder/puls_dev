@@ -135,6 +135,10 @@
     "emptySeed": {
       "title": "Demo veri yok",
       "description": "Supabase SQL Editor'da supabase/seed-demo.sql dosyasını çalıştırın (USER_UUID değiştirin)."
+    },
+    "emptyTenant": {
+      "title": "Henüz organizasyon verisi yok",
+      "description": "Kiracınız için gösterilecek dashboard metriği bulunmuyor. Bu özeti doldurmak için şirket kurulumunu tamamlayın veya organizasyon verisini içe aktarın."
     }
   },
   "dashboardSetup": {
