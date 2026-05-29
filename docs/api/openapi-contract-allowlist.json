@@ -1,0 +1,256 @@
+{
+  "operationIds": [
+    "createExpenseClaim",
+    "createLeaveRequest",
+    "decideApprovalRequest",
+    "createExpenseCategory",
+    "updateExpenseCategory",
+    "deactivateExpenseCategory",
+    "restoreExpenseCategory",
+    "createLeaveType",
+    "updateLeaveType",
+    "deactivateLeaveType",
+    "restoreLeaveType",
+    "createDepartment",
+    "updateDepartment",
+    "createPosition",
+    "updatePosition",
+    "createPerformanceCycle",
+    "updatePerformanceCycle"
+  ],
+  "mutationAdapters": [
+    "createExpenseClaim",
+    "createLeaveRequest",
+    "decideApprovalRequest",
+    "createExpenseCategory",
+    "updateExpenseCategory",
+    "deactivateExpenseCategory",
+    "restoreExpenseCategory",
+    "createLeaveType",
+    "updateLeaveType",
+    "deactivateLeaveType",
+    "restoreLeaveType",
+    "createDepartment",
+    "updateDepartment",
+    "createPosition",
+    "updatePosition",
+    "createPerformanceCycle",
+    "updatePerformanceCycle"
+  ],
+  "partialCoverageOperationIds": [
+    "decideApprovalRequest",
+    "createPerformanceCycle",
+    "updatePerformanceCycle"
+  ],
+  "restoreOperationIds": [
+    "restoreExpenseCategory",
+    "restoreLeaveType"
+  ],
+  "directTableWriteOperationIds": [
+    "createExpenseCategory",
+    "updateExpenseCategory",
+    "createLeaveType",
+    "updateLeaveType",
+    "createDepartment",
+    "updateDepartment",
+    "createPosition",
+    "updatePosition",
+    "createPerformanceCycle",
+    "updatePerformanceCycle"
+  ],
+  "sourceOwnedOperationIds": [
+    "createDepartment",
+    "updateDepartment",
+    "createPosition",
+    "updatePosition"
+  ],
+  "backendObjects": [
+    "puls_workflow.create_expense_claim",
+    "puls_workflow.create_leave_request",
+    "puls_workflow.decide_approval_request",
+    "puls_workflow.deactivate_expense_category",
+    "puls_workflow.restore_expense_category",
+    "puls_workflow.deactivate_leave_type",
+    "puls_workflow.restore_leave_type",
+    "puls_workflow.expense_categories",
+    "puls_workflow.leave_types",
+    "puls_core.departments",
+    "puls_core.positions",
+    "puls_performance.performance_cycles"
+  ],
+  "readModelRoutes": [
+    "/dashboard",
+    "/profil",
+    "/calisanlar",
+    "/sirket-kurulum",
+    "/departmanlar",
+    "/pozisyonlar",
+    "/izin",
+    "/izin-tanimlari",
+    "/masraf",
+    "/masraf-kategorileri",
+    "/performans",
+    "/kariyer",
+    "/egitim",
+    "/is-degerleme",
+    "/sozlesmeler",
+    "/erp",
+    "/ayarlar",
+    "/ai-koc",
+    "/performans-parametreleri",
+    "/menu"
+  ],
+  "forbiddenRequestFields": [
+    "tenant_id",
+    "tenantId",
+    "is_active",
+    "isActive",
+    "external_source",
+    "externalSource",
+    "created_at",
+    "createdAt",
+    "updated_at",
+    "updatedAt"
+  ],
+  "internalPathForbidden": [
+    "puls_integration.apply_import_batch",
+    "puls_integration.validate_import_batch",
+    "puls_integration.preview_import_diff",
+    "puls_workflow.resolve_approver",
+    "puls_workflow.resolve_policy_step_approver",
+    "supabase.functions.invoke"
+  ],
+  "operations": {
+    "createExpenseClaim": {
+      "backend": "puls_workflow.create_expense_claim",
+      "transport": "supabase_rpc",
+      "requestSchema": "CreateExpenseClaimRequest"
+    },
+    "createLeaveRequest": {
+      "backend": "puls_workflow.create_leave_request",
+      "transport": "supabase_rpc",
+      "requestSchema": "CreateLeaveRequestRequest"
+    },
+    "decideApprovalRequest": {
+      "backend": "puls_workflow.decide_approval_request",
+      "transport": "supabase_rpc",
+      "requestSchema": "DecideApprovalRequestRequest"
+    },
+    "createExpenseCategory": {
+      "backend": "puls_workflow.expense_categories",
+      "transport": "supabase_table_insert",
+      "requestSchema": "ExpenseCategoryMutationRequest"
+    },
+    "updateExpenseCategory": {
+      "backend": "puls_workflow.expense_categories",
+      "transport": "supabase_table_update",
+      "requestSchema": "ExpenseCategoryMutationRequest"
+    },
+    "deactivateExpenseCategory": {
+      "backend": "puls_workflow.deactivate_expense_category",
+      "transport": "supabase_table_lifecycle",
+      "requestSchema": "ExpenseCategoryLifecycleRequest"
+    },
+    "restoreExpenseCategory": {
+      "backend": "puls_workflow.restore_expense_category",
+      "transport": "supabase_table_lifecycle",
+      "requestSchema": null
+    },
+    "createLeaveType": {
+      "backend": "puls_workflow.leave_types",
+      "transport": "supabase_table_insert",
+      "requestSchema": "LeaveTypeMutationRequest"
+    },
+    "updateLeaveType": {
+      "backend": "puls_workflow.leave_types",
+      "transport": "supabase_table_update",
+      "requestSchema": "LeaveTypeMutationRequest"
+    },
+    "deactivateLeaveType": {
+      "backend": "puls_workflow.deactivate_leave_type",
+      "transport": "supabase_table_lifecycle",
+      "requestSchema": "LeaveTypeLifecycleRequest"
+    },
+    "restoreLeaveType": {
+      "backend": "puls_workflow.restore_leave_type",
+      "transport": "supabase_table_lifecycle",
+      "requestSchema": null
+    },
+    "createDepartment": {
+      "backend": "puls_core.departments",
+      "transport": "supabase_table_insert",
+      "requestSchema": "DepartmentMutationRequest"
+    },
+    "updateDepartment": {
+      "backend": "puls_core.departments",
+      "transport": "supabase_table_update",
+      "requestSchema": "DepartmentMutationRequest"
+    },
+    "createPosition": {
+      "backend": "puls_core.positions",
+      "transport": "supabase_table_insert",
+      "requestSchema": "PositionMutationRequest"
+    },
+    "updatePosition": {
+      "backend": "puls_core.positions",
+      "transport": "supabase_table_update",
+      "requestSchema": "PositionMutationRequest"
+    },
+    "createPerformanceCycle": {
+      "backend": "puls_performance.performance_cycles",
+      "transport": "supabase_table_insert",
+      "requestSchema": "PerformanceCycleMutationRequest"
+    },
+    "updatePerformanceCycle": {
+      "backend": "puls_performance.performance_cycles",
+      "transport": "supabase_table_update",
+      "requestSchema": "PerformanceCycleMutationRequest"
+    }
+  },
+  "requestSchemaAllowlist": {
+    "CreateExpenseClaimRequest": [
+      "categoryId",
+      "title",
+      "amount",
+      "currency",
+      "vatRate",
+      "vatIncluded",
+      "expenseDate",
+      "description"
+    ],
+    "CreateLeaveRequestRequest": [
+      "leaveTypeId",
+      "startDate",
+      "endDate",
+      "halfDay",
+      "delegateEmployeeId",
+      "description"
+    ],
+    "DecideApprovalRequestRequest": [
+      "approvalRequestId",
+      "decision",
+      "note"
+    ],
+    "ExpenseCategoryMutationRequest": [
+      "name",
+      "code",
+      "monthlyLimit",
+      "receiptRequiredOver",
+      "erpAccountCode"
+    ],
+    "ExpenseCategoryLifecycleRequest": ["reason"],
+    "LeaveTypeMutationRequest": [
+      "name",
+      "code",
+      "defaultEntitlementDays",
+      "requiresDocument",
+      "carryOverAllowed",
+      "maxCarryOverDays",
+      "approvalPolicyId"
+    ],
+    "LeaveTypeLifecycleRequest": ["reason"],
+    "DepartmentMutationRequest": ["name", "code"],
+    "PositionMutationRequest": ["name", "code", "departmentId", "normHeadcount"],
+    "PerformanceCycleMutationRequest": ["name", "startsAt", "endsAt", "status"]
+  }
+}
