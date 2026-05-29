@@ -527,6 +527,7 @@ export type DemoDepartment = {
   count: number
   isActive: boolean
   source: 'puls' | 'erp' | 'demo' | 'unknown'
+  isEditable: boolean
   /** @deprecated use isActive */
   status?: DemoDepartmentStatus
 }
@@ -557,6 +558,7 @@ const demoDepartmentsOverview: DemoDepartmentsOverview = {
       count: 2,
       isActive: true,
       source: 'demo',
+      isEditable: false,
       status: 'active',
     },
     {
@@ -567,6 +569,7 @@ const demoDepartmentsOverview: DemoDepartmentsOverview = {
       count: 1,
       isActive: true,
       source: 'demo',
+      isEditable: false,
       status: 'active',
     },
     {
@@ -577,6 +580,7 @@ const demoDepartmentsOverview: DemoDepartmentsOverview = {
       count: 1,
       isActive: true,
       source: 'demo',
+      isEditable: false,
       status: 'active',
     },
   ],
@@ -591,11 +595,14 @@ export type DemoPosition = {
   name: string
   code: string | null
   department: string
+  departmentId: string | null
+  normHeadcount: number
   template: string
   evaluation: number
   open: number
   isActive: boolean
   source: 'puls' | 'erp' | 'demo' | 'unknown'
+  isEditable: boolean
 }
 
 export type DemoPositionsOverview = {
@@ -623,33 +630,42 @@ const demoPositionsOverview: DemoPositionsOverview = {
       name: 'İK Yöneticisi',
       code: 'hr_manager',
       department: 'İK & Finans',
+      departmentId: 'd3',
+      normHeadcount: 1,
       template: 'Yönetici',
       evaluation: 855,
       open: 0,
       isActive: true,
       source: 'demo',
+      isEditable: false,
     },
     {
       id: 'p2',
       name: 'Saha Mühendisi',
       code: 'field_engineer',
       department: 'Mühendislik',
+      departmentId: 'd1',
+      normHeadcount: 2,
       template: 'Saha Mühendisi',
       evaluation: 720,
       open: 0,
       isActive: true,
       source: 'demo',
+      isEditable: false,
     },
     {
       id: 'p3',
       name: 'Operasyon Uzmanı',
       code: 'ops_specialist',
       department: 'Operasyon',
+      departmentId: 'd2',
+      normHeadcount: 1,
       template: 'Ofis & Operasyon',
       evaluation: 645,
       open: 0,
       isActive: true,
       source: 'demo',
+      isEditable: false,
     },
   ],
 }

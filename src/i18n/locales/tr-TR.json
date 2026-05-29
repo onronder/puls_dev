@@ -776,6 +776,51 @@
       "crudDeferred": "Oluşturma ve düzenleme işlemleri sonraki sürümde gelecek."
     }
   },
+  "orgSetupCrud": {
+    "actions": {
+      "createDepartment": "Departman ekle",
+      "createPosition": "Pozisyon ekle",
+      "save": "Kaydet",
+      "cancel": "İptal"
+    },
+    "department": {
+      "createTitle": "Yeni departman",
+      "editTitle": "Departmanı düzenle",
+      "readOnlyTitle": "Departman detayı",
+      "created": "Departman oluşturuldu",
+      "updated": "Departman güncellendi"
+    },
+    "position": {
+      "createTitle": "Yeni pozisyon",
+      "editTitle": "Pozisyonu düzenle",
+      "readOnlyTitle": "Pozisyon detayı",
+      "created": "Pozisyon oluşturuldu",
+      "updated": "Pozisyon güncellendi"
+    },
+    "fields": {
+      "name": "Ad",
+      "code": "Kod",
+      "codeHint": "Küçük harf slug (harf, rakam, alt çizgi)",
+      "department": "Departman",
+      "departmentUnassigned": "Atanmamış",
+      "normHeadcount": "Norm kadro"
+    },
+    "validation": {
+      "nameRequired": "Ad zorunludur",
+      "codeRequired": "Kod zorunludur",
+      "codeInvalid": "Kod küçük harf slug olmalıdır",
+      "duplicateCode": "Bu kod zaten kullanılıyor",
+      "departmentInvalid": "Geçerli bir departman seçin",
+      "normInvalid": "Norm kadro 0 ile 100.000 arasında olmalıdır",
+      "sourceReadOnly": "İçe aktarılan kayıtlar PULS'ta düzenlenemez",
+      "generic": "Değişiklikler kaydedilemedi"
+    },
+    "boundary": {
+      "sourceReadOnly": "Bu kayıt harici bir kaynağa aittir ve PULS'ta salt okunurdur.",
+      "noErpWrite": "PULS ERP ana verisine yazmaz."
+    },
+    "discardConfirm": "Kaydedilmemiş değişiklikler silinsin mi?"
+  },
   "setupReadinessDashboard": {
     "title": "Kurulum kontrol listesi",
     "subtitle": "Masraf, izin, organizasyon ve atama hazırlığını tek ekranda görüntüleyin.",

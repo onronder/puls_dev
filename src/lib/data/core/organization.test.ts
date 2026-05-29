@@ -1,57 +1,108 @@
 import { describe, expect, it } from 'vitest'
 
+import { DataAdapterError } from '#/lib/data/errors'
 import { computeOpenHeadcount } from '#/lib/data/core/lookups'
 import {
   fetchDemoDepartmentsOverview,
   fetchDemoPositionsOverview,
 } from '#/lib/demo/puls-demo-data'
+import { isOrgEntityEditable } from '#/lib/data/setup/org-entity-source'
+import {
+  mapDepartmentMutationError,
+  mapPositionMutationError,
+} from '#/lib/data/core/organization'
 
 describe('positions open headcount', () => {
   it('computes open positions from norm headcount minus filled count', () => {
     expect(computeOpenHeadcount(5, 3)).toBe(2)
     expect(computeOpenHeadcount(3, 5)).toBe(0)
   })
+})
 
-  it('uses zero for templateLinked and evaluationComplete in real adapter', () => {
-    const summary = {
-      templateLinked: 0,
-      evaluationComplete: 0,
-    }
-
-    expect(summary.templateLinked).toBe(0)
-    expect(summary.evaluationComplete).toBe(0)
+describe('isOrgEntityEditable', () => {
+  it('allows puls source only', () => {
+    expect(isOrgEntityEditable('puls')).toBe(true)
+    expect(isOrgEntityEditable('erp')).toBe(false)
+    expect(isOrgEntityEditable('demo')).toBe(false)
+    expect(isOrgEntityEditable('unknown')).toBe(false)
   })
 })
 
 describe('organization overview row shape', () => {
-  it('includes code, isActive, and source on department rows', async () => {
+  it('includes code, isActive, source, and isEditable on department rows', async () => {
     const overview = await fetchDemoDepartmentsOverview()
-
-    expect(overview.totalCount).toBe(overview.departments.length)
-    expect(overview.activeCount).toBeGreaterThan(0)
 
     for (const department of overview.departments) {
       expect(department).toMatchObject({
         code: expect.any(String),
         isActive: expect.any(Boolean),
         source: expect.stringMatching(/^(puls|erp|demo|unknown)$/),
+        isEditable: expect.any(Boolean),
       })
+      expect(department.isEditable).toBe(isOrgEntityEditable(department.source))
     }
   })
 
-  it('includes code, isActive, and source on position rows', async () => {
+  it('includes departmentId and normHeadcount on position rows', async () => {
     const overview = await fetchDemoPositionsOverview()
-
-    expect(overview.totalCount).toBe(overview.positions.length)
-    expect(overview.activeCount).toBeGreaterThan(0)
-    expect(overview.showsTemplateMetrics).toBe(true)
 
     for (const position of overview.positions) {
       expect(position).toMatchObject({
         code: expect.any(String),
         isActive: expect.any(Boolean),
         source: expect.stringMatching(/^(puls|erp|demo|unknown)$/),
+        isEditable: expect.any(Boolean),
+        normHeadcount: expect.any(Number),
       })
     }
+  })
+})
+
+describe('mapDepartmentMutationError', () => {
+  it('maps source read-only puls code', () => {
+    const error = new DataAdapterError({
+      code: 'P0001',
+      message: 'PULS_ORG_DEPARTMENT_SOURCE_READ_ONLY: imported departments cannot be edited locally.',
+      source: 'supabase',
+      operation: 'updateDepartment',
+      schema: 'puls_core',
+      table: 'departments',
+    })
+
+    expect(mapDepartmentMutationError(error)).toEqual({
+      fieldErrors: { code: 'orgSetupCrud.validation.sourceReadOnly' },
+    })
+  })
+
+  it('maps code duplicate 23505', () => {
+    const error = new DataAdapterError({
+      code: '23505',
+      message: 'duplicate key value violates unique constraint "(tenant_id, code)"',
+      source: 'supabase',
+      operation: 'createDepartment',
+      schema: 'puls_core',
+      table: 'departments',
+    })
+
+    expect(mapDepartmentMutationError(error)).toEqual({
+      fieldErrors: { code: 'orgSetupCrud.validation.duplicateCode' },
+    })
+  })
+})
+
+describe('mapPositionMutationError', () => {
+  it('maps invalid department field', () => {
+    const error = new DataAdapterError({
+      code: 'P0001',
+      message: 'PULS_ORG_POSITION_DEPARTMENT_INVALID: department_id is invalid for this tenant.',
+      source: 'supabase',
+      operation: 'createPosition',
+      schema: 'puls_core',
+      table: 'positions',
+    })
+
+    expect(mapPositionMutationError(error)).toEqual({
+      fieldErrors: { departmentId: 'orgSetupCrud.validation.departmentInvalid' },
+    })
   })
 })

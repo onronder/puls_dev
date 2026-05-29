@@ -776,6 +776,51 @@
       "crudDeferred": "Create and edit actions will arrive in a later release."
     }
   },
+  "orgSetupCrud": {
+    "actions": {
+      "createDepartment": "Add department",
+      "createPosition": "Add position",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "department": {
+      "createTitle": "New department",
+      "editTitle": "Edit department",
+      "readOnlyTitle": "Department details",
+      "created": "Department created",
+      "updated": "Department updated"
+    },
+    "position": {
+      "createTitle": "New position",
+      "editTitle": "Edit position",
+      "readOnlyTitle": "Position details",
+      "created": "Position created",
+      "updated": "Position updated"
+    },
+    "fields": {
+      "name": "Name",
+      "code": "Code",
+      "codeHint": "Lowercase slug (letters, numbers, underscores)",
+      "department": "Department",
+      "departmentUnassigned": "Unassigned",
+      "normHeadcount": "Norm headcount"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "codeRequired": "Code is required",
+      "codeInvalid": "Code must be a lowercase slug",
+      "duplicateCode": "This code is already in use",
+      "departmentInvalid": "Select a valid department",
+      "normInvalid": "Norm headcount must be between 0 and 100,000",
+      "sourceReadOnly": "Imported records cannot be edited in PULS",
+      "generic": "Could not save changes"
+    },
+    "boundary": {
+      "sourceReadOnly": "This record is owned by an external source and is read-only in PULS.",
+      "noErpWrite": "PULS does not write to ERP master data."
+    },
+    "discardConfirm": "Discard unsaved changes?"
+  },
   "setupReadinessDashboard": {
     "title": "Setup readiness checklist",
     "subtitle": "Review expense, leave, organization, and assignment readiness in one place.",

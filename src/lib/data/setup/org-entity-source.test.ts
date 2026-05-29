@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { mapOrgEntitySource } from '#/lib/data/setup/org-entity-source'
+import { isOrgEntityEditable, mapOrgEntitySource } from '#/lib/data/setup/org-entity-source'
 
 describe('mapOrgEntitySource', () => {
   it('defaults to puls when external_source is missing', () => {
@@ -23,5 +23,12 @@ describe('mapOrgEntitySource', () => {
   it('returns unknown for ambiguous external sources', () => {
     expect(mapOrgEntitySource('manual_entry')).toBe('unknown')
     expect(mapOrgEntitySource('legacy_sync')).toBe('unknown')
+  })
+})
+
+describe('isOrgEntityEditable', () => {
+  it('allows puls source only', () => {
+    expect(isOrgEntityEditable('puls')).toBe(true)
+    expect(isOrgEntityEditable('erp')).toBe(false)
   })
 })
