@@ -9,6 +9,12 @@ The PR12 **API contract pack** is a contract-path reference for **current in-app
 It is **not live public REST**, not a generated HTTP client source, and not a deployment spec for public endpoints.
 
 It is:
+
+- A boundary inventory → OpenAPI draft → validation → examples → error catalog pipeline
+- Honest about transport (`x-puls-public-http: false`)
+
+It is **not**:
+
 - Source for an auto-generated HTTP client against real endpoints
 - A promise that internal backend RPCs are app-exposed
 
