@@ -25,6 +25,17 @@ Verify: [`../../scripts/verify-13-v1-product-packaging.sh`](../../scripts/verify
 
 Verify: [`../../scripts/verify-13-feature-db-coverage.sh`](../../scripts/verify-13-feature-db-coverage.sh)
 
+## PR13.2 retirement pack
+
+PR13.2 **extends PR13.1** into an actionable retirement plan; it **does not replace** the dependency map or feature DB coverage docs.
+
+| Document | Purpose |
+|----------|---------|
+| [13_embedded_demo_retirement_plan.md](./13_embedded_demo_retirement_plan.md) | P0/P1/P2 work packages and PR13.3–13.5 mapping |
+| [13_packaging_proof_demo_guardrails.md](./13_packaging_proof_demo_guardrails.md) | Packaging proof vs dev fallback; `source: demo` rules |
+
+Verify: [`../../scripts/verify-13-embedded-demo-retirement.sh`](../../scripts/verify-13-embedded-demo-retirement.sh)
+
 ## Related packs
 
 | Pack | Entry point |
