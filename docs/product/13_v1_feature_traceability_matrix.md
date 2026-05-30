@@ -6,7 +6,7 @@ Maps V1 product intent to implemented surfaces, backends, DB-backed demo needs, 
 
 ## Executive summary
 
-PULS has **20 PR12 read-model routes** (19 standard inventory routes + `/menu` shell exception) plus additional setup surfaces such as `/performans-parametreleri`. Many routes still rely on `resolveAdapterData*` demo fallback or embedded `fetchDemo*` when DB is empty. **No row is marked `production_ready` if demo fallback is the only way to show rich UI.**
+PULS has **20 PR12 read-model routes**, including `/menu` as a shell exception and `/performans-parametreleri` as a setup surface. This matrix may split a route into multiple capability rows where useful (e.g. `/performans` overview + cycles). Many routes still rely on `resolveAdapterData*` demo fallback or embedded `fetchDemo*` when DB is empty. **No row is marked `production_ready` if demo fallback is the only way to show rich UI.**
 
 Status reflects the **PR13 capability taxonomy**, informed by PR11 inventory — **not a 1:1 PR11 label copy**.
 
@@ -41,7 +41,7 @@ Status reflects the **PR13 capability taxonomy**, informed by PR11 inventory —
 | Job evaluation | specs/05 §4.12 | `/is-degerleme` | `job-evaluation/overview.ts` | TBD | Job eval grades — `future/not V1` | — | — | `not_v1` | Placeholder / soon | PR13.1 |
 | Contracts metadata | specs/05 §4.13 | `/sozlesmeler` | `contracts/overview.ts` | `puls_workflow.contracts`, calc summary | Contract metadata — `required seeded` | — | Contract risk explainer | `production_partial` | Real metadata read when tenant has rows; demo fallback for rich empty UX | PR13.3 |
 | Profile/account | specs/05 §4.14 | `/profil` | `profile/overview.ts` | `puls_core.employees`, auth link | Persona-linked employee — `required seeded` | — | Profile/persona context | `production_partial` | Auth→employee readiness path; `tenant_without_employee` does not silently demo-fallback | PR13.3 |
-| Settings | specs/05 §4.15 | `/ayarlar` | `settings/overview.ts` | Setup hub links | — | `readable empty-ok` | — | `production_partial` | Hub only; linked setup routes vary | PR13.1 |
+| Settings | specs/05 §4.15 | `/ayarlar` | `settings/overview.ts` | Setup hub links | `readable empty-ok` | — | — | `production_partial` | Hub only; linked setup routes vary | PR13.1 |
 | ERP setup/readiness | specs/05 §4.16 | `/erp` | `setup/erp.ts` | `puls_integration.erp_*` | Canias connection row — `required seeded` (inactive) | ERP mapping CSV future | Setup coach | `db_backed_demo_required` | Read-only integration metadata; Canias label; demo fallback when empty | PR13.7 |
 | Menu / shell navigation | specs/05 mobile shell | `/menu` | `menu/overview.ts` | `puls_calc.menu_overview` | Tenant counts — `required seeded` | — | — | `production_partial` | Shell exception: no WithMeta/demo pill; navigation surface not domain CRUD | PR13.1 |
 | AI Coach | specs/05 §4.17 | `/ai-koc` | `ai-coach/overview.ts` | `puls_vault` (passive) | Full context tables — PR13.6 inventory | — | All touchpoints (target) | `embedded_demo_only` | **Implemented:** static/teaser (`STATIC_AI_COACH_OVERVIEW`). **Ambition:** process-embedded value layer. **Package gate:** PR13.6; not product-ready today | PR13.6 |
