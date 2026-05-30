@@ -36,6 +36,19 @@ PR13.2 **extends PR13.1** into an actionable retirement plan; it **does not repl
 
 Verify: [`../../scripts/verify-13-embedded-demo-retirement.sh`](../../scripts/verify-13-embedded-demo-retirement.sh)
 
+## PR13.3 seed spec pack
+
+PR13.3 **extends PR13.1 and PR13.2** into a DB-backed synthetic company specification; it **does not replace** the dependency map, feature inventory, or retirement plan.
+
+| Document | Purpose |
+|----------|---------|
+| [13_synthetic_company_seed_spec.md](./13_synthetic_company_seed_spec.md) | 120-employee **Puls Sanayi A.Ş.** org model, personas, source ownership |
+| [13_seed_table_coverage_manifest.md](./13_seed_table_coverage_manifest.md) | Product-facing `puls_*` object coverage, row targets, proof routes |
+| [13_seed_scenario_generation_spec.md](./13_seed_scenario_generation_spec.md) | Workflow/performance/contract/dashboard scenario requirements |
+| [13_seed_ai_context_manifest.md](./13_seed_ai_context_manifest.md) | Seed data → AI Coach touchpoints and guardrails |
+
+Verify: [`../../scripts/verify-13-synthetic-company-seed-spec.sh`](../../scripts/verify-13-synthetic-company-seed-spec.sh)
+
 ## Related packs
 
 | Pack | Entry point |
