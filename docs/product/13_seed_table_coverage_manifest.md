@@ -35,7 +35,7 @@ Production-facing product behavior must not depend on embedded TypeScript busine
 | puls_core | cost_centers | required seeded | 12–20 | PR13.4 baseline | Mixed | `/masraf-kategorileri` | `setup/cost-center-readiness.ts` | PR13.4 | ERP routing readiness |
 | puls_core | employee_reporting_lines | required seeded | 119+ | PR13.4 baseline | PULS-owned | `/sirket-kurulum`, `/calisanlar` | `setup/employee-assignment-readiness.ts` | PR13.4 | **puls_core.employee_reporting_lines** |
 | puls_core | employee_cost_center_assignments | required seeded | 120 | PR13.4 baseline | PULS-owned | `/masraf-kategorileri`, `/sirket-kurulum` | `setup/cost-center-readiness.ts` | PR13.4 | **puls_core.employee_cost_center_assignments** |
-| puls_core | legal_entities | required seeded | 1 | PR13.4 baseline | PULS-owned | `/sirket-kurulum` | setup readiness | PR13.4 | **Puls Sanayi A.Ş.** legal entity |
+| puls_core | legal_entities | required seeded | 1 | PR13.4 baseline | PULS-owned | `/sirket-kurulum` | setup readiness | PR13.4 | puls_core.legal_entities — **Puls Sanayi A.Ş.** |
 | puls_core | locations | required seeded | 3 | PR13.4 baseline | PULS-owned | `/sirket-kurulum` | setup readiness | PR13.4 | **puls_core.locations** — İstanbul HQ, Bursa production, İzmir sales/service |
 | puls_core | employee_legal_entity_assignments | required seeded | 120 | PR13.4 baseline | PULS-owned | `/sirket-kurulum` | assignment readiness | PR13.4 | All 120 employees linked to legal entity |
 | puls_core | employee_location_assignments | required seeded | 120 | PR13.4 baseline | PULS-owned | `/sirket-kurulum` | assignment readiness | PR13.4 | Every employee assigned to one of 3 sites; aligns with department/site model |
