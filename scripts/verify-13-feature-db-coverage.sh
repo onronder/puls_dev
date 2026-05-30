@@ -81,6 +81,7 @@ feature_needles=(
   "Leave setup"
   "Leave request"
   "Expense categories"
+  "Cost center"
   "Expense claim"
   "Performance overview"
   "Performance cycles"

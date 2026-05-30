@@ -46,7 +46,7 @@ Count may change as migrations evolve — treat as **currently observed minimum 
 | `puls_core` | `employees` | Directory, profile, calc views | 20-40 employees linked to auth personas | PULS-owned + optional imported | PR13.3 |
 | `puls_core` | `departments` | Org UI, mixed CRUD | PULS-owned + imported examples | Mixed | PR13.3 |
 | `puls_core` | `positions` | Org UI, mixed CRUD | PULS-owned + imported examples | Mixed | PR13.3 |
-| `puls_core` | `cost_centers` | Expense category readiness | Baseline cost centers | PULS-owned or imported | PR13.3 |
+| `puls_core` | `cost_centers` | Expense category cost-center readiness panel | Baseline cost centers + mapping examples | PULS-owned or imported | PR13.3 |
 | `puls_workflow` | `leave_types` | Leave setup + create RPC | Types with policies | PULS-owned | PR13.3 |
 | `puls_workflow` | `approval_policies` | Policy binding for leave/expense | At least one active policy per domain | PULS-owned | PR13.3 |
 | `puls_workflow` | `expense_categories` | Expense setup + create RPC | Categories with limits | PULS-owned | PR13.3 |
@@ -75,8 +75,7 @@ Count may change as migrations evolve — treat as **currently observed minimum 
 |--------|--------|-----|
 | `puls_integration` | `import_batches`, `import_records`, `import_field_violations` | No import scenario in baseline demo |
 | `puls_integration` | `erp_sync_batches`, `erp_staging_records` | Sync history optional |
-| `puls_integration` | `entity_identity_map`, `source_namespaces` | Present when import demo needed; else empty OK |
-| `puls_audit` | `audit_logs` | System trail; not narrative |
+| `puls_integration` | `entity_identity_map`, `source_namespaces` | Present when import/ERP mapping demo needed for cost-center readiness; else empty OK |
 | `puls_performance` | `training_needs`, `career_profiles` | Weak V1 depth; honest empty OK |
 | `puls_workflow` | `leave_documents`, `expense_receipts` | Attachment metadata optional in demo |
 
@@ -93,7 +92,7 @@ Count may change as migrations evolve — treat as **currently observed minimum 
 | Schema | Object | Why | Demo posture |
 |--------|--------|-----|--------------|
 | `puls_vault` | `conversation_messages` | AI vault — not V1 teaser content | Do not seed narrative |
-| `puls_audit` | `audit_logs` | Compliance trail | System-generated only |
+| `puls_audit` | `audit_logs` | Compliance trail | System-generated only; empty OK — do not seed for demo narrative |
 | Auth | `auth.users` / employee link | Persona login | Indirect via bootstrap runbook |
 | `puls_integration` | ERP credentials / secrets | Never in demo CSV | Config-only, inactive |
 
