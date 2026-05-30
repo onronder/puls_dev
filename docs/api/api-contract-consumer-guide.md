@@ -102,7 +102,7 @@ See [`pr12-release-checklist.md`](./pr12-release-checklist.md) for the authorita
 
 ## What not to do
 
-- **Do not** generate a public HTTP client from this spec as if `https://api.example.com` endpoints exist.
+- **Do not** generate a public HTTP client from this spec as if fetchable REST endpoints exist at a public API base URL.
 - **Do not** expose internal RPCs listed under `x-puls-internal-backend-surfaces` as app mutations.
 - **Do not** add request fields outside [`openapi-contract-allowlist.json`](./openapi-contract-allowlist.json) without updating the allowlist and validator.
 - **Do not** publish `openapi.json` / `swagger.json` generated artifacts as the contract source of truth — the repo YAML + allowlist are authoritative.
