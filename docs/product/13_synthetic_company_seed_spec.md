@@ -37,6 +37,8 @@ PR13.3 **extends** PR13.1 inventory and PR13.2 retirement plan; it **does not re
 | ERP posture | Canias master-data **import candidate** — inactive connection + sample mappings (**metadata seed only**) |
 | CRM | Future — not V1 |
 
+These three sites are **required seeded proof**, not narrative-only: PR13.4 must seed **puls_core.locations** (3 rows), **puls_core.legal_entities** (1 row), and **puls_core.employee_location_assignments** (120 rows) per manifest.
+
 ## Employee scale
 
 Exactly **120 employees** across 12 departments:
@@ -84,9 +86,9 @@ Minimum auth-linked personas for packaging walkthrough (bootstrap runbook in PR1
 | Finance / admin | Finans | Expense categories, cost center readiness |
 | Manager approver | Departman müdürü | Pending leave/expense approvals |
 | Regular employee | IC | Leave/expense create, profile |
-| Incomplete-setup edge (optional) | Auth user without full employee link | Honest `tenant_without_employee` UX if tested |
+| Incomplete-setup edge (optional) | Auth user in tenant without employee link | Honest `tenant_without_employee` UX if tested |
 
-Each persona maps to a seeded `puls_core.employees` row linked to auth via PR13.5 bootstrap — not embedded demo.
+**Persona ↔ employee mapping:** All linked personas **except** the optional incomplete-setup edge map to seeded `puls_core.employees` rows linked to auth via PR13.5 bootstrap — not embedded demo. The incomplete-setup edge is **`user_tenants` / auth membership without `employees.user_id`** and **does not count toward the 120 employees**.
 
 ## Source ownership
 
@@ -119,6 +121,9 @@ See [`13_seed_table_coverage_manifest.md`](./13_seed_table_coverage_manifest.md)
 | Tenants | 1 (`Puls Sanayi A.Ş.`) |
 | Employees | 120 |
 | Departments | 12 |
+| Locations | 3 (İstanbul HQ, Bursa production, İzmir sales/service) |
+| Employee–location assignments | 120 (every seeded employee assigned to one site) |
+| Legal entity | 1 (Puls Sanayi A.Ş.) |
 | Positions | 35–50 |
 | Cost centers | 12–20 |
 | Employee–cost-center assignments | 120 |

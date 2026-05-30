@@ -60,6 +60,8 @@ doc_needles=(
   "puls_core.employees"
   "puls_core.employee_reporting_lines"
   "puls_core.employee_cost_center_assignments"
+  "puls_core.locations"
+  "puls_core.legal_entities"
   "puls_workflow.leave_requests"
   "puls_workflow.expense_claims"
   "puls_workflow.approval_requests"
