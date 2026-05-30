@@ -149,6 +149,9 @@ ALLOWED=(
   "scripts/verify-12-contract-examples-errors.sh"
   "scripts/verify-12-openapi-draft.sh"
   "scripts/verify-12-mutation-contract-smoke.sh"
+  "docs/api/api-contract-consumer-guide.md"
+  "docs/api/pr12-release-checklist.md"
+  "scripts/verify-12-api-contract-release-pack.sh"
 )
 
 is_allowed() {

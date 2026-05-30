@@ -138,6 +138,9 @@ ALLOWED=(
   "docs/api/openapi-examples.yaml"
   "docs/api/puls-error-catalog.md"
   "scripts/verify-12-contract-examples-errors.sh"
+  "docs/api/api-contract-consumer-guide.md"
+  "docs/api/pr12-release-checklist.md"
+  "scripts/verify-12-api-contract-release-pack.sh"
 )
 
 is_allowed() {
