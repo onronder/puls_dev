@@ -14,6 +14,8 @@ x-puls-source-inventory: docs/data/12_app_api_boundary_inventory.md
 x-puls-public-http: false
 x-puls-current-transport: supabase-js
 x-puls-generated-from: PR12.0 boundary inventory
+x-puls-examples-doc: docs/api/openapi-examples.yaml
+x-puls-error-catalog: docs/api/puls-error-catalog.md
 
 paths:
   /mutations/expense-claims:

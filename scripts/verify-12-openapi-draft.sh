@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifies PR12.1 OpenAPI draft + PR12.2 contract validation + PR12.3 mutation smokes (documentation-only PR).
+# Verifies PR12.1 OpenAPI draft + PR12.2 contract validation + PR12.3 mutation smokes + PR12.4 examples (documentation-only PR).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,7 +20,7 @@ file_at_ref() {
 
 OPENAPI_CONTENT="$(file_at_ref "$OPENAPI")"
 
-echo "Checking ${REF}: PR12.1 OpenAPI draft + PR12.2 contract validation + PR12.3 mutation smokes ..."
+echo "Checking ${REF}: PR12.1 OpenAPI draft + PR12.2 contract validation + PR12.3 mutation smokes + PR12.4 examples ..."
 
 if [[ ! -f "$OPENAPI" ]]; then
   echo "FAIL: missing required file: $OPENAPI"
@@ -284,6 +284,9 @@ ALLOWED=(
   "docs/data/12_decide_approval_contract_smoke.sql"
   "docs/data/12_performance_cycle_contract_smoke.sql"
   "scripts/verify-12-mutation-contract-smoke.sh"
+  "docs/api/openapi-examples.yaml"
+  "docs/api/puls-error-catalog.md"
+  "scripts/verify-12-contract-examples-errors.sh"
 )
 
 is_allowed() {
@@ -305,7 +308,7 @@ FORBIDDEN_EXACT=(
 if ((${#CHANGED_FILES[@]} > 0)); then
   for file in "${CHANGED_FILES[@]}"; do
     if ! is_allowed "$file"; then
-      echo "FAIL: PR12.1/PR12.2/PR12.3 must not change implementation files: $file"
+      echo "FAIL: PR12.1/PR12.2/PR12.3/PR12.4 must not change implementation files: $file"
       exit 1
     fi
 
@@ -327,4 +330,4 @@ fi
 
 chmod +x "$0" 2>/dev/null || true
 
-echo "OK: PR12.1 OpenAPI draft + PR12.2 contract validation + PR12.3 mutation smokes checks passed for ${REF}"
+echo "OK: PR12.1 OpenAPI draft + PR12.2 contract validation + PR12.3 mutation smokes + PR12.4 examples checks passed for ${REF}"
