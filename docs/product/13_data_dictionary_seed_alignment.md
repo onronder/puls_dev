@@ -17,7 +17,7 @@ PR13.4 seed artifacts must follow the data dictionary alignment crosswalk.
 | **Workbook** | Business/UI field vocabulary (494 technical fields across 21 domain sheets) |
 | **Migrations + adapters** | Implementation truth (`puls_*` tables, RPC, calc views) |
 | **PR13.3 seed spec** | Row targets, scenarios, **Puls Sanayi A.Ş.**, 120 employees |
-| **Crosswalk JSON** | Machine-readable domain status for PR13.4 generator |
+| Crosswalk JSON | Machine-readable domain crosswalk for PR13.4 generator — **`baselineSeedArtifacts`** (PR13.4) vs **`scenarioSeedArtifacts`** (PR13.5) |
 
 **Not every dictionary field becomes a DB seed column.** Crosswalk uses domain-level defaults plus **representative field exceptions** (ERP `api_key`, AI `conversations[]`, computed KPI cards, workflow requests).
 
@@ -125,11 +125,14 @@ Current MVP stack: **Supabase/Postgres + RLS/RPC/views + src/lib/data adapters**
 
 1. **Must read** [`13_data_dictionary_seed_crosswalk.json`](./13_data_dictionary_seed_crosswalk.json)
 2. Honor `defaultStatus` and `exceptions[]` per domain
-3. **Do not seed** `sensitive_system` fields (ERP secrets, AI vault/conversations)
-4. **Do not infer** non-existent DB columns from dictionary fields
-5. **Do not treat** dictionary microservice labels as runtime service requirements (`physicalMicroservicesInMvp: false`)
-6. Map seed artifacts to PR13.3 [`13_seed_table_coverage_manifest.md`](./13_seed_table_coverage_manifest.md) row targets
-7. Reject embedded TS fixtures as seed source
+3. Use **`baselineSeedArtifacts`** (owner `baselineSeedArtifactOwner`, default **PR13.4**) for baseline CSV/SQL — logical package names, not final filenames
+4. Use **`scenarioSeedArtifacts`** (owner `scenarioSeedArtifactOwner`, default **PR13.5**) for workflow narrative — do **not** put scenario rows in baseline packs (e.g. `performance_scores` is scenario-generated per PR13.3 manifest)
+5. **Do not seed** `sensitive_system` fields (ERP secrets, AI vault/conversations)
+6. **Do not infer** non-existent DB columns from dictionary fields
+7. **Do not treat** dictionary microservice labels as runtime service requirements (`physicalMicroservicesInMvp: false`)
+8. Map logical packages to PR13.3 [`13_seed_table_coverage_manifest.md`](./13_seed_table_coverage_manifest.md) row targets
+9. Reject embedded TS fixtures as seed source
+10. **Ortak Alanlar** uses `namespace: cross-cutting`, `dictionaryUrl: shared` — not a routable domain; skip special-case empty metadata
 
 ## Known gaps
 

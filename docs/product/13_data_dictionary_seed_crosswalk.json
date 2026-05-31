@@ -7,6 +7,11 @@
     "dictionaryMicroservices": "future_service_boundary",
     "physicalMicroservicesInMvp": false
   },
+  "artifactConventions": {
+    "baselineSeedArtifacts": "Logical package names for PR13.4 baseline CSV/SQL — not final filenames",
+    "scenarioSeedArtifacts": "Logical package names for PR13.5 scenario scripts — workflow narrative rows",
+    "seedArtifactsDeprecated": "Use baselineSeedArtifacts + scenarioSeedArtifacts instead of flat seedArtifacts[]"
+  },
   "statuses": [
     "covered_by_seed",
     "derived_calc",
@@ -19,32 +24,26 @@
   ],
   "domains": [
     {
+      "baselineSeedArtifacts": [],
+      "baselineSeedArtifactOwner": "none",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "none",
+      "exceptions": [],
       "sheet": "🗂️ Ortak Alanlar",
       "sheetPlainName": "Ortak Alanlar",
-      "namespace": "",
-      "dictionaryUrl": "",
-      "dictionaryMicroservice": "",
+      "namespace": "cross-cutting",
+      "dictionaryUrl": "shared",
+      "dictionaryMicroservice": "shared-vocabulary",
       "currentRoutes": [],
       "dbObjects": [],
-      "seedArtifacts": [],
       "defaultStatus": "configuration_static",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label  maps to future_service_boundary — not physical microservices"
+      "notes": "Shared field vocabulary across domains — not a routable seed package; maps to configuration_static only"
     },
     {
-      "sheet": "📊 KPI Hedefleri",
-      "sheetPlainName": "KPI Hedefleri",
-      "namespace": "kpi",
-      "dictionaryUrl": "/kpi-hedefleri",
-      "dictionaryMicroservice": "kpi-svc",
-      "currentRoutes": [],
-      "dbObjects": [
-        "puls_performance.performance_kpis"
-      ],
-      "seedArtifacts": [],
-      "defaultStatus": "future_not_v1",
-      "seedArtifactOwner": "PR13.4",
+      "baselineSeedArtifacts": [],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
       "exceptions": [
         {
           "field": "kpi_card_score",
@@ -54,9 +53,29 @@
           "notes": "Computed KPI cards"
         }
       ],
-      "notes": "Workbook label kpi-svc maps to future_service_boundary — not physical microservices"
+      "sheet": "📊 KPI Hedefleri",
+      "sheetPlainName": "KPI Hedefleri",
+      "namespace": "kpi",
+      "dictionaryUrl": "/kpi-hedefleri",
+      "dictionaryMicroservice": "kpi-svc",
+      "currentRoutes": [],
+      "dbObjects": [
+        "puls_performance.performance_kpis"
+      ],
+      "defaultStatus": "future_not_v1",
+      "notes": "kpi-svc is future_service_boundary — not_current_route for dedicated KPI UI"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.performance_cycles"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [
+        "pack.performance_scores",
+        "pack.competency_evaluations"
+      ],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "📝 Performans",
       "sheetPlainName": "Performans",
       "namespace": "performans",
@@ -71,24 +90,17 @@
         "puls_performance.competency_evaluations",
         "puls_calc.performance_overview"
       ],
-      "seedArtifacts": [
-        "12_performance_cycles.csv",
-        "12_performance_scores.csv"
-      ],
       "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [
-        {
-          "field": "evaluation_form_submit",
-          "status": "scenario_generated",
-          "dbObject": "puls_performance.competency_evaluations",
-          "seedArtifactOwner": "PR13.5",
-          "notes": "Post-bootstrap scenario"
-        }
-      ],
-      "notes": "Workbook label performans-svc maps to future_service_boundary — not physical microservices"
+      "notes": "Baseline cycles in PR13.4; scores/evaluations are scenario-generated per PR13.3 manifest"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.training_catalog"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "🎓 Eğitim Analizi",
       "sheetPlainName": "Eğitim Analizi",
       "namespace": "okul",
@@ -100,15 +112,16 @@
       "dbObjects": [
         "puls_performance.training_needs"
       ],
-      "seedArtifacts": [
-        "13_training_needs.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label training-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.career_profiles"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "🗺️ Kariyer Haritası",
       "sheetPlainName": "Kariyer Haritası",
       "namespace": "kariyer",
@@ -120,15 +133,14 @@
       "dbObjects": [
         "puls_performance.career_profiles"
       ],
-      "seedArtifacts": [
-        "13_career_profiles.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label career-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [],
+      "baselineSeedArtifactOwner": "none",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "⚖️ İş Değerleme",
       "sheetPlainName": "İş Değerleme",
       "namespace": "kale",
@@ -138,13 +150,14 @@
         "/is-degerleme"
       ],
       "dbObjects": [],
-      "seedArtifacts": [],
-      "defaultStatus": "future_not_v1",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label job-eval-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "future_not_v1"
     },
     {
+      "baselineSeedArtifacts": [],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "📋 Görev Tanımı",
       "sheetPlainName": "Görev Tanımı",
       "namespace": "gorev-tanimi",
@@ -152,13 +165,16 @@
       "dictionaryMicroservice": "position-svc",
       "currentRoutes": [],
       "dbObjects": [],
-      "seedArtifacts": [],
-      "defaultStatus": "future_not_v1",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "future_not_v1"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.org_positions"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "📑 İş Tanımı",
       "sheetPlainName": "İş Tanımı",
       "namespace": "is-tanimi",
@@ -170,15 +186,15 @@
       "dbObjects": [
         "puls_core.positions"
       ],
-      "seedArtifacts": [
-        "04_positions.csv"
-      ],
       "defaultStatus": "needs_mapping_review",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+      "notes": "Partial overlap with Pozisyonlar — position-svc is future_service_boundary label"
     },
     {
+      "baselineSeedArtifacts": [],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "🔬 İş Analizi",
       "sheetPlainName": "İş Analizi",
       "namespace": "is-analizi",
@@ -186,13 +202,27 @@
       "dictionaryMicroservice": "position-svc",
       "currentRoutes": [],
       "dbObjects": [],
-      "seedArtifacts": [],
-      "defaultStatus": "future_not_v1",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "future_not_v1"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.leave_balances"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [
+        "pack.leave_requests",
+        "pack.approval_requests"
+      ],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [
+        {
+          "field": "leave_request_status",
+          "status": "scenario_generated",
+          "dbObject": "puls_workflow.leave_requests",
+          "seedArtifactOwner": "PR13.5",
+          "notes": "Tatil workflow narrative"
+        }
+      ],
       "sheet": "🌴 Tatil (İzin)",
       "sheetPlainName": "Tatil",
       "namespace": "tatil",
@@ -207,24 +237,27 @@
         "puls_workflow.leave_requests",
         "puls_calc.leave_overview"
       ],
-      "seedArtifacts": [
-        "08_leave_types.csv",
-        "11_leave_balances.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [
-        {
-          "field": "leave_request_status",
-          "status": "scenario_generated",
-          "dbObject": "puls_workflow.leave_requests",
-          "seedArtifactOwner": "PR13.5",
-          "notes": "Tatil workflow narrative"
-        }
-      ],
-      "notes": "Workbook label leave-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.expense_categories"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [
+        "pack.expense_claims",
+        "pack.approval_requests"
+      ],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [
+        {
+          "field": "expense_claim_amount",
+          "status": "scenario_generated",
+          "dbObject": "puls_workflow.expense_claims",
+          "seedArtifactOwner": "PR13.5",
+          "notes": "Cüzdan workflow narrative"
+        }
+      ],
       "sheet": "💸 Cüzdan (Masraf)",
       "sheetPlainName": "Cüzdan",
       "namespace": "cuzdan",
@@ -238,23 +271,18 @@
         "puls_workflow.expense_claims",
         "puls_calc.expense_overview"
       ],
-      "seedArtifacts": [
-        "09_expense_categories.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [
-        {
-          "field": "expense_claim_amount",
-          "status": "scenario_generated",
-          "dbObject": "puls_workflow.expense_claims",
-          "seedArtifactOwner": "PR13.5",
-          "notes": "Cüzdan workflow narrative"
-        }
-      ],
-      "notes": "Workbook label expense-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.contracts_metadata"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [
+        "pack.contracts_risk_variety"
+      ],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "📄 Belge (Sözleşme)",
       "sheetPlainName": "Belge",
       "namespace": "belge",
@@ -267,15 +295,23 @@
         "puls_workflow.contracts",
         "puls_calc.contracts_overview"
       ],
-      "seedArtifacts": [
-        "13_contracts.csv"
-      ],
       "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label contract-svc maps to future_service_boundary — not physical microservices"
+      "notes": "Baseline contract rows PR13.4; enriched risk variety may extend in PR13.5 scenarios"
     },
     {
+      "baselineSeedArtifacts": [],
+      "baselineSeedArtifactOwner": "none",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.6",
+      "exceptions": [
+        {
+          "field": "conversations[]",
+          "status": "sensitive_system",
+          "dbObject": "puls_vault.conversation_messages",
+          "seedArtifactOwner": "PR13.6",
+          "notes": "AI Coach vault — not seeded in PR13.4"
+        }
+      ],
       "sheet": "🤖 Koç (AI)",
       "sheetPlainName": "Koç",
       "namespace": "koc",
@@ -287,21 +323,18 @@
       "dbObjects": [
         "puls_vault.conversation_messages"
       ],
-      "seedArtifacts": [],
       "defaultStatus": "future_not_v1",
-      "seedArtifactOwner": "PR13.6",
-      "exceptions": [
-        {
-          "field": "conversations[]",
-          "status": "sensitive_system",
-          "dbObject": "puls_vault.conversation_messages",
-          "seedArtifactOwner": "PR13.6",
-          "notes": "AI Coach vault — not seeded in PR13.4"
-        }
-      ],
       "notes": "AI Coach teaser until PR13.6; llm-gateway not physical microservices in MVP"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.tenant_org",
+        "pack.locations_assignments"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "🏢 Şirket Kurulum",
       "sheetPlainName": "Şirket Kurulum",
       "namespace": "tenant",
@@ -316,16 +349,17 @@
         "puls_core.locations",
         "puls_calc.setup_readiness_summary"
       ],
-      "seedArtifacts": [
-        "01_tenant.csv",
-        "02_legal_entities_locations.csv"
-      ],
       "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
       "notes": "Puls Sanayi A.Ş. tenant with 3 locations (İstanbul, Bursa, İzmir)"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.org_departments"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "🗂️ Departmanlar",
       "sheetPlainName": "Departmanlar",
       "namespace": "identity",
@@ -338,15 +372,16 @@
         "puls_core.departments",
         "puls_calc.organization_overview"
       ],
-      "seedArtifacts": [
-        "03_departments.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label identity-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.org_positions"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "💼 Pozisyonlar",
       "sheetPlainName": "Pozisyonlar",
       "namespace": "is-tanimi",
@@ -359,15 +394,18 @@
         "puls_core.positions",
         "puls_calc.organization_overview"
       ],
-      "seedArtifacts": [
-        "04_positions.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.employee_roster",
+        "pack.reporting_lines",
+        "pack.cost_center_assignments"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "👥 Çalışanlar",
       "sheetPlainName": "Çalışanlar",
       "namespace": "identity",
@@ -381,16 +419,18 @@
         "puls_core.employees",
         "puls_calc.employee_list_overview"
       ],
-      "seedArtifacts": [
-        "06_employees.csv",
-        "07_reporting_lines.csv"
-      ],
       "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
       "notes": "120 Puls Sanayi A.Ş. employees — identity-svc is future_service_boundary label only"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.leave_types",
+        "pack.approval_policies"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "🌴 İzin Tipleri (Tanım)",
       "sheetPlainName": "İzin Tipleri",
       "namespace": "tatil",
@@ -403,16 +443,17 @@
         "puls_workflow.leave_types",
         "puls_workflow.approval_policies"
       ],
-      "seedArtifacts": [
-        "08_leave_types.csv",
-        "10_approval_policies.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label leave-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.expense_categories",
+        "pack.cost_center_erp_mapping"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "💸 Masraf Kategorileri",
       "sheetPlainName": "Masraf Kategorileri",
       "namespace": "cuzdan",
@@ -426,15 +467,16 @@
         "puls_core.cost_centers",
         "puls_integration.entity_identity_map"
       ],
-      "seedArtifacts": [
-        "09_expense_categories.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label expense-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.performance_parameters"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [],
       "sheet": "📊 Performans Param",
       "sheetPlainName": "Performans Param",
       "namespace": "performans",
@@ -448,15 +490,24 @@
         "puls_performance.kpi_category_weights",
         "puls_performance.score_bands"
       ],
-      "seedArtifacts": [
-        "12_performance_params.csv"
-      ],
-      "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [],
-      "notes": "Workbook label performans-svc maps to future_service_boundary — not physical microservices"
+      "defaultStatus": "covered_by_seed"
     },
     {
+      "baselineSeedArtifacts": [
+        "pack.erp_metadata"
+      ],
+      "baselineSeedArtifactOwner": "PR13.4",
+      "scenarioSeedArtifacts": [],
+      "scenarioSeedArtifactOwner": "PR13.5",
+      "exceptions": [
+        {
+          "field": "api_key",
+          "status": "sensitive_system",
+          "dbObject": "puls_integration.erp_connections",
+          "seedArtifactOwner": "none",
+          "notes": "Never seed credentials"
+        }
+      ],
       "sheet": "🔌 ERP Entegrasyon",
       "sheetPlainName": "ERP Entegrasyon",
       "namespace": "erp-config",
@@ -469,20 +520,7 @@
         "puls_integration.erp_connections",
         "puls_integration.erp_field_mappings"
       ],
-      "seedArtifacts": [
-        "14_erp_metadata.csv"
-      ],
       "defaultStatus": "covered_by_seed",
-      "seedArtifactOwner": "PR13.4",
-      "exceptions": [
-        {
-          "field": "api_key",
-          "status": "sensitive_system",
-          "dbObject": "puls_integration.erp_connections",
-          "seedArtifactOwner": "none",
-          "notes": "Never seed credentials"
-        }
-      ],
       "notes": "Canias connector metadata seed only; no automatic destructive ERP writes"
     }
   ]
