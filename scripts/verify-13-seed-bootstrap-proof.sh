@@ -104,8 +104,8 @@ if ! grep -Fq "approval_policy_id" <<< "$SQL03"; then
   echo "FAIL: 03 missing approval_policy_id in scenario inserts"
   exit 1
 fi
-if ! grep -Fq "current_approval_step" <<< "$SQL03"; then
-  echo "FAIL: 03 missing current_approval_step in scenario inserts"
+if ! grep -Fq "approval_requests" <<< "$SQL03" || ! grep -A12 "INSERT INTO puls_workflow.approval_requests" <<< "$SQL03" | grep -Fq "approval_policy_id"; then
+  echo "FAIL: 03 approval_requests must set approval_policy_id"
   exit 1
 fi
 if ! grep -Fq "Delete order" <<< "$SQL03"; then
@@ -138,6 +138,24 @@ check_conditional_psql_defaults() {
     echo "FAIL: ${label} missing NULLIF empty -v handling"
     exit 1
   fi
+  if ! grep -Fq "pr13_psql_vars" <<< "$sql_file"; then
+    echo "FAIL: ${label} must stage psql vars in pr13_psql_vars temp table (outside DO body)"
+    exit 1
+  fi
+  local do_body
+  do_body="$(sed -n '/^DO \$\$/,/^END \$\$;/p' <<< "$sql_file")"
+  if grep -Fq ":'admin_user_id'" <<< "$do_body"; then
+    echo "FAIL: ${label} must not use :'admin_user_id' inside DO $$ body"
+    exit 1
+  fi
+  if grep -Fq ":'employee_user_id'" <<< "$do_body"; then
+    echo "FAIL: ${label} must not use :'employee_user_id' inside DO $$ body"
+    exit 1
+  fi
+  if grep -Fq ":'manager_user_id'" <<< "$do_body"; then
+    echo "FAIL: ${label} must not use :'manager_user_id' inside DO $$ body"
+    exit 1
+  fi
 }
 
 check_conditional_psql_defaults "$SQL05" "05"
@@ -147,8 +165,20 @@ if grep -Fi "INSERT INTO auth.users" <<< "$SQL05"; then
   echo "FAIL: 05 must not INSERT INTO auth.users"
   exit 1
 fi
-if ! grep -Fq "legacy_public_tenant_id" <<< "$SQL05"; then
-  echo "FAIL: 05 missing legacy_public_tenant_id gate"
+if ! grep -Fq "'approved'" <<< "$SQL06"; then
+  echo "FAIL: 06 must call decide_approval_request with approved"
+  exit 1
+fi
+if grep -Fq "'approve'" <<< "$SQL06"; then
+  echo "FAIL: 06 must not use invalid decide decision approve"
+  exit 1
+fi
+if ! grep -Fq "pr13_psql_vars" <<< "$SQL05"; then
+  echo "FAIL: 05 must stage psql vars in pr13_psql_vars temp table"
+  exit 1
+fi
+if ! grep -Fq "information_schema.columns" <<< "$SQL05"; then
+  echo "FAIL: 05 missing information_schema.columns guard for public bridge"
   exit 1
 fi
 if grep -Fq "v_tenant" <<< "$SQL05" && grep -E "user_tenants.*v_tenant" <<< "$SQL05"; then
@@ -179,6 +209,14 @@ if ! grep -Fq "000000000006" <<< "$SQL06"; then
 fi
 if ! grep -Fq "000000000008" <<< "$SQL06"; then
   echo "FAIL: 06 missing lifecycle-smoke-reserved expense category (HED)"
+  exit 1
+fi
+if ! grep -Fq "JWT smoke fail: employee current_employee_id" <<< "$SQL06"; then
+  echo "FAIL: 06 must RAISE EXCEPTION on employee mapping mismatch when UUID provided"
+  exit 1
+fi
+if ! grep -Fq "JWT smoke fail: decide_approval_request unexpected status" <<< "$SQL06"; then
+  echo "FAIL: 06 must fail on unexpected decide_approval_request result"
   exit 1
 fi
 

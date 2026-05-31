@@ -184,13 +184,15 @@ BEGIN
       INSERT INTO puls_workflow.approval_requests (
         id, tenant_id, module, leave_request_id,
         requester_employee_id, approver_employee_id,
-        step_order, status, decision_note, decided_at
+        step_order, status, decision_note, decided_at,
+        approval_policy_id
       ) VALUES (
         v_apr_id, v_tenant, 'leave', v_req_id,
         v_emp_id, v_mgr_id,
         1, v_apr_status,
         CASE WHEN v_apr_status = 'rejected' THEN 'PR13.5 scenario rejection' ELSE NULL END,
-        CASE WHEN v_apr_status IN ('approved', 'rejected') THEN NOW() - INTERVAL '1 day' ELSE NULL END
+        CASE WHEN v_apr_status IN ('approved', 'rejected') THEN NOW() - INTERVAL '1 day' ELSE NULL END,
+        v_leave_policy
       );
     END IF;
   END LOOP;
@@ -257,13 +259,15 @@ BEGIN
       INSERT INTO puls_workflow.approval_requests (
         id, tenant_id, module, expense_claim_id,
         requester_employee_id, approver_employee_id,
-        step_order, status, decision_note, decided_at
+        step_order, status, decision_note, decided_at,
+        approval_policy_id
       ) VALUES (
         v_apr_id, v_tenant, 'expense', v_req_id,
         v_emp_id, v_mgr_id,
         1, v_apr_status,
         CASE WHEN v_apr_status = 'rejected' THEN 'PR13.5 scenario rejection' ELSE NULL END,
-        CASE WHEN v_apr_status IN ('approved', 'rejected') THEN NOW() - INTERVAL '1 day' ELSE NULL END
+        CASE WHEN v_apr_status IN ('approved', 'rejected') THEN NOW() - INTERVAL '1 day' ELSE NULL END,
+        v_expense_policy
       );
     END IF;
   END LOOP;

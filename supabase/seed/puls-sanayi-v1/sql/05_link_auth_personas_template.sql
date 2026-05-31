@@ -34,6 +34,19 @@
 \set incomplete_setup_user_id '00000000-0000-0000-0000-000000000000'
 \endif
 
+-- psql :'var' substitution does not run inside dollar-quoted DO bodies — stage vars first.
+CREATE TEMP TABLE IF NOT EXISTS pr13_psql_vars (
+  key text PRIMARY KEY,
+  raw_value text NOT NULL
+);
+TRUNCATE pr13_psql_vars;
+INSERT INTO pr13_psql_vars (key, raw_value) VALUES
+  ('admin_user_id', :'admin_user_id'),
+  ('hr_admin_user_id', :'hr_admin_user_id'),
+  ('manager_user_id', :'manager_user_id'),
+  ('employee_user_id', :'employee_user_id'),
+  ('incomplete_setup_user_id', :'incomplete_setup_user_id');
+
 DO $$
 DECLARE
   v_tenant uuid := 'a0000001-0001-4001-8001-000000000001';
@@ -46,17 +59,25 @@ DECLARE
   v_legacy_public_tenant_id uuid;
   v_has_user_tenants boolean;
   v_has_user_roles boolean;
-  -- Persona anchors from PR13.4 csv/06_employees.csv inspect-first
-  v_emp_superadmin uuid := 'a0000006-0006-4006-8006-000000000001'; -- PS-001 CEO
-  v_emp_hr_admin uuid := 'a0000006-0006-4006-8006-000000000006';   -- PS-006 İK Uzmanı
-  v_emp_manager uuid := 'a0000006-0006-4006-8006-000000000021';    -- PS-021 Satış Müdürü
-  v_emp_employee uuid := 'a0000006-0006-4006-8006-000000000023';    -- PS-023 Satış Temsilcisi
+  v_ut_cols_ok boolean;
+  v_ur_cols_ok boolean;
+  v_role_udt text;
+  v_emp_superadmin uuid := 'a0000006-0006-4006-8006-000000000001';
+  v_emp_hr_admin uuid := 'a0000006-0006-4006-8006-000000000006';
+  v_emp_manager uuid := 'a0000006-0006-4006-8006-000000000021';
+  v_emp_employee uuid := 'a0000006-0006-4006-8006-000000000023';
+  v_raw text;
 BEGIN
-  v_admin := NULLIF(NULLIF(BTRIM(:'admin_user_id'), ''), v_zero::text)::uuid;
-  v_hr := NULLIF(NULLIF(BTRIM(:'hr_admin_user_id'), ''), v_zero::text)::uuid;
-  v_manager := NULLIF(NULLIF(BTRIM(:'manager_user_id'), ''), v_zero::text)::uuid;
-  v_employee := NULLIF(NULLIF(BTRIM(:'employee_user_id'), ''), v_zero::text)::uuid;
-  v_incomplete := NULLIF(NULLIF(BTRIM(:'incomplete_setup_user_id'), ''), v_zero::text)::uuid;
+  SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'admin_user_id';
+  v_admin := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
+  SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'hr_admin_user_id';
+  v_hr := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
+  SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'manager_user_id';
+  v_manager := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
+  SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'employee_user_id';
+  v_employee := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
+  SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'incomplete_setup_user_id';
+  v_incomplete := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
 
   IF v_admin IS NOT NULL THEN
     UPDATE puls_core.employees SET user_id = v_admin, updated_at = NOW()
@@ -108,8 +129,20 @@ BEGIN
     WHERE table_schema = 'public' AND table_name = 'user_roles'
   ) INTO v_has_user_roles;
 
-  IF NOT v_has_user_tenants THEN
-    RAISE NOTICE 'SKIP: public.user_tenants not present';
+  SELECT COUNT(*) = 3 INTO v_ut_cols_ok
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'user_tenants'
+    AND column_name IN ('user_id', 'tenant_id', 'is_default');
+
+  SELECT COUNT(*) = 3 INTO v_ur_cols_ok
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'user_roles'
+    AND column_name IN ('user_id', 'tenant_id', 'role');
+
+  IF NOT v_has_user_tenants OR NOT v_ut_cols_ok THEN
+    RAISE NOTICE 'SKIP: public.user_tenants missing or required columns absent';
     RETURN;
   END IF;
 
@@ -150,24 +183,50 @@ BEGIN
     RAISE NOTICE 'Incomplete-setup edge: user_tenants only for %', v_incomplete;
   END IF;
 
-  IF v_has_user_roles THEN
-    IF v_manager IS NOT NULL THEN
+  IF NOT v_has_user_roles OR NOT v_ur_cols_ok THEN
+    RAISE NOTICE 'SKIP: public.user_roles missing or required columns absent';
+    RETURN;
+  END IF;
+
+  SELECT c.udt_name INTO v_role_udt
+  FROM information_schema.columns c
+  WHERE c.table_schema = 'public'
+    AND c.table_name = 'user_roles'
+    AND c.column_name = 'role';
+
+  IF v_manager IS NOT NULL THEN
+    IF v_role_udt = 'app_role' THEN
       INSERT INTO public.user_roles (user_id, tenant_id, role)
       SELECT v_manager, v_legacy_public_tenant_id, 'yonetici'::public.app_role
       WHERE NOT EXISTS (
         SELECT 1 FROM public.user_roles ur
         WHERE ur.user_id = v_manager AND ur.tenant_id = v_legacy_public_tenant_id
       );
+    ELSE
+      INSERT INTO public.user_roles (user_id, tenant_id, role)
+      SELECT v_manager, v_legacy_public_tenant_id, 'yonetici'
+      WHERE NOT EXISTS (
+        SELECT 1 FROM public.user_roles ur
+        WHERE ur.user_id = v_manager AND ur.tenant_id = v_legacy_public_tenant_id
+      );
     END IF;
-    IF v_hr IS NOT NULL THEN
+  END IF;
+
+  IF v_hr IS NOT NULL THEN
+    IF v_role_udt = 'app_role' THEN
       INSERT INTO public.user_roles (user_id, tenant_id, role)
       SELECT v_hr, v_legacy_public_tenant_id, 'ik_admin'::public.app_role
       WHERE NOT EXISTS (
         SELECT 1 FROM public.user_roles ur
         WHERE ur.user_id = v_hr AND ur.tenant_id = v_legacy_public_tenant_id
       );
+    ELSE
+      INSERT INTO public.user_roles (user_id, tenant_id, role)
+      SELECT v_hr, v_legacy_public_tenant_id, 'ik_admin'
+      WHERE NOT EXISTS (
+        SELECT 1 FROM public.user_roles ur
+        WHERE ur.user_id = v_hr AND ur.tenant_id = v_legacy_public_tenant_id
+      );
     END IF;
-  ELSE
-    RAISE NOTICE 'SKIP: public.user_roles not present';
   END IF;
 END $$;
