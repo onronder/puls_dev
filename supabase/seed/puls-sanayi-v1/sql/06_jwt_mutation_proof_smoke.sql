@@ -1,9 +1,12 @@
 -- PR13.5 — JWT mutation proof smoke (RPC proof inside BEGIN … ROLLBACK).
 -- Lifecycle RPC smoke targets reserved setup rows (UCRETSIZ leave type, HED expense category).
+-- Lifecycle RPCs require admin (superadmin/hr_admin) or service_role — not manager JWT.
 -- Do not persist mutations — transaction rolls back at end; JWT claims reset with transaction scope.
 --
 -- Usage:
---   psql "$DATABASE_URL" -v employee_user_id='<uuid>' -v manager_user_id='<uuid>' \
+--   psql "$DATABASE_URL" \
+--     -v employee_user_id='<uuid>' -v manager_user_id='<uuid>' \
+--     -v admin_user_id='<uuid>' -v hr_admin_user_id='<uuid>' \
 --     -f sql/06_jwt_mutation_proof_smoke.sql
 
 \set ON_ERROR_STOP on
@@ -51,8 +54,14 @@ DO $$
 DECLARE
   v_tenant uuid := 'a0000001-0001-4001-8001-000000000001';
   v_zero uuid := '00000000-0000-0000-0000-000000000000';
+  v_admin_user uuid;
+  v_hr_admin_user uuid;
   v_employee_user uuid;
   v_manager_user uuid;
+  v_lifecycle_user uuid;
+  v_lifecycle_emp_id uuid;
+  v_admin_id uuid := 'a0000006-0006-4006-8006-000000000001';
+  v_hr_admin_id uuid := 'a0000006-0006-4006-8006-000000000006';
   v_employee_id uuid := 'a0000006-0006-4006-8006-000000000023';
   v_manager_id uuid := 'a0000006-0006-4006-8006-000000000021';
   v_lt_yillik uuid := 'a0000012-0012-4012-8012-000000000001';
@@ -67,14 +76,23 @@ DECLARE
   v_decide_result jsonb;
   v_lifecycle_result jsonb;
   v_approval_id uuid;
+  v_decide_status text;
+  v_decide_final text;
   v_raw text;
 BEGIN
+  SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'admin_user_id';
+  v_admin_user := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
+  SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'hr_admin_user_id';
+  v_hr_admin_user := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
   SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'employee_user_id';
   v_employee_user := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
   SELECT raw_value INTO v_raw FROM pr13_psql_vars WHERE key = 'manager_user_id';
   v_manager_user := NULLIF(NULLIF(BTRIM(COALESCE(v_raw, '')), ''), v_zero::text)::uuid;
 
-  IF v_employee_user IS NULL AND v_manager_user IS NULL THEN
+  IF v_employee_user IS NULL
+     AND v_manager_user IS NULL
+     AND v_admin_user IS NULL
+     AND v_hr_admin_user IS NULL THEN
     RAISE NOTICE 'JWT smoke skipped — provide auth UUIDs via psql -v';
     RETURN;
   END IF;
@@ -152,10 +170,44 @@ BEGIN
     v_decide_result := puls_workflow.decide_approval_request(
       v_approval_id, 'approved', 'PR13.5 smoke approved'
     );
-    IF COALESCE(v_decide_result->>'status', '') NOT IN ('approved', 'step_approved') THEN
-      RAISE EXCEPTION 'JWT smoke fail: decide_approval_request unexpected status: %', v_decide_result;
+    v_decide_status := COALESCE(v_decide_result->>'status', '');
+    v_decide_final := COALESCE(v_decide_result->>'final', '');
+
+    IF v_decide_status IN ('approved', 'step_approved') THEN
+      RAISE NOTICE 'decide_approval_request final/single-step: %', v_decide_status;
+    ELSIF v_decide_status = 'pending'
+          AND v_decide_final = 'false'
+          AND NULLIF(v_decide_result->>'next_approval_request_id', '') IS NOT NULL THEN
+      RAISE NOTICE 'decide_approval_request step approved (multi-step pending): next=%',
+        v_decide_result->>'next_approval_request_id';
+    ELSE
+      RAISE EXCEPTION 'JWT smoke fail: decide_approval_request unexpected result: %', v_decide_result;
     END IF;
-    RAISE NOTICE 'decide_approval_request approved: %', v_decide_result->>'status';
+
+    PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+    PERFORM set_config('request.jwt.claim.sub', '', true);
+  END IF;
+
+  IF v_admin_user IS NOT NULL THEN
+    v_lifecycle_user := v_admin_user;
+    v_lifecycle_emp_id := v_admin_id;
+  ELSIF v_hr_admin_user IS NOT NULL THEN
+    v_lifecycle_user := v_hr_admin_user;
+    v_lifecycle_emp_id := v_hr_admin_id;
+  ELSE
+    v_lifecycle_user := NULL;
+    v_lifecycle_emp_id := NULL;
+  END IF;
+
+  IF v_lifecycle_user IS NOT NULL THEN
+    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+    PERFORM set_config('request.jwt.claim.sub', v_lifecycle_user::text, true);
+
+    SELECT puls_core.current_employee_id() INTO v_current_emp;
+    IF v_current_emp IS DISTINCT FROM v_lifecycle_emp_id THEN
+      RAISE EXCEPTION 'JWT smoke fail: lifecycle actor current_employee_id % (expected %)',
+        v_current_emp, v_lifecycle_emp_id;
+    END IF;
 
     v_lifecycle_result := puls_workflow.deactivate_leave_type(v_lt_reserved, 'PR13.5 lifecycle smoke');
     IF COALESCE(v_lifecycle_result->>'status', '') NOT IN ('deactivated', 'already_inactive') THEN
@@ -189,6 +241,8 @@ BEGIN
 
     PERFORM set_config('request.jwt.claim.role', 'service_role', true);
     PERFORM set_config('request.jwt.claim.sub', '', true);
+  ELSE
+    RAISE NOTICE 'SKIP: lifecycle smoke — provide admin_user_id or hr_admin_user_id';
   END IF;
 
   RAISE NOTICE 'OK: PR13.5 JWT mutation smoke completed (ROLLBACK pending)';

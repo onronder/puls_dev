@@ -173,6 +173,18 @@ if grep -Fq "'approve'" <<< "$SQL06"; then
   echo "FAIL: 06 must not use invalid decide decision approve"
   exit 1
 fi
+if ! grep -Fq "next_approval_request_id" <<< "$SQL06"; then
+  echo "FAIL: 06 must accept multi-step decide result via next_approval_request_id"
+  exit 1
+fi
+if ! grep -Fq "SKIP: lifecycle smoke" <<< "$SQL06"; then
+  echo "FAIL: 06 must skip lifecycle when no admin/hr_admin UUID provided"
+  exit 1
+fi
+if ! grep -Fq "lifecycle actor current_employee_id" <<< "$SQL06"; then
+  echo "FAIL: 06 lifecycle smoke must run under admin/hr_admin JWT context"
+  exit 1
+fi
 if ! grep -Fq "pr13_psql_vars" <<< "$SQL05"; then
   echo "FAIL: 05 must stage psql vars in pr13_psql_vars temp table"
   exit 1
@@ -215,7 +227,7 @@ if ! grep -Fq "JWT smoke fail: employee current_employee_id" <<< "$SQL06"; then
   echo "FAIL: 06 must RAISE EXCEPTION on employee mapping mismatch when UUID provided"
   exit 1
 fi
-if ! grep -Fq "JWT smoke fail: decide_approval_request unexpected status" <<< "$SQL06"; then
+if ! grep -Fq "JWT smoke fail: decide_approval_request unexpected result" <<< "$SQL06"; then
   echo "FAIL: 06 must fail on unexpected decide_approval_request result"
   exit 1
 fi

@@ -108,12 +108,14 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
   -f sql/05_link_auth_personas_template.sql
 ```
 
-3. Optional `06` JWT smoke (rolls back all mutations):
+3. Optional `06` JWT smoke (rolls back all mutations). Lifecycle RPC proof requires `admin_user_id` or `hr_admin_user_id` (manager JWT is insufficient):
 
 ```bash
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
   -v employee_user_id='<uuid>' \
   -v manager_user_id='<uuid>' \
+  -v admin_user_id='<uuid>' \
+  -v hr_admin_user_id='<uuid>' \
   -f sql/06_jwt_mutation_proof_smoke.sql
 ```
 
