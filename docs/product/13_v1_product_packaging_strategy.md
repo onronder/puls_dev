@@ -128,16 +128,16 @@ Use across PR13 docs — **not every table must be seeded**:
 | **PR13.4** | CSV fixture pack |
 | **PR13.5** | Demo bootstrap / reset / smoke |
 | **PR13.6** | AI Coach DB context readiness |
-| **PR13.7** | Canias mapping discovery |
+| **PR13.7** | Canias connector discovery + AI action boundary |
 
 ## Definition of done before PR13.7
 
-- [ ] Traceability matrix verified against routes/adapters (PR13.1)
-- [ ] Embedded demo retirement list approved (PR13.2)
-- [ ] Demo company spec signed off with completeness classes (PR13.3)
-- [ ] CSV + bootstrap path defined (PR13.4–13.5)
-- [ ] AI context inventory complete (PR13.6)
-- [ ] Canias discovery checklist ready for first customer (PR13.7)
+- [x] Traceability matrix verified against routes/adapters (PR13.1)
+- [x] Embedded demo retirement list approved (PR13.2)
+- [x] Demo company spec signed off with completeness classes (PR13.3)
+- [x] CSV + bootstrap path defined (PR13.4–13.5)
+- [x] AI context inventory complete (PR13.6)
+- [x] Canias discovery checklist ready for first customer (PR13.7)
 
 ## Risks and mitigations
 

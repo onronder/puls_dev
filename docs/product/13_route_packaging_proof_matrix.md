@@ -21,13 +21,14 @@ Maps all **20 PR12 routes** for Puls Sanayi DB-backed packaging proof with **`VI
 | `/sozlesmeler` | `puls_calc.contracts_overview` | 15–30 contracts | risk variety baseline | hr_admin | `source: real` | — |
 | `/profil` | account readiness | employee row | persona link via `05` | linked employee | `source: real` | incomplete-setup edge optional |
 | `/ayarlar` | settings shell | tenant metadata | — | admin | `source: real` | — |
-| `/erp` | ERP readiness | Canias inactive + mappings | source_namespaces proof in `07` | hr_admin | `source: real` | No Canias runtime |
-| `/ai-koc` | AI coach context readiness | PR13.4–13.5A calc + workflow context | — | any | `source: real` | Teaser — DB context readiness (PR13.6); no live chat |
+| `/erp` | ERP readiness | Canias inactive + mappings | source_namespaces proof in `07` | hr_admin | `source: real` | Canias connector boundary documented (PR13.7); no runtime |
+| `/ai-koc` | AI coach context readiness | PR13.4–13.5A calc + workflow context | — | any | `source: real` | DB context readiness (PR13.6); AI action boundary (PR13.7); no live chat/autonomous actions |
 | `/menu` | `puls_calc.menu_overview` | menu shell | — | any | `source: real` | Shell exception (no demo pill) |
 
 ## Honest exceptions
 
-- **`/ai-koc`** — DB context readiness (PR13.6); teaser with no live chat; no embedded TS business fixtures on real path.
+- **`/ai-koc`** — DB context readiness (PR13.6); AI action boundary documented (PR13.7); no live chat; no autonomous actions; no embedded TS business fixtures on real path.
+- **`/erp`** — Canias connector discovery boundary (PR13.7); read-only metadata; no runtime sync.
 - **`/is-degerleme`** — placeholder/future module.
 - **`/menu`** — shell exception; no demo pill when demo mode off.
 - **CRM / SDK / real-time sync** — future; out of PR13.5 scope.
