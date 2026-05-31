@@ -390,4 +390,5 @@ export {
   fetchAiCoachOverview,
   fetchAiCoachOverviewWithMeta,
   type AiCoachOverview,
+  type AiCoachContextDomain,
 } from '#/lib/data/ai-coach/overview'

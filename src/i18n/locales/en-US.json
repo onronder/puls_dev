@@ -2090,7 +2090,9 @@
     "sections": {
       "capabilities": "What it will do",
       "privacy": "Privacy",
-      "readiness": "Readiness"
+      "readiness": "Readiness",
+      "contextReadiness": "Context readiness",
+      "guardrails": "Guardrails"
     },
     "capabilities": {
       "leavePlan": {
@@ -2121,6 +2123,88 @@
       "pending": "Pending",
       "doneAria": "Completed",
       "pendingAria": "Pending"
+    },
+    "productPosture": {
+      "ready": "DB context available — teaser mode",
+      "partial": "Context partially available — teaser mode"
+    },
+    "contextDomains": {
+      "status": {
+        "ready": "Ready",
+        "partial": "Partial",
+        "blocked": "Blocked"
+      },
+      "evidence": {
+        "queryStatus": "Query status",
+        "overallReadinessPct": "Overall setup readiness (%)",
+        "departmentCount": "Department count",
+        "positionCount": "Position count",
+        "employeeCount": "Employee count",
+        "reportingLineCount": "Reporting line count",
+        "leaveTypeCount": "Leave type count",
+        "leaveRequestCount": "Leave request count",
+        "expenseCategoryCount": "Expense category count",
+        "expenseClaimCount": "Expense claim count",
+        "performanceCycleCount": "Performance cycle count",
+        "competencyTemplateCount": "Competency template count",
+        "contractCount": "Contract count",
+        "contractsOverview": "Contracts overview view",
+        "dashboardOverview": "Dashboard overview view",
+        "pendingLeaveCount": "Pending leave count",
+        "employeeLinked": "Employee link",
+        "employeeName": "Linked employee"
+      },
+      "setup": {
+        "title": "Setup coach",
+        "description": "Explains setup and read-model readiness gaps.",
+        "guardrail": "Human confirmation required; no autonomous setup."
+      },
+      "employee_quality": {
+        "title": "Employee data quality",
+        "description": "Surfaces assignment and hierarchy gaps.",
+        "guardrail": "Read-only analysis; no data mutations."
+      },
+      "leave": {
+        "title": "Leave helper",
+        "description": "Explains balance, policy, and approval path.",
+        "guardrail": "No auto-approvals or autonomous submissions."
+      },
+      "expense": {
+        "title": "Expense helper",
+        "description": "Explains category, limits, and approval path.",
+        "guardrail": "No autonomous expense submissions."
+      },
+      "performance": {
+        "title": "Performance coach",
+        "description": "Summarizes cycle, KPI, and evaluation context.",
+        "guardrail": "Does not write scores or evaluations automatically."
+      },
+      "contracts": {
+        "title": "Contract risk explainer",
+        "description": "Summarizes contract metadata and risk bands.",
+        "guardrail": "Not legal advice; human confirmation required."
+      },
+      "dashboard": {
+        "title": "Dashboard insight summary",
+        "description": "Prioritizes KPI and queue context.",
+        "guardrail": "Read-only; no autonomous actions."
+      },
+      "profile": {
+        "title": "Profile / persona assistant",
+        "description": "Scopes context to the current employee and persona.",
+        "guardrail": "No cross-tenant context."
+      }
+    },
+    "guardrails": {
+      "dbBacked": { "label": "DB-backed context" },
+      "tenantScoped": { "label": "Tenant scoped" },
+      "humanInLoop": { "label": "Human-in-the-loop confirmation required" },
+      "noAutonomousMutations": { "label": "No autonomous mutations" },
+      "noAutoApprovals": { "label": "No auto-approvals" },
+      "noErpWrites": { "label": "No ERP writes" },
+      "noVaultSeed": { "label": "No vault message seed" },
+      "enforced": "Enforced",
+      "pending": "Pending"
     },
     "actions": {
       "notifyMe": "Notify me",

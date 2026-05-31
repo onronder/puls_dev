@@ -7,6 +7,7 @@ import {
   Check,
   Clock,
   GraduationCap,
+  Lock,
   Receipt,
   Shield,
   Sparkles,
@@ -24,7 +25,12 @@ import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchAiCoachOverviewWithMeta, type AiCoachOverview } from '#/lib/data'
+import {
+  fetchAiCoachOverviewWithMeta,
+  type AiCoachContextDomain,
+  type AiCoachOverview,
+} from '#/lib/data'
+import { productPostureLabelKey } from '#/lib/data/ai-coach/context-readiness'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/ai-koc')({
@@ -84,6 +90,27 @@ function ReadinessStatus({
   )
 }
 
+function ContextDomainStatusPill({ status }: { status: AiCoachContextDomain['status'] }) {
+  const { t } = useTranslation()
+
+  const tone =
+    status === 'ready' ? 'success' : status === 'partial' ? 'warning' : ('neutral' as const)
+
+  return (
+    <StatusPill tone={tone}>{t(`aiCoachSetup.contextDomains.status.${status}`)}</StatusPill>
+  )
+}
+
+function formatEvidenceValue(value: number | string | boolean): string {
+  if (typeof value === 'boolean') return value ? '✓' : '—'
+  return String(value)
+}
+
+function ProductPosturePill({ posture }: { posture: AiCoachOverview['productPosture'] }) {
+  const { t } = useTranslation()
+  return <StatusPill tone="ai">{t(productPostureLabelKey(posture))}</StatusPill>
+}
+
 function AiKocPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -121,6 +148,9 @@ function AiKocPage() {
               </h2>
               <StatusPill tone="ai">{t('common.soon')}</StatusPill>
               <StatusPill tone="neutral">{t('ai.teaser.badge')}</StatusPill>
+              {!isLoading && data?.productPosture ? (
+                <ProductPosturePill posture={data.productPosture} />
+              ) : null}
             </div>
             <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
               {t('aiCoachSetup.hero.description')}
@@ -128,6 +158,88 @@ function AiKocPage() {
           </div>
         </div>
       </div>
+
+      <section className="mb-6">
+        <SectionHeader title={t('aiCoachSetup.sections.contextReadiness')} />
+        <ul className="mt-3 grid gap-3 lg:grid-cols-2">
+          {isLoading
+            ? Array.from({ length: 8 }, (_, index) => (
+                <Skeleton key={index} className="h-36 rounded-xl" />
+              ))
+            : (data?.contextDomains ?? []).map((domain) => (
+                <li
+                  key={domain.id}
+                  className="min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">{t(domain.titleKey)}</div>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                        {t(domain.descriptionKey)}
+                      </p>
+                    </div>
+                    <ContextDomainStatusPill status={domain.status} />
+                  </div>
+                  <ul className="mt-3 space-y-1">
+                    {domain.evidence.map((item) => (
+                      <li
+                        key={`${domain.id}-${item.labelKey}`}
+                        className="flex items-center justify-between gap-2 text-xs text-[var(--color-text-secondary)]"
+                      >
+                        <span>{t(item.labelKey)}</span>
+                        <span className="font-medium tabular-nums text-[var(--color-text-primary)]">
+                          {formatEvidenceValue(item.value)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+                    {t(domain.guardrailKey)}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="mt-2 h-auto justify-start p-0 text-xs text-[var(--color-primary)] hover:bg-transparent hover:text-[var(--color-primary-bright)]"
+                    asChild
+                  >
+                    <Link to={domain.route}>{domain.route}</Link>
+                  </Button>
+                </li>
+              ))}
+        </ul>
+      </section>
+
+      <section className="mb-6">
+        <SectionHeader title={t('aiCoachSetup.sections.guardrails')} />
+        <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          {isLoading
+            ? Array.from({ length: 7 }, (_, index) => (
+                <li key={index} className="flex items-center gap-3 p-4">
+                  <Skeleton className="h-7 w-7 rounded-full" />
+                  <Skeleton className="h-4 w-56" />
+                </li>
+              ))
+            : (data?.guardrails ?? []).map((guardrail) => (
+                <li
+                  key={guardrail.id}
+                  className="flex min-h-[52px] flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <Lock className="h-4 w-4 text-[var(--color-primary)]" aria-hidden />
+                    {t(guardrail.labelKey)}
+                  </span>
+                  <ReadinessStatus
+                    status={guardrail.status === 'enforced' ? 'done' : 'pending'}
+                    label={
+                      guardrail.status === 'enforced'
+                        ? t('aiCoachSetup.guardrails.enforced')
+                        : t('aiCoachSetup.guardrails.pending')
+                    }
+                  />
+                </li>
+              ))}
+        </ul>
+      </section>
 
       <section className="mb-6">
         <SectionHeader title={t('aiCoachSetup.sections.capabilities')} />
