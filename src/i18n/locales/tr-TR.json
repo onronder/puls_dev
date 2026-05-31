@@ -2090,7 +2090,9 @@
     "sections": {
       "capabilities": "Neler yapacak",
       "privacy": "Gizlilik",
-      "readiness": "Hazırlık"
+      "readiness": "Hazırlık",
+      "contextReadiness": "Bağlam hazırlığı",
+      "guardrails": "Koruma kuralları"
     },
     "capabilities": {
       "leavePlan": {
@@ -2121,6 +2123,88 @@
       "pending": "Bekliyor",
       "doneAria": "Tamamlandı",
       "pendingAria": "Beklemede"
+    },
+    "productPosture": {
+      "ready": "DB bağlamı mevcut — teaser modu",
+      "partial": "Bağlam kısmen hazır — teaser modu"
+    },
+    "contextDomains": {
+      "status": {
+        "ready": "Hazır",
+        "partial": "Kısmi",
+        "blocked": "Engelli"
+      },
+      "evidence": {
+        "queryStatus": "Sorgu durumu",
+        "overallReadinessPct": "Genel kurulum hazırlığı (%)",
+        "departmentCount": "Departman sayısı",
+        "positionCount": "Pozisyon sayısı",
+        "employeeCount": "Çalışan sayısı",
+        "reportingLineCount": "Raporlama hattı sayısı",
+        "leaveTypeCount": "İzin tipi sayısı",
+        "leaveRequestCount": "İzin talebi sayısı",
+        "expenseCategoryCount": "Masraf kategorisi sayısı",
+        "expenseClaimCount": "Masraf talebi sayısı",
+        "performanceCycleCount": "Performans dönemi sayısı",
+        "competencyTemplateCount": "Yetkinlik şablonu sayısı",
+        "contractCount": "Sözleşme sayısı",
+        "contractsOverview": "Sözleşme özeti görünümü",
+        "dashboardOverview": "Dashboard özeti görünümü",
+        "pendingLeaveCount": "Bekleyen izin sayısı",
+        "employeeLinked": "Çalışan bağlantısı",
+        "employeeName": "Bağlı çalışan"
+      },
+      "setup": {
+        "title": "Kurulum koçu",
+        "description": "Kurulum ve okuma hazırlığı boşluklarını açıklar.",
+        "guardrail": "İnsan onayı gerekir; otomatik kurulum yapmaz."
+      },
+      "employee_quality": {
+        "title": "Çalışan veri kalitesi",
+        "description": "Atama ve hiyerarşi boşluklarını gösterir.",
+        "guardrail": "Salt okunur analiz; veri değiştirmez."
+      },
+      "leave": {
+        "title": "İzin yardımcısı",
+        "description": "Bakiye, politika ve onay yolunu açıklar.",
+        "guardrail": "Otomatik onay veya talep gönderimi yok."
+      },
+      "expense": {
+        "title": "Masraf yardımcısı",
+        "description": "Kategori, limit ve onay yolunu açıklar.",
+        "guardrail": "Otonom masraf gönderimi yok."
+      },
+      "performance": {
+        "title": "Performans koçu",
+        "description": "Dönem, KPI ve değerlendirme bağlamını özetler.",
+        "guardrail": "Skor veya değerlendirme otomatik yazmaz."
+      },
+      "contracts": {
+        "title": "Sözleşme risk açıklayıcı",
+        "description": "Sözleşme meta verisi ve risk bantlarını özetler.",
+        "guardrail": "Hukuki karar vermez; insan onayı gerekir."
+      },
+      "dashboard": {
+        "title": "Dashboard içgörü özeti",
+        "description": "KPI ve kuyruk bağlamını önceliklendirir.",
+        "guardrail": "Yalnızca okuma; otomatik işlem yok."
+      },
+      "profile": {
+        "title": "Profil / persona asistanı",
+        "description": "Mevcut çalışan ve persona kapsamını gösterir.",
+        "guardrail": "Tenant dışı bağlam kullanmaz."
+      }
+    },
+    "guardrails": {
+      "dbBacked": { "label": "DB destekli bağlam" },
+      "tenantScoped": { "label": "Tenant kapsamlı" },
+      "humanInLoop": { "label": "İnsan onayı gerekli (human-in-the-loop)" },
+      "noAutonomousMutations": { "label": "Otonom mutasyon yok" },
+      "noAutoApprovals": { "label": "Otomatik onay yok" },
+      "noErpWrites": { "label": "ERP yazma işlemi yok" },
+      "noVaultSeed": { "label": "Vault mesaj seed'i yok" },
+      "enforced": "Uygulanıyor",
+      "pending": "Bekliyor"
     },
     "actions": {
       "notifyMe": "Beni bilgilendir",

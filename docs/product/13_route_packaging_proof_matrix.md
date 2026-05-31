@@ -22,12 +22,12 @@ Maps all **20 PR12 routes** for Puls Sanayi DB-backed packaging proof with **`VI
 | `/profil` | account readiness | employee row | persona link via `05` | linked employee | `source: real` | incomplete-setup edge optional |
 | `/ayarlar` | settings shell | tenant metadata | — | admin | `source: real` | — |
 | `/erp` | ERP readiness | Canias inactive + mappings | source_namespaces proof in `07` | hr_admin | `source: real` | No Canias runtime |
-| `/ai-koc` | AI coach teaser | — | — | any | `source: real` | Teaser until PR13.6 |
+| `/ai-koc` | AI coach context readiness | PR13.4–13.5A calc + workflow context | — | any | `source: real` | Teaser — DB context readiness (PR13.6); no live chat |
 | `/menu` | `puls_calc.menu_overview` | menu shell | — | any | `source: real` | Shell exception (no demo pill) |
 
 ## Honest exceptions
 
-- **`/ai-koc`** — teaser until PR13.6; no embedded TS business fixtures required for packaging proof gate.
+- **`/ai-koc`** — DB context readiness (PR13.6); teaser with no live chat; no embedded TS business fixtures on real path.
 - **`/is-degerleme`** — placeholder/future module.
 - **`/menu`** — shell exception; no demo pill when demo mode off.
 - **CRM / SDK / real-time sync** — future; out of PR13.5 scope.

@@ -84,6 +84,20 @@ PR13.5 **adds scenario/proof SQL on top of PR13.4 baseline** without changing CS
 
 Verify: [`../../scripts/verify-13-seed-bootstrap-proof.sh`](../../scripts/verify-13-seed-bootstrap-proof.sh)
 
+## PR13.6 AI Coach DB context readiness
+
+PR13.6 **adds DB-backed AI Coach context readiness** for `/ai-koc` on top of PR13.5A seed proof. Teaser posture remains — no live chat, no LLM runtime. **No** migrations or seed CSV/manifest changes.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [13_ai_coach_db_context_readiness.md](./13_ai_coach_db_context_readiness.md) | Product vision, inspect-first table, guardrails, UX posture |
+| [`src/lib/data/ai-coach/`](../src/lib/data/ai-coach/) | Context readiness adapter (`overview.ts`, `context-readiness.ts`, `types.ts`) |
+| [`src/routes/_app/ai-koc.tsx`](../src/routes/_app/ai-koc.tsx) | Context readiness + guardrails UI |
+| [`supabase/seed/puls-sanayi-v1/sql/08_validate_ai_context_readiness.sql`](../supabase/seed/puls-sanayi-v1/sql/08_validate_ai_context_readiness.sql) | Optional read-only AI context validation |
+| [`scripts/verify-13-ai-coach-db-context-readiness.sh`](../../scripts/verify-13-ai-coach-db-context-readiness.sh) | PR13.6 verify gate |
+
+Verify: [`../../scripts/verify-13-ai-coach-db-context-readiness.sh`](../../scripts/verify-13-ai-coach-db-context-readiness.sh)
+
 ## Related packs
 
 | Pack | Entry point |
