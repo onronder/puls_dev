@@ -61,6 +61,17 @@ Bridge PR before PR13.4 — aligns [`Puls_Veri_Sozlugu_v1.0.xlsx`](../V1%20Dokü
 
 Verify: [`../../scripts/verify-13-data-dictionary-alignment.sh`](../../scripts/verify-13-data-dictionary-alignment.sh)
 
+## PR13.4 baseline seed pack
+
+PR13.4 **implements PR13.3 spec + PR13.3A crosswalk** as importable CSV/SQL artifacts for **Puls Sanayi A.Ş.** (120 employees). Defers scenario/bootstrap proof to PR13.5. **No** app code or migrations.
+
+| Artifact | Purpose |
+|----------|---------|
+| [`supabase/seed/puls-sanayi-v1/`](../supabase/seed/puls-sanayi-v1/) | 22 baseline CSVs, manifest, FK-safe load order, reset/load/validate SQL |
+| [`supabase/seed/puls-sanayi-v1/README.md`](../supabase/seed/puls-sanayi-v1/README.md) | Runbook: psql-local `\copy`, packaging proof guardrails, PR13.5 handoff |
+
+Verify: [`../../scripts/verify-13-synthetic-seed-artifacts.sh`](../../scripts/verify-13-synthetic-seed-artifacts.sh)
+
 ## Related packs
 
 | Pack | Entry point |

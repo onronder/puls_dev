@@ -1,0 +1,2 @@
+id,tenant_id,provider,display_name,connection_method,base_url,firm_code,is_active,sync_direction,sync_schedule
+a0000016-0016-4016-8016-000000000001,a0000001-0001-4001-8001-000000000001,canias,Canias ERP (Pasif),rest_api,,PS01,false,erp_to_puls,
