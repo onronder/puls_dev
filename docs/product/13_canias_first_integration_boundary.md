@@ -75,17 +75,19 @@ These appear in strategy non-goals and must not be implied by ERP setup UI or de
 
 ## Discovery checklist (PR13.7)
 
-PR13.7 will complete for first Canias customer:
+PR13.7 discovery pack ([`13_canias_connector_discovery.md`](./13_canias_connector_discovery.md)) addresses first Canias customer workshop prep:
 
-- [ ] Canias modules and export formats available (HR, org, cost centers)
-- [ ] Field mapping: Canias fields → `puls_core` / `puls_workflow` targets
-- [ ] `external_source` values and read-only guards per entity
-- [ ] Import frequency (manual, daily batch, etc.)
-- [ ] PULS → Canias export candidates (approved leave, posted expenses)
-- [ ] Staging vs direct upsert strategy
-- [ ] Error handling and partial batch recovery
-- [ ] Demo tenant: inactive connection + sample `canias_erp` imported rows
-- [ ] Connector runtime scope (file watcher vs API poller)
+- [x] Canias modules and export formats available (HR, org, cost centers) — documented as open questions
+- [x] Field mapping: Canias fields → `puls_core` / `puls_workflow` targets — [`13_canias_field_mapping_matrix.json`](./13_canias_field_mapping_matrix.json)
+- [x] `external_source` values and read-only guards per entity — inspect-first + seed proof
+- [x] Import frequency (manual, daily batch, etc.) — transport modes documented
+- [x] PULS → Canias export candidates (approved leave, posted expenses) — export_candidate_future classes
+- [x] Staging vs direct upsert strategy — conflict/idempotency policy documented
+- [x] Error handling and partial batch recovery — policy documented
+- [x] Demo tenant: inactive connection + sample imported rows — validated by `09_validate_canias_connector_readiness.sql`
+- [x] Connector runtime scope (file watcher vs API poller) — deferred to future runtime PR
+
+**Runtime connector remains future** — see [`services/erp-connector/README.md`](../../services/erp-connector/README.md).
 
 ## Demo packaging requirements
 
@@ -100,12 +102,15 @@ See [`13_demo_data_packaging_principles.md`](./13_demo_data_packaging_principles
 
 ## PR13.7 handoff
 
-PR13.7 delivers:
+PR13.7 **implemented** (discovery pack — runtime connector future):
 
-1. Canias field mapping discovery document
-2. Import/export boundary per entity
-3. Connector implementation scope (post-packaging)
-4. Verification that ERP UI remains read-only until export workflows are explicitly designed
+1. Canias field mapping discovery document — [`13_canias_connector_discovery.md`](./13_canias_connector_discovery.md)
+2. Structured field mapping matrix — [`13_canias_field_mapping_matrix.json`](./13_canias_field_mapping_matrix.json)
+3. AI Coach action boundary — [`13_ai_coach_action_boundary.md`](./13_ai_coach_action_boundary.md)
+4. Connector readiness touchpoint matrix — [`13_canias_ai_connector_readiness_matrix.md`](./13_canias_ai_connector_readiness_matrix.md)
+5. Verification that ERP UI remains read-only until export workflows are explicitly designed
+
+**Runtime connector implementation** remains a future PR after packaging gates.
 
 ## References
 

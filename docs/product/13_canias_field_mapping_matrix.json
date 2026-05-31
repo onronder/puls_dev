@@ -1,0 +1,459 @@
+{
+  "version": "pr13.7-canias-discovery-v1",
+  "provider": "canias",
+  "posture": "discovery_only_no_runtime",
+  "sourceNamespace": "canias_erp",
+  "sourceNamespaceSeedCrosswalk": {
+    "discoveryLabel": "canias_erp",
+    "seedNamespaceCode": "CANIAS",
+    "seedExternalSourceValue": "canias"
+  },
+  "seedSampleReference": "puls_integration.erp_field_mappings and entity_identity_map rows in PR13.4 seed are demo samples only — not customer truth",
+  "transportModes": [
+    "manual_csv",
+    "scheduled_file_exchange",
+    "excel_xml",
+    "staging_table",
+    "api_future",
+    "controlled_export_future"
+  ],
+  "guardrails": [
+    "no_automatic_destructive_erp_writes",
+    "human_confirmation_required",
+    "no_credentials_in_repo",
+    "source_disclosure_required"
+  ],
+  "dataClasses": [
+    {
+      "id": "departments",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "canias",
+      "pulsTarget": "puls_core.departments",
+      "mvpStatus": "inbound_candidate",
+      "mutabilityInPuls": "read_only_when_imported",
+      "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "fieldMappings": [
+        {
+          "caniasField": "DEPT_CODE",
+          "pulsColumn": "code",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "DEPT_NAME",
+          "pulsColumn": "name",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "MANAGER_CODE",
+          "pulsColumn": "manager_employee_id",
+          "required": false,
+          "transform": "resolve_employee_by_external_id",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "invalid_transform"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "external_department_id",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        }
+      ]
+    },
+    {
+      "id": "positions",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "canias",
+      "pulsTarget": "puls_core.positions",
+      "mvpStatus": "inbound_candidate",
+      "mutabilityInPuls": "read_only_when_imported",
+      "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "fieldMappings": [
+        {
+          "caniasField": "POS_CODE",
+          "pulsColumn": "code",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "POS_NAME",
+          "pulsColumn": "name",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "external_position_id",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        }
+      ]
+    },
+    {
+      "id": "employees",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "canias",
+      "pulsTarget": "puls_core.employees",
+      "mvpStatus": "inbound_candidate",
+      "mutabilityInPuls": "read_only_when_imported",
+      "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "fieldMappings": [
+        {
+          "caniasField": "EMPLOYEE_CODE",
+          "pulsColumn": "employee_code",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "FULL_NAME",
+          "pulsColumn": "full_name",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "EMAIL",
+          "pulsColumn": "email",
+          "required": false,
+          "transform": "lowercase_email",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "invalid_transform"
+        },
+        {
+          "caniasField": "HIRE_DATE",
+          "pulsColumn": "hire_date",
+          "required": false,
+          "transform": "parse_date",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "invalid_transform"
+        }
+      ]
+    },
+    {
+      "id": "cost_centers",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "canias",
+      "pulsTarget": "puls_core.cost_centers",
+      "mvpStatus": "inbound_candidate",
+      "mutabilityInPuls": "read_only_when_imported",
+      "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "fieldMappings": [
+        {
+          "caniasField": "CC_CODE",
+          "pulsColumn": "code",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "CC_NAME",
+          "pulsColumn": "name",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "external_id",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        }
+      ]
+    },
+    {
+      "id": "legal_entities",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "canias",
+      "pulsTarget": "puls_core.legal_entities",
+      "mvpStatus": "discovery_only",
+      "mutabilityInPuls": "read_only_when_imported",
+      "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "fieldMappings": [
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "code",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "name",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        }
+      ]
+    },
+    {
+      "id": "locations",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "canias",
+      "pulsTarget": "puls_core.locations",
+      "mvpStatus": "discovery_only",
+      "mutabilityInPuls": "read_only_when_imported",
+      "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "fieldMappings": [
+        {
+          "caniasField": "LOC_CODE",
+          "pulsColumn": "code",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "name",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        }
+      ]
+    },
+    {
+      "id": "leave_balances",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "tbd_workshop",
+      "pulsTarget": "puls_workflow.leave_balances",
+      "mvpStatus": "discovery_only",
+      "mutabilityInPuls": "read_only_when_imported",
+      "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "derivedColumns": [
+        {
+          "pulsColumn": "remaining_days",
+          "definition": "entitlement_days + carried_over_days + adjustment_days - used_days - pending_days",
+          "insertable": false,
+          "schemaNote": "GENERATED ALWAYS STORED — excluded from PR13.4 seed insertableColumns"
+        }
+      ],
+      "fieldMappings": [
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "entitlement_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "carried_over_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "adjustment_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "used_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "pending_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "as_of_date",
+          "required": false,
+          "transform": "parse_date",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "invalid_transform"
+        }
+      ]
+    },
+    {
+      "id": "approved_leave_results",
+      "direction": "puls_to_canias",
+      "sourceOfTruth": "puls",
+      "pulsTarget": "puls_workflow.leave_requests",
+      "mvpStatus": "export_candidate_future",
+      "mutabilityInPuls": "puls_workflow_owned",
+      "identityStrategy": "puls_request_id + export_batch_id",
+      "fieldMappings": [
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "status",
+          "required": true,
+          "transform": "export_approved_only",
+          "conflictRule": "human_reviewed_export",
+          "errorClass": "export_not_approved"
+        }
+      ]
+    },
+    {
+      "id": "posted_expense_results",
+      "direction": "puls_to_canias",
+      "sourceOfTruth": "puls",
+      "pulsTarget": "puls_workflow.expense_claims",
+      "mvpStatus": "export_candidate_future",
+      "mutabilityInPuls": "puls_workflow_owned",
+      "identityStrategy": "puls_claim_id + export_batch_id",
+      "fieldMappings": [
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "status",
+          "required": true,
+          "transform": "export_posted_only",
+          "conflictRule": "human_reviewed_export",
+          "errorClass": "export_not_posted"
+        }
+      ]
+    },
+    {
+      "id": "approval_audit_summary",
+      "direction": "puls_only",
+      "sourceOfTruth": "puls",
+      "pulsTarget": "puls_workflow.approval_requests",
+      "mvpStatus": "export_candidate_future",
+      "mutabilityInPuls": "puls_owned",
+      "identityStrategy": "puls_approval_request_id",
+      "fieldMappings": [
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "status",
+          "required": false,
+          "transform": "audit_summary_export",
+          "conflictRule": "human_reviewed_export",
+          "errorClass": "export_not_ready"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "decision_note",
+          "required": false,
+          "transform": "audit_summary_export",
+          "conflictRule": "human_reviewed_export",
+          "errorClass": "export_not_ready"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "decided_at",
+          "required": false,
+          "transform": "audit_summary_export",
+          "conflictRule": "human_reviewed_export",
+          "errorClass": "export_not_ready"
+        }
+      ]
+    },
+    {
+      "id": "performance_data",
+      "direction": "puls_only",
+      "sourceOfTruth": "puls",
+      "pulsTarget": "puls_performance.*",
+      "mvpStatus": "no_canias_mvp_sync",
+      "mutabilityInPuls": "puls_owned",
+      "identityStrategy": "puls_owned_no_erp_sync",
+      "fieldMappings": [
+        {
+          "caniasField": "NOT_APPLICABLE_NO_CANIAS_MVP_SYNC",
+          "pulsColumn": "not_applicable",
+          "required": false,
+          "transform": "none",
+          "conflictRule": "not_synced_in_mvp",
+          "errorClass": "not_applicable"
+        }
+      ]
+    },
+    {
+      "id": "contracts",
+      "direction": "puls_only",
+      "sourceOfTruth": "puls",
+      "pulsTarget": "puls_workflow.contracts",
+      "mvpStatus": "no_canias_mvp_sync",
+      "mutabilityInPuls": "puls_owned",
+      "identityStrategy": "puls_owned_no_erp_sync",
+      "fieldMappings": [
+        {
+          "caniasField": "NOT_APPLICABLE_NO_CANIAS_MVP_SYNC",
+          "pulsColumn": "not_applicable",
+          "required": false,
+          "transform": "none",
+          "conflictRule": "not_synced_in_mvp",
+          "errorClass": "not_applicable"
+        }
+      ]
+    },
+    {
+      "id": "source_identity_mappings",
+      "direction": "canias_to_puls",
+      "sourceOfTruth": "canias",
+      "pulsTarget": "puls_integration.entity_identity_map",
+      "mvpStatus": "inbound_candidate",
+      "mutabilityInPuls": "integration_owned",
+      "identityStrategy": "source_namespace_id + external_id + canonical_table + canonical_id",
+      "fieldMappings": [
+        {
+          "caniasField": "ENTITY_TYPE",
+          "pulsColumn": "entity_type",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "EXTERNAL_ID",
+          "pulsColumn": "external_id",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "CANONICAL_TABLE",
+          "pulsColumn": "canonical_table",
+          "required": true,
+          "transform": "trim_string",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "CANONICAL_ID",
+          "pulsColumn": "canonical_id",
+          "required": true,
+          "transform": "parse_uuid",
+          "conflictRule": "external_id_match_updates_imported_row_only",
+          "errorClass": "invalid_transform"
+        }
+      ]
+    }
+  ]
+}

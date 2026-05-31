@@ -42,9 +42,9 @@ Status reflects the **PR13 capability taxonomy**, informed by PR11 inventory —
 | Contracts metadata | specs/05 §4.13 | `/sozlesmeler` | `contracts/overview.ts` | `puls_workflow.contracts`, calc summary | Contract metadata — `required seeded` | — | Contract risk explainer | `production_partial` | Real metadata read when tenant has rows; demo fallback for rich empty UX | PR13.3 |
 | Profile/account | specs/05 §4.14 | `/profil` | `profile/overview.ts` | `puls_core.employees`, auth link | Persona-linked employee — `required seeded` | — | Profile/persona context | `production_partial` | Auth→employee readiness path; `tenant_without_employee` does not silently demo-fallback | PR13.3 |
 | Settings | specs/05 §4.15 | `/ayarlar` | `settings/overview.ts` | Setup hub links | `readable empty-ok` | — | — | `production_partial` | Hub only; linked setup routes vary | PR13.1 |
-| ERP setup/readiness | specs/05 §4.16 | `/erp` | `setup/erp.ts` | `puls_integration.erp_*` | Canias connection row — `required seeded` (inactive) | ERP mapping CSV future | Setup coach | `db_backed_demo_required` | Read-only integration metadata; Canias label; demo fallback when empty | PR13.7 |
+| ERP setup/readiness | specs/05 §4.16 | `/erp` | `setup/erp.ts` | `puls_integration.erp_*` | Canias connection row — `required seeded` (inactive) | ERP mapping CSV future | Setup coach | `db_backed_demo_required` | Read-only integration metadata; Canias label; **PR13.7 discovery complete**; runtime connector future | PR13.8+ |
 | Menu / shell navigation | specs/05 mobile shell | `/menu` | `menu/overview.ts` | `puls_calc.menu_overview` | Tenant counts — `required seeded` | — | — | `production_partial` | Shell exception: no WithMeta/demo pill; navigation surface not domain CRUD | PR13.1 |
-| AI Coach | specs/05 §4.17 | `/ai-koc` | `ai-coach/overview.ts` | `puls_vault` (passive) | Full context tables — PR13.6 inventory | — | All touchpoints (target) | `embedded_demo_only` | **Implemented:** static/teaser (`STATIC_AI_COACH_OVERVIEW`). **Ambition:** process-embedded value layer. **Package gate:** PR13.6; not product-ready today | PR13.6 |
+| AI Coach | specs/05 §4.17 | `/ai-koc` | `ai-coach/overview.ts` | `puls_vault` (passive) | Full context tables — PR13.6 inventory | — | All touchpoints (target) | `production_partial` | **PR13.6:** DB context readiness. **PR13.7:** action boundary documented. Live LLM future. No live chat; no autonomous actions | PR13.8+ |
 | Performance parameters | specs/05 setup | `/performans-parametreleri` | `setup/performance-parameters.ts` | `puls_performance` params | Templates/bands — `required seeded` | CSV optional | Setup coach | `embedded_demo_only` | Demo fallback when DB empty | PR13.3 |
 
 ## Gap posture
@@ -52,7 +52,7 @@ Status reflects the **PR13 capability taxonomy**, informed by PR11 inventory —
 - **No silent ready:** Rows use `embedded_demo_only` or `production_partial` where demo fallback, static content, or empty aggregators fill the UI.
 - **Workflow creates are real:** Leave/expense **create** RPCs are implemented; packaging gap is overview + demo tenant completeness.
 - **Org mixed CRUD (PR11.2):** Departments/positions support source-aware mixed CRUD — PULS-owned create/edit, imported/ERP-owned read-only. Demo seed must include **both** row classes.
-- **AI Coach tension:** V1 spec = teaser not chat (implemented). Strategy = core value column (ambition). Neither implies product-ready until PR13.6.
+- **AI Coach tension:** V1 spec = teaser not chat (implemented). Strategy = core value column (ambition). PR13.6 proved DB context readiness; PR13.7 documents action boundary; live LLM remains future.
 
 ## PR13.1 handoff
 

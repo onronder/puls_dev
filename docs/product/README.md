@@ -98,6 +98,23 @@ PR13.6 **adds DB-backed AI Coach context readiness** for `/ai-koc` on top of PR1
 
 Verify: [`../../scripts/verify-13-ai-coach-db-context-readiness.sh`](../../scripts/verify-13-ai-coach-db-context-readiness.sh)
 
+## PR13.7 Canias + AI connector boundary readiness
+
+PR13.7 **defines Canias-first connector discovery and AI Coach action boundaries** on top of PR13.6 DB context readiness. No runtime connector, no LLM/live chat, no app source changes, no migrations, no seed CSV/manifest changes, no credentials.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [13_canias_connector_discovery.md](./13_canias_connector_discovery.md) | Canias-first discovery pack, inspect-first table, SoT rules, handoff |
+| [13_canias_field_mapping_matrix.json](./13_canias_field_mapping_matrix.json) | 13 data classes including `source_identity_mappings` |
+| [13_ai_coach_action_boundary.md](./13_ai_coach_action_boundary.md) | Allowed explain/draft vs forbidden mutations/sync/ERP writes |
+| [13_canias_ai_connector_readiness_matrix.md](./13_canias_ai_connector_readiness_matrix.md) | Route touchpoint matrix |
+| [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Health-only skeleton posture |
+| [`services/llm-gateway/README.md`](../../services/llm-gateway/README.md) | Future LLM boundary hint |
+| [`supabase/seed/puls-sanayi-v1/sql/09_validate_canias_connector_readiness.sql`](../supabase/seed/puls-sanayi-v1/sql/09_validate_canias_connector_readiness.sql) | Read-only Canias metadata validation |
+| [`scripts/verify-13-canias-ai-connector-boundary.sh`](../../scripts/verify-13-canias-ai-connector-boundary.sh) | PR13.7 verify gate |
+
+Verify: [`../../scripts/verify-13-canias-ai-connector-boundary.sh`](../../scripts/verify-13-canias-ai-connector-boundary.sh)
+
 ## Related packs
 
 | Pack | Entry point |
