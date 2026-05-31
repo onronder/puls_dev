@@ -1,5 +1,5 @@
 -- PR13.5 — JWT mutation proof smoke (RPC proof inside BEGIN … ROLLBACK).
--- Lifecycle RPC smoke targets reserved setup rows (UCRETSIZ leave type, HED expense category).
+-- Lifecycle RPC smoke targets reserved setup rows (ucretsiz leave type, hed expense category).
 -- Lifecycle RPCs require admin (superadmin/hr_admin) or service_role — not manager JWT.
 -- Do not persist mutations — transaction rolls back at end; JWT claims reset with transaction scope.
 --
@@ -211,32 +211,32 @@ BEGIN
 
     v_lifecycle_result := puls_workflow.deactivate_leave_type(v_lt_reserved, 'PR13.5 lifecycle smoke');
     IF COALESCE(v_lifecycle_result->>'status', '') NOT IN ('deactivated', 'already_inactive') THEN
-      RAISE EXCEPTION 'JWT smoke fail: deactivate_leave_type (UCRETSIZ): %', v_lifecycle_result;
+      RAISE EXCEPTION 'JWT smoke fail: deactivate_leave_type (ucretsiz): %', v_lifecycle_result;
     END IF;
 
     v_lifecycle_result := puls_workflow.restore_leave_type(v_lt_reserved);
     IF COALESCE(v_lifecycle_result->>'status', '') NOT IN ('restored', 'already_active') THEN
-      RAISE EXCEPTION 'JWT smoke fail: restore_leave_type (UCRETSIZ): %', v_lifecycle_result;
+      RAISE EXCEPTION 'JWT smoke fail: restore_leave_type (ucretsiz): %', v_lifecycle_result;
     END IF;
 
     v_lifecycle_result := puls_workflow.deactivate_expense_category(v_ec_reserved, 'PR13.5 lifecycle smoke');
     IF COALESCE(v_lifecycle_result->>'status', '') NOT IN ('deactivated', 'already_inactive') THEN
-      RAISE EXCEPTION 'JWT smoke fail: deactivate_expense_category (HED): %', v_lifecycle_result;
+      RAISE EXCEPTION 'JWT smoke fail: deactivate_expense_category (hed): %', v_lifecycle_result;
     END IF;
 
     v_lifecycle_result := puls_workflow.restore_expense_category(v_ec_reserved);
     IF COALESCE(v_lifecycle_result->>'status', '') NOT IN ('restored', 'already_active') THEN
-      RAISE EXCEPTION 'JWT smoke fail: restore_expense_category (HED): %', v_lifecycle_result;
+      RAISE EXCEPTION 'JWT smoke fail: restore_expense_category (hed): %', v_lifecycle_result;
     END IF;
 
     v_lifecycle_result := puls_workflow.deactivate_leave_type(v_lt_eski, 'PR13.5 already inactive check');
     IF v_lifecycle_result->>'status' IS DISTINCT FROM 'already_inactive' THEN
-      RAISE EXCEPTION 'JWT smoke fail: ESKI-TIP expected already_inactive, got %', v_lifecycle_result;
+      RAISE EXCEPTION 'JWT smoke fail: eski_tip expected already_inactive, got %', v_lifecycle_result;
     END IF;
 
     v_lifecycle_result := puls_workflow.deactivate_expense_category(v_ec_eski, 'PR13.5 already inactive check');
     IF v_lifecycle_result->>'status' IS DISTINCT FROM 'already_inactive' THEN
-      RAISE EXCEPTION 'JWT smoke fail: ESKI-KAT expected already_inactive, got %', v_lifecycle_result;
+      RAISE EXCEPTION 'JWT smoke fail: eski_kat expected already_inactive, got %', v_lifecycle_result;
     END IF;
 
     PERFORM set_config('request.jwt.claim.role', 'service_role', true);

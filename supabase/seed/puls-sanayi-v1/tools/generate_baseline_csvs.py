@@ -17,6 +17,10 @@ def uid(block: int, n: int) -> str:
     return f"a000{block:04d}-{block:04d}-40{block:02d}-80{block:02d}-{n:012d}"
 
 
+def setup_code(value: str) -> str:
+    return value.lower().replace("-", "_")
+
+
 def write_csv(name: str, headers: list[str], rows: list[dict]) -> None:
     path = CSV_DIR / name
     with path.open("w", newline="", encoding="utf-8") as f:
@@ -59,7 +63,7 @@ def main() -> None:
             {
                 "id": uid(4, i),
                 "tenant_id": TENANT,
-                "code": code,
+                "code": setup_code(code),
                 "name": name,
                 "parent_id": uid(4, 1) if code != "GM" else "",
                 "manager_employee_id": "",
@@ -69,7 +73,7 @@ def main() -> None:
                 "is_active": "true",
             }
         )
-    dept_by_code = {d["code"]: d for d in departments}
+    dept_by_code = {code: departments[i] for i, (code, *_rest) in enumerate(dept_spec)}
 
     cost_centers: list[dict] = []
     cc_codes = [
@@ -149,7 +153,7 @@ def main() -> None:
             pos = {
                 "id": uid(5, pos_idx),
                 "tenant_id": TENANT,
-                "code": p_code,
+                "code": setup_code(p_code),
                 "name": p_name,
                 "department_id": dept_by_code[code]["id"],
                 "level": str(level),
@@ -343,14 +347,14 @@ def main() -> None:
             step_idx += 1
 
     leave_types = [
-        ("YILLIK", "Yıllık İzin", "true", "14", uid(13, 1)),
-        ("HASTALIK", "Hastalık İzni", "true", "0", uid(13, 1)),
-        ("DOGUM", "Doğum İzni", "true", "112", uid(13, 3)),
-        ("EVLILIK", "Evlilik İzni", "true", "3", uid(13, 1)),
-        ("OLUM", "Ölüm İzni", "true", "3", uid(13, 1)),
-        ("UCRETSIZ", "Ücretsiz İzin", "false", "0", uid(13, 1)),
-        ("SAATLIK", "Saatlik İzin", "true", "0", uid(13, 1)),
-        ("ESKI-TIP", "Eski İzin Tipi (Pasif)", "true", "0", uid(13, 1)),
+        ("yillik", "Yıllık İzin", "true", "14", uid(13, 1)),
+        ("hastalik", "Hastalık İzni", "true", "0", uid(13, 1)),
+        ("dogum", "Doğum İzni", "true", "112", uid(13, 3)),
+        ("evlilik", "Evlilik İzni", "true", "3", uid(13, 1)),
+        ("olum", "Ölüm İzni", "true", "3", uid(13, 1)),
+        ("ucretsiz", "Ücretsiz İzin", "false", "0", uid(13, 1)),
+        ("saatlik", "Saatlik İzin", "true", "0", uid(13, 1)),
+        ("eski_tip", "Eski İzin Tipi (Pasif)", "true", "0", uid(13, 1)),
     ]
     lt_rows = []
     for i, (code, name, paid, ent, pol) in enumerate(leave_types, start=1):
@@ -365,10 +369,10 @@ def main() -> None:
                 "requires_document": "false",
                 "requires_approval": "true",
                 "show_in_calendar": "true",
-                "carry_over_allowed": "true" if code == "YILLIK" else "false",
-                "max_carry_over_days": "5" if code == "YILLIK" else "",
+                "carry_over_allowed": "true" if code == "yillik" else "false",
+                "max_carry_over_days": "5" if code == "yillik" else "",
                 "approval_policy_id": pol,
-                "is_active": "false" if code == "ESKI-TIP" else "true",
+                "is_active": "false" if code == "eski_tip" else "true",
             }
         )
     annual_lt = lt_rows[0]["id"]
@@ -393,16 +397,16 @@ def main() -> None:
         )
 
     expense_cats = [
-        ("YEMEK", "Yemek", "5000", uid(13, 2)),
-        ("ULASIM", "Ulaşım", "8000", uid(13, 2)),
-        ("KONAKLAMA", "Konaklama", "15000", uid(13, 2)),
-        ("MALZEME", "Ofis Malzemesi", "3000", uid(13, 2)),
-        ("EGITIM", "Eğitim", "10000", uid(13, 2)),
-        ("YAKIT", "Yakıt", "6000", uid(13, 2)),
-        ("BAKIM", "Bakım/Onarım", "7000", uid(13, 2)),
-        ("HED", "Hediye/İkram", "2000", uid(13, 2)),
-        ("DIGER", "Diğer", "4000", uid(13, 2)),
-        ("ESKI-KAT", "Eski Kategori (Pasif)", "1000", uid(13, 2)),
+        ("yemek", "Yemek", "5000", uid(13, 2)),
+        ("ulasim", "Ulaşım", "8000", uid(13, 2)),
+        ("konaklama", "Konaklama", "15000", uid(13, 2)),
+        ("malzeme", "Ofis Malzemesi", "3000", uid(13, 2)),
+        ("egitim", "Eğitim", "10000", uid(13, 2)),
+        ("yakit", "Yakıt", "6000", uid(13, 2)),
+        ("bakim", "Bakım/Onarım", "7000", uid(13, 2)),
+        ("hed", "Hediye/İkram", "2000", uid(13, 2)),
+        ("diger", "Diğer", "4000", uid(13, 2)),
+        ("eski_kat", "Eski Kategori (Pasif)", "1000", uid(13, 2)),
     ]
     exp_rows = []
     for i, (code, name, lim, pol) in enumerate(expense_cats, start=1):
@@ -416,8 +420,8 @@ def main() -> None:
                 "receipt_required_over": "500",
                 "default_vat_rate": "20",
                 "approval_policy_id": pol,
-                "erp_account_code": f"770.{code}",
-                "is_active": "false" if code == "ESKI-KAT" else "true",
+                "erp_account_code": f"770.{i:02d}",
+                "is_active": "false" if code == "eski_kat" else "true",
             }
         )
 
@@ -626,7 +630,7 @@ def main() -> None:
         )
 
     for i in range(25):
-        emp = employees[(i * 5 + 2) % len(employees)]
+        emp = employees[(i * 7 + 2) % len(employees)]
         if emp["id"] == ceo_id:
             emp = employees[3]
         perf21.append(

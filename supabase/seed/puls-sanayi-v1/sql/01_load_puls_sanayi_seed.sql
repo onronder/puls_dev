@@ -48,7 +48,7 @@ SELECT id,tenant_id,legal_entity_id,code,name,is_active::boolean FROM st_loc ON 
 CREATE TEMP TABLE st_cc (LIKE puls_core.cost_centers INCLUDING DEFAULTS);
 \copy st_cc (id,tenant_id,legal_entity_id,parent_cost_center_id,code,name,source_namespace_id,external_id,is_active) FROM 'csv/10_cost_centers.csv' CSV HEADER
 INSERT INTO puls_core.cost_centers (id,tenant_id,legal_entity_id,parent_cost_center_id,code,name,source_namespace_id,external_id,is_active)
-SELECT id,tenant_id,legal_entity_id,NULLIF(parent_cost_center_id,'')::uuid,code,name,NULLIF(source_namespace_id,'')::uuid,NULLIF(external_id,''),is_active::boolean
+SELECT id,tenant_id,legal_entity_id,parent_cost_center_id,code,name,source_namespace_id,NULLIF(external_id,''),is_active::boolean
 FROM st_cc ON CONFLICT (id) DO NOTHING;
 
 -- Phase 7: departments (defer manager/cost_center FKs)
@@ -65,7 +65,7 @@ FROM st_dept ON CONFLICT (id) DO NOTHING;
 CREATE TEMP TABLE st_pos (LIKE puls_core.positions INCLUDING DEFAULTS);
 \copy st_pos (id,tenant_id,code,name,department_id,level,parent_position_id,employment_type,norm_headcount,external_source,external_position_id,is_active) FROM 'csv/05_positions.csv' CSV HEADER
 INSERT INTO puls_core.positions (id,tenant_id,code,name,department_id,level,parent_position_id,employment_type,norm_headcount,external_source,external_position_id,is_active)
-SELECT id,tenant_id,code,name,department_id,level::int,NULLIF(parent_position_id,'')::uuid,employment_type,norm_headcount::int,
+SELECT id,tenant_id,code,name,department_id,level::int,parent_position_id,employment_type,norm_headcount::int,
   NULLIF(external_source,''),NULLIF(external_position_id,''),is_active::boolean
 FROM st_pos ON CONFLICT (id) DO NOTHING;
 
@@ -98,10 +98,14 @@ INSERT INTO puls_core.employee_cost_center_assignments (id,tenant_id,employee_id
 SELECT id,tenant_id,employee_id,cost_center_id,starts_on::date,is_active::boolean,source FROM st_cca ON CONFLICT (id) DO NOTHING;
 
 -- Phase 14: post-load department updates
+-- Imported departments are read-only outside import apply; this bootstrap loader
+-- only enables the import-apply flag for the FK backfill phase inside this transaction.
+SELECT set_config('puls.import_apply.active', 'true', true);
 UPDATE puls_core.departments d SET
   manager_employee_id = NULLIF(s.manager_employee_id,'')::uuid,
   cost_center_id = NULLIF(s.cost_center_id,'')::uuid
 FROM st_dept s WHERE d.id = s.id;
+SELECT set_config('puls.import_apply.active', 'false', true);
 
 -- Phase 15: approval policies + steps
 CREATE TEMP TABLE st_apol (
@@ -133,7 +137,7 @@ CREATE TEMP TABLE st_lb (LIKE puls_workflow.leave_balances INCLUDING DEFAULTS);
 \copy st_lb (id,tenant_id,employee_id,leave_type_id,period_year,source,entitlement_days,carried_over_days,adjustment_days,used_days,pending_days,as_of_date) FROM 'csv/14_leave_balances.csv' CSV HEADER
 INSERT INTO puls_workflow.leave_balances (id,tenant_id,employee_id,leave_type_id,period_year,source,entitlement_days,carried_over_days,adjustment_days,used_days,pending_days,as_of_date)
 SELECT id,tenant_id,employee_id,leave_type_id,period_year::int,source::puls_workflow.balance_source,
-  entitlement_days::numeric,carried_over_days::numeric,adjustment_days::numeric,used_days::numeric,pending_days::numeric,NULLIF(as_of_date,'')::date
+  entitlement_days::numeric,carried_over_days::numeric,adjustment_days::numeric,used_days::numeric,pending_days::numeric,as_of_date
 FROM st_lb ON CONFLICT (id) DO NOTHING;
 
 CREATE TEMP TABLE st_ec (
