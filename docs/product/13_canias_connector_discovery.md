@@ -84,7 +84,7 @@ See [`13_canias_field_mapping_matrix.json`](./13_canias_field_mapping_matrix.jso
 
 - departments, positions, employees, cost_centers (seed proves depts/positions/cost centers partially)
 - legal_entities, locations (discovery-only)
-- leave_balances (SoT: TBD workshop — JSON enum `tbd_workshop`)
+- leave_balances (SoT: TBD workshop — JSON enum `tbd_workshop`; maps insertable inputs `entitlement_days`, `carried_over_days`, `adjustment_days`, `used_days`, `pending_days`, `as_of_date`; `remaining_days` is schema-derived, not insertable)
 - source_identity_mappings (13 seed rows prove reconciliation pattern)
 
 ## Outbound/export candidates

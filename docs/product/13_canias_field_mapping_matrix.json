@@ -242,14 +242,62 @@
       "mvpStatus": "discovery_only",
       "mutabilityInPuls": "read_only_when_imported",
       "identityStrategy": "source_namespace_id + external_id + entity_identity_map",
+      "derivedColumns": [
+        {
+          "pulsColumn": "remaining_days",
+          "definition": "entitlement_days + carried_over_days + adjustment_days - used_days - pending_days",
+          "insertable": false,
+          "schemaNote": "GENERATED ALWAYS STORED — excluded from PR13.4 seed insertableColumns"
+        }
+      ],
       "fieldMappings": [
         {
           "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
-          "pulsColumn": "remaining_days",
+          "pulsColumn": "entitlement_days",
           "required": false,
           "transform": "parse_decimal",
           "conflictRule": "workshop_decides_source_of_truth",
           "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "carried_over_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "adjustment_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "used_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "pending_days",
+          "required": false,
+          "transform": "parse_decimal",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "missing_required_field"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "as_of_date",
+          "required": false,
+          "transform": "parse_date",
+          "conflictRule": "workshop_decides_source_of_truth",
+          "errorClass": "invalid_transform"
         }
       ]
     },
@@ -302,7 +350,23 @@
       "fieldMappings": [
         {
           "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
-          "pulsColumn": "decision_status",
+          "pulsColumn": "status",
+          "required": false,
+          "transform": "audit_summary_export",
+          "conflictRule": "human_reviewed_export",
+          "errorClass": "export_not_ready"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "decision_note",
+          "required": false,
+          "transform": "audit_summary_export",
+          "conflictRule": "human_reviewed_export",
+          "errorClass": "export_not_ready"
+        },
+        {
+          "caniasField": "TBD_FROM_CUSTOMER_DISCOVERY",
+          "pulsColumn": "decided_at",
           "required": false,
           "transform": "audit_summary_export",
           "conflictRule": "human_reviewed_export",
