@@ -246,6 +246,14 @@ if ! grep -Fq 'DATABASE_URL' <<< "$RUNNER"; then
   echo "FAIL: runner must use DATABASE_URL"
   exit 1
 fi
+if ! grep -Fq 'admin_user_id:-' <<< "$RUNNER"; then
+  echo "FAIL: runner auth smoke gate must include admin_user_id persona env"
+  exit 1
+fi
+if ! grep -Fq 'hr_admin_user_id:-' <<< "$RUNNER"; then
+  echo "FAIL: runner auth smoke gate must include hr_admin_user_id persona env"
+  exit 1
+fi
 if grep -Ei '(password|secret|token)=' <<< "$RUNNER"; then
   echo "FAIL: runner must not hardcode credentials"
   exit 1
