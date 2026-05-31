@@ -117,12 +117,23 @@ Verify: [`../../scripts/verify-13-canias-ai-connector-boundary.sh`](../../script
 
 ## PR13 closeout planning
 
-PR13.0-13.7 established the packaging foundation. Closeout is bounded to remote proof, demo-off route smoke, and fallback hardening before PR14+.
+PR13.0-13.7 established the packaging foundation. Closeout is bounded to local proof, remote tenant proof, demo-off route smoke, and fallback hardening before PR14+.
 
 | Document | Purpose |
 |----------|---------|
 | [13_v1_packaging_signoff_roadmap.md](./13_v1_packaging_signoff_roadmap.md) | PR13.8-13.10 prompts, stop conditions, and final claim boundaries |
-| [13_v1_remaining_work_register.md](./13_v1_remaining_work_register.md) | Living checklist for remote proof, auth personas, route smoke, fallback guard, and PR14 handoff |
+| [13_v1_remaining_work_register.md](./13_v1_remaining_work_register.md) | Living checklist for local proof, remote tenant proof, auth personas, route smoke, fallback guard, and PR14 handoff |
+
+## PR13.8 Local Supabase packaging + mandatory auth proof
+
+PR13.8 shifts the next gate to **local Supabase first**. Remote Puls Teknik A.S. tenant work waits until the local DB proof and mandatory auth/JWT smoke pass with real local auth UUIDs.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [13_local_supabase_packaging_auth_proof.md](./13_local_supabase_packaging_auth_proof.md) | Local proof runbook, mandatory auth rules, stop conditions |
+| [13_local_supabase_packaging_auth_proof_results.md](./13_local_supabase_packaging_auth_proof_results.md) | Sanitized local proof result template |
+| [`scripts/run-13-local-supabase-auth-proof.sh`](../../scripts/run-13-local-supabase-auth-proof.sh) | Runs SQL `00-09` plus mandatory `05`/`06` auth smoke |
+| [`scripts/verify-13-local-supabase-auth-proof.sh`](../../scripts/verify-13-local-supabase-auth-proof.sh) | PR13.8 local proof verify gate |
 
 ## Related packs
 

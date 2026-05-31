@@ -10,11 +10,13 @@ BEGIN;
 -- Defensive FK detach before delete (departments.manager_employee_id -> employees)
 UPDATE puls_core.departments
 SET manager_employee_id = NULL, cost_center_id = NULL
-WHERE tenant_id = :'tenant_id'::uuid;
+WHERE tenant_id = :'tenant_id'::uuid
+  AND (manager_employee_id IS NOT NULL OR cost_center_id IS NOT NULL);
 
 UPDATE puls_core.employees
-SET manager_employee_id = NULL, legal_entity_id = NULL, location_id = NULL, cost_center_id = NULL
-WHERE tenant_id = :'tenant_id'::uuid;
+SET manager_employee_id = NULL
+WHERE tenant_id = :'tenant_id'::uuid
+  AND manager_employee_id IS NOT NULL;
 
 DELETE FROM puls_integration.entity_identity_map WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_integration.erp_field_mappings WHERE tenant_id = :'tenant_id'::uuid;
@@ -30,6 +32,8 @@ DELETE FROM puls_workflow.leave_balances WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_workflow.leave_requests WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_workflow.expense_claims WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_workflow.approval_requests WHERE tenant_id = :'tenant_id'::uuid;
+DELETE FROM puls_workflow.leave_type_lifecycle_events WHERE tenant_id = :'tenant_id'::uuid;
+DELETE FROM puls_workflow.expense_category_lifecycle_events WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_workflow.leave_types WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_workflow.expense_categories WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_workflow.approval_policy_steps WHERE tenant_id = :'tenant_id'::uuid;

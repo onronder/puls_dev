@@ -4,29 +4,30 @@ Living checklist for the remaining V1 packaging work. Use this instead of openin
 
 ## Working Rule
 
-PR13 closeout is limited to proof, route smoke, and fallback hardening. New product features, deep domain completion, Canias runtime, live AI, SDK/API productization, and CRM integrations move to PR14+ unless they block a core demo route.
+PR13 closeout is limited to local proof, remote tenant proof, route smoke, and fallback hardening. New product features, deep domain completion, Canias runtime, live AI, SDK/API productization, and CRM integrations move to PR14+ unless they block a core demo route.
 
 ## Summary Board
 
 | ID | Workstream | Status | Target | Blocker / Input |
 |----|------------|--------|--------|-----------------|
-| W1 | Remote DB seed/proof | Not started | PR13.8 | `DATABASE_URL` / target Postgres URI |
-| W2 | Auth persona proof | Not started | PR13.8 | Dashboard users + UUIDs |
-| W3 | Demo-off route smoke | Not started | PR13.9 | Remote proof complete |
-| W4 | Screen readiness truth table | Not started | PR13.9 | Route smoke observations |
-| W5 | Demo fallback guard | Not started | PR13.10 | Final route truth table |
+| W1 | Local Supabase seed/proof | Not started | PR13.8 | Docker/Supabase running + local `DATABASE_URL` |
+| W2 | Mandatory auth persona proof | Not started | PR13.8 | Local auth users + UUIDs |
+| W3 | Remote Puls Teknik tenant proof | Waiting | PR13.9 | Local proof green + tenant strategy |
+| W4 | Demo-off route smoke | Not started | PR13.10 | Local/remote proof complete |
+| W5 | Screen readiness truth table + fallback guard | Not started | PR13.10 | Route smoke observations |
 | W6 | Canias customer discovery | Waiting | PR14+ | Customer export/API/data model |
 | W7 | Live AI / LLM gateway | Waiting | PR14+ | Product decision + security boundary |
 | W8 | Production hardening | Waiting | PR14+ | Post-demo acceptance |
 
 ## Detailed Checklist
 
-### W1 — Remote DB Seed / Proof
+### W1 — Local Supabase Seed / Proof
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Confirm target Supabase/Postgres project | Pending | Do not commit connection string |
-| Run `00_reset_puls_sanayi_seed.sql` | Pending | Target DB only |
+| Confirm local Supabase/Postgres is running | Pending | Docker must be reachable |
+| Export local `DATABASE_URL` | Pending | Do not commit connection string |
+| Run `00_reset_puls_sanayi_seed.sql` | Pending | Local DB only |
 | Run `01_load_puls_sanayi_seed.sql` | Pending | psql-local `\copy`; SQL Editor cannot read local CSV |
 | Run `02_validate_puls_sanayi_seed.sql` | Pending | Baseline proof |
 | Run `03_generate_workflow_scenarios.sql` | Pending | Workflow scenario proof |
@@ -36,14 +37,14 @@ PR13 closeout is limited to proof, route smoke, and fallback hardening. New prod
 | Run `09_validate_canias_connector_readiness.sql` | Pending | Canias metadata proof |
 | Record sanitized results | Pending | No secrets, no full connection strings |
 
-### W2 — Auth Persona Proof
+### W2 — Mandatory Auth Persona Proof
 
 | Persona | Purpose | Status | Notes |
 |---------|---------|--------|-------|
-| `admin_user_id` | Admin/settings/lifecycle smoke | Pending | Create in Dashboard |
-| `hr_admin_user_id` | Setup and HR admin routes | Pending | Create in Dashboard |
-| `manager_user_id` | Approval/performance manager proof | Pending | Create in Dashboard |
-| `employee_user_id` | Leave/expense/profile proof | Pending | Create in Dashboard |
+| `admin_user_id` | Admin/settings/lifecycle smoke | Pending | Create in local Supabase Studio/Auth |
+| `hr_admin_user_id` | Setup and HR admin routes | Pending | Create in local Supabase Studio/Auth |
+| `manager_user_id` | Approval/performance manager proof | Pending | Create in local Supabase Studio/Auth |
+| `employee_user_id` | Leave/expense/profile proof | Pending | Create in local Supabase Studio/Auth |
 | `incomplete_setup_user_id` | Edge case | Optional | Only if useful |
 
 Required scripts:
@@ -51,9 +52,19 @@ Required scripts:
 - `05_link_auth_personas_template.sql`
 - `06_jwt_mutation_proof_smoke.sql`
 
-If persona UUIDs are unavailable, document as "not run" in PR13.8. Do not fake auth proof.
+If required persona UUIDs are unavailable, PR13.8 is not signed off. Do not fake auth proof.
 
-### W3 — Demo-Off Route Smoke
+### W3 — Remote Puls Teknik Tenant Proof
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Decide remote tenant strategy | Waiting | Do not mutate PR13.4 baseline silently |
+| Prepare Puls Teknik A.S. tenant posture | Waiting | Separate tenant after local green |
+| Run SQL proof remotely | Waiting | Requires remote Postgres URI |
+| Run auth proof remotely | Waiting | Requires remote auth personas |
+| Record sanitized remote results | Waiting | No secrets, no full connection strings |
+
+### W4 — Demo-Off Route Smoke
 
 | Route | Target Status | Smoke Status | Notes |
 |-------|---------------|--------------|-------|
@@ -85,7 +96,7 @@ Smoke evidence should record:
 - expected core content present
 - accepted gaps
 
-### W4 — Screen Readiness Truth Table
+### W5 — Screen Readiness Truth Table + Demo Fallback Guard
 
 For each route, record:
 
@@ -101,7 +112,7 @@ For each route, record:
 
 This is the document that answers: "What is actually ready, what is demo-ready, and what is future?"
 
-### W5 — Demo Fallback Guard
+#### Demo Fallback Guard Tasks
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -155,4 +166,3 @@ Do not say:
 Do not say:
 
 > AI Coach is live.
-
