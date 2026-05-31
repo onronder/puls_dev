@@ -1,0 +1,2 @@
+id,tenant_id,code,name,source_type,priority_rank,connection_id,is_active
+a0000018-0018-4018-8018-000000000001,a0000001-0001-4001-8001-000000000001,CANIAS,Canias ERP Kaynağı,erp,1,a0000016-0016-4016-8016-000000000001,true
