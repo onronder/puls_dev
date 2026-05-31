@@ -39,3 +39,12 @@ Run from pack root with local `psql` (see `README.md`). Supabase SQL Editor cann
 ```bash
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/01_load_puls_sanayi_seed.sql
 ```
+
+## PR13.5 scenario layer (after baseline)
+
+| Step | Script |
+|------|--------|
+| 1 | `03_generate_workflow_scenarios.sql` |
+| 2 | `04_generate_performance_scenarios.sql` |
+| 3 | `07_validate_packaging_proof.sql` |
+| optional | `05_link_auth_personas_template.sql` → `06_jwt_mutation_proof_smoke.sql` |
