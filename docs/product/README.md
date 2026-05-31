@@ -72,6 +72,18 @@ PR13.4 **implements PR13.3 spec + PR13.3A crosswalk** as importable CSV/SQL arti
 
 Verify: [`../../scripts/verify-13-synthetic-seed-artifacts.sh`](../../scripts/verify-13-synthetic-seed-artifacts.sh)
 
+## PR13.5 bootstrap proof pack
+
+PR13.5 **adds scenario/proof SQL on top of PR13.4 baseline** without changing CSV/manifest content. Defers embedded demo removal to later PRs. **No** app code or migrations.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [13_seed_bootstrap_proof_runbook.md](./13_seed_bootstrap_proof_runbook.md) | Load order, two-layer proof, auth template, inspect-first UUIDs |
+| [13_route_packaging_proof_matrix.md](./13_route_packaging_proof_matrix.md) | 20-route packaging proof with `VITE_PULS_DEMO_MODE=false` |
+| [`supabase/seed/puls-sanayi-v1/sql/03_*` … `07_*`](../supabase/seed/puls-sanayi-v1/sql/) | Scenario generation, auth link template, JWT smoke, packaging validation |
+
+Verify: [`../../scripts/verify-13-seed-bootstrap-proof.sh`](../../scripts/verify-13-seed-bootstrap-proof.sh)
+
 ## Related packs
 
 | Pack | Entry point |

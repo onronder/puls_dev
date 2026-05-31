@@ -71,7 +71,19 @@ Historical legacy fixture names (e.g. in old `seed-demo.sql`) are not the canoni
 
 ## PR13.5 handoff
 
-PR13.5 loads this pack, runs scenario scripts, binds auth users, and proves routes with **`VITE_PULS_DEMO_MODE=false`**.
+PR13.5 loads this pack, runs scenario scripts (`03`–`07`), binds auth users (`05`–`06`), and proves routes with **`VITE_PULS_DEMO_MODE=false`**.
+
+See [`docs/product/13_seed_bootstrap_proof_runbook.md`](../../docs/product/13_seed_bootstrap_proof_runbook.md).
+
+### PR13.5 SQL (after baseline load)
+
+| Script | Purpose |
+|--------|---------|
+| `sql/03_generate_workflow_scenarios.sql` | Leave/expense scenarios + lifecycle event narrative |
+| `sql/04_generate_performance_scenarios.sql` | KPIs, evaluations, scores (80+ combined) |
+| `sql/05_link_auth_personas_template.sql` | Auth UUID → `employees.user_id` template |
+| `sql/06_jwt_mutation_proof_smoke.sql` | RPC proof (ROLLBACK) |
+| `sql/07_validate_packaging_proof.sql` | Baseline + scenario + calc validation |
 
 ## References
 
