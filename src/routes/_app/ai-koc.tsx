@@ -196,7 +196,12 @@ function AiKocPage() {
                   <p className="mt-3 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
                     {t(domain.guardrailKey)}
                   </p>
-                  <Button type="button" variant="link" className="mt-2 h-auto p-0 text-xs" asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="mt-2 h-auto justify-start p-0 text-xs text-[var(--color-primary)] hover:bg-transparent hover:text-[var(--color-primary-bright)]"
+                    asChild
+                  >
                     <Link to={domain.route}>{domain.route}</Link>
                   </Button>
                 </li>
