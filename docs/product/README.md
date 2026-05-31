@@ -49,6 +49,18 @@ PR13.3 **extends PR13.1 and PR13.2** into a DB-backed synthetic company specific
 
 Verify: [`../../scripts/verify-13-synthetic-company-seed-spec.sh`](../../scripts/verify-13-synthetic-company-seed-spec.sh)
 
+## PR13.3A alignment pack
+
+Bridge PR before PR13.4 — aligns [`Puls_Veri_Sozlugu_v1.0.xlsx`](../V1%20Dokümanlar/Puls_Veri_Sozlugu_v1.0.xlsx) with Supabase/Postgres + adapter architecture and PR13.3 seed spec. **Does not replace** PR13.3 docs; **no** CSV/SQL or `supabase/seed/**` in this PR.
+
+| Document | Purpose |
+|----------|---------|
+| [13_data_dictionary_seed_alignment.md](./13_data_dictionary_seed_alignment.md) | Domain alignment matrix, route aliases, seed coverage decisions |
+| [13_data_dictionary_architecture_notes.md](./13_data_dictionary_architecture_notes.md) | Microservice labels vs modular Supabase MVP architecture |
+| [13_data_dictionary_seed_crosswalk.json](./13_data_dictionary_seed_crosswalk.json) | Machine-readable domain crosswalk for PR13.4 generator |
+
+Verify: [`../../scripts/verify-13-data-dictionary-alignment.sh`](../../scripts/verify-13-data-dictionary-alignment.sh)
+
 ## Related packs
 
 | Pack | Entry point |
