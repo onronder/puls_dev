@@ -308,13 +308,23 @@ if ! grep -Fq "manager_employee_id = NULL" <<< "$RESET_SQL"; then
   exit 1
 fi
 
-if grep -E $'\\copy st_[a-z_0-9]+ FROM' <<< "$LOAD_SQL"; then
-  echo "FAIL: load SQL \\copy must use explicit column lists (no bare FROM after temp table name)"
-  exit 1
-fi
+for bare_copy_table in st_lt st_ec st_map st_pc st_con; do
+  if grep -E "\\copy ${bare_copy_table} FROM" <<< "$LOAD_SQL"; then
+    echo "FAIL: load SQL \\copy ${bare_copy_table} must use explicit column list"
+    exit 1
+  fi
+done
 
 if grep -Fq "INSERT INTO puls_workflow.leave_types SELECT * FROM st_lt" <<< "$LOAD_SQL"; then
   echo "FAIL: load SQL must not use INSERT SELECT * from staging tables"
+  exit 1
+fi
+if grep -Fq "INSERT INTO puls_workflow.expense_categories SELECT * FROM st_ec" <<< "$LOAD_SQL"; then
+  echo "FAIL: load SQL must not use INSERT SELECT * from st_ec"
+  exit 1
+fi
+if grep -Fq "INSERT INTO puls_performance.performance_cycles SELECT * FROM st_pc" <<< "$LOAD_SQL"; then
+  echo "FAIL: load SQL must not use INSERT SELECT * from st_pc"
   exit 1
 fi
 
