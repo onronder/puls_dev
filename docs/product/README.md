@@ -115,6 +115,15 @@ PR13.7 **defines Canias-first connector discovery and AI Coach action boundaries
 
 Verify: [`../../scripts/verify-13-canias-ai-connector-boundary.sh`](../../scripts/verify-13-canias-ai-connector-boundary.sh)
 
+## PR13 closeout planning
+
+PR13.0-13.7 established the packaging foundation. Closeout is bounded to remote proof, demo-off route smoke, and fallback hardening before PR14+.
+
+| Document | Purpose |
+|----------|---------|
+| [13_v1_packaging_signoff_roadmap.md](./13_v1_packaging_signoff_roadmap.md) | PR13.8-13.10 prompts, stop conditions, and final claim boundaries |
+| [13_v1_remaining_work_register.md](./13_v1_remaining_work_register.md) | Living checklist for remote proof, auth personas, route smoke, fallback guard, and PR14 handoff |
+
 ## Related packs
 
 | Pack | Entry point |
