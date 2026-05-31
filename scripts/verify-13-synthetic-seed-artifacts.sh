@@ -180,6 +180,28 @@ if (emp.headers.includes('user_id')) {
   process.exit(1);
 }
 
+for (const rel of [
+  'supabase/seed/puls-sanayi-v1/csv/04_departments.csv',
+  'supabase/seed/puls-sanayi-v1/csv/05_positions.csv',
+  'supabase/seed/puls-sanayi-v1/csv/12_leave_types.csv',
+  'supabase/seed/puls-sanayi-v1/csv/15_expense_categories.csv',
+]) {
+  const { rows } = readCsv(rel);
+  for (const row of rows) {
+    if (!/^[a-z][a-z0-9_]{1,63}$/.test(row.code || '')) {
+      console.error(`FAIL: ${rel} code '${row.code}' must be lowercase setup slug`);
+      process.exit(1);
+    }
+  }
+}
+
+for (const row of readCsv('supabase/seed/puls-sanayi-v1/csv/15_expense_categories.csv').rows) {
+  if (row.erp_account_code && !/^[0-9]{3}(\.[0-9]{2})?$/.test(row.erp_account_code)) {
+    console.error(`FAIL: expense category erp_account_code '${row.erp_account_code}' must match guardrail format`);
+    process.exit(1);
+  }
+}
+
 for (const [fileKey, map] of Object.entries(manifest.tableColumnMap)) {
   const actualRel = `supabase/seed/puls-sanayi-v1/${fileKey}`;
   const { headers, rows } = readCsv(actualRel);
@@ -220,6 +242,15 @@ for (const [fileKey, map] of Object.entries(manifest.tableColumnMap)) {
     if (fileKey.includes('21_') && (counts.career_profiles || 0) >= 100) {
       console.error('FAIL: career_profiles bloat guard');
       process.exit(1);
+    }
+    if (fileKey.includes('21_')) {
+      const careerEmployeeIds = rows
+        .filter((row) => row.target_table === 'career_profiles')
+        .map((row) => row.employee_id);
+      if (new Set(careerEmployeeIds).size !== careerEmployeeIds.length) {
+        console.error('FAIL: career_profiles must be unique per employee_id');
+        process.exit(1);
+      }
     }
   } else {
     const allowed = new Set([...(map.insertableColumns || []), ...(map.stagingOnlyColumns || [])]);
@@ -308,6 +339,11 @@ if ! grep -Fq "manager_employee_id = NULL" <<< "$RESET_SQL"; then
   exit 1
 fi
 
+if ! grep -Fq "puls.import_apply.active" <<< "$LOAD_SQL"; then
+  echo "FAIL: load SQL must use import-apply context for imported department FK backfill"
+  exit 1
+fi
+
 for bare_copy_table in st_lt st_ec st_map st_pc st_con; do
   if grep -E "\\copy ${bare_copy_table} FROM" <<< "$LOAD_SQL"; then
     echo "FAIL: load SQL \\copy ${bare_copy_table} must use explicit column list"
@@ -327,6 +363,18 @@ if grep -Fq "INSERT INTO puls_performance.performance_cycles SELECT * FROM st_pc
   echo "FAIL: load SQL must not use INSERT SELECT * from st_pc"
   exit 1
 fi
+
+for typed_nullif_pattern in \
+  "NULLIF(parent_cost_center_id,'')::uuid" \
+  "NULLIF(source_namespace_id,'')::uuid" \
+  "NULLIF(parent_position_id,'')::uuid" \
+  "NULLIF(as_of_date,'')::date"
+do
+  if grep -Fq "$typed_nullif_pattern" <<< "$LOAD_SQL"; then
+    echo "FAIL: load SQL must not NULLIF already-typed staging column: $typed_nullif_pattern"
+    exit 1
+  fi
+done
 
 VALIDATE_SQL="$(file_at_ref "${PACK}/sql/02_validate_puls_sanayi_seed.sql")"
 for needle in "legal_entity_assignments expected 120" "location_assignments expected 120" "positions expected 35-50" "leave_balances expected >=120" "contracts expected 15-30" "entity_identity_map expected 6-15"; do

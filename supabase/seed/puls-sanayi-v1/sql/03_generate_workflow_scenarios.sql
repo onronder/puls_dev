@@ -11,8 +11,8 @@
 --   3. leave_requests / expense_claims (external_source = 'pr13_scenario')
 --
 -- Lifecycle-smoke-reserved (no scenario open/pending on these):
---   leave type UCRETSIZ  a0000012-0012-4012-8012-000000000006
---   expense category HED a0000015-0015-4015-8015-000000000008
+--   leave type ucretsiz a0000012-0012-4012-8012-000000000006
+--   expense category hed a0000015-0015-4015-8015-000000000008
 
 \set ON_ERROR_STOP on
 
