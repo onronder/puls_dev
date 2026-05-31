@@ -1,0 +1,489 @@
+{
+  "version": "13.3A",
+  "sourceWorkbook": "docs/V1 Dokümanlar/Puls_Veri_Sozlugu_v1.0.xlsx",
+  "canonicalTenant": "Puls Sanayi A.Ş.",
+  "architectureDecision": {
+    "current": "Supabase/Postgres + RLS/RPC/views + src/lib/data adapters",
+    "dictionaryMicroservices": "future_service_boundary",
+    "physicalMicroservicesInMvp": false
+  },
+  "statuses": [
+    "covered_by_seed",
+    "derived_calc",
+    "scenario_generated",
+    "future_not_v1",
+    "sensitive_system",
+    "configuration_static",
+    "not_current_route",
+    "needs_mapping_review"
+  ],
+  "domains": [
+    {
+      "sheet": "🗂️ Ortak Alanlar",
+      "sheetPlainName": "Ortak Alanlar",
+      "namespace": "",
+      "dictionaryUrl": "",
+      "dictionaryMicroservice": "",
+      "currentRoutes": [],
+      "dbObjects": [],
+      "seedArtifacts": [],
+      "defaultStatus": "configuration_static",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label  maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "📊 KPI Hedefleri",
+      "sheetPlainName": "KPI Hedefleri",
+      "namespace": "kpi",
+      "dictionaryUrl": "/kpi-hedefleri",
+      "dictionaryMicroservice": "kpi-svc",
+      "currentRoutes": [],
+      "dbObjects": [
+        "puls_performance.performance_kpis"
+      ],
+      "seedArtifacts": [],
+      "defaultStatus": "future_not_v1",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [
+        {
+          "field": "kpi_card_score",
+          "status": "derived_calc",
+          "dbObject": "puls_calc.performance_overview",
+          "seedArtifactOwner": "PR13.5",
+          "notes": "Computed KPI cards"
+        }
+      ],
+      "notes": "Workbook label kpi-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "📝 Performans",
+      "sheetPlainName": "Performans",
+      "namespace": "performans",
+      "dictionaryUrl": "/performans/degerlendirme",
+      "dictionaryMicroservice": "performans-svc",
+      "currentRoutes": [
+        "/performans"
+      ],
+      "dbObjects": [
+        "puls_performance.performance_cycles",
+        "puls_performance.performance_scores",
+        "puls_performance.competency_evaluations",
+        "puls_calc.performance_overview"
+      ],
+      "seedArtifacts": [
+        "12_performance_cycles.csv",
+        "12_performance_scores.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [
+        {
+          "field": "evaluation_form_submit",
+          "status": "scenario_generated",
+          "dbObject": "puls_performance.competency_evaluations",
+          "seedArtifactOwner": "PR13.5",
+          "notes": "Post-bootstrap scenario"
+        }
+      ],
+      "notes": "Workbook label performans-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "🎓 Eğitim Analizi",
+      "sheetPlainName": "Eğitim Analizi",
+      "namespace": "okul",
+      "dictionaryUrl": "/okul/ihtiyac-analizi",
+      "dictionaryMicroservice": "training-svc",
+      "currentRoutes": [
+        "/egitim"
+      ],
+      "dbObjects": [
+        "puls_performance.training_needs"
+      ],
+      "seedArtifacts": [
+        "13_training_needs.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label training-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "🗺️ Kariyer Haritası",
+      "sheetPlainName": "Kariyer Haritası",
+      "namespace": "kariyer",
+      "dictionaryUrl": "/kariyer/harita",
+      "dictionaryMicroservice": "career-svc",
+      "currentRoutes": [
+        "/kariyer"
+      ],
+      "dbObjects": [
+        "puls_performance.career_profiles"
+      ],
+      "seedArtifacts": [
+        "13_career_profiles.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label career-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "⚖️ İş Değerleme",
+      "sheetPlainName": "İş Değerleme",
+      "namespace": "kale",
+      "dictionaryUrl": "/kale/is-degerleme",
+      "dictionaryMicroservice": "job-eval-svc",
+      "currentRoutes": [
+        "/is-degerleme"
+      ],
+      "dbObjects": [],
+      "seedArtifacts": [],
+      "defaultStatus": "future_not_v1",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label job-eval-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "📋 Görev Tanımı",
+      "sheetPlainName": "Görev Tanımı",
+      "namespace": "gorev-tanimi",
+      "dictionaryUrl": "/gorev-tanimi",
+      "dictionaryMicroservice": "position-svc",
+      "currentRoutes": [],
+      "dbObjects": [],
+      "seedArtifacts": [],
+      "defaultStatus": "future_not_v1",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "📑 İş Tanımı",
+      "sheetPlainName": "İş Tanımı",
+      "namespace": "is-tanimi",
+      "dictionaryUrl": "/is-tanimi",
+      "dictionaryMicroservice": "position-svc",
+      "currentRoutes": [
+        "/pozisyonlar"
+      ],
+      "dbObjects": [
+        "puls_core.positions"
+      ],
+      "seedArtifacts": [
+        "04_positions.csv"
+      ],
+      "defaultStatus": "needs_mapping_review",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "🔬 İş Analizi",
+      "sheetPlainName": "İş Analizi",
+      "namespace": "is-analizi",
+      "dictionaryUrl": "/is-analizi",
+      "dictionaryMicroservice": "position-svc",
+      "currentRoutes": [],
+      "dbObjects": [],
+      "seedArtifacts": [],
+      "defaultStatus": "future_not_v1",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "🌴 Tatil (İzin)",
+      "sheetPlainName": "Tatil",
+      "namespace": "tatil",
+      "dictionaryUrl": "/tatil/izin-yonetimi",
+      "dictionaryMicroservice": "leave-svc",
+      "currentRoutes": [
+        "/izin"
+      ],
+      "dbObjects": [
+        "puls_workflow.leave_types",
+        "puls_workflow.leave_balances",
+        "puls_workflow.leave_requests",
+        "puls_calc.leave_overview"
+      ],
+      "seedArtifacts": [
+        "08_leave_types.csv",
+        "11_leave_balances.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [
+        {
+          "field": "leave_request_status",
+          "status": "scenario_generated",
+          "dbObject": "puls_workflow.leave_requests",
+          "seedArtifactOwner": "PR13.5",
+          "notes": "Tatil workflow narrative"
+        }
+      ],
+      "notes": "Workbook label leave-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "💸 Cüzdan (Masraf)",
+      "sheetPlainName": "Cüzdan",
+      "namespace": "cuzdan",
+      "dictionaryUrl": "/cuzdan/masraf",
+      "dictionaryMicroservice": "expense-svc",
+      "currentRoutes": [
+        "/masraf"
+      ],
+      "dbObjects": [
+        "puls_workflow.expense_categories",
+        "puls_workflow.expense_claims",
+        "puls_calc.expense_overview"
+      ],
+      "seedArtifacts": [
+        "09_expense_categories.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [
+        {
+          "field": "expense_claim_amount",
+          "status": "scenario_generated",
+          "dbObject": "puls_workflow.expense_claims",
+          "seedArtifactOwner": "PR13.5",
+          "notes": "Cüzdan workflow narrative"
+        }
+      ],
+      "notes": "Workbook label expense-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "📄 Belge (Sözleşme)",
+      "sheetPlainName": "Belge",
+      "namespace": "belge",
+      "dictionaryUrl": "/belge/sozlesmeler",
+      "dictionaryMicroservice": "contract-svc",
+      "currentRoutes": [
+        "/sozlesmeler"
+      ],
+      "dbObjects": [
+        "puls_workflow.contracts",
+        "puls_calc.contracts_overview"
+      ],
+      "seedArtifacts": [
+        "13_contracts.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label contract-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "🤖 Koç (AI)",
+      "sheetPlainName": "Koç",
+      "namespace": "koc",
+      "dictionaryUrl": "/koc/mesajlar",
+      "dictionaryMicroservice": "llm-gateway",
+      "currentRoutes": [
+        "/ai-koc"
+      ],
+      "dbObjects": [
+        "puls_vault.conversation_messages"
+      ],
+      "seedArtifacts": [],
+      "defaultStatus": "future_not_v1",
+      "seedArtifactOwner": "PR13.6",
+      "exceptions": [
+        {
+          "field": "conversations[]",
+          "status": "sensitive_system",
+          "dbObject": "puls_vault.conversation_messages",
+          "seedArtifactOwner": "PR13.6",
+          "notes": "AI Coach vault — not seeded in PR13.4"
+        }
+      ],
+      "notes": "AI Coach teaser until PR13.6; llm-gateway not physical microservices in MVP"
+    },
+    {
+      "sheet": "🏢 Şirket Kurulum",
+      "sheetPlainName": "Şirket Kurulum",
+      "namespace": "tenant",
+      "dictionaryUrl": "/kurulum/sirket",
+      "dictionaryMicroservice": "tenant-svc",
+      "currentRoutes": [
+        "/sirket-kurulum"
+      ],
+      "dbObjects": [
+        "puls_core.tenants",
+        "puls_core.legal_entities",
+        "puls_core.locations",
+        "puls_calc.setup_readiness_summary"
+      ],
+      "seedArtifacts": [
+        "01_tenant.csv",
+        "02_legal_entities_locations.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Puls Sanayi A.Ş. tenant with 3 locations (İstanbul, Bursa, İzmir)"
+    },
+    {
+      "sheet": "🗂️ Departmanlar",
+      "sheetPlainName": "Departmanlar",
+      "namespace": "identity",
+      "dictionaryUrl": "/kurulum/departmanlar",
+      "dictionaryMicroservice": "identity-svc",
+      "currentRoutes": [
+        "/departmanlar"
+      ],
+      "dbObjects": [
+        "puls_core.departments",
+        "puls_calc.organization_overview"
+      ],
+      "seedArtifacts": [
+        "03_departments.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label identity-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "💼 Pozisyonlar",
+      "sheetPlainName": "Pozisyonlar",
+      "namespace": "is-tanimi",
+      "dictionaryUrl": "/kurulum/pozisyonlar",
+      "dictionaryMicroservice": "position-svc",
+      "currentRoutes": [
+        "/pozisyonlar"
+      ],
+      "dbObjects": [
+        "puls_core.positions",
+        "puls_calc.organization_overview"
+      ],
+      "seedArtifacts": [
+        "04_positions.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label position-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "👥 Çalışanlar",
+      "sheetPlainName": "Çalışanlar",
+      "namespace": "identity",
+      "dictionaryUrl": "/calisanlar",
+      "dictionaryMicroservice": "identity-svc",
+      "currentRoutes": [
+        "/calisanlar",
+        "/profil"
+      ],
+      "dbObjects": [
+        "puls_core.employees",
+        "puls_calc.employee_list_overview"
+      ],
+      "seedArtifacts": [
+        "06_employees.csv",
+        "07_reporting_lines.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "120 Puls Sanayi A.Ş. employees — identity-svc is future_service_boundary label only"
+    },
+    {
+      "sheet": "🌴 İzin Tipleri (Tanım)",
+      "sheetPlainName": "İzin Tipleri",
+      "namespace": "tatil",
+      "dictionaryUrl": "/kurulum/izin-tipleri",
+      "dictionaryMicroservice": "leave-svc",
+      "currentRoutes": [
+        "/izin-tanimlari"
+      ],
+      "dbObjects": [
+        "puls_workflow.leave_types",
+        "puls_workflow.approval_policies"
+      ],
+      "seedArtifacts": [
+        "08_leave_types.csv",
+        "10_approval_policies.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label leave-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "💸 Masraf Kategorileri",
+      "sheetPlainName": "Masraf Kategorileri",
+      "namespace": "cuzdan",
+      "dictionaryUrl": "/kurulum/masraf-kategorileri",
+      "dictionaryMicroservice": "expense-svc",
+      "currentRoutes": [
+        "/masraf-kategorileri"
+      ],
+      "dbObjects": [
+        "puls_workflow.expense_categories",
+        "puls_core.cost_centers",
+        "puls_integration.entity_identity_map"
+      ],
+      "seedArtifacts": [
+        "09_expense_categories.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label expense-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "📊 Performans Param",
+      "sheetPlainName": "Performans Param",
+      "namespace": "performans",
+      "dictionaryUrl": "/kurulum/performans-parametreleri",
+      "dictionaryMicroservice": "performans-svc",
+      "currentRoutes": [
+        "/performans-parametreleri"
+      ],
+      "dbObjects": [
+        "puls_performance.competency_templates",
+        "puls_performance.kpi_category_weights",
+        "puls_performance.score_bands"
+      ],
+      "seedArtifacts": [
+        "12_performance_params.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [],
+      "notes": "Workbook label performans-svc maps to future_service_boundary — not physical microservices"
+    },
+    {
+      "sheet": "🔌 ERP Entegrasyon",
+      "sheetPlainName": "ERP Entegrasyon",
+      "namespace": "erp-config",
+      "dictionaryUrl": "/kurulum/erp-entegrasyon",
+      "dictionaryMicroservice": "erp-connector(canias)",
+      "currentRoutes": [
+        "/erp"
+      ],
+      "dbObjects": [
+        "puls_integration.erp_connections",
+        "puls_integration.erp_field_mappings"
+      ],
+      "seedArtifacts": [
+        "14_erp_metadata.csv"
+      ],
+      "defaultStatus": "covered_by_seed",
+      "seedArtifactOwner": "PR13.4",
+      "exceptions": [
+        {
+          "field": "api_key",
+          "status": "sensitive_system",
+          "dbObject": "puls_integration.erp_connections",
+          "seedArtifactOwner": "none",
+          "notes": "Never seed credentials"
+        }
+      ],
+      "notes": "Canias connector metadata seed only; no automatic destructive ERP writes"
+    }
+  ]
+}
