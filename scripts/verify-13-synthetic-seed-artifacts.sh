@@ -303,6 +303,29 @@ if ! grep -Fq $'\\copy' <<< "$LOAD_SQL"; then
   exit 1
 fi
 
+if ! grep -Fq "manager_employee_id = NULL" <<< "$RESET_SQL"; then
+  echo "FAIL: reset SQL must detach departments.manager_employee_id before employee delete"
+  exit 1
+fi
+
+if grep -E $'\\copy st_[a-z_0-9]+ FROM' <<< "$LOAD_SQL"; then
+  echo "FAIL: load SQL \\copy must use explicit column lists (no bare FROM after temp table name)"
+  exit 1
+fi
+
+if grep -Fq "INSERT INTO puls_workflow.leave_types SELECT * FROM st_lt" <<< "$LOAD_SQL"; then
+  echo "FAIL: load SQL must not use INSERT SELECT * from staging tables"
+  exit 1
+fi
+
+VALIDATE_SQL="$(file_at_ref "${PACK}/sql/02_validate_puls_sanayi_seed.sql")"
+for needle in "legal_entity_assignments expected 120" "location_assignments expected 120" "positions expected 35-50" "leave_balances expected >=120" "contracts expected 15-30" "entity_identity_map expected 6-15"; do
+  if ! grep -Fq "$needle" <<< "$VALIDATE_SQL"; then
+    echo "FAIL: validate SQL missing check: $needle"
+    exit 1
+  fi
+done
+
 if grep -Fq "supabase/migrations" <<< "$LOAD_SQL"; then
   echo "FAIL: load SQL must not reference supabase/migrations"
   exit 1

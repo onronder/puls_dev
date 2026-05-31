@@ -118,9 +118,16 @@ SELECT id,tenant_id,policy_id::uuid,step_order::int,approver_type::puls_workflow
 FROM st_apol WHERE target_table = 'approval_policy_steps' ON CONFLICT (id) DO NOTHING;
 
 -- Phase 16–18: leave types, balances, expense categories
-CREATE TEMP TABLE st_lt (LIKE puls_workflow.leave_types INCLUDING DEFAULTS);
-\copy st_lt FROM 'csv/12_leave_types.csv' CSV HEADER
-INSERT INTO puls_workflow.leave_types SELECT * FROM st_lt ON CONFLICT (id) DO NOTHING;
+CREATE TEMP TABLE st_lt (
+  id uuid, tenant_id uuid, code text, name text, is_paid text, default_entitlement_days text,
+  requires_document text, requires_approval text, show_in_calendar text, carry_over_allowed text,
+  max_carry_over_days text, approval_policy_id uuid, is_active text
+);
+\copy st_lt (id,tenant_id,code,name,is_paid,default_entitlement_days,requires_document,requires_approval,show_in_calendar,carry_over_allowed,max_carry_over_days,approval_policy_id,is_active) FROM 'csv/12_leave_types.csv' CSV HEADER
+INSERT INTO puls_workflow.leave_types (id,tenant_id,code,name,is_paid,default_entitlement_days,requires_document,requires_approval,show_in_calendar,carry_over_allowed,max_carry_over_days,approval_policy_id,is_active)
+SELECT id,tenant_id,code,name,is_paid::boolean,NULLIF(default_entitlement_days,'')::numeric,requires_document::boolean,requires_approval::boolean,
+  show_in_calendar::boolean,carry_over_allowed::boolean,NULLIF(max_carry_over_days,'')::numeric,approval_policy_id,is_active::boolean
+FROM st_lt ON CONFLICT (id) DO NOTHING;
 
 CREATE TEMP TABLE st_lb (LIKE puls_workflow.leave_balances INCLUDING DEFAULTS);
 \copy st_lb (id,tenant_id,employee_id,leave_type_id,period_year,source,entitlement_days,carried_over_days,adjustment_days,used_days,pending_days,as_of_date) FROM 'csv/14_leave_balances.csv' CSV HEADER
@@ -129,13 +136,23 @@ SELECT id,tenant_id,employee_id,leave_type_id,period_year::int,source::puls_work
   entitlement_days::numeric,carried_over_days::numeric,adjustment_days::numeric,used_days::numeric,pending_days::numeric,NULLIF(as_of_date,'')::date
 FROM st_lb ON CONFLICT (id) DO NOTHING;
 
-CREATE TEMP TABLE st_ec (LIKE puls_workflow.expense_categories INCLUDING DEFAULTS);
-\copy st_ec FROM 'csv/15_expense_categories.csv' CSV HEADER
-INSERT INTO puls_workflow.expense_categories SELECT * FROM st_ec ON CONFLICT (id) DO NOTHING;
+CREATE TEMP TABLE st_ec (
+  id uuid, tenant_id uuid, code text, name text, monthly_limit text, receipt_required_over text,
+  default_vat_rate text, approval_policy_id uuid, erp_account_code text, is_active text
+);
+\copy st_ec (id,tenant_id,code,name,monthly_limit,receipt_required_over,default_vat_rate,approval_policy_id,erp_account_code,is_active) FROM 'csv/15_expense_categories.csv' CSV HEADER
+INSERT INTO puls_workflow.expense_categories (id,tenant_id,code,name,monthly_limit,receipt_required_over,default_vat_rate,approval_policy_id,erp_account_code,is_active)
+SELECT id,tenant_id,code,name,NULLIF(monthly_limit,'')::numeric,NULLIF(receipt_required_over,'')::numeric,
+  NULLIF(default_vat_rate,'')::numeric,approval_policy_id,NULLIF(erp_account_code,''),is_active::boolean
+FROM st_ec ON CONFLICT (id) DO NOTHING;
 
 -- Phase 19–20: erp mappings, identity map
-CREATE TEMP TABLE st_map (LIKE puls_integration.erp_field_mappings INCLUDING DEFAULTS);
-\copy st_map FROM 'csv/17_erp_field_mappings.csv' CSV HEADER
+CREATE TEMP TABLE st_map (
+  id uuid, tenant_id uuid, connection_id uuid, source_entity text, source_field text,
+  target_schema text, target_table text, target_field text, transform_rule text,
+  is_required text, is_sensitive text, is_active text
+);
+\copy st_map (id,tenant_id,connection_id,source_entity,source_field,target_schema,target_table,target_field,transform_rule,is_required,is_sensitive,is_active) FROM 'csv/17_erp_field_mappings.csv' CSV HEADER
 INSERT INTO puls_integration.erp_field_mappings (id,tenant_id,connection_id,source_entity,source_field,target_schema,target_table,target_field,transform_rule,is_required,is_sensitive,is_active)
 SELECT id,tenant_id,connection_id,source_entity,source_field,target_schema,target_table,target_field,transform_rule::jsonb,is_required::boolean,is_sensitive::boolean,is_active::boolean
 FROM st_map ON CONFLICT (id) DO NOTHING;
@@ -147,9 +164,13 @@ SELECT id,tenant_id,source_namespace_id,entity_type::puls_integration.import_ent
 FROM st_eim ON CONFLICT (id) DO NOTHING;
 
 -- Phase 21–22: performance + contracts
-CREATE TEMP TABLE st_pc (LIKE puls_performance.performance_cycles INCLUDING DEFAULTS);
-\copy st_pc FROM 'csv/20_performance_cycles.csv' CSV HEADER
-INSERT INTO puls_performance.performance_cycles SELECT * FROM st_pc ON CONFLICT (id) DO NOTHING;
+CREATE TEMP TABLE st_pc (
+  id uuid, tenant_id uuid, name text, status text, starts_at text, ends_at text, scope text, kpi_frequency text
+);
+\copy st_pc (id,tenant_id,name,status,starts_at,ends_at,scope,kpi_frequency) FROM 'csv/20_performance_cycles.csv' CSV HEADER
+INSERT INTO puls_performance.performance_cycles (id,tenant_id,name,status,starts_at,ends_at,scope,kpi_frequency)
+SELECT id,tenant_id,name,status::puls_performance.performance_cycle_status,starts_at::date,ends_at::date,scope,NULLIF(kpi_frequency,'')
+FROM st_pc ON CONFLICT (id) DO NOTHING;
 
 CREATE TEMP TABLE st_p21 (
   target_table text, id uuid, tenant_id uuid, name text, description text, weight text, scale_min text, scale_max text,
@@ -174,8 +195,11 @@ INSERT INTO puls_performance.career_profiles (id,tenant_id,employee_id,current_s
 SELECT id,tenant_id,employee_id::uuid,current_step,target_step,readiness_score::numeric,missing_competencies::jsonb
 FROM st_p21 WHERE target_table='career_profiles' ON CONFLICT (id) DO NOTHING;
 
-CREATE TEMP TABLE st_con (LIKE puls_workflow.contracts INCLUDING DEFAULTS);
-\copy st_con FROM 'csv/22_contracts.csv' CSV HEADER
+CREATE TEMP TABLE st_con (
+  id uuid, tenant_id uuid, employee_id uuid, contract_type text, start_date text, end_date text,
+  status text, signature_status text, risk_band text, metadata_only text, external_source text, external_contract_id text
+);
+\copy st_con (id,tenant_id,employee_id,contract_type,start_date,end_date,status,signature_status,risk_band,metadata_only,external_source,external_contract_id) FROM 'csv/22_contracts.csv' CSV HEADER
 INSERT INTO puls_workflow.contracts (id,tenant_id,employee_id,contract_type,start_date,end_date,status,signature_status,risk_band,metadata_only,external_source,external_contract_id)
 SELECT id,tenant_id,employee_id,contract_type,start_date::date,NULLIF(end_date,'')::date,
   status::puls_workflow.contract_status,signature_status::puls_workflow.contract_signature_status,

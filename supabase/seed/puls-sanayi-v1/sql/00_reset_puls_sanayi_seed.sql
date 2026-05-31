@@ -7,6 +7,15 @@
 
 BEGIN;
 
+-- Defensive FK detach before delete (departments.manager_employee_id -> employees)
+UPDATE puls_core.departments
+SET manager_employee_id = NULL, cost_center_id = NULL
+WHERE tenant_id = :'tenant_id'::uuid;
+
+UPDATE puls_core.employees
+SET manager_employee_id = NULL, legal_entity_id = NULL, location_id = NULL, cost_center_id = NULL
+WHERE tenant_id = :'tenant_id'::uuid;
+
 DELETE FROM puls_integration.entity_identity_map WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_integration.erp_field_mappings WHERE tenant_id = :'tenant_id'::uuid;
 DELETE FROM puls_integration.import_records WHERE tenant_id = :'tenant_id'::uuid;
