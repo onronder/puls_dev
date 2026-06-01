@@ -21,14 +21,14 @@ Maps all **20 PR12 routes** for Puls Sanayi DB-backed packaging proof with **`VI
 | `/sozlesmeler` | `puls_calc.contracts_overview` | 15–30 contracts | risk variety baseline | hr_admin | `source: real` | — |
 | `/profil` | account readiness | employee row | persona link via `05` | linked employee | `source: real` | incomplete-setup edge optional |
 | `/ayarlar` | settings shell | tenant metadata | — | admin | `source: real` | — |
-| `/erp` | Connector preflight readiness | Provider metadata + mappings | source_namespaces proof in `07` | hr_admin | `source: real` | PR14.1 makes the UI provider-agnostic; Canias is first seeded provider; no runtime |
+| `/erp` | Connector preflight readiness | Provider metadata + mappings | source_namespaces proof in `07` | hr_admin | `source: real` | PR14.2 adds no-connector onboarding empty state; Canias is first seeded provider; no runtime |
 | `/ai-koc` | AI coach context readiness | PR13.4–13.5A calc + workflow context | — | any | `source: real` | DB context readiness (PR13.6); AI action boundary (PR13.7); no live chat/autonomous actions |
 | `/menu` | `puls_calc.menu_overview` | menu shell | — | any | `source: real` | Shell exception (no demo pill) |
 
 ## Honest exceptions
 
 - **`/ai-koc`** — DB context readiness (PR13.6); AI action boundary documented (PR13.7); no live chat; no autonomous actions; no embedded TS business fixtures on real path.
-- **`/erp`** — connector preflight readiness (PR14.1); canonical mapping + unified namespace; Canias is the first provider, not the product abstraction; no runtime sync.
+- **`/erp`** — connector preflight readiness (PR14.1) plus no-connector onboarding empty state (PR14.2); canonical mapping + unified namespace; Canias is the first provider, not the product abstraction; no runtime sync.
 - **`/is-degerleme`** — placeholder/future module.
 - **`/menu`** — shell exception; no demo pill when demo mode off.
 - **CRM / SDK / real-time sync** — future; out of PR13.5 scope.

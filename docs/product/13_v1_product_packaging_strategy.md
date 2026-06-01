@@ -130,6 +130,7 @@ Use across PR13 docs — **not every table must be seeded**:
 | **PR13.6** | AI Coach DB context readiness |
 | **PR13.7** | Canias connector discovery + AI action boundary |
 | **PR14.1** | Provider-agnostic connector preflight readiness |
+| **PR14.2** | ERP connector onboarding empty state |
 
 ## Definition of done before PR13.7
 
@@ -140,6 +141,7 @@ Use across PR13 docs — **not every table must be seeded**:
 - [x] AI context inventory complete (PR13.6)
 - [x] Canias discovery checklist ready for first customer (PR13.7)
 - [x] `/erp` uses canonical connector preflight posture instead of a Canias-only product abstraction (PR14.1)
+- [x] `/erp` has a no-connector PULS empty state before provider metadata exists (PR14.2)
 
 ## Risks and mitigations
 

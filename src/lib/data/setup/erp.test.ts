@@ -183,6 +183,30 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.readiness.status).toBe('blocked')
   })
 
+  it('returns real no-connector onboarding state without demo fallback', async () => {
+    demoEnabled.mockReturnValue(true)
+    setupSeededMocks({
+      erp_connections: { data: null, error: null },
+      erp_field_mappings: { data: [], error: null },
+      erp_sync_batches: { data: [], error: null },
+      source_namespaces: { data: [], error: null },
+      entity_identity_map: { data: [], error: null },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('real')
+    expect(result.status).toBe('success')
+    expect(result.data.connectorState).toBe('no_connector')
+    expect(result.data.providerOptions.map((option) => option.id)).toEqual([
+      'canias',
+      'logo',
+      'csv_import',
+      'custom_api',
+    ])
+    expect(isErpOverviewEmpty(result.data)).toBe(false)
+  })
+
   it('uses enriched demo fallback only when demo mode is enabled', async () => {
     demoEnabled.mockReturnValue(true)
     resolveTenant.mockResolvedValue(mockTenantContextWithoutTenant())

@@ -4,6 +4,7 @@ import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/resul
 
 export type ConnectorReadinessStatus = 'ready' | 'partial' | 'blocked'
 export type ConnectorMappingStatus = 'mapped' | 'pending'
+export type ConnectorLifecycleState = 'no_tenant' | 'no_connector' | 'connector_selected'
 export type ConnectorProviderStatus =
   | 'not_configured'
   | 'metadata_only'
@@ -71,7 +72,15 @@ export type ConnectorSyncLog = {
   message: string
 }
 
+export type ConnectorProviderOption = {
+  id: 'canias' | 'logo' | 'csv_import' | 'custom_api'
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+}
+
 export type ErpOverview = {
+  connectorState: ConnectorLifecycleState
   provider: {
     code: string | null
     label: string
@@ -90,6 +99,7 @@ export type ErpOverview = {
   namespaces: ConnectorNamespaceSummary[]
   transferModes: ConnectorTransferMode[]
   guardrails: ConnectorGuardrail[]
+  providerOptions: ConnectorProviderOption[]
   syncLogs: ConnectorSyncLog[]
   status: {
     system: string
@@ -154,6 +164,33 @@ const PROVIDER_LABELS: Record<string, string> = {
 
 const FALLBACK_PROVIDER_LABEL = 'External data source'
 
+const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
+  {
+    id: 'canias',
+    labelKey: 'erp.providerOptions.canias.label',
+    descriptionKey: 'erp.providerOptions.canias.description',
+    status: 'ready',
+  },
+  {
+    id: 'logo',
+    labelKey: 'erp.providerOptions.logo.label',
+    descriptionKey: 'erp.providerOptions.logo.description',
+    status: 'partial',
+  },
+  {
+    id: 'csv_import',
+    labelKey: 'erp.providerOptions.csv_import.label',
+    descriptionKey: 'erp.providerOptions.csv_import.description',
+    status: 'ready',
+  },
+  {
+    id: 'custom_api',
+    labelKey: 'erp.providerOptions.custom_api.label',
+    descriptionKey: 'erp.providerOptions.custom_api.description',
+    status: 'blocked',
+  },
+]
+
 const TRANSFER_MODES: ConnectorTransferMode[] = [
   {
     id: 'manual_csv',
@@ -215,7 +252,7 @@ const CONNECTOR_GUARDRAILS: ConnectorGuardrail[] = [
   },
 ]
 
-function emptyErpOverview(): ErpOverview {
+function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant'): ErpOverview {
   const checks = buildReadinessChecks({
     hasConnection: false,
     isActive: false,
@@ -227,6 +264,7 @@ function emptyErpOverview(): ErpOverview {
   })
 
   return buildOverview({
+    connectorState,
     providerCode: null,
     providerLabel: FALLBACK_PROVIDER_LABEL,
     displayName: null,
@@ -242,12 +280,7 @@ function emptyErpOverview(): ErpOverview {
 }
 
 export function isErpOverviewEmpty(data: ErpOverview): boolean {
-  return (
-    data.provider.code == null &&
-    data.mappings.length === 0 &&
-    data.namespaces.length === 0 &&
-    data.syncLogs.length === 0
-  )
+  return data.connectorState === 'no_tenant'
 }
 
 function formatSyncTimestamp(iso: string | null | undefined, locale = 'tr-TR'): string {
@@ -382,6 +415,7 @@ function deriveReadinessScore(checks: ConnectorReadinessCheck[]): number {
 }
 
 function buildOverview({
+  connectorState,
   providerCode,
   providerLabel,
   displayName,
@@ -394,6 +428,7 @@ function buildOverview({
   namespaces,
   syncLogs,
 }: {
+  connectorState: ConnectorLifecycleState
   providerCode: string | null
   providerLabel: string
   displayName: string | null
@@ -411,6 +446,7 @@ function buildOverview({
   const readinessScore = deriveReadinessScore(checks)
 
   return {
+    connectorState,
     provider: {
       code: providerCode,
       label: providerLabel,
@@ -429,6 +465,7 @@ function buildOverview({
     namespaces,
     transferModes: TRANSFER_MODES,
     guardrails: CONNECTOR_GUARDRAILS,
+    providerOptions: CONNECTOR_PROVIDER_OPTIONS,
     syncLogs,
     status: {
       system: providerLabel,
@@ -455,6 +492,7 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
   })
 
   return buildOverview({
+    connectorState: 'connector_selected',
     providerCode: 'canias',
     providerLabel: demo.status.system,
     displayName: demo.status.system,
@@ -485,7 +523,7 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
 
 async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   const ctx = await resolveTenantContext(userId)
-  if (!ctx.tenantId) return emptyErpOverview()
+  if (!ctx.tenantId) return emptyErpOverview('no_tenant')
 
   const [connectionRow, mappingsRow, batchesRow, readinessRow, namespacesRow, identitiesRow] =
     await Promise.all([
@@ -601,6 +639,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   const providerStatusLabelKey = `erp.providerStatus.${providerStatus}`
 
   return buildOverview({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
     providerCode,
     providerLabel,
     displayName: connection?.display_name ?? null,

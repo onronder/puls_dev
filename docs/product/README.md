@@ -170,6 +170,17 @@ PR14.1 hardens `/erp` as a provider-agnostic connector preflight surface. Canias
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | Connector preflight UI with mapping, namespace, transfer posture, and guardrails |
 | [`scripts/verify-14-connector-preflight-readiness.sh`](../../scripts/verify-14-connector-preflight-readiness.sh) | PR14.1 verify gate |
 
+## PR14.2 ERP connector onboarding empty state
+
+PR14.2 adds the missing first `/erp` state: a new customer tenant can have no connector configured yet, and that is treated as real product posture rather than demo fallback.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_erp_connector_onboarding_empty_state.md](./14_erp_connector_onboarding_empty_state.md) | no-connector state machine, provider options, and acceptance criteria |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts) | Distinguishes `no_tenant`, `no_connector`, and `connector_selected` |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | Shows onboarding empty state before connector metadata exists |
+| [`scripts/verify-14-erp-connector-empty-state.sh`](../../scripts/verify-14-erp-connector-empty-state.sh) | PR14.2 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |
