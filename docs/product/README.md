@@ -159,6 +159,17 @@ PR13.10 closes the PR13 packaging track by walking all 20 V1 routes with **`VITE
 | [`scripts/check-13-demo-fallback-regression.sh`](../../scripts/check-13-demo-fallback-regression.sh) | Fails new unclassified product-path demo fallback additions |
 | [`scripts/verify-13-demo-off-route-smoke-closeout.sh`](../../scripts/verify-13-demo-off-route-smoke-closeout.sh) | PR13.10 route smoke closeout verify gate |
 
+## PR14.1 Connector preflight readiness
+
+PR14.1 hardens `/erp` as a provider-agnostic connector preflight surface. Canias remains the seeded first provider, but the product abstraction is canonical PULS data, unified namespaces, field mapping, and identity reconciliation.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_connector_preflight_readiness.md](./14_connector_preflight_readiness.md) | Provider-independent connector readiness claim, inspect-first summary, and acceptance |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts) | Product-owned connector overview adapter and demo wrapper |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | Connector preflight UI with mapping, namespace, transfer posture, and guardrails |
+| [`scripts/verify-14-connector-preflight-readiness.sh`](../../scripts/verify-14-connector-preflight-readiness.sh) | PR14.1 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |

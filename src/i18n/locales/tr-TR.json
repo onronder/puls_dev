@@ -702,36 +702,86 @@
   },
   "erp": {
     "eyebrow": "Tanım & Kurulum",
-    "title": "ERP Entegrasyon",
-    "subtitle": "Sistem: Canias · API erişimi bekleniyor.",
+    "title": "Connector preflight",
+    "subtitle": "Kaynak bağımsız veri bağlantısı için provider, canonical mapping ve namespace hazırlığı.",
     "badge": "Beklemede",
     "metrics": {
-      "system": "Sistem",
-      "dataReadiness": "Veri hazırlığı",
+      "provider": "Provider",
+      "preflight": "Preflight",
       "fieldMapping": "Alan eşleştirme",
-      "fieldMappingHint": "Mapped / toplam",
-      "lastAttempt": "Son deneme",
-      "lastAttemptHint": "Zaman aşımı"
+      "fieldMappingHint": "Canonical / kaynak",
+      "namespaces": "Namespace",
+      "namespacesHint": "Aktif kaynak alanı"
     },
     "actions": {
-      "mapFields": "Alan eşleştir",
-      "testConnection": "Test bağlantısı"
+      "mapFields": "Mapping taslağı",
+      "testConnection": "Preflight testi"
     },
+    "preflightNote": "Bu ekran bağlantı hazırlığını gösterir; runtime sync, kimlik bilgisi saklama veya ERP yazma işlemi açmaz.",
     "toast": {
-      "apiPendingTitle": "Canias API erişimi bekleniyor.",
-      "mapDescription": "Mapping editörü, müşteri tarafında API erişimi açıldığında devreye alınacak.",
-      "testDescription": "Şu an Canias tarafında kimlik doğrulama bekleniyor."
+      "apiPendingTitle": "Connector runtime kapsam dışı.",
+      "mapDescription": "Mapping editörü ileride provider bağlantısı seçildiğinde açılacak.",
+      "testDescription": "Preflight canlı API çağrısı yapmadan metadata hazırlığını gösterir."
     },
     "sections": {
-      "mapping": "Alan eşleştirme",
-      "mappingDescription": "PULS alanı → Canias alanı.",
-      "syncLogs": "Sync logları",
-      "syncLogsDescription": "Son bağlantı denemeleri."
+      "preflight": "Connector preflight",
+      "preflightDescription": "Provider metadata, canonical mapping, namespace ve kimlik eşleştirme kanıtı.",
+      "namespaces": "Unified namespace",
+      "namespacesDescription": "Dış kaynaklardan gelen kimliklerin PULS canonical kayıtlarına bağlandığı alan.",
+      "mapping": "Canonical field mapping",
+      "mappingDescription": "PULS canonical alanı → kaynak provider alanı.",
+      "transferModes": "Transfer modları",
+      "transferModesDescription": "CSV, dosya, staging veya API sınırlarının ürün postürü.",
+      "guardrails": "Connector guardrails",
+      "guardrailsDescription": "Runtime ve ERP yazma sınırları bilinçli olarak kapalı.",
+      "syncLogs": "Preflight kayıtları",
+      "syncLogsDescription": "Son metadata veya bağlantı hazırlığı kayıtları."
     },
     "columns": {
-      "pulsField": "PULS alanı",
-      "erpField": "Canias alanı",
+      "canonicalField": "PULS canonical alanı",
+      "sourceField": "Kaynak alan",
       "status": "Durum"
+    },
+    "providerStatus": {
+      "not_configured": "Provider tanımlı değil",
+      "metadata_only": "Metadata-only",
+      "runtime_inactive": "Runtime pasif",
+      "runtime_active": "Runtime aktif"
+    },
+    "readinessStatus": {
+      "ready": "Hazır",
+      "partial": "Kısmi",
+      "blocked": "Kapalı"
+    },
+    "readinessChecks": {
+      "providerMetadata": "Provider metadata",
+      "runtimeBoundary": "Runtime sınırı",
+      "fieldMapping": "Field mapping",
+      "sourceNamespace": "Source namespace",
+      "identityReconciliation": "Identity reconciliation",
+      "setupReadiness": "Setup readiness",
+      "writeGuardrail": "ERP yazma koruması"
+    },
+    "transferModes": {
+      "manual_csv": "Manual CSV / Excel import",
+      "scheduled_file_exchange": "Planlı dosya aktarımı",
+      "excel_xml": "Excel / XML değişim dosyası",
+      "staging_table": "Staging table preflight",
+      "api_future": "Provider API runtime (gelecek)"
+    },
+    "guardrails": {
+      "canonicalMappingRequired": "Her dış kaynak alanı PULS canonical modele eşleşmeden ürün davranışına girmez.",
+      "identityReconciliationRequired": "External ID kayıtları unified namespace ve identity map üzerinden çözülür.",
+      "humanConfirmationRequired": "İçe aktarma, dışa aktarma ve workflow aksiyonlarında insan onayı gerekir.",
+      "noRuntimeSync": "Bu sürüm runtime sync veya canlı connector çağrısı başlatmaz.",
+      "noErpWrites": "PULS ERP ana verisine otomatik yazmaz.",
+      "noCredentialsInRepo": "Credential, token veya API anahtarı repo ve seed içinde tutulmaz."
+    },
+    "identityCount": "{{count}} kimlik",
+    "empty": {
+      "namespaces": "Aktif source namespace kaydı yok.",
+      "mappings": "Canonical mapping kaydı yok.",
+      "syncLogs": "Preflight kaydı yok."
     },
     "status": {
       "mapped": "Eşleşti",
