@@ -416,6 +416,9 @@ function PerformansPage() {
 
   const cycles = cyclesResult?.data
   const overviewData = performanceOverviewResult?.data
+  const visibleEmployeeScopeCount = isManagerView ? (overviewData?.employeeScopeCount ?? 0) : 1
+  const visiblePendingReviews = isManagerView ? (overviewData?.pendingReviews ?? 0) : 0
+  const visibleOverdueCount = isManagerView ? (overviewData?.overdueCount ?? 0) : 0
   const showDemoSourcePill =
     performanceOverviewResult?.source === 'demo' || cyclesResult?.source === 'demo'
 
@@ -534,13 +537,13 @@ function PerformansPage() {
         <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricCard
             label={t('performanceSetup.metrics.scope')}
-            value={String(overviewData.employeeScopeCount)}
+            value={String(visibleEmployeeScopeCount)}
             hint={t('performanceSetup.metrics.scopeHint')}
             icon={Users}
           />
           <MetricCard
             label={t('performanceSetup.metrics.pending')}
-            value={String(overviewData.pendingReviews)}
+            value={String(visiblePendingReviews)}
             hint={t('performanceSetup.metrics.pendingHint')}
           />
           <MetricCard
@@ -550,7 +553,7 @@ function PerformansPage() {
           />
           <MetricCard
             label={t('performanceSetup.metrics.overdue')}
-            value={String(overviewData.overdueCount)}
+            value={String(visibleOverdueCount)}
             hint={t('performanceSetup.metrics.overdueHint')}
           />
         </section>
@@ -575,7 +578,7 @@ function PerformansPage() {
           />
           <MetricCard
             label={t('performanceSetup.metrics.scope')}
-            value={String(overviewData.employeeScopeCount)}
+            value={String(visibleEmployeeScopeCount)}
             hint={t('performanceSetup.metrics.scopeHint')}
             icon={Users}
           />

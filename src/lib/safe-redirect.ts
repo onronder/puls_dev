@@ -43,7 +43,7 @@ export function resolveSafeRedirect(
 }
 
 export function buildRedirectPath(pathname: string, searchStr?: string): string {
-  return searchStr ? `${pathname}${searchStr}` : pathname
+  return resolveSafeRedirect(searchStr ? `${pathname}${searchStr}` : pathname)
 }
 
 export function parseRedirectForNavigate(

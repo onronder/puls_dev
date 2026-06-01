@@ -13,7 +13,7 @@ import {
   Plus,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -171,7 +171,7 @@ function validateLeaveForm(
 
 function IzinPage() {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
+  const { user, activePersona } = useAuth()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<LeaveTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -185,7 +185,14 @@ function IzinPage() {
   const data = leaveOverviewResult?.data
 
   const historyCount = data?.requests.length ?? 0
-  const approvalCount = data?.pendingApprovals.length ?? 0
+  const showApprovals = activePersona === 'manager'
+  const approvalCount = showApprovals ? (data?.pendingApprovals.length ?? 0) : 0
+
+  useEffect(() => {
+    if (!showApprovals && tab === 'approvals') {
+      setTab('mine')
+    }
+  }, [showApprovals, tab])
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -265,10 +272,14 @@ function IzinPage() {
                   value: 'mine',
                   label: `${t('leaveSetup.tabs.mine')} (${historyCount})`,
                 },
-                {
-                  value: 'approvals',
-                  label: `${t('leaveSetup.tabs.approvals')} (${approvalCount})`,
-                },
+                ...(showApprovals
+                  ? [
+                      {
+                        value: 'approvals' as const,
+                        label: `${t('leaveSetup.tabs.approvals')} (${approvalCount})`,
+                      },
+                    ]
+                  : []),
                 { value: 'calendar', label: t('leaveSetup.tabs.calendar') },
               ]}
             />

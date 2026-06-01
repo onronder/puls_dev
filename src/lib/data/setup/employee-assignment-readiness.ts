@@ -268,6 +268,21 @@ function mapManagerRef(
   }
 }
 
+export function mapManagerRefFromVisibleRow(
+  managerId: string | null,
+  row: { id: string; full_name: string | null; email: string | null; employment_status: string } | undefined,
+): EmployeeAssignmentManagerRef | null {
+  const visible = mapManagerRef(row)
+  if (visible || !managerId) return visible
+
+  return {
+    id: managerId,
+    displayName: '—',
+    email: null,
+    isActive: true,
+  }
+}
+
 async function buildEmployeeAssignmentReadinessFromRows(
   tenantId: string,
   rows: EmployeeRow[],
@@ -467,7 +482,10 @@ async function buildEmployeeAssignmentReadinessFromRows(
       reportingLinesByEmployee.get(row.id) ?? [],
       row.manager_employee_id,
     )
-    const manager = managerId ? mapManagerRef(managerMap.get(managerId)) : null
+    const manager = mapManagerRefFromVisibleRow(
+      managerId,
+      managerId ? managerMap.get(managerId) : undefined,
+    )
 
     const flags = buildEmployeeAssignmentReadinessFlags({
       department,

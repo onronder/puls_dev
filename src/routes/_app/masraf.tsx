@@ -12,7 +12,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -165,7 +165,7 @@ function validateExpenseForm(
 
 function MasrafPage() {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
+  const { user, activePersona } = useAuth()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<ExpenseTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -177,6 +177,13 @@ function MasrafPage() {
   })
 
   const data = expenseResult?.data
+  const showApprovals = activePersona === 'manager'
+
+  useEffect(() => {
+    if (!showApprovals && tab === 'approvals') {
+      setTab('mine')
+    }
+  }, [showApprovals, tab])
 
   const usedPct =
     data && data.monthlyLimit > 0
@@ -279,10 +286,14 @@ function MasrafPage() {
                   value: 'mine',
                   label: `${t('expenseSetup.tabs.mine')} (${data.claims.length})`,
                 },
-                {
-                  value: 'approvals',
-                  label: `${t('expenseSetup.tabs.approvals')} (${data.pendingApprovals.length})`,
-                },
+                ...(showApprovals
+                  ? [
+                      {
+                        value: 'approvals' as const,
+                        label: `${t('expenseSetup.tabs.approvals')} (${data.pendingApprovals.length})`,
+                      },
+                    ]
+                  : []),
                 { value: 'cats', label: t('expenseSetup.tabs.categories') },
               ]}
             />

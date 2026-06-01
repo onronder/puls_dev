@@ -14,15 +14,19 @@ vi.mock('#/lib/data/demo-mode', () => ({
 
 vi.mock('#/lib/data/client', () => ({
   pulsCalc: vi.fn(),
+  pulsCore: vi.fn(),
   pulsWorkflow: vi.fn(),
   resolveTenantContext: vi.fn(),
 }))
 
 import { isPulsDemoModeEnabled } from '#/lib/data/demo-mode'
-import { resolveTenantContext } from '#/lib/data/client'
+import { pulsCalc, pulsCore, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 
 const demoEnabled = vi.mocked(isPulsDemoModeEnabled)
 const resolveTenant = vi.mocked(resolveTenantContext)
+const pulsCalcMock = vi.mocked(pulsCalc)
+const pulsCoreMock = vi.mocked(pulsCore)
+const pulsWorkflowMock = vi.mocked(pulsWorkflow)
 
 function mockTenantContextWithoutTenant() {
   return {
@@ -32,6 +36,28 @@ function mockTenantContextWithoutTenant() {
     employeeName: null,
     personaRole: 'employee' as const,
   }
+}
+
+function mockTenantContext() {
+  return {
+    tenantId: 'tenant-1',
+    tenantName: 'Tenant',
+    employeeId: 'employee-1',
+    employeeName: 'Employee One',
+    personaRole: 'employee' as const,
+  }
+}
+
+function queryChain(result: { data?: unknown; error?: unknown }) {
+  const builder = {
+    select: vi.fn(() => builder),
+    eq: vi.fn(() => builder),
+    in: vi.fn(async () => result),
+    order: vi.fn(() => builder),
+    limit: vi.fn(async () => result),
+    maybeSingle: vi.fn(async () => result),
+  }
+  return builder
 }
 
 describe('getContractInitials', () => {
@@ -132,6 +158,9 @@ describe('fetchContractsOverviewWithMeta', () => {
   afterEach(() => {
     demoEnabled.mockReset()
     resolveTenant.mockReset()
+    pulsCalcMock.mockReset()
+    pulsCoreMock.mockReset()
+    pulsWorkflowMock.mockReset()
   })
 
   it('real empty tenant returns source real and status empty', async () => {
@@ -155,5 +184,57 @@ describe('fetchContractsOverviewWithMeta', () => {
     expect(result.status).toBe('success')
     expect(result.data.contracts.length).toBeGreaterThan(0)
     expect(result.data.activeContractCount).toBeGreaterThan(0)
+  })
+
+  it('fetches real contracts and resolves employee names with a separate core query', async () => {
+    demoEnabled.mockReturnValue(false)
+    resolveTenant.mockResolvedValue(mockTenantContext())
+
+    pulsCalcMock.mockReturnValue({
+      from: vi.fn(() =>
+        queryChain({
+          data: { active_contract_count: 20, expiring_contract_count: 2 },
+          error: null,
+        }),
+      ),
+    } as never)
+    pulsWorkflowMock.mockReturnValue({
+      from: vi.fn(() =>
+        queryChain({
+          data: [
+            {
+              id: 'contract-1',
+              employee_id: 'employee-1',
+              contract_type: 'employment',
+              start_date: '2026-01-01',
+              end_date: null,
+              signature_status: 'signed',
+              risk_band: 'low',
+            },
+          ],
+          error: null,
+        }),
+      ),
+    } as never)
+    pulsCoreMock.mockReturnValue({
+      from: vi.fn(() =>
+        queryChain({
+          data: [{ id: 'employee-1', full_name: 'Burak Aslan' }],
+          error: null,
+        }),
+      ),
+    } as never)
+
+    const result = await fetchContractsOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('real')
+    expect(result.status).toBe('success')
+    expect(result.data.activeContractCount).toBe(20)
+    expect(result.data.contracts).toEqual([
+      expect.objectContaining({
+        employeeName: 'Burak Aslan',
+        typeKey: 'contractsSetup.types.indefinite',
+      }),
+    ])
   })
 })

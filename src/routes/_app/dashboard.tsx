@@ -164,9 +164,9 @@ function QuickActionCard({
 
 function DashboardPage() {
   const { t, i18n: i18nInstance } = useTranslation()
-  const { user } = useAuth()
+  const { user, activePersona } = useAuth()
 
-  const { data: dashboardResult, isLoading, isError, refetch } = useQuery({
+  const { data: dashboardResult, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['dashboard-overview', user?.id],
     queryFn: () => fetchDashboardOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
@@ -177,8 +177,15 @@ function DashboardPage() {
   const overview = data?.overview
   const leaveSummary = data?.leaveSummary
   const expenseSummary = data?.expenseSummary
+  const visibleQueue =
+    activePersona === 'employee'
+      ? (overview?.queue ?? []).filter((item) => item.id !== 'q3' && item.id !== 'q4')
+      : (overview?.queue ?? [])
+  const activeEmployeeCount =
+    activePersona === 'employee' && stats?.displayName ? 1 : (stats?.employeeCount ?? 0)
 
   const dataReadiness = stats?.dataReadinessPct ?? overview?.erpStatus.readiness ?? 0
+  const showLoading = isLoading || (isFetching && data ? isDashboardEmpty(data) : false)
 
   const welcomeName = stats?.displayName?.split(' ')[0] ?? null
 
@@ -199,11 +206,15 @@ function DashboardPage() {
       <div className="flex flex-col gap-1">
         <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs font-medium text-[var(--color-text-muted)]">
           <Building2 className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{stats?.tenantName ?? t('dashboard.noTenant')}</span>
+          {showLoading ? (
+            <Skeleton className="h-4 w-32 rounded" />
+          ) : (
+            <span className="truncate">{stats?.tenantName ?? t('dashboard.noTenant')}</span>
+          )}
           <span aria-hidden>·</span>
           <span className="shrink-0">{formattedDate}</span>
         </div>
-        {isLoading ? (
+        {showLoading ? (
           <Skeleton className="mt-2 h-9 w-64 max-w-full" />
         ) : (
           <h1 className="text-[26px] font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
@@ -238,7 +249,7 @@ function DashboardPage() {
         className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
         aria-label={t('dashboard.stats.employees')}
       >
-        {isLoading ? (
+        {showLoading ? (
           Array.from({ length: 6 }).map((_, index) => (
             <Skeleton key={index} className="h-28 w-full rounded-xl" />
           ))
@@ -246,7 +257,7 @@ function DashboardPage() {
           <>
             <MetricCard
               label={t('dashboard.stats.employees')}
-              value={String(stats?.employeeCount ?? 0)}
+              value={String(activeEmployeeCount)}
               hint={t('dashboard.stats.employeesHint', {
                 count: stats?.departmentCount ?? 0,
               })}
@@ -300,12 +311,12 @@ function DashboardPage() {
               description={t('dashboard.workQueue.description')}
               action={
                 <StatusPill tone="warning">
-                  {t('dashboard.workQueue.itemCount', { count: overview.queue.length })}
+                  {t('dashboard.workQueue.itemCount', { count: visibleQueue.length })}
                 </StatusPill>
               }
             />
             <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-              {overview.queue.map((item) => (
+              {visibleQueue.map((item) => (
                 <li key={item.id}>
                   <Link
                     to={item.to}
