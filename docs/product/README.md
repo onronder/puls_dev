@@ -192,6 +192,15 @@ PR14.3 upgrades `/erp` into a provider-agnostic setup workbench: provider select
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | Shows the setup stepper and selectable provider preview state |
 | [`scripts/verify-14-connector-setup-workbench.sh`](../../scripts/verify-14-connector-setup-workbench.sh) | PR14.3 verify gate |
 
+## PR14.4 Tenant rollout readiness
+
+PR14.4 records the two tenant postures needed before remote rollout: Puls Teknik A.S. for seeded connector metadata and PULS Connector Lab for no-connector onboarding. It keeps auth/persona proof explicit without adding runtime connector behavior.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_tenant_rollout_readiness.md](./14_tenant_rollout_readiness.md) | Tenant posture matrix, auth boundary, rollout order, and `/dashboard` + `/erp` smoke expectations |
+| [`scripts/verify-14-tenant-rollout-readiness.sh`](../../scripts/verify-14-tenant-rollout-readiness.sh) | PR14.4 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |
