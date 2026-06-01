@@ -199,7 +199,12 @@ function DashboardPage() {
     [i18nInstance.language],
   )
 
-  const erpProvider = stats?.erpProvider ?? 'Canias'
+  const erpProvider = stats?.erpProvider ?? t('dashboard.erpNoSourceValue')
+  const erpHint = stats?.erpProvider
+    ? stats.erpConnected
+      ? t('dashboard.erpConnected', { provider: erpProvider })
+      : t('dashboard.erpDisconnected')
+    : t('dashboard.erpNoSourceHint')
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -284,11 +289,7 @@ function DashboardPage() {
             <MetricCard
               label={t('dashboard.stats.erp')}
               value={erpProvider}
-              hint={
-                stats?.erpConnected
-                  ? t('dashboard.erpConnected', { provider: erpProvider })
-                  : t('dashboard.erpCaniasInactive')
-              }
+              hint={erpHint}
               icon={Plug}
             />
             <div className="min-w-0">
