@@ -18,10 +18,13 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
+    const currentPathname = typeof window === 'undefined' ? pathname : window.location.pathname
+    const currentSearch = typeof window === 'undefined' ? searchStr : window.location.search
+
     return (
       <Navigate
         to="/login"
-        search={{ redirect: buildRedirectPath(pathname, searchStr) }}
+        search={{ redirect: buildRedirectPath(currentPathname, currentSearch) }}
         replace
       />
     )
