@@ -28,9 +28,9 @@ Do not claim:
 | PR13.5 scenario/bootstrap proof | Done | Workflow/performance scenario SQL, auth/JWT templates, route matrix |
 | PR13.6 AI Coach DB context readiness | Done | `/ai-koc` DB context readiness + guardrails |
 | PR13.7 Canias/AI connector boundary | Done | Canias discovery, AI action boundary, SQL 09 |
-| Local Supabase proof | Pending | Needs Docker/Supabase running and local `DATABASE_URL` |
-| Mandatory auth persona proof | Pending | Needs local auth users + `05`/`06` |
-| Remote Puls Teknik A.S. tenant proof | Waiting | Starts only after local proof and tenant strategy |
+| Local Supabase proof | Done | PR13.8 local SQL `00-09` passed |
+| Mandatory auth persona proof | Done | PR13.8 `05`/`06` and local auth password smoke passed |
+| Remote Puls Teknik A.S. tenant proof | Done | Remote SQL/auth proof passed for Puls Teknik A.S. proof tenant |
 | Demo-off route smoke | Pending | Needs 20-route walkthrough with `source: real` |
 | Screen readiness truth table | Pending | Needs final route-by-route status and gaps |
 | Demo fallback hardening | Pending | Needs guard against new packaging dependencies on `fetchDemo*` |
