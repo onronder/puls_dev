@@ -103,7 +103,20 @@ export {
 
 export { fetchSettingsOverview, fetchSettingsOverviewWithMeta, type SettingsOverview } from '#/lib/data/settings/overview'
 
-export { fetchErpOverview, fetchErpOverviewWithMeta, type ErpOverview } from '#/lib/data/setup/erp'
+export {
+  fetchErpOverview,
+  fetchErpOverviewWithMeta,
+  type ConnectorFieldMapping,
+  type ConnectorGuardrail,
+  type ConnectorNamespaceSummary,
+  type ConnectorProviderStatus,
+  type ConnectorReadinessCheck,
+  type ConnectorReadinessStatus,
+  type ConnectorSyncLog,
+  type ConnectorSyncLogLevel,
+  type ConnectorTransferMode,
+  type ErpOverview,
+} from '#/lib/data/setup/erp'
 
 export {
   fetchCompanySetupOverview,

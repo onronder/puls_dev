@@ -129,6 +129,7 @@ Use across PR13 docs — **not every table must be seeded**:
 | **PR13.5** | Demo bootstrap / reset / smoke |
 | **PR13.6** | AI Coach DB context readiness |
 | **PR13.7** | Canias connector discovery + AI action boundary |
+| **PR14.1** | Provider-agnostic connector preflight readiness |
 
 ## Definition of done before PR13.7
 
@@ -138,6 +139,7 @@ Use across PR13 docs — **not every table must be seeded**:
 - [x] CSV + bootstrap path defined (PR13.4–13.5)
 - [x] AI context inventory complete (PR13.6)
 - [x] Canias discovery checklist ready for first customer (PR13.7)
+- [x] `/erp` uses canonical connector preflight posture instead of a Canias-only product abstraction (PR14.1)
 
 ## Risks and mitigations
 

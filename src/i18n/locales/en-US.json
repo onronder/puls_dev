@@ -702,36 +702,86 @@
   },
   "erp": {
     "eyebrow": "Setup & Configuration",
-    "title": "ERP Integration",
-    "subtitle": "System: Canias · API access pending.",
+    "title": "Connector preflight",
+    "subtitle": "Provider, canonical mapping, and namespace readiness for source-independent data connections.",
     "badge": "Pending",
     "metrics": {
-      "system": "System",
-      "dataReadiness": "Data readiness",
+      "provider": "Provider",
+      "preflight": "Preflight",
       "fieldMapping": "Field mapping",
-      "fieldMappingHint": "Mapped / total",
-      "lastAttempt": "Last attempt",
-      "lastAttemptHint": "Timeout"
+      "fieldMappingHint": "Canonical / source",
+      "namespaces": "Namespace",
+      "namespacesHint": "Active source scope"
     },
     "actions": {
-      "mapFields": "Map fields",
-      "testConnection": "Test connection"
+      "mapFields": "Mapping draft",
+      "testConnection": "Preflight test"
     },
+    "preflightNote": "This screen shows connection readiness; it does not enable runtime sync, credential storage, or ERP writes.",
     "toast": {
-      "apiPendingTitle": "Canias API access is pending.",
-      "mapDescription": "The mapping editor will be enabled once customer-side API access is available.",
-      "testDescription": "Canias authentication is currently pending on the customer side."
+      "apiPendingTitle": "Connector runtime is out of scope.",
+      "mapDescription": "The mapping editor will open when a provider connection is selected in a future phase.",
+      "testDescription": "Preflight shows metadata readiness without making live API calls."
     },
     "sections": {
-      "mapping": "Field mapping",
-      "mappingDescription": "PULS field → Canias field.",
-      "syncLogs": "Sync logs",
-      "syncLogsDescription": "Recent connection attempts."
+      "preflight": "Connector preflight",
+      "preflightDescription": "Provider metadata, canonical mapping, namespace, and identity reconciliation proof.",
+      "namespaces": "Unified namespace",
+      "namespacesDescription": "External identifiers are reconciled to PULS canonical records here.",
+      "mapping": "Canonical field mapping",
+      "mappingDescription": "PULS canonical field → source provider field.",
+      "transferModes": "Transfer modes",
+      "transferModesDescription": "Product posture for CSV, file, staging, and API boundaries.",
+      "guardrails": "Connector guardrails",
+      "guardrailsDescription": "Runtime and ERP write boundaries remain intentionally closed.",
+      "syncLogs": "Preflight records",
+      "syncLogsDescription": "Recent metadata or connection readiness records."
     },
     "columns": {
-      "pulsField": "PULS field",
-      "erpField": "Canias field",
+      "canonicalField": "PULS canonical field",
+      "sourceField": "Source field",
       "status": "Status"
+    },
+    "providerStatus": {
+      "not_configured": "Provider not configured",
+      "metadata_only": "Metadata-only",
+      "runtime_inactive": "Runtime inactive",
+      "runtime_active": "Runtime active"
+    },
+    "readinessStatus": {
+      "ready": "Ready",
+      "partial": "Partial",
+      "blocked": "Blocked"
+    },
+    "readinessChecks": {
+      "providerMetadata": "Provider metadata",
+      "runtimeBoundary": "Runtime boundary",
+      "fieldMapping": "Field mapping",
+      "sourceNamespace": "Source namespace",
+      "identityReconciliation": "Identity reconciliation",
+      "setupReadiness": "Setup readiness",
+      "writeGuardrail": "ERP write guardrail"
+    },
+    "transferModes": {
+      "manual_csv": "Manual CSV / Excel import",
+      "scheduled_file_exchange": "Scheduled file exchange",
+      "excel_xml": "Excel / XML exchange file",
+      "staging_table": "Staging table preflight",
+      "api_future": "Provider API runtime (future)"
+    },
+    "guardrails": {
+      "canonicalMappingRequired": "External source fields do not drive product behavior until mapped to the PULS canonical model.",
+      "identityReconciliationRequired": "External IDs resolve through unified namespace and identity map records.",
+      "humanConfirmationRequired": "Imports, exports, and workflow actions require human confirmation.",
+      "noRuntimeSync": "This version does not start runtime sync or live connector calls.",
+      "noErpWrites": "PULS does not write ERP master data automatically.",
+      "noCredentialsInRepo": "Credentials, tokens, and API keys are never stored in repo or seed artifacts."
+    },
+    "identityCount": "{{count}} identities",
+    "empty": {
+      "namespaces": "No active source namespace record.",
+      "mappings": "No canonical mapping record.",
+      "syncLogs": "No preflight records."
     },
     "status": {
       "mapped": "Matched",
