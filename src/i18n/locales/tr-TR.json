@@ -1134,8 +1134,10 @@
     "metrics": {
       "departments": "Departman",
       "activeEmployees": "Aktif çalışan",
-      "assignedManagers": "Yönetici atanan",
-      "emptyManagers": "Boş yönetici"
+      "assignedManagers": "Departman yöneticisi",
+      "assignedManagersHint": "Departman kaydındaki manager metadata'sını ölçer.",
+      "emptyManagers": "Metadata bekleyen",
+      "emptyManagersHint": "Çalışan onay yöneticileri /calisanlar altında ayrı doğrulanır."
     },
     "sections": {
       "list": "Departman listesi"
@@ -1831,7 +1833,9 @@
     },
     "empty": {
       "title": "Sözleşme kaydı yok",
-      "description": "Bu tenant için aktif sözleşme metadata kaydı bulunmuyor."
+      "description": "Bu tenant için aktif sözleşme metadata kaydı bulunmuyor.",
+      "selfTitle": "Sana ait sözleşme kaydı yok",
+      "selfDescription": "Tenant sözleşme metadata'sı mevcut; çalışan görünümünde yalnızca hesabınla eşleşen kayıtlar listelenir."
     },
     "boundary": {
       "metadataOnly": "Bu ekran yalnızca sözleşme metadata özetini gösterir; belge yükleme ve hatırlatıcı kaydı henüz açık değil."

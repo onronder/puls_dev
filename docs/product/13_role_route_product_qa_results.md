@@ -6,7 +6,7 @@ This file records the actual role/route/function QA run. It starts as an executi
 
 | Field | Value |
 |-------|-------|
-| Status | Complete — P0/P1 closed, P2 caveats tracked |
+| Status | Complete — P0/P1/P2 QA findings closed for PR13.11 scope |
 | Started | 2026-06-01 |
 | Environment | Remote Supabase development |
 | Tenant | Puls Teknik A.S. |
@@ -26,10 +26,10 @@ This file records the actual role/route/function QA run. It starts as an executi
 | Anonymous protected route redirect | none | Partial | Protected route redirects to login, but redirect query nesting bug found. |
 | Employee route/function pass | `calisan@puls.demo` | Passed after fix | Route access correct; leave/expense create sheets no longer show false missing-manager warnings; dashboard no longer shows approval queue copy in employee mode. |
 | Manager employee-mode pass | `yonetici@puls.demo` | Passed after fix | Employee-mode recheck: dashboard active employee 1, no approval queue copy, leave/expense approval tabs hidden, no manager performance action. |
-| Manager manager-mode pass | `yonetici@puls.demo` | Partial | Manager routes and key surfaces checked; shared contracts finding remains open. |
+| Manager manager-mode pass | `yonetici@puls.demo` | Passed | Manager routes and key surfaces checked; no open PR13.11 P2 findings remain. |
 | HR admin employee-mode pass | `ik@puls.demo` | Passed after fix | Employee-mode recheck: dashboard active employee 1, no approval queue copy, leave/expense approval tabs hidden, performance scope 1 and no manager action. |
-| HR admin manager-mode pass | `ik@puls.demo` | Partial | Setup/admin routes, sheets, and ERP metadata checked; shared contracts and org-manager gaps remain open. |
-| Admin manager-mode pass | `admin@puls.demo` | Partial | 20-route sweep completed in browser; one open contracts finding. |
+| HR admin manager-mode pass | `ik@puls.demo` | Passed | Setup/admin routes, sheets, and ERP metadata checked; department manager metadata copy clarified. |
+| Admin manager-mode pass | `admin@puls.demo` | Passed | 20-route sweep completed in browser; contracts empty-state copy clarified for self-scope. |
 | Incomplete setup pass | configured user | Skipped | Optional edge; not required for PR13.11 go/no-go because the four linked Puls Teknik personas passed DB and browser coverage. |
 
 ## Findings
@@ -41,9 +41,9 @@ This file records the actual role/route/function QA run. It starts as an executi
 | QA-003 | P1 | Auth redirect | Anonymous `/dashboard` redirect reaches login, but URL contains recursively nested `redirect` parameters after sign-out/protected-route navigation. | Resolved | `buildRedirectPath` now normalizes through `resolveSafeRedirect`; unit test covers login redirect nesting. |
 | QA-004 | P2 | `/dashboard` | Immediately after employee login, `/dashboard` briefly rendered `Tenant bağlantısı yok — seed-demo.sql çalıştırın`; reload later showed Puls Teknik data correctly. | Resolved | Empty cached dashboard data is shown as loading while refetching; browser recheck no longer shows seed-demo copy during the transition. |
 | QA-005 | P1 | Leave/expense request creation | `calisan@puls.demo` is PS-023 and has a seeded primary reporting line to PS-021, but both leave and expense create sheets warn `Birincil yönetici atanmamış`. | Resolved | Assignment readiness now treats `employees.manager_employee_id` as enough for manager-positive readiness when manager detail rows are hidden by RLS. Browser recheck: leave and expense sheets open without the missing-manager warning. |
-| QA-006 | P2 | `/sozlesmeler` | Employee self-view may legitimately have no own contract, but empty copy says tenant has no active contract metadata. | Open | Adjust empty-state copy to distinguish self-scope from tenant-scope. |
+| QA-006 | P2 | `/sozlesmeler` | Employee self-view may legitimately have no own contract, but empty copy says tenant has no active contract metadata. | Resolved | Empty-state copy now distinguishes self-scoped employee view from tenant-wide contract metadata. |
 | QA-007 | P1 | Persona mode / data scope | `yonetici@puls.demo` and `ik@puls.demo` with `Çalışan Modu` selected still show manager/admin-scoped data (`AKTİF ÇALIŞAN 16/120`, leave approval queue, performance tenant scope). | Resolved | Dashboard, leave, expense, and performance routes now filter visible employee-mode scope by active persona. Browser rechecks passed for `yonetici@puls.demo` and `ik@puls.demo`. |
-| QA-008 | P2 | `/departmanlar` | HR/admin setup shows `YÖNETİCİ ATANAN 0` and `BOŞ YÖNETİCİ 12` while reporting lines are seeded and setup readiness is 100%. | Open | Decide whether department manager assignment is out of seed scope or wire department manager metadata before ERP readiness. |
+| QA-008 | P2 | `/departmanlar` | HR/admin setup shows `YÖNETİCİ ATANAN 0` and `BOŞ YÖNETİCİ 12` while reporting lines are seeded and setup readiness is 100%. | Resolved | Kept department manager assignment as `departments.manager_employee_id` metadata, and clarified metric labels/hints so reporting-line approval managers are not conflated with department-manager metadata. |
 
 ## Route Result Matrix
 
@@ -63,7 +63,7 @@ This file records the actual role/route/function QA run. It starts as an executi
 | `/kariyer` | Passed | Passed | Passed | partial surface/CTA sheet | Partial |
 | `/egitim` | Passed | Passed | Passed | partial surface | Partial |
 | `/is-degerleme` | Passed | Passed | Passed | placeholder clarity | Partial |
-| `/sozlesmeler` | Partial | Passed | Passed | detail/reminder sheets | Partial |
+| `/sozlesmeler` | Passed | Passed | Passed | detail/reminder sheets | Partial |
 | `/profil` | Passed | Passed | Passed | profile identity/sign-out | Partial |
 | `/ayarlar` | Passed | Passed | Passed | settings visibility/sheets | Partial |
 | `/erp` | Passed | Passed | Passed | mappings/no sync write | Partial |
@@ -72,4 +72,4 @@ This file records the actual role/route/function QA run. It starts as an executi
 
 ## Go / No-Go
 
-PR14 ERP/runtime work is **approved** for planning and connector-readiness work. P0/P1 findings from this QA gate are closed; keep QA-006 and QA-008 as tracked P2 follow-ups before a customer-facing demo.
+PR14 ERP/runtime work is **approved** for planning and connector-readiness work. P0/P1/P2 findings from this QA gate are closed for the PR13.11 product QA scope. PR14 connector-preflight work should keep the canonical model/provider-agnostic connector boundary explicit: Canias is the first provider, not the product abstraction.

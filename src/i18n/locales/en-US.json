@@ -1134,8 +1134,10 @@
     "metrics": {
       "departments": "Departments",
       "activeEmployees": "Active employees",
-      "assignedManagers": "Managers assigned",
-      "emptyManagers": "Unassigned managers"
+      "assignedManagers": "Department manager",
+      "assignedManagersHint": "Measures manager metadata on department records.",
+      "emptyManagers": "Metadata pending",
+      "emptyManagersHint": "Employee approval managers are validated separately under employees."
     },
     "sections": {
       "list": "Department list"
@@ -1831,7 +1833,9 @@
     },
     "empty": {
       "title": "No contract records",
-      "description": "No active contract metadata records were found for this tenant."
+      "description": "No active contract metadata records were found for this tenant.",
+      "selfTitle": "No contract record for you",
+      "selfDescription": "Tenant contract metadata exists; employee view lists only records linked to your account."
     },
     "boundary": {
       "metadataOnly": "This screen shows contract metadata summaries only; document upload and reminder saving are not enabled yet."

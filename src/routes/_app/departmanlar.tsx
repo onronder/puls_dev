@@ -231,8 +231,20 @@ function DepartmanlarPage() {
         <div className="-mx-4 mb-6 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
           <MetricCard compact label={t('departments.metrics.departments')} value={String(data.departmentCount)} icon={Building2} />
           <MetricCard compact label={t('departments.metrics.activeEmployees')} value={String(data.activeEmployees)} icon={Users} />
-          <MetricCard compact label={t('departments.metrics.assignedManagers')} value={String(data.assignedManagers)} icon={UserCheck} />
-          <MetricCard compact label={t('departments.metrics.emptyManagers')} value={String(data.emptyManagers)} icon={UserMinus} />
+          <MetricCard
+            compact
+            label={t('departments.metrics.assignedManagers')}
+            value={String(data.assignedManagers)}
+            hint={t('departments.metrics.assignedManagersHint')}
+            icon={UserCheck}
+          />
+          <MetricCard
+            compact
+            label={t('departments.metrics.emptyManagers')}
+            value={String(data.emptyManagers)}
+            hint={t('departments.metrics.emptyManagersHint')}
+            icon={UserMinus}
+          />
         </div>
       ) : null}
 

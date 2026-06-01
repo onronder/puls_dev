@@ -186,6 +186,36 @@ describe('fetchContractsOverviewWithMeta', () => {
     expect(result.data.activeContractCount).toBeGreaterThan(0)
   })
 
+  it('preserves tenant contract counts when scoped contract rows are empty', async () => {
+    demoEnabled.mockReturnValue(false)
+    resolveTenant.mockResolvedValue(mockTenantContext())
+
+    pulsCalcMock.mockReturnValue({
+      from: vi.fn(() =>
+        queryChain({
+          data: { active_contract_count: 20, expiring_contract_count: 2 },
+          error: null,
+        }),
+      ),
+    } as never)
+    pulsWorkflowMock.mockReturnValue({
+      from: vi.fn(() =>
+        queryChain({
+          data: [],
+          error: null,
+        }),
+      ),
+    } as never)
+
+    const result = await fetchContractsOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('real')
+    expect(result.status).toBe('empty')
+    expect(result.data.activeContractCount).toBe(20)
+    expect(result.data.contracts).toEqual([])
+    expect(pulsCoreMock).not.toHaveBeenCalled()
+  })
+
   it('fetches real contracts and resolves employee names with a separate core query', async () => {
     demoEnabled.mockReturnValue(false)
     resolveTenant.mockResolvedValue(mockTenantContext())
