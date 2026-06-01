@@ -41,8 +41,12 @@ Persisting a selected provider before a real connector boundary exists would cre
 |--------|---------|
 | `E2E_EMAIL` | Authenticated smoke user |
 | `E2E_PASSWORD` | Authenticated smoke user secret |
+| `E2E_EMPLOYEE_EMAIL` | Optional employee-only route guard user |
+| `E2E_EMPLOYEE_PASSWORD` | Optional employee-only route guard secret |
 
 Recommended first user: a stable seeded Puls Teknik admin or HR persona. Connector Lab can be added later as a second authenticated project once route expectations are split by tenant posture.
+
+The default authenticated user may be an admin, HR, manager, or connector operator. Route checks that depend on an employee-only persona must use the optional employee secrets; otherwise they skip instead of treating admin setup access as a failure.
 
 ## Acceptance
 

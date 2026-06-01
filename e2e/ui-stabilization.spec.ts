@@ -4,16 +4,30 @@ const email = process.env.E2E_EMAIL
 const password = process.env.E2E_PASSWORD
 const hasCredentials = Boolean(email && password)
 const requireAuth = process.env.E2E_REQUIRE_AUTH === 'true'
+const employeeEmail = process.env.E2E_EMPLOYEE_EMAIL
+const employeePassword = process.env.E2E_EMPLOYEE_PASSWORD
+const hasEmployeeCredentials = Boolean(employeeEmail && employeePassword)
 
-function getCredentials() {
+type Credentials = {
+  email: string
+  password: string
+}
+
+function getCredentials(): Credentials {
   if (!email || !password) {
     throw new Error('Set E2E_EMAIL and E2E_PASSWORD for authenticated e2e')
   }
   return { email, password }
 }
 
-async function login(page: import('@playwright/test').Page) {
-  const credentials = getCredentials()
+function getEmployeeCredentials(): Credentials {
+  if (!employeeEmail || !employeePassword) {
+    throw new Error('Set E2E_EMPLOYEE_EMAIL and E2E_EMPLOYEE_PASSWORD for employee route e2e')
+  }
+  return { email: employeeEmail, password: employeePassword }
+}
+
+async function login(page: import('@playwright/test').Page, credentials = getCredentials()) {
   await page.goto('/login')
   await page.getByLabel(/E-posta|Email/i).fill(credentials.email)
   await page.getByLabel(/Şifre|Password/i).fill(credentials.password)
@@ -39,6 +53,7 @@ test('unauthenticated redirect preserves path in query', async ({ page }) => {
 
 test.describe('authenticated stabilization', () => {
   test.skip(!hasCredentials && !requireAuth, 'Set E2E_EMAIL and E2E_PASSWORD for authenticated flows')
+  test.describe.configure({ mode: 'serial' })
 
   test('login honors redirect query', async ({ page }) => {
     const credentials = getCredentials()
@@ -60,13 +75,21 @@ test.describe('authenticated stabilization', () => {
     }
   })
 
-  test('employee mode blocks setup route', async ({ page }) => {
+  test('setup route resolves for authenticated account without login bounce', async ({ page }) => {
     await login(page)
 
-    const employeeToggle = page.getByRole('button', { name: /Çalışan Modu|Employee mode/i })
-    if (await employeeToggle.isVisible()) {
-      await employeeToggle.click()
-    }
+    await page.goto('/erp')
+    await expect(page).not.toHaveURL(/\/login/)
+    await expect(page).toHaveURL(/\/(erp|ayarlar)/)
+  })
+
+  test('employee account blocks setup route', async ({ page }) => {
+    test.skip(
+      !hasEmployeeCredentials,
+      'Set E2E_EMPLOYEE_EMAIL and E2E_EMPLOYEE_PASSWORD for employee route e2e',
+    )
+
+    await login(page, getEmployeeCredentials())
 
     await page.goto('/erp')
     await expect(page).toHaveURL(/\/ayarlar/)

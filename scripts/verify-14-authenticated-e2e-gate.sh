@@ -51,6 +51,8 @@ done
 
 for needle in \
   "E2E_BASE_URL" \
+  "E2E_REQUIRE_AUTH" \
+  "workers:" \
   "useExternalServer" \
   "webServer" \
   "baseURL"; do
@@ -62,7 +64,11 @@ done
 
 for needle in \
   "E2E_REQUIRE_AUTH" \
+  "E2E_EMPLOYEE_EMAIL" \
+  "getEmployeeCredentials" \
   "getCredentials" \
+  "setup route resolves for authenticated account without login bounce" \
+  "employee account blocks setup route" \
   "test.skip(!hasCredentials && !requireAuth" \
   "Set E2E_EMAIL and E2E_PASSWORD for authenticated e2e"; do
   if ! grep -Fq "$needle" <<< "$E2E_SPEC"; then
@@ -76,6 +82,8 @@ for needle in \
   "https://puls-dev.vercel.app" \
   "secrets.E2E_EMAIL" \
   "secrets.E2E_PASSWORD" \
+  "secrets.E2E_EMPLOYEE_EMAIL" \
+  "secrets.E2E_EMPLOYEE_PASSWORD" \
   "pnpm run test:e2e:auth" \
   "Authenticated e2e skipped"; do
   if ! grep -Fq "$needle" <<< "$CI_WORKFLOW"; then
