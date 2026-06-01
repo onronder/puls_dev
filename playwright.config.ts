@@ -6,6 +6,7 @@ const useExternalServer = Boolean(process.env.E2E_BASE_URL)
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  workers: process.env.E2E_REQUIRE_AUTH === 'true' ? 1 : undefined,
   retries: process.env.CI ? 1 : 0,
   use: {
     baseURL,
