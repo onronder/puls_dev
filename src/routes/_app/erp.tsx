@@ -2,14 +2,21 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
   AlertTriangle,
+  Braces,
+  Check,
   CheckCircle2,
+  ChevronRight,
+  Circle,
   Database,
+  FileSpreadsheet,
+  Globe2,
   Info,
   Link2,
   Plug,
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
@@ -42,6 +49,7 @@ function ErpRoute() {
 
 type ConnectorStatus = ErpOverview['readiness']['status']
 type ConnectorSyncLevel = ErpOverview['syncLogs'][number]['level']
+type ConnectorProviderOption = ErpOverview['providerOptions'][number]
 
 function readinessTone(status: ConnectorStatus): StatusTone {
   if (status === 'ready') return 'success'
@@ -67,9 +75,25 @@ function SyncLogIcon({ level }: { level: ConnectorSyncLevel }) {
   return <Info className={className} aria-hidden />
 }
 
+function ProviderOptionIcon({ id }: { id: ConnectorProviderOption['id'] }) {
+  const className = 'h-5 w-5'
+  if (id === 'csv_import') return <FileSpreadsheet className={className} aria-hidden />
+  if (id === 'custom_api') return <Braces className={className} aria-hidden />
+  if (id === 'logo') return <Globe2 className={className} aria-hidden />
+  return <Plug className={className} aria-hidden />
+}
+
+function SetupStepIcon({ status }: { status: ConnectorStatus }) {
+  if (status === 'ready') return <Check className="h-4 w-4" aria-hidden />
+  if (status === 'partial') return <Circle className="h-3 w-3 fill-current" aria-hidden />
+  return <Circle className="h-3 w-3" aria-hidden />
+}
+
 function ErpPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const [selectedProviderId, setSelectedProviderId] =
+    useState<ConnectorProviderOption['id']>('canias')
   const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],
     queryFn: () => fetchErpOverviewWithMeta(user!.id),
@@ -79,6 +103,9 @@ function ErpPage() {
   const data = erpResult?.data
   const hasSelectedConnector = data?.connectorState === 'connector_selected'
   const hasNoConnector = data?.connectorState === 'no_connector'
+  const selectedProvider =
+    data?.providerOptions.find((option) => option.id === selectedProviderId) ??
+    data?.providerOptions[0]
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -97,6 +124,47 @@ function ErpPage() {
       />
 
       <DemoSourcePill visible={erpResult?.source === 'demo'} />
+
+      {data ? (
+        <section className="mt-6">
+          <SectionHeader
+            title={t('erp.workbench.title')}
+            description={t('erp.workbench.description')}
+          />
+          <ol className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0">
+            {data.setupSteps.map((step, index) => (
+              <li
+                key={step.id}
+                className="min-w-[176px] rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span
+                    className={cn(
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
+                      step.status === 'ready'
+                        ? 'border-[color-mix(in_srgb,var(--color-success)_30%,transparent)] bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                        : step.status === 'partial'
+                          ? 'border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[var(--color-warning-soft)] text-[var(--color-warning)]'
+                          : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-muted)]',
+                    )}
+                  >
+                    <SetupStepIcon status={step.status} />
+                  </span>
+                  <span className="font-mono text-xs text-[var(--color-text-muted)]">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+                  {t(step.labelKey)}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                  {t(step.descriptionKey)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
 
       {isLoading ? (
         <div className="-mx-4 mt-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
@@ -145,53 +213,145 @@ function ErpPage() {
             title={t('erp.onboarding.title')}
             description={t('erp.onboarding.description')}
           />
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+          <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="grid gap-3 md:grid-cols-2">
               {data.providerOptions.map((option) => (
-                <div
+                <button
                   key={option.id}
-                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-4"
+                  type="button"
+                  aria-pressed={selectedProvider?.id === option.id}
+                  onClick={() => setSelectedProviderId(option.id)}
+                  className={cn(
+                    'touch-target rounded-xl border bg-[var(--color-bg-card)] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
+                    selectedProvider?.id === option.id
+                      ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_30%,transparent)]'
+                      : 'border-[var(--color-border)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)]',
+                  )}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                      <ProviderOptionIcon id={option.id} />
+                    </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                        {t(option.labelKey)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {t(option.labelKey)}
+                        </p>
+                        {selectedProvider?.id === option.id ? (
+                          <CheckCircle2
+                            className="h-4 w-4 text-[var(--color-success)]"
+                            aria-hidden
+                          />
+                        ) : null}
+                      </div>
                       <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
                         {t(option.descriptionKey)}
                       </p>
+                      <p className="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
+                        {t(option.readinessLabelKey)}
+                      </p>
                     </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between gap-3">
                     <StatusPill tone={readinessTone(option.status)}>
                       {t(`erp.readinessStatus.${option.status}`)}
                     </StatusPill>
+                    <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" aria-hidden />
                   </div>
-                </div>
+                </button>
               ))}
             </div>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
-                <Plug className="h-4 w-4" />
-                {t('erp.onboarding.selectProvider')}
-              </Button>
-              <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
-                <Link2 className="h-4 w-4" />
-                {t('erp.onboarding.importMapping')}
-              </Button>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
-              {t('erp.onboarding.guardrail')}
-            </p>
+
+            {selectedProvider ? (
+              <aside className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                      {t('erp.providerPreview.eyebrow')}
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                      {t(selectedProvider.labelKey)}
+                    </h2>
+                    <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                      {t('erp.providerPreview.description')}
+                    </p>
+                  </div>
+                  <StatusPill tone={readinessTone(selectedProvider.status)}>
+                    {t(`erp.readinessStatus.${selectedProvider.status}`)}
+                  </StatusPill>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {t('erp.providerPreview.requirements')}
+                  </p>
+                  <ul className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+                    {selectedProvider.requirements.map((requirement) => (
+                      <li key={requirement.id} className="py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                              {t(requirement.labelKey)}
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                              {t(requirement.descriptionKey)}
+                            </p>
+                          </div>
+                          <StatusPill tone={readinessTone(requirement.status)}>
+                            {t(`erp.readinessStatus.${requirement.status}`)}
+                          </StatusPill>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </aside>
+            ) : null}
           </div>
+
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              className="touch-target w-full sm:w-auto"
+              disabled
+            >
+              <Plug className="h-4 w-4" />
+              {t('erp.onboarding.selectProvider')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="touch-target w-full sm:w-auto"
+              disabled
+            >
+              <Link2 className="h-4 w-4" />
+              {t('erp.onboarding.importMapping')}
+            </Button>
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
+            {t('erp.onboarding.guardrail')}
+          </p>
         </section>
       ) : null}
 
       {data && hasSelectedConnector ? (
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
-          <Link2 className="h-4 w-4" />
-          {t('erp.actions.mapFields')}
+          <Button
+            type="button"
+            variant="outline"
+            className="touch-target w-full sm:w-auto"
+            disabled
+          >
+            <Link2 className="h-4 w-4" />
+            {t('erp.actions.mapFields')}
           </Button>
-          <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
+          <Button
+            type="button"
+            variant="outline"
+            className="touch-target w-full sm:w-auto"
+            disabled
+          >
             <RefreshCw className="h-4 w-4" />
             {t('erp.actions.testConnection')}
           </Button>

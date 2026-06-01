@@ -1,4 +1,8 @@
-export { isPulsDemoModeEnabled, readPulsDemoModeConfig, type PulsDemoModeConfig } from '#/lib/data/demo-mode'
+export {
+  isPulsDemoModeEnabled,
+  readPulsDemoModeConfig,
+  type PulsDemoModeConfig,
+} from '#/lib/data/demo-mode'
 
 export {
   pulsAudit,
@@ -101,7 +105,11 @@ export {
   type ProfileOverview,
 } from '#/lib/data/profile/overview'
 
-export { fetchSettingsOverview, fetchSettingsOverviewWithMeta, type SettingsOverview } from '#/lib/data/settings/overview'
+export {
+  fetchSettingsOverview,
+  fetchSettingsOverviewWithMeta,
+  type SettingsOverview,
+} from '#/lib/data/settings/overview'
 
 export {
   fetchErpOverview,
@@ -110,10 +118,13 @@ export {
   type ConnectorGuardrail,
   type ConnectorLifecycleState,
   type ConnectorNamespaceSummary,
+  type ConnectorProviderRequirement,
   type ConnectorProviderStatus,
   type ConnectorProviderOption,
   type ConnectorReadinessCheck,
   type ConnectorReadinessStatus,
+  type ConnectorSetupStep,
+  type ConnectorSetupStepId,
   type ConnectorSyncLog,
   type ConnectorSyncLogLevel,
   type ConnectorTransferMode,
