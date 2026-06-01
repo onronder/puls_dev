@@ -755,6 +755,7 @@
       "title": "Henüz veri bağlantısı yok",
       "description": "Önce veri kaynağını seç, ardından alan ve kimlik eşleştirmesini tamamla.",
       "selectProvider": "Kaynak seç",
+      "providerSelected": "Seçim taslağı hazır",
       "importMapping": "Eşleştirme yükle",
       "guardrail": "Bu aşamada yalnızca kurulum hazırlanır; canlı aktarım, kimlik bilgisi saklama ve ERP'ye yazma kapalıdır."
     },
@@ -783,6 +784,8 @@
     "providerPreview": {
       "eyebrow": "Seçim önizlemesi",
       "description": "Bu seçim kurulum adımlarını gösterir; kayıt oluşturmaz.",
+      "emptyTitle": "Bir kaynak seçerek başla",
+      "emptyDescription": "Canias, Logo, CSV / Excel veya özel API seçeneklerinden birini seçtiğinde hazırlık gereksinimleri burada görünür.",
       "requirements": "Hazırlık gereksinimleri"
     },
     "providerRequirements": {

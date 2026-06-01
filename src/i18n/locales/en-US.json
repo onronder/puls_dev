@@ -755,6 +755,7 @@
       "title": "No data connection yet",
       "description": "Choose a data source, then complete field and identity matching.",
       "selectProvider": "Select source",
+      "providerSelected": "Selection draft ready",
       "importMapping": "Upload mapping",
       "guardrail": "This step only prepares the setup; live transfer, credential storage, and ERP writes remain off."
     },
@@ -783,6 +784,8 @@
     "providerPreview": {
       "eyebrow": "Selection preview",
       "description": "This selection shows the setup steps; it does not create a record.",
+      "emptyTitle": "Start by choosing a source",
+      "emptyDescription": "Choose Canias, Logo, CSV / Excel, or Custom API to preview the readiness requirements here.",
       "requirements": "Readiness requirements"
     },
     "providerRequirements": {
