@@ -31,9 +31,9 @@ Do not claim:
 | Local Supabase proof | Done | PR13.8 local SQL `00-09` passed |
 | Mandatory auth persona proof | Done | PR13.8 `05`/`06` and local auth password smoke passed |
 | Remote Puls Teknik A.S. tenant proof | Done | Remote SQL/auth proof passed for Puls Teknik A.S. proof tenant |
-| Demo-off route smoke | Pending | Needs 20-route walkthrough with `source: real` |
-| Screen readiness truth table | Pending | Needs final route-by-route status and gaps |
-| Demo fallback hardening | Pending | Needs guard against new packaging dependencies on `fetchDemo*` |
+| Demo-off route smoke | Done | PR13.10 route truth table recorded with demo mode off; smoke-found persona/deep-link blockers fixed |
+| Screen readiness truth table | Done | `13_v1_screen_readiness_truth_table.md` |
+| Demo fallback hardening | Done | `check-13-demo-fallback-regression.sh` blocks new unclassified fallback additions; stale demo copy removed from smoke path |
 
 ## Remaining PR Cap
 

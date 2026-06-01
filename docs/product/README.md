@@ -147,6 +147,18 @@ PR13.9 moves from local proof to the remote development Supabase project. It kee
 | [`scripts/run-13-remote-puls-teknik-proof.sh`](../../scripts/run-13-remote-puls-teknik-proof.sh) | Runs remote SQL `00-10`, `02-04`, `07-09`, and mandatory `05`/`06` auth smoke |
 | [`scripts/verify-13-remote-puls-teknik-proof.sh`](../../scripts/verify-13-remote-puls-teknik-proof.sh) | PR13.9 remote proof verify gate |
 
+## PR13.10 Demo-off route smoke + fallback closeout
+
+PR13.10 closes the PR13 packaging track by walking all 20 V1 routes with **`VITE_PULS_DEMO_MODE=false`**, recording honest route readiness, and guarding against new product-path demo fallback drift.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [13_v1_screen_readiness_truth_table.md](./13_v1_screen_readiness_truth_table.md) | Route-by-route source, DB model, readiness, and accepted gap table |
+| [13_v1_packaging_closeout.md](./13_v1_packaging_closeout.md) | Final PR13 claims, non-claims, and PR14 handoff |
+| [`src/lib/persona.ts`](../../src/lib/persona.ts) + [`src/components/auth/SetupRouteGuard.tsx`](../../src/components/auth/SetupRouteGuard.tsx) | Small smoke-found blocker fixes: `puls_core` auth persona resolution and setup deep-link guard timing |
+| [`scripts/check-13-demo-fallback-regression.sh`](../../scripts/check-13-demo-fallback-regression.sh) | Fails new unclassified product-path demo fallback additions |
+| [`scripts/verify-13-demo-off-route-smoke-closeout.sh`](../../scripts/verify-13-demo-off-route-smoke-closeout.sh) | PR13.10 route smoke closeout verify gate |
+
 ## Related packs
 
 | Pack | Entry point |
