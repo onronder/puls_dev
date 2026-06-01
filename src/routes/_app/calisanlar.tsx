@@ -216,7 +216,7 @@ function CalisanlarPage() {
     enabled: Boolean(user?.id) && activePersona === 'manager',
   })
 
-  const employees = data?.employees ?? []
+  const employees = useMemo(() => data?.employees ?? [], [data?.employees])
   const summary = data?.summary
 
   const readinessFiltered = useMemo(
