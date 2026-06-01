@@ -12,7 +12,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -178,12 +178,7 @@ function MasrafPage() {
 
   const data = expenseResult?.data
   const showApprovals = activePersona === 'manager'
-
-  useEffect(() => {
-    if (!showApprovals && tab === 'approvals') {
-      setTab('mine')
-    }
-  }, [showApprovals, tab])
+  const activeTab: ExpenseTab = showApprovals || tab !== 'approvals' ? tab : 'mine'
 
   const usedPct =
     data && data.monthlyLimit > 0
@@ -279,7 +274,7 @@ function MasrafPage() {
           <div className="mt-6">
             <Segmented
               ariaLabel={t('expenseSetup.tabs.ariaLabel')}
-              value={tab}
+              value={activeTab}
               onChange={setTab}
               options={[
                 {
@@ -299,11 +294,11 @@ function MasrafPage() {
             />
           </div>
 
-          {tab === 'mine' ? (
+          {activeTab === 'mine' ? (
             <RecentTab claims={data.claims} locale={i18n.language} t={t} />
           ) : null}
 
-          {tab === 'approvals' ? (
+          {activeTab === 'approvals' ? (
             <ApprovalsTab
               approvals={data.pendingApprovals}
               locale={i18n.language}
@@ -313,7 +308,7 @@ function MasrafPage() {
             />
           ) : null}
 
-          {tab === 'cats' ? (
+          {activeTab === 'cats' ? (
             <CategoriesTab limits={data.categoryLimits} locale={i18n.language} t={t} />
           ) : null}
         </>
