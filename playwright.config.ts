@@ -1,18 +1,25 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
+const useExternalServer = Boolean(process.env.E2E_BASE_URL)
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
   },
-  webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-  },
+  ...(useExternalServer
+    ? {}
+    : {
+        webServer: {
+          command: 'pnpm dev',
+          url: baseURL,
+          reuseExistingServer: !process.env.CI,
+        },
+      }),
   projects: [
     {
       name: 'mobile',

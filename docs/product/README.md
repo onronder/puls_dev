@@ -210,6 +210,18 @@ PR14.5 records the live remote UI smoke for the two PR14 tenant postures: PULS C
 | [14_remote_tenant_rollout_smoke_results.md](./14_remote_tenant_rollout_smoke_results.md) | Sanitized live remote UI smoke results for `/dashboard` and `/erp` |
 | [`scripts/verify-14-remote-tenant-rollout-smoke-results.sh`](../../scripts/verify-14-remote-tenant-rollout-smoke-results.sh) | PR14.5 verify gate |
 
+## PR14.6 Authenticated e2e gate
+
+PR14.6 enables live login coverage for authenticated route stabilization before any connector setup persistence work. It keeps connector runtime closed while allowing CI to run authenticated Playwright against the live Vercel deployment when repository secrets are configured.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_authenticated_e2e_gate.md](./14_authenticated_e2e_gate.md) | Authenticated e2e modes, CI secret boundary, and acceptance criteria |
+| [`e2e/ui-stabilization.spec.ts`](../../e2e/ui-stabilization.spec.ts) | Uses `E2E_REQUIRE_AUTH=true` to fail authenticated specs instead of skipping |
+| [`playwright.config.ts`](../../playwright.config.ts) | Supports external `E2E_BASE_URL` without starting the local dev server |
+| [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | Adds live authenticated e2e job when secrets are present |
+| [`scripts/verify-14-authenticated-e2e-gate.sh`](../../scripts/verify-14-authenticated-e2e-gate.sh) | PR14.6 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |

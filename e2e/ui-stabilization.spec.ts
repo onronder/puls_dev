@@ -3,11 +3,20 @@ import { expect, test } from '@playwright/test'
 const email = process.env.E2E_EMAIL
 const password = process.env.E2E_PASSWORD
 const hasCredentials = Boolean(email && password)
+const requireAuth = process.env.E2E_REQUIRE_AUTH === 'true'
+
+function getCredentials() {
+  if (!email || !password) {
+    throw new Error('Set E2E_EMAIL and E2E_PASSWORD for authenticated e2e')
+  }
+  return { email, password }
+}
 
 async function login(page: import('@playwright/test').Page) {
+  const credentials = getCredentials()
   await page.goto('/login')
-  await page.getByLabel(/E-posta|Email/i).fill(email!)
-  await page.getByLabel(/Şifre|Password/i).fill(password!)
+  await page.getByLabel(/E-posta|Email/i).fill(credentials.email)
+  await page.getByLabel(/Şifre|Password/i).fill(credentials.password)
   await page.getByRole('button', { name: /Giriş Yap|Sign in/i }).click()
   await expect(page).toHaveURL(/\/dashboard/)
 }
@@ -29,12 +38,13 @@ test('unauthenticated redirect preserves path in query', async ({ page }) => {
 })
 
 test.describe('authenticated stabilization', () => {
-  test.skip(!hasCredentials, 'Set E2E_EMAIL and E2E_PASSWORD for authenticated flows')
+  test.skip(!hasCredentials && !requireAuth, 'Set E2E_EMAIL and E2E_PASSWORD for authenticated flows')
 
   test('login honors redirect query', async ({ page }) => {
+    const credentials = getCredentials()
     await page.goto('/login?redirect=%2Fayarlar')
-    await page.getByLabel(/E-posta|Email/i).fill(email!)
-    await page.getByLabel(/Şifre|Password/i).fill(password!)
+    await page.getByLabel(/E-posta|Email/i).fill(credentials.email)
+    await page.getByLabel(/Şifre|Password/i).fill(credentials.password)
     await page.getByRole('button', { name: /Giriş Yap|Sign in/i }).click()
     await expect(page).toHaveURL(/\/ayarlar/)
   })
