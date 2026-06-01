@@ -69,9 +69,9 @@
   },
   "dashboard": {
     "title": "Ana Sayfa",
-    "placeholder": "Sprint-2 — canlı veri kartları.",
+    "placeholder": "Canlı veri özeti",
     "welcome": "Hoş geldin, {{name}}",
-    "noTenant": "Tenant bağlantısı yok — seed-demo.sql çalıştırın.",
+    "noTenant": "Organizasyon bağlantısı bulunamadı.",
     "erpCaniasInactive": "Canias pasif (hazırlık)",
     "subtitle": "İK operasyonlarının bugünkü özetini buradan takip et.",
     "meta": {
@@ -111,7 +111,7 @@
       "leaveBalance": "İzin bakiyesi",
       "pendingExpense": "Bekleyen masraf",
       "performanceScore": "Performans skoru",
-      "performanceHint": "Demo skor — performans modülü"
+      "performanceHint": "Performans modülü"
     },
     "cards": {
       "bagla": {
@@ -131,10 +131,10 @@
       }
     },
     "erpConnected": "Bağlı: {{provider}}",
-    "erpDisconnected": "ERP bağlantısı pasif (demo)",
+    "erpDisconnected": "ERP bağlantısı pasif",
     "emptySeed": {
-      "title": "Demo veri yok",
-      "description": "Supabase SQL Editor'da supabase/seed-demo.sql dosyasını çalıştırın (USER_UUID değiştirin)."
+      "title": "Veri yok",
+      "description": "Bu ekranı doldurmak için şirket kurulumunu tamamlayın veya organizasyon verisini içe aktarın."
     },
     "emptyTenant": {
       "title": "Henüz organizasyon verisi yok",
@@ -210,7 +210,7 @@
       "endsAt": "Bitiş"
     },
     "empty": {
-      "competencies": "Henüz şablon yok. seed-demo.sql ile demo şablon ekleyebilirsiniz.",
+      "competencies": "Henüz yetkinlik şablonu yok. Yönetici modunda şablon oluşturabilirsiniz.",
       "cycles": "Aktif dönem yok. Yönetici modunda yeni dönem oluşturabilirsiniz.",
       "cyclesHint": "İK yöneticisi dönem oluşturduğunda burada görünür.",
       "goals": "Atanmış hedef yok."
@@ -223,7 +223,7 @@
     },
     "managerOnlyCreate": "Dönem oluşturmak için Yönetici Modu'na geçin.",
     "errors": {
-      "noTenant": "Tenant bulunamadı — seed-demo.sql çalıştırın."
+      "noTenant": "Organizasyon bağlantısı bulunamadı."
     },
     "status": {
       "active": "Aktif",
@@ -319,7 +319,7 @@
     },
     "empty": {
       "title": "Çalışan kaydı yok",
-      "description": "seed-demo.sql çalıştırıldığında Mert Teknik demo çalışanları listelenir."
+      "description": "Organizasyon verisi içe aktarıldığında çalışanlar burada listelenir."
     },
     "error": {
       "loadFailed": "Çalışan listesi yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin."
@@ -698,141 +698,141 @@
       "departments": "Departman",
       "positions": "Pozisyon"
     },
-    "versionFooter": "PULS · v0.1 prototip"
+    "versionFooter": "PULS"
   },
   "erp": {
     "eyebrow": "Tanım & Kurulum",
-    "title": "Connector preflight",
-    "subtitle": "Kaynak bağımsız veri bağlantısı için provider, canonical mapping ve namespace hazırlığı.",
+    "title": "Veri bağlantıları",
+    "subtitle": "ERP, dosya veya özel API kaynaklarını PULS veri alanlarına bağla.",
     "badge": "Beklemede",
     "workbench": {
-      "title": "Connector setup workbench",
-      "description": "Veri kaynağı seçimi, canonical mapping, namespace ve preflight aşamaları ayrı ayrı doğrulanır."
+      "title": "Bağlantı kurulum adımları",
+      "description": "Veri kaynağı, alan eşleştirme, kimlik eşleştirme ve kontrol adımları sırayla tamamlanır."
     },
     "setupSteps": {
       "source": {
         "label": "Kaynak",
-        "description": "Provider veya dosya kaynağı seçilir."
+        "description": "ERP, dosya veya özel API kaynağı seçilir."
       },
       "mapping": {
-        "label": "Mapping",
-        "description": "Kaynak alanlar PULS canonical modele bağlanır."
+        "label": "Alanlar",
+        "description": "Kaynak alanlar PULS veri alanlarına bağlanır."
       },
       "namespace": {
-        "label": "Namespace",
-        "description": "External ID kayıtları unified namespace içinde çözülür."
+        "label": "Kimlikler",
+        "description": "Dış kayıt kimlikleri organizasyon içinde izlenebilir hale gelir."
       },
       "preflight": {
-        "label": "Preflight",
-        "description": "Metadata, mapping ve kimlik kanıtı kontrol edilir."
+        "label": "Kontrol",
+        "description": "Kaynak, alan ve kimlik eşleştirme durumu kontrol edilir."
       },
       "runtime": {
-        "label": "Runtime",
-        "description": "Canlı sync ve ERP yazma sınırı kapalı tutulur."
+        "label": "Canlı bağlantı",
+        "description": "Aktarım ve ERP yazma yetkileri ayrıca açılır."
       }
     },
     "metrics": {
-      "provider": "Provider",
-      "preflight": "Preflight",
+      "provider": "Kaynak",
+      "preflight": "Kontrol",
       "fieldMapping": "Alan eşleştirme",
-      "fieldMappingHint": "Canonical / kaynak",
-      "namespaces": "Namespace",
-      "namespacesHint": "Aktif kaynak alanı"
+      "fieldMappingHint": "PULS / kaynak",
+      "namespaces": "Kaynak kimlikleri",
+      "namespacesHint": "Aktif kapsam"
     },
     "actions": {
-      "mapFields": "Mapping taslağı",
-      "testConnection": "Preflight testi"
+      "mapFields": "Alanları eşleştir",
+      "testConnection": "Bağlantıyı kontrol et"
     },
     "onboarding": {
-      "title": "Henüz connector tanımlı değil",
-      "description": "Yeni müşteri tenant'ında önce veri kaynağı seçilir; sonra canonical mapping ve namespace hazırlığı yapılır.",
-      "selectProvider": "Provider seç",
-      "importMapping": "Mapping içe aktar",
-      "guardrail": "Bu başlangıç state'i yalnızca hazırlık akışını gösterir; runtime sync, credential saklama veya ERP yazma işlemi açmaz."
+      "title": "Henüz veri bağlantısı yok",
+      "description": "Önce veri kaynağını seç, ardından alan ve kimlik eşleştirmesini tamamla.",
+      "selectProvider": "Kaynak seç",
+      "importMapping": "Eşleştirme yükle",
+      "guardrail": "Bu aşamada yalnızca kurulum hazırlanır; canlı aktarım, kimlik bilgisi saklama ve ERP'ye yazma kapalıdır."
     },
     "providerOptions": {
       "canias": {
         "label": "Canias",
-        "description": "İlk müşteri track'i; metadata ve mapping preflight hazır.",
-        "readiness": "Seed kanıtı mevcut; canlı runtime kapalı."
+        "description": "PULS'un desteklediği ERP bağlantı modeli.",
+        "readiness": "Alan eşleştirme ve güvenli aktarım kuralları hazır."
       },
       "logo": {
         "label": "Logo",
-        "description": "Gelecek provider adayı; aynı canonical mapping modelini kullanır.",
-        "readiness": "Discovery ve mapping taslağı gerekir."
+        "description": "Aynı bağlantı modeliyle eklenebilir.",
+        "readiness": "Kaynak alanları ve erişim yöntemi netleşmeli."
       },
       "csv_import": {
         "label": "CSV / Excel",
-        "description": "API olmayan kaynaklar için dosya veya template tabanlı aktarım.",
+        "description": "API olmayan kaynaklar için dosya veya şablon tabanlı aktarım.",
         "readiness": "Dosya tabanlı başlangıç için en düşük riskli yol."
       },
       "custom_api": {
-        "label": "Custom API",
-        "description": "Müşteri özel bağlantısı; runtime boundary gelecek fazda açılır.",
-        "readiness": "Müşteri discovery ve servis boundary gerekir."
+        "label": "Özel API",
+        "description": "Müşteri özel API bağlantısı.",
+        "readiness": "Erişim yöntemi ve veri sözleşmesi gerekir."
       }
     },
     "providerPreview": {
       "eyebrow": "Seçim önizlemesi",
-      "description": "Bu seçim yalnızca akış önizlemesidir; connector metadata kaydı oluşturmaz.",
+      "description": "Bu seçim kurulum adımlarını gösterir; kayıt oluşturmaz.",
       "requirements": "Hazırlık gereksinimleri"
     },
     "providerRequirements": {
       "sourceProfile": {
         "label": "Kaynak profili",
-        "description": "Provider tipi, sahiplik ve veri kapsamı netleşir."
+        "description": "Kaynak tipi, sahiplik ve veri kapsamı netleşir."
       },
       "canonicalMapping": {
-        "label": "Canonical mapping",
-        "description": "Dış kaynak alanları PULS canonical veri alanlarına eşleşir."
+        "label": "Alan eşleştirme",
+        "description": "Dış kaynak alanları PULS veri alanlarına eşleşir."
       },
       "sourceNamespace": {
-        "label": "Source namespace",
+        "label": "Kaynak kimliği",
         "description": "External ID alanı tenant içinde benzersiz ve izlenebilir olur."
       },
       "identityStrategy": {
-        "label": "Identity strategy",
-        "description": "Kaynak kayıtları PULS canonical kayıtlarıyla reconciliation kuralı üzerinden bağlanır."
+        "label": "Kayıt eşleştirme",
+        "description": "Kaynak kayıtları PULS kayıtlarıyla eşleştirme kuralı üzerinden bağlanır."
       },
       "transferMode": {
         "label": "Transfer modu",
         "description": "CSV, Excel, dosya veya API sınırı insan onaylı akışa göre seçilir."
       },
       "runtimeBoundary": {
-        "label": "Runtime boundary",
-        "description": "Canlı connector çağrısı, credential saklama ve ERP yazma gelecek faza kapalıdır."
+        "label": "Canlı bağlantı sınırı",
+        "description": "Canlı aktarım, kimlik bilgisi saklama ve ERP yazma ayrı onay gerektirir."
       }
     },
-    "preflightNote": "Bu ekran bağlantı hazırlığını gösterir; runtime sync, kimlik bilgisi saklama veya ERP yazma işlemi açmaz.",
+    "preflightNote": "Bu ekran bağlantı hazırlığını gösterir; canlı aktarım, kimlik bilgisi saklama veya ERP'ye yazma başlatmaz.",
     "toast": {
-      "apiPendingTitle": "Connector runtime kapsam dışı.",
-      "mapDescription": "Mapping editörü ileride provider bağlantısı seçildiğinde açılacak.",
-      "testDescription": "Preflight canlı API çağrısı yapmadan metadata hazırlığını gösterir."
+      "apiPendingTitle": "Canlı bağlantı kapalı.",
+      "mapDescription": "Alan eşleştirme ekranı bağlantı seçildikten sonra açılacak.",
+      "testDescription": "Kontrol işlemi canlı API çağrısı yapmaz."
     },
     "sections": {
-      "preflight": "Connector preflight",
-      "preflightDescription": "Provider metadata, canonical mapping, namespace ve kimlik eşleştirme kanıtı.",
-      "namespaces": "Unified namespace",
-      "namespacesDescription": "Dış kaynaklardan gelen kimliklerin PULS canonical kayıtlarına bağlandığı alan.",
-      "mapping": "Canonical field mapping",
-      "mappingDescription": "PULS canonical alanı → kaynak provider alanı.",
+      "preflight": "Bağlantı kontrolü",
+      "preflightDescription": "Kaynak bilgisi, alan eşleştirme ve kimlik eşleştirme durumu.",
+      "namespaces": "Kaynak kimlikleri",
+      "namespacesDescription": "Dış kaynaklardan gelen kayıtların PULS kayıtlarıyla eşleştiği alan.",
+      "mapping": "Alan eşleştirme",
+      "mappingDescription": "PULS alanı → kaynak alanı.",
       "transferModes": "Transfer modları",
-      "transferModesDescription": "CSV, dosya, staging veya API sınırlarının ürün postürü.",
-      "guardrails": "Connector guardrails",
-      "guardrailsDescription": "Runtime ve ERP yazma sınırları bilinçli olarak kapalı.",
-      "syncLogs": "Preflight kayıtları",
-      "syncLogsDescription": "Son metadata veya bağlantı hazırlığı kayıtları."
+      "transferModesDescription": "CSV, dosya ve API aktarım seçenekleri.",
+      "guardrails": "Güvenlik sınırları",
+      "guardrailsDescription": "Canlı aktarım ve ERP'ye yazma kapalıdır.",
+      "syncLogs": "Kontrol geçmişi",
+      "syncLogsDescription": "Son bağlantı hazırlığı kayıtları."
     },
     "columns": {
-      "canonicalField": "PULS canonical alanı",
+      "canonicalField": "PULS alanı",
       "sourceField": "Kaynak alan",
       "status": "Durum"
     },
     "providerStatus": {
-      "not_configured": "Provider tanımlı değil",
-      "metadata_only": "Metadata-only",
-      "runtime_inactive": "Runtime pasif",
-      "runtime_active": "Runtime aktif"
+      "not_configured": "Kaynak tanımlı değil",
+      "metadata_only": "Hazırlık kaydı",
+      "runtime_inactive": "Canlı bağlantı pasif",
+      "runtime_active": "Canlı bağlantı aktif"
     },
     "readinessStatus": {
       "ready": "Hazır",
@@ -840,34 +840,34 @@
       "blocked": "Kapalı"
     },
     "readinessChecks": {
-      "providerMetadata": "Provider metadata",
-      "runtimeBoundary": "Runtime sınırı",
-      "fieldMapping": "Field mapping",
-      "sourceNamespace": "Source namespace",
-      "identityReconciliation": "Identity reconciliation",
-      "setupReadiness": "Setup readiness",
+      "providerMetadata": "Kaynak bilgisi",
+      "runtimeBoundary": "Canlı bağlantı sınırı",
+      "fieldMapping": "Alan eşleştirme",
+      "sourceNamespace": "Kaynak kimliği",
+      "identityReconciliation": "Kayıt eşleştirme",
+      "setupReadiness": "Kurulum durumu",
       "writeGuardrail": "ERP yazma koruması"
     },
     "transferModes": {
-      "manual_csv": "Manual CSV / Excel import",
+      "manual_csv": "CSV / Excel içe aktarma",
       "scheduled_file_exchange": "Planlı dosya aktarımı",
       "excel_xml": "Excel / XML değişim dosyası",
-      "staging_table": "Staging table preflight",
-      "api_future": "Provider API runtime (gelecek)"
+      "staging_table": "Ara tablo aktarımı",
+      "api_future": "Provider API bağlantısı"
     },
     "guardrails": {
-      "canonicalMappingRequired": "Her dış kaynak alanı PULS canonical modele eşleşmeden ürün davranışına girmez.",
-      "identityReconciliationRequired": "External ID kayıtları unified namespace ve identity map üzerinden çözülür.",
+      "canonicalMappingRequired": "Dış kaynak alanları PULS alanlarıyla eşleşmeden üründe kullanılmaz.",
+      "identityReconciliationRequired": "Dış kayıt kimlikleri kaynak kapsamı ve eşleştirme kayıtlarıyla çözülür.",
       "humanConfirmationRequired": "İçe aktarma, dışa aktarma ve workflow aksiyonlarında insan onayı gerekir.",
-      "noRuntimeSync": "Bu sürüm runtime sync veya canlı connector çağrısı başlatmaz.",
+      "noRuntimeSync": "Bu ekrandan canlı aktarım veya connector çağrısı başlatılmaz.",
       "noErpWrites": "PULS ERP ana verisine otomatik yazmaz.",
-      "noCredentialsInRepo": "Credential, token veya API anahtarı repo ve seed içinde tutulmaz."
+      "noCredentialsInRepo": "Kimlik bilgileri ve API anahtarları uygulama dosyalarında tutulmaz."
     },
     "identityCount": "{{count}} kimlik",
     "empty": {
-      "namespaces": "Aktif source namespace kaydı yok.",
-      "mappings": "Canonical mapping kaydı yok.",
-      "syncLogs": "Preflight kaydı yok."
+      "namespaces": "Aktif kaynak kapsamı yok.",
+      "mappings": "Alan eşleştirme kaydı yok.",
+      "syncLogs": "Kontrol kaydı yok."
     },
     "status": {
       "mapped": "Eşleşti",
@@ -883,13 +883,13 @@
       "empty": "Boş",
       "partial": "Kısmi",
       "unmapped": "Eşleşmemiş",
-      "demo_only": "Demo veri",
+      "demo_only": "Örnek veri",
       "unknown": "Bilinmiyor"
     },
     "source": {
       "puls": "PULS",
       "erp": "ERP",
-      "demo": "Demo",
+      "demo": "Örnek",
       "unknown": "Bilinmiyor"
     },
     "empty": {
@@ -1268,8 +1268,8 @@
       "departments": "Departman",
       "activeEmployees": "Aktif çalışan",
       "assignedManagers": "Departman yöneticisi",
-      "assignedManagersHint": "Departman kaydındaki manager metadata'sını ölçer.",
-      "emptyManagers": "Metadata bekleyen",
+      "assignedManagersHint": "Departman kayıtlarında yönetici atama kapsamını ölçer.",
+      "emptyManagers": "Yönetici ataması bekliyor",
       "emptyManagersHint": "Çalışan onay yöneticileri /calisanlar altında ayrı doğrulanır."
     },
     "sections": {
@@ -1698,7 +1698,7 @@
         "description": "Salt okunur eşleşme bilgisi.",
         "fields": {
           "code": "PULS kodu",
-          "source": "Kaynak namespace",
+          "source": "Kaynak kapsamı",
           "externalId": "Dış kimlik",
           "status": "ERP durumu"
         }
@@ -1966,12 +1966,12 @@
     },
     "empty": {
       "title": "Sözleşme kaydı yok",
-      "description": "Bu tenant için aktif sözleşme metadata kaydı bulunmuyor.",
+      "description": "Bu organizasyon için aktif sözleşme kaydı bulunmuyor.",
       "selfTitle": "Sana ait sözleşme kaydı yok",
-      "selfDescription": "Tenant sözleşme metadata'sı mevcut; çalışan görünümünde yalnızca hesabınla eşleşen kayıtlar listelenir."
+      "selfDescription": "Organizasyonda sözleşme kayıtları var; çalışan görünümünde yalnızca hesabınla eşleşen kayıtlar listelenir."
     },
     "boundary": {
-      "metadataOnly": "Bu ekran yalnızca sözleşme metadata özetini gösterir; belge yükleme ve hatırlatıcı kaydı henüz açık değil."
+      "metadataOnly": "Bu ekran sözleşme özetlerini gösterir; belge yükleme ve hatırlatıcı kaydı henüz açık değil."
     },
     "columns": {
       "employee": "Çalışan",
@@ -2020,7 +2020,7 @@
     },
     "detailSheet": {
       "title": "Sözleşme özeti",
-      "description": "Metadata düzeyinde önizleme. Belge içeriği gösterilmez.",
+      "description": "Belge özeti gösterilir. Belge içeriği bu ekranda açılmaz.",
       "fields": {
         "employee": "Çalışan",
         "type": "Tip",
@@ -2339,7 +2339,7 @@
       "noAutonomousMutations": { "label": "Otonom mutasyon yok" },
       "noAutoApprovals": { "label": "Otomatik onay yok" },
       "noErpWrites": { "label": "ERP yazma işlemi yok" },
-      "noVaultSeed": { "label": "Vault mesaj seed'i yok" },
+      "noVaultSeed": { "label": "Kalıcı konuşma kaydı yok" },
       "enforced": "Uygulanıyor",
       "pending": "Bekliyor"
     },

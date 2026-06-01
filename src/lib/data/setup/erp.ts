@@ -718,7 +718,7 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
       {
         id: 'demo-canias',
         code: 'CANIAS',
-        name: 'Canias demo namespace',
+        name: 'Canias source scope',
         sourceType: 'erp',
         identityCount: 0,
       },
@@ -852,7 +852,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       id: row.id ?? `sync-${index}`,
       at: formatSyncTimestamp(row.created_at),
       level: mapSyncLevel(row.status),
-      message: row.error_summary ?? `${row.sync_type ?? 'preflight'} · ${row.status ?? 'pending'}`,
+      message: row.error_summary ?? `${row.sync_type ?? 'check'} · ${row.status ?? 'pending'}`,
     })),
   })
 }

@@ -34,7 +34,7 @@ import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/erp')({
   head: () => ({
-    meta: [{ title: 'Connector Preflight — PULS' }],
+    meta: [{ title: 'Data Connections — PULS' }],
   }),
   component: ErpRoute,
 })
@@ -357,7 +357,7 @@ function ErpPage() {
           </Button>
         </div>
       ) : null}
-      {data ? (
+      {data && hasSelectedConnector ? (
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">{t('erp.preflightNote')}</p>
       ) : null}
 
@@ -506,36 +506,38 @@ function ErpPage() {
         </>
       ) : null}
 
-      <section className="mt-8">
-        <SectionHeader
-          title={t('erp.sections.syncLogs')}
-          description={t('erp.sections.syncLogsDescription')}
-        />
-        <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-          {(data?.syncLogs ?? []).length > 0 ? (
-            (data?.syncLogs ?? []).map((log) => (
-              <li key={log.id} className="flex items-start gap-3 p-4">
-                <span
-                  className={cn(
-                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
-                    syncLogTone(log.level),
-                  )}
-                >
-                  <SyncLogIcon level={log.level} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-[var(--color-text-primary)]">{log.message}</p>
-                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">{log.at}</p>
-                </div>
+      {data && hasSelectedConnector ? (
+        <section className="mt-8">
+          <SectionHeader
+            title={t('erp.sections.syncLogs')}
+            description={t('erp.sections.syncLogsDescription')}
+          />
+          <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+            {data.syncLogs.length > 0 ? (
+              data.syncLogs.map((log) => (
+                <li key={log.id} className="flex items-start gap-3 p-4">
+                  <span
+                    className={cn(
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
+                      syncLogTone(log.level),
+                    )}
+                  >
+                    <SyncLogIcon level={log.level} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-[var(--color-text-primary)]">{log.message}</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{log.at}</p>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                {t('erp.empty.syncLogs')}
               </li>
-            ))
-          ) : (
-            <li className="p-4 text-sm text-[var(--color-text-muted)]">
-              {t('erp.empty.syncLogs')}
-            </li>
-          )}
-        </ul>
-      </section>
+            )}
+          </ul>
+        </section>
+      ) : null}
     </div>
   )
 }

@@ -69,9 +69,9 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "placeholder": "Sprint-2 — live data cards.",
+    "placeholder": "Live data overview",
     "welcome": "Welcome, {{name}}",
-    "noTenant": "No tenant linked — run seed-demo.sql.",
+    "noTenant": "No organization is linked.",
     "erpCaniasInactive": "Canias inactive (preparation)",
     "subtitle": "Track today's HR operations summary here.",
     "meta": {
@@ -111,7 +111,7 @@
       "leaveBalance": "Leave balance",
       "pendingExpense": "Pending expenses",
       "performanceScore": "Performance score",
-      "performanceHint": "Demo score — performance module"
+      "performanceHint": "Performance module"
     },
     "cards": {
       "bagla": {
@@ -131,10 +131,10 @@
       }
     },
     "erpConnected": "Connected: {{provider}}",
-    "erpDisconnected": "ERP connection inactive (demo)",
+    "erpDisconnected": "ERP connection inactive",
     "emptySeed": {
-      "title": "No demo data",
-      "description": "Run supabase/seed-demo.sql in Supabase SQL Editor (replace USER_UUID)."
+      "title": "No data yet",
+      "description": "Complete company setup or import organization data to populate this screen."
     },
     "emptyTenant": {
       "title": "No organization data yet",
@@ -210,7 +210,7 @@
       "endsAt": "End date"
     },
     "empty": {
-      "competencies": "No templates yet. Add demo templates via seed-demo.sql.",
+      "competencies": "No competency templates yet. Switch to Manager Mode to create templates.",
       "cycles": "No active cycle. Switch to Manager Mode to create one.",
       "cyclesHint": "Cycles appear here once HR creates one.",
       "goals": "No assigned goals."
@@ -223,7 +223,7 @@
     },
     "managerOnlyCreate": "Switch to Manager Mode to create review cycles.",
     "errors": {
-      "noTenant": "No tenant found — run seed-demo.sql."
+      "noTenant": "No organization is linked."
     },
     "status": {
       "active": "Active",
@@ -319,7 +319,7 @@
     },
     "empty": {
       "title": "No employee records",
-      "description": "Run seed-demo.sql to list Mert Teknik demo employees."
+      "description": "Employees appear here after organization data is imported."
     },
     "error": {
       "loadFailed": "Could not load employees. Check your connection and try again."
@@ -698,68 +698,68 @@
       "departments": "Departments",
       "positions": "Positions"
     },
-    "versionFooter": "PULS · v0.1 prototype"
+    "versionFooter": "PULS"
   },
   "erp": {
     "eyebrow": "Setup & Configuration",
-    "title": "Connector preflight",
-    "subtitle": "Provider, canonical mapping, and namespace readiness for source-independent data connections.",
+    "title": "Data connections",
+    "subtitle": "Connect ERP, file, or custom API sources to PULS data fields.",
     "badge": "Pending",
     "workbench": {
-      "title": "Connector setup workbench",
-      "description": "Data source selection, canonical mapping, namespace, and preflight are verified as separate steps."
+      "title": "Connection setup steps",
+      "description": "Data source, field mapping, identity matching, and connection checks are completed step by step."
     },
     "setupSteps": {
       "source": {
         "label": "Source",
-        "description": "Select the provider or file source."
+        "description": "Select an ERP, file, or custom API source."
       },
       "mapping": {
-        "label": "Mapping",
-        "description": "Map source fields into the PULS canonical model."
+        "label": "Fields",
+        "description": "Map source fields into PULS data fields."
       },
       "namespace": {
-        "label": "Namespace",
-        "description": "Resolve external IDs inside a unified namespace."
+        "label": "Identities",
+        "description": "Make external record IDs traceable inside the organization."
       },
       "preflight": {
-        "label": "Preflight",
-        "description": "Check metadata, mapping, and identity proof."
+        "label": "Check",
+        "description": "Check the source, field mapping, and identity matching status."
       },
       "runtime": {
-        "label": "Runtime",
-        "description": "Live sync and ERP write boundaries remain closed."
+        "label": "Live connection",
+        "description": "Transfer and ERP write permissions are enabled separately."
       }
     },
     "metrics": {
-      "provider": "Provider",
-      "preflight": "Preflight",
+      "provider": "Source",
+      "preflight": "Check",
       "fieldMapping": "Field mapping",
-      "fieldMappingHint": "Canonical / source",
-      "namespaces": "Namespace",
-      "namespacesHint": "Active source scope"
+      "fieldMappingHint": "PULS / source",
+      "namespaces": "Source identities",
+      "namespacesHint": "Active scope"
     },
     "actions": {
-      "mapFields": "Mapping draft",
-      "testConnection": "Preflight test"
+      "mapFields": "Map fields",
+      "testConnection": "Check connection"
     },
     "onboarding": {
-      "title": "No connector configured yet",
-      "description": "A new customer tenant starts by selecting a data source, then preparing canonical mapping and namespace readiness.",
-      "selectProvider": "Select provider",
-      "importMapping": "Import mapping",
-      "guardrail": "This initial state shows preparation only; it does not enable runtime sync, credential storage, or ERP writes."
+      "title": "No data connection yet",
+      "description": "Choose a data source, then complete field and identity matching.",
+      "selectProvider": "Select source",
+      "importMapping": "Upload mapping",
+      "guardrail": "This step only prepares the setup; live transfer, credential storage, and ERP writes remain off."
     },
     "providerOptions": {
       "canias": {
         "label": "Canias",
-        "description": "First customer track; metadata and mapping preflight are ready.",
-        "readiness": "Seed proof exists; live runtime is closed."
+        "description": "ERP connection model supported by PULS.",
+        "readiness": "Field mapping and safe transfer rules are ready."
       },
       "logo": {
         "label": "Logo",
-        "description": "Future provider candidate using the same canonical mapping model.",
-        "readiness": "Discovery and mapping draft required."
+        "description": "Can be added through the same connection model.",
+        "readiness": "Source fields and access method need confirmation."
       },
       "csv_import": {
         "label": "CSV / Excel",
@@ -768,71 +768,71 @@
       },
       "custom_api": {
         "label": "Custom API",
-        "description": "Customer-specific connection; runtime boundary opens in a future phase.",
-        "readiness": "Customer discovery and service boundary required."
+        "description": "Customer-specific API connection.",
+        "readiness": "Access method and data contract are required."
       }
     },
     "providerPreview": {
       "eyebrow": "Selection preview",
-      "description": "This selection previews the flow only; it does not create connector metadata.",
+      "description": "This selection shows the setup steps; it does not create a record.",
       "requirements": "Readiness requirements"
     },
     "providerRequirements": {
       "sourceProfile": {
         "label": "Source profile",
-        "description": "Provider type, ownership, and data scope are clarified."
+        "description": "Source type, ownership, and data scope are clarified."
       },
       "canonicalMapping": {
-        "label": "Canonical mapping",
-        "description": "External source fields map to PULS canonical data fields."
+        "label": "Field mapping",
+        "description": "External source fields map to PULS data fields."
       },
       "sourceNamespace": {
-        "label": "Source namespace",
+        "label": "Source identity",
         "description": "External IDs become tenant-scoped, unique, and traceable."
       },
       "identityStrategy": {
-        "label": "Identity strategy",
-        "description": "Source records link to PULS canonical records through reconciliation rules."
+        "label": "Record matching",
+        "description": "Source records link to PULS records through matching rules."
       },
       "transferMode": {
         "label": "Transfer mode",
         "description": "CSV, Excel, file, or API boundary is selected for a human-confirmed flow."
       },
       "runtimeBoundary": {
-        "label": "Runtime boundary",
-        "description": "Live connector calls, credential storage, and ERP writes remain closed for a future phase."
+        "label": "Live connection boundary",
+        "description": "Live transfer, credential storage, and ERP writes require separate approval."
       }
     },
-    "preflightNote": "This screen shows connection readiness; it does not enable runtime sync, credential storage, or ERP writes.",
+    "preflightNote": "This screen shows connection readiness; it does not start live transfer, credential storage, or ERP writes.",
     "toast": {
-      "apiPendingTitle": "Connector runtime is out of scope.",
-      "mapDescription": "The mapping editor will open when a provider connection is selected in a future phase.",
-      "testDescription": "Preflight shows metadata readiness without making live API calls."
+      "apiPendingTitle": "Live connection is off.",
+      "mapDescription": "Field mapping opens after a connection is selected.",
+      "testDescription": "The check does not make live API calls."
     },
     "sections": {
-      "preflight": "Connector preflight",
-      "preflightDescription": "Provider metadata, canonical mapping, namespace, and identity reconciliation proof.",
-      "namespaces": "Unified namespace",
-      "namespacesDescription": "External identifiers are reconciled to PULS canonical records here.",
-      "mapping": "Canonical field mapping",
-      "mappingDescription": "PULS canonical field → source provider field.",
+      "preflight": "Connection check",
+      "preflightDescription": "Source information, field mapping, and identity matching status.",
+      "namespaces": "Source identities",
+      "namespacesDescription": "External records are matched to PULS records here.",
+      "mapping": "Field mapping",
+      "mappingDescription": "PULS field → source field.",
       "transferModes": "Transfer modes",
-      "transferModesDescription": "Product posture for CSV, file, staging, and API boundaries.",
-      "guardrails": "Connector guardrails",
-      "guardrailsDescription": "Runtime and ERP write boundaries remain intentionally closed.",
-      "syncLogs": "Preflight records",
-      "syncLogsDescription": "Recent metadata or connection readiness records."
+      "transferModesDescription": "CSV, file, and API transfer options.",
+      "guardrails": "Safety limits",
+      "guardrailsDescription": "Live transfer and ERP writes are off.",
+      "syncLogs": "Check history",
+      "syncLogsDescription": "Recent connection readiness records."
     },
     "columns": {
-      "canonicalField": "PULS canonical field",
+      "canonicalField": "PULS field",
       "sourceField": "Source field",
       "status": "Status"
     },
     "providerStatus": {
-      "not_configured": "Provider not configured",
-      "metadata_only": "Metadata-only",
-      "runtime_inactive": "Runtime inactive",
-      "runtime_active": "Runtime active"
+      "not_configured": "Source not configured",
+      "metadata_only": "Setup record",
+      "runtime_inactive": "Live connection inactive",
+      "runtime_active": "Live connection active"
     },
     "readinessStatus": {
       "ready": "Ready",
@@ -840,34 +840,34 @@
       "blocked": "Blocked"
     },
     "readinessChecks": {
-      "providerMetadata": "Provider metadata",
-      "runtimeBoundary": "Runtime boundary",
+      "providerMetadata": "Source information",
+      "runtimeBoundary": "Live connection boundary",
       "fieldMapping": "Field mapping",
-      "sourceNamespace": "Source namespace",
-      "identityReconciliation": "Identity reconciliation",
-      "setupReadiness": "Setup readiness",
+      "sourceNamespace": "Source identity",
+      "identityReconciliation": "Record matching",
+      "setupReadiness": "Setup status",
       "writeGuardrail": "ERP write guardrail"
     },
     "transferModes": {
-      "manual_csv": "Manual CSV / Excel import",
+      "manual_csv": "CSV / Excel import",
       "scheduled_file_exchange": "Scheduled file exchange",
       "excel_xml": "Excel / XML exchange file",
-      "staging_table": "Staging table preflight",
-      "api_future": "Provider API runtime (future)"
+      "staging_table": "Staging table transfer",
+      "api_future": "Provider API connection"
     },
     "guardrails": {
-      "canonicalMappingRequired": "External source fields do not drive product behavior until mapped to the PULS canonical model.",
-      "identityReconciliationRequired": "External IDs resolve through unified namespace and identity map records.",
+      "canonicalMappingRequired": "External source fields are not used until they are mapped to PULS fields.",
+      "identityReconciliationRequired": "External record IDs resolve through source scope and matching records.",
       "humanConfirmationRequired": "Imports, exports, and workflow actions require human confirmation.",
-      "noRuntimeSync": "This version does not start runtime sync or live connector calls.",
+      "noRuntimeSync": "This screen does not start live transfer or connector calls.",
       "noErpWrites": "PULS does not write ERP master data automatically.",
-      "noCredentialsInRepo": "Credentials, tokens, and API keys are never stored in repo or seed artifacts."
+      "noCredentialsInRepo": "Credentials and API keys are not stored in application files."
     },
     "identityCount": "{{count}} identities",
     "empty": {
-      "namespaces": "No active source namespace record.",
-      "mappings": "No canonical mapping record.",
-      "syncLogs": "No preflight records."
+      "namespaces": "No active source scope.",
+      "mappings": "No field mapping record.",
+      "syncLogs": "No check records."
     },
     "status": {
       "mapped": "Matched",
@@ -883,13 +883,13 @@
       "empty": "Empty",
       "partial": "Partial",
       "unmapped": "Unmapped",
-      "demo_only": "Demo data",
+      "demo_only": "Sample data",
       "unknown": "Unknown"
     },
     "source": {
       "puls": "PULS",
       "erp": "ERP",
-      "demo": "Demo",
+      "demo": "Sample",
       "unknown": "Unknown"
     },
     "empty": {
@@ -1268,8 +1268,8 @@
       "departments": "Departments",
       "activeEmployees": "Active employees",
       "assignedManagers": "Department manager",
-      "assignedManagersHint": "Measures manager metadata on department records.",
-      "emptyManagers": "Metadata pending",
+      "assignedManagersHint": "Measures manager assignment coverage on department records.",
+      "emptyManagers": "Manager assignment pending",
       "emptyManagersHint": "Employee approval managers are validated separately under employees."
     },
     "sections": {
@@ -1698,7 +1698,7 @@
         "description": "Read-only mapping information.",
         "fields": {
           "code": "PULS code",
-          "source": "Source namespace",
+          "source": "Source scope",
           "externalId": "External ID",
           "status": "ERP status"
         }
@@ -1966,12 +1966,12 @@
     },
     "empty": {
       "title": "No contract records",
-      "description": "No active contract metadata records were found for this tenant.",
+      "description": "No active contract records were found for this organization.",
       "selfTitle": "No contract record for you",
-      "selfDescription": "Tenant contract metadata exists; employee view lists only records linked to your account."
+      "selfDescription": "The organization has contract records; employee view only lists records linked to your account."
     },
     "boundary": {
-      "metadataOnly": "This screen shows contract metadata summaries only; document upload and reminder saving are not enabled yet."
+      "metadataOnly": "This screen shows contract summaries; document upload and reminder saving are not enabled yet."
     },
     "columns": {
       "employee": "Employee",
@@ -2020,7 +2020,7 @@
     },
     "detailSheet": {
       "title": "Contract summary",
-      "description": "Metadata-level preview. Document content is not shown.",
+      "description": "Shows the document summary. Document content does not open on this screen.",
       "fields": {
         "employee": "Employee",
         "type": "Type",
@@ -2318,7 +2318,7 @@
       },
       "contracts": {
         "title": "Contract risk explainer",
-        "description": "Summarizes contract metadata and risk bands.",
+        "description": "Summarizes contract records and risk bands.",
         "guardrail": "Not legal advice; human confirmation required."
       },
       "dashboard": {
@@ -2339,7 +2339,7 @@
       "noAutonomousMutations": { "label": "No autonomous mutations" },
       "noAutoApprovals": { "label": "No auto-approvals" },
       "noErpWrites": { "label": "No ERP writes" },
-      "noVaultSeed": { "label": "No vault message seed" },
+      "noVaultSeed": { "label": "No persistent conversation record" },
       "enforced": "Enforced",
       "pending": "Pending"
     },
