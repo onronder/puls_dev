@@ -10,9 +10,9 @@ PR13 closeout is limited to local proof, remote tenant proof, route smoke, and f
 
 | ID | Workstream | Status | Target | Blocker / Input |
 |----|------------|--------|--------|-----------------|
-| W1 | Local Supabase seed/proof | Not started | PR13.8 | Docker/Supabase running + local `DATABASE_URL` |
-| W2 | Mandatory auth persona proof | Not started | PR13.8 | Local auth users + UUIDs |
-| W3 | Remote Puls Teknik tenant proof | Waiting | PR13.9 | Local proof green + tenant strategy |
+| W1 | Local Supabase seed/proof | Done | PR13.8 | SQL `00-09` passed locally |
+| W2 | Mandatory auth persona proof | Done | PR13.8 | `05`/`06` and password-grant smoke passed locally |
+| W3 | Remote Puls Teknik tenant proof | Done | PR13.9 | Remote SQL/auth proof passed |
 | W4 | Demo-off route smoke | Not started | PR13.10 | Local/remote proof complete |
 | W5 | Screen readiness truth table + fallback guard | Not started | PR13.10 | Route smoke observations |
 | W6 | Canias customer discovery | Waiting | PR14+ | Customer export/API/data model |
@@ -25,44 +25,45 @@ PR13 closeout is limited to local proof, remote tenant proof, route smoke, and f
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Confirm local Supabase/Postgres is running | Pending | Docker must be reachable |
-| Export local `DATABASE_URL` | Pending | Do not commit connection string |
-| Run `00_reset_puls_sanayi_seed.sql` | Pending | Local DB only |
-| Run `01_load_puls_sanayi_seed.sql` | Pending | psql-local `\copy`; SQL Editor cannot read local CSV |
-| Run `02_validate_puls_sanayi_seed.sql` | Pending | Baseline proof |
-| Run `03_generate_workflow_scenarios.sql` | Pending | Workflow scenario proof |
-| Run `04_generate_performance_scenarios.sql` | Pending | Performance scenario proof |
-| Run `07_validate_packaging_proof.sql` | Pending | Main packaging proof |
-| Run `08_validate_ai_context_readiness.sql` | Pending | AI context proof |
-| Run `09_validate_canias_connector_readiness.sql` | Pending | Canias metadata proof |
-| Record sanitized results | Pending | No secrets, no full connection strings |
+| Confirm local Supabase/Postgres is running | Passed | Docker/Supabase stack was reachable after Docker start |
+| Export local `DATABASE_URL` | Passed | Connection string not committed |
+| Run `00_reset_puls_sanayi_seed.sql` | Passed | Local DB only |
+| Run `01_load_puls_sanayi_seed.sql` | Passed | Dockerized `psql` fallback used |
+| Run `02_validate_puls_sanayi_seed.sql` | Passed | Baseline proof |
+| Run `03_generate_workflow_scenarios.sql` | Passed | Workflow scenario proof |
+| Run `04_generate_performance_scenarios.sql` | Passed | Performance scenario proof |
+| Run `07_validate_packaging_proof.sql` | Passed | Main packaging proof |
+| Run `08_validate_ai_context_readiness.sql` | Passed | AI context proof |
+| Run `09_validate_canias_connector_readiness.sql` | Passed | Canias metadata proof |
+| Record sanitized results | Passed | See `13_local_supabase_packaging_auth_proof_results.md` |
 
 ### W2 — Mandatory Auth Persona Proof
 
 | Persona | Purpose | Status | Notes |
 |---------|---------|--------|-------|
-| `admin_user_id` | Admin/settings/lifecycle smoke | Pending | Create in local Supabase Studio/Auth |
-| `hr_admin_user_id` | Setup and HR admin routes | Pending | Create in local Supabase Studio/Auth |
-| `manager_user_id` | Approval/performance manager proof | Pending | Create in local Supabase Studio/Auth |
-| `employee_user_id` | Leave/expense/profile proof | Pending | Create in local Supabase Studio/Auth |
-| `incomplete_setup_user_id` | Edge case | Optional | Only if useful |
+| `admin_user_id` | Admin/settings/lifecycle smoke | Passed | Local auth UUID omitted from docs |
+| `hr_admin_user_id` | Setup and HR admin routes | Passed | Local auth UUID omitted from docs |
+| `manager_user_id` | Approval/performance manager proof | Passed | Local auth UUID omitted from docs |
+| `employee_user_id` | Leave/expense/profile proof | Passed | Local auth UUID omitted from docs |
+| `incomplete_setup_user_id` | Edge case | Passed | Optional local edge was staged |
 
 Required scripts:
 
 - `05_link_auth_personas_template.sql`
 - `06_jwt_mutation_proof_smoke.sql`
 
-If required persona UUIDs are unavailable, PR13.8 is not signed off. Do not fake auth proof.
+PR13.8 is signed off locally. Do not fake the same auth proof remotely; PR13.9 still requires remote auth UUIDs.
 
 ### W3 — Remote Puls Teknik Tenant Proof
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Decide remote tenant strategy | Waiting | Do not mutate PR13.4 baseline silently |
-| Prepare Puls Teknik A.S. tenant posture | Waiting | Separate tenant after local green |
-| Run SQL proof remotely | Waiting | Requires remote Postgres URI |
-| Run auth proof remotely | Waiting | Requires remote auth personas |
-| Record sanitized remote results | Waiting | No secrets, no full connection strings |
+| Decide remote tenant strategy | Passed | Use fixed PR13 proof tenant with Puls Teknik A.S. label overlay; do not mutate PR13.4 CSV/manifest |
+| Read-only remote inspect | Passed | Remote schemas/migrations present; Mert Teknik exists; fixed PR13 tenant absent |
+| Prepare Puls Teknik A.S. tenant posture | Passed | `10_apply_puls_teknik_remote_posture.sql` labeled the fixed proof tenant |
+| Run SQL proof remotely | Passed | Explicit `REMOTE_PROOF_CONFIRM` was required |
+| Run auth proof remotely | Passed | Remote auth personas linked and JWT/RPC smoke passed |
+| Record sanitized remote results | Passed | See `13_remote_puls_teknik_tenant_proof_results.md` |
 
 ### W4 — Demo-Off Route Smoke
 

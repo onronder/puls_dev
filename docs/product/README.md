@@ -135,6 +135,18 @@ PR13.8 shifts the next gate to **local Supabase first**. Remote Puls Teknik A.S.
 | [`scripts/run-13-local-supabase-auth-proof.sh`](../../scripts/run-13-local-supabase-auth-proof.sh) | Runs SQL `00-09` plus mandatory `05`/`06` auth smoke |
 | [`scripts/verify-13-local-supabase-auth-proof.sh`](../../scripts/verify-13-local-supabase-auth-proof.sh) | PR13.8 local proof verify gate |
 
+## PR13.9 Remote Puls Teknik tenant proof
+
+PR13.9 moves from local proof to the remote development Supabase project. It keeps the PR13.4 CSV/manifest baseline unchanged, protects existing remote tenants, and labels the fixed PR13 proof tenant as **Puls Teknik A.S.** through a SQL posture overlay.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [13_remote_puls_teknik_tenant_proof.md](./13_remote_puls_teknik_tenant_proof.md) | Remote proof runbook, tenant posture, auth requirements, stop conditions |
+| [13_remote_puls_teknik_tenant_proof_results.md](./13_remote_puls_teknik_tenant_proof_results.md) | Sanitized remote inspect/proof results |
+| [`supabase/seed/puls-sanayi-v1/sql/10_apply_puls_teknik_remote_posture.sql`](../../supabase/seed/puls-sanayi-v1/sql/10_apply_puls_teknik_remote_posture.sql) | Labels the fixed proof tenant as Puls Teknik A.S. without CSV/manifest drift |
+| [`scripts/run-13-remote-puls-teknik-proof.sh`](../../scripts/run-13-remote-puls-teknik-proof.sh) | Runs remote SQL `00-10`, `02-04`, `07-09`, and mandatory `05`/`06` auth smoke |
+| [`scripts/verify-13-remote-puls-teknik-proof.sh`](../../scripts/verify-13-remote-puls-teknik-proof.sh) | PR13.9 remote proof verify gate |
+
 ## Related packs
 
 | Pack | Entry point |
