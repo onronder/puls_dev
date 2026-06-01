@@ -705,6 +705,32 @@
     "title": "Connector preflight",
     "subtitle": "Kaynak bağımsız veri bağlantısı için provider, canonical mapping ve namespace hazırlığı.",
     "badge": "Beklemede",
+    "workbench": {
+      "title": "Connector setup workbench",
+      "description": "Veri kaynağı seçimi, canonical mapping, namespace ve preflight aşamaları ayrı ayrı doğrulanır."
+    },
+    "setupSteps": {
+      "source": {
+        "label": "Kaynak",
+        "description": "Provider veya dosya kaynağı seçilir."
+      },
+      "mapping": {
+        "label": "Mapping",
+        "description": "Kaynak alanlar PULS canonical modele bağlanır."
+      },
+      "namespace": {
+        "label": "Namespace",
+        "description": "External ID kayıtları unified namespace içinde çözülür."
+      },
+      "preflight": {
+        "label": "Preflight",
+        "description": "Metadata, mapping ve kimlik kanıtı kontrol edilir."
+      },
+      "runtime": {
+        "label": "Runtime",
+        "description": "Canlı sync ve ERP yazma sınırı kapalı tutulur."
+      }
+    },
     "metrics": {
       "provider": "Provider",
       "preflight": "Preflight",
@@ -727,19 +753,54 @@
     "providerOptions": {
       "canias": {
         "label": "Canias",
-        "description": "İlk müşteri track'i; metadata ve mapping preflight hazır."
+        "description": "İlk müşteri track'i; metadata ve mapping preflight hazır.",
+        "readiness": "Seed kanıtı mevcut; canlı runtime kapalı."
       },
       "logo": {
         "label": "Logo",
-        "description": "Gelecek provider adayı; aynı canonical mapping modelini kullanır."
+        "description": "Gelecek provider adayı; aynı canonical mapping modelini kullanır.",
+        "readiness": "Discovery ve mapping taslağı gerekir."
       },
       "csv_import": {
         "label": "CSV / Excel",
-        "description": "API olmayan kaynaklar için dosya veya template tabanlı aktarım."
+        "description": "API olmayan kaynaklar için dosya veya template tabanlı aktarım.",
+        "readiness": "Dosya tabanlı başlangıç için en düşük riskli yol."
       },
       "custom_api": {
         "label": "Custom API",
-        "description": "Müşteri özel bağlantısı; runtime boundary gelecek fazda açılır."
+        "description": "Müşteri özel bağlantısı; runtime boundary gelecek fazda açılır.",
+        "readiness": "Müşteri discovery ve servis boundary gerekir."
+      }
+    },
+    "providerPreview": {
+      "eyebrow": "Seçim önizlemesi",
+      "description": "Bu seçim yalnızca akış önizlemesidir; connector metadata kaydı oluşturmaz.",
+      "requirements": "Hazırlık gereksinimleri"
+    },
+    "providerRequirements": {
+      "sourceProfile": {
+        "label": "Kaynak profili",
+        "description": "Provider tipi, sahiplik ve veri kapsamı netleşir."
+      },
+      "canonicalMapping": {
+        "label": "Canonical mapping",
+        "description": "Dış kaynak alanları PULS canonical veri alanlarına eşleşir."
+      },
+      "sourceNamespace": {
+        "label": "Source namespace",
+        "description": "External ID alanı tenant içinde benzersiz ve izlenebilir olur."
+      },
+      "identityStrategy": {
+        "label": "Identity strategy",
+        "description": "Kaynak kayıtları PULS canonical kayıtlarıyla reconciliation kuralı üzerinden bağlanır."
+      },
+      "transferMode": {
+        "label": "Transfer modu",
+        "description": "CSV, Excel, dosya veya API sınırı insan onaylı akışa göre seçilir."
+      },
+      "runtimeBoundary": {
+        "label": "Runtime boundary",
+        "description": "Canlı connector çağrısı, credential saklama ve ERP yazma gelecek faza kapalıdır."
       }
     },
     "preflightNote": "Bu ekran bağlantı hazırlığını gösterir; runtime sync, kimlik bilgisi saklama veya ERP yazma işlemi açmaz.",
@@ -849,8 +910,7 @@
       "costCentersDetail": "{{mapped}} eşleşmiş · {{unmapped}} eşleşmemiş · {{total}} toplam"
     },
     "boundary": {
-      "erpNoWrite":
-        "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır.",
+      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır.",
       "readOnly": "Salt okunur kurulum görünümü.",
       "crudDeferred": "Oluşturma ve düzenleme işlemleri sonraki sürümde gelecek."
     }
@@ -930,8 +990,7 @@
       "open": "Detaya git"
     },
     "boundary": {
-      "erpNoWrite":
-        "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
+      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
     },
     "issues": {
       "sourceUnknown": {
@@ -1115,8 +1174,7 @@
     },
     "boundary": {
       "readOnly": "Bu görünüm çalışan atamalarını denetlemek içindir; düzenleme akışı ayrı adımda açılacaktır.",
-      "erpNoWrite":
-        "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
+      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
     }
   },
   "requestCreationReadiness": {

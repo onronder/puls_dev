@@ -11,6 +11,27 @@ export type ConnectorProviderStatus =
   | 'runtime_inactive'
   | 'runtime_active'
 export type ConnectorSyncLogLevel = 'success' | 'warning' | 'info'
+export type ConnectorSetupStepId = 'source' | 'mapping' | 'namespace' | 'preflight' | 'runtime'
+
+export type ConnectorSetupStep = {
+  id: ConnectorSetupStepId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+}
+
+export type ConnectorProviderRequirement = {
+  id:
+    | 'source_profile'
+    | 'canonical_mapping'
+    | 'source_namespace'
+    | 'identity_strategy'
+    | 'transfer_mode'
+    | 'runtime_boundary'
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+}
 
 export type ConnectorReadinessCheck = {
   id:
@@ -43,12 +64,7 @@ export type ConnectorNamespaceSummary = {
 }
 
 export type ConnectorTransferMode = {
-  id:
-    | 'manual_csv'
-    | 'scheduled_file_exchange'
-    | 'excel_xml'
-    | 'staging_table'
-    | 'api_future'
+  id: 'manual_csv' | 'scheduled_file_exchange' | 'excel_xml' | 'staging_table' | 'api_future'
   labelKey: string
   status: ConnectorReadinessStatus
 }
@@ -76,7 +92,9 @@ export type ConnectorProviderOption = {
   id: 'canias' | 'logo' | 'csv_import' | 'custom_api'
   labelKey: string
   descriptionKey: string
+  readinessLabelKey: string
   status: ConnectorReadinessStatus
+  requirements: ConnectorProviderRequirement[]
 }
 
 export type ErpOverview = {
@@ -95,6 +113,7 @@ export type ErpOverview = {
     status: ConnectorReadinessStatus
     checks: ConnectorReadinessCheck[]
   }
+  setupSteps: ConnectorSetupStep[]
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
   transferModes: ConnectorTransferMode[]
@@ -169,25 +188,133 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     id: 'canias',
     labelKey: 'erp.providerOptions.canias.label',
     descriptionKey: 'erp.providerOptions.canias.description',
+    readinessLabelKey: 'erp.providerOptions.canias.readiness',
     status: 'ready',
+    requirements: [
+      {
+        id: 'source_profile',
+        labelKey: 'erp.providerRequirements.sourceProfile.label',
+        descriptionKey: 'erp.providerRequirements.sourceProfile.description',
+        status: 'ready',
+      },
+      {
+        id: 'canonical_mapping',
+        labelKey: 'erp.providerRequirements.canonicalMapping.label',
+        descriptionKey: 'erp.providerRequirements.canonicalMapping.description',
+        status: 'ready',
+      },
+      {
+        id: 'identity_strategy',
+        labelKey: 'erp.providerRequirements.identityStrategy.label',
+        descriptionKey: 'erp.providerRequirements.identityStrategy.description',
+        status: 'ready',
+      },
+      {
+        id: 'runtime_boundary',
+        labelKey: 'erp.providerRequirements.runtimeBoundary.label',
+        descriptionKey: 'erp.providerRequirements.runtimeBoundary.description',
+        status: 'blocked',
+      },
+    ],
   },
   {
     id: 'logo',
     labelKey: 'erp.providerOptions.logo.label',
     descriptionKey: 'erp.providerOptions.logo.description',
+    readinessLabelKey: 'erp.providerOptions.logo.readiness',
     status: 'partial',
+    requirements: [
+      {
+        id: 'source_profile',
+        labelKey: 'erp.providerRequirements.sourceProfile.label',
+        descriptionKey: 'erp.providerRequirements.sourceProfile.description',
+        status: 'partial',
+      },
+      {
+        id: 'canonical_mapping',
+        labelKey: 'erp.providerRequirements.canonicalMapping.label',
+        descriptionKey: 'erp.providerRequirements.canonicalMapping.description',
+        status: 'partial',
+      },
+      {
+        id: 'source_namespace',
+        labelKey: 'erp.providerRequirements.sourceNamespace.label',
+        descriptionKey: 'erp.providerRequirements.sourceNamespace.description',
+        status: 'partial',
+      },
+      {
+        id: 'runtime_boundary',
+        labelKey: 'erp.providerRequirements.runtimeBoundary.label',
+        descriptionKey: 'erp.providerRequirements.runtimeBoundary.description',
+        status: 'blocked',
+      },
+    ],
   },
   {
     id: 'csv_import',
     labelKey: 'erp.providerOptions.csv_import.label',
     descriptionKey: 'erp.providerOptions.csv_import.description',
+    readinessLabelKey: 'erp.providerOptions.csv_import.readiness',
     status: 'ready',
+    requirements: [
+      {
+        id: 'transfer_mode',
+        labelKey: 'erp.providerRequirements.transferMode.label',
+        descriptionKey: 'erp.providerRequirements.transferMode.description',
+        status: 'ready',
+      },
+      {
+        id: 'canonical_mapping',
+        labelKey: 'erp.providerRequirements.canonicalMapping.label',
+        descriptionKey: 'erp.providerRequirements.canonicalMapping.description',
+        status: 'partial',
+      },
+      {
+        id: 'source_namespace',
+        labelKey: 'erp.providerRequirements.sourceNamespace.label',
+        descriptionKey: 'erp.providerRequirements.sourceNamespace.description',
+        status: 'partial',
+      },
+      {
+        id: 'runtime_boundary',
+        labelKey: 'erp.providerRequirements.runtimeBoundary.label',
+        descriptionKey: 'erp.providerRequirements.runtimeBoundary.description',
+        status: 'blocked',
+      },
+    ],
   },
   {
     id: 'custom_api',
     labelKey: 'erp.providerOptions.custom_api.label',
     descriptionKey: 'erp.providerOptions.custom_api.description',
+    readinessLabelKey: 'erp.providerOptions.custom_api.readiness',
     status: 'blocked',
+    requirements: [
+      {
+        id: 'source_profile',
+        labelKey: 'erp.providerRequirements.sourceProfile.label',
+        descriptionKey: 'erp.providerRequirements.sourceProfile.description',
+        status: 'blocked',
+      },
+      {
+        id: 'canonical_mapping',
+        labelKey: 'erp.providerRequirements.canonicalMapping.label',
+        descriptionKey: 'erp.providerRequirements.canonicalMapping.description',
+        status: 'partial',
+      },
+      {
+        id: 'identity_strategy',
+        labelKey: 'erp.providerRequirements.identityStrategy.label',
+        descriptionKey: 'erp.providerRequirements.identityStrategy.description',
+        status: 'partial',
+      },
+      {
+        id: 'runtime_boundary',
+        labelKey: 'erp.providerRequirements.runtimeBoundary.label',
+        descriptionKey: 'erp.providerRequirements.runtimeBoundary.description',
+        status: 'blocked',
+      },
+    ],
   },
 ]
 
@@ -414,6 +541,75 @@ function deriveReadinessScore(checks: ConnectorReadinessCheck[]): number {
   return Math.round((score / checks.length) * 100)
 }
 
+function buildConnectorSetupSteps({
+  connectorState,
+  mappedFields,
+  namespaceCount,
+  identityCount,
+  readinessStatus,
+  isActive,
+}: {
+  connectorState: ConnectorLifecycleState
+  mappedFields: number
+  namespaceCount: number
+  identityCount: number
+  readinessStatus: ConnectorReadinessStatus
+  isActive: boolean
+}): ConnectorSetupStep[] {
+  if (connectorState === 'no_tenant') {
+    return ['source', 'mapping', 'namespace', 'preflight', 'runtime'].map((id) => ({
+      id: id as ConnectorSetupStepId,
+      labelKey: `erp.setupSteps.${id}.label`,
+      descriptionKey: `erp.setupSteps.${id}.description`,
+      status: 'blocked' as const,
+    }))
+  }
+
+  return [
+    {
+      id: 'source',
+      labelKey: 'erp.setupSteps.source.label',
+      descriptionKey: 'erp.setupSteps.source.description',
+      status: connectorState === 'connector_selected' ? 'ready' : 'partial',
+    },
+    {
+      id: 'mapping',
+      labelKey: 'erp.setupSteps.mapping.label',
+      descriptionKey: 'erp.setupSteps.mapping.description',
+      status:
+        connectorState === 'connector_selected'
+          ? mappedFields > 0
+            ? 'ready'
+            : 'partial'
+          : 'blocked',
+    },
+    {
+      id: 'namespace',
+      labelKey: 'erp.setupSteps.namespace.label',
+      descriptionKey: 'erp.setupSteps.namespace.description',
+      status:
+        connectorState === 'connector_selected'
+          ? namespaceCount > 0 && identityCount > 0
+            ? 'ready'
+            : 'partial'
+          : 'blocked',
+    },
+    {
+      id: 'preflight',
+      labelKey: 'erp.setupSteps.preflight.label',
+      descriptionKey: 'erp.setupSteps.preflight.description',
+      status: connectorState === 'connector_selected' ? readinessStatus : 'blocked',
+    },
+    {
+      id: 'runtime',
+      labelKey: 'erp.setupSteps.runtime.label',
+      descriptionKey: 'erp.setupSteps.runtime.description',
+      status:
+        connectorState === 'connector_selected' ? (isActive ? 'partial' : 'ready') : 'blocked',
+    },
+  ]
+}
+
 function buildOverview({
   connectorState,
   providerCode,
@@ -444,6 +640,8 @@ function buildOverview({
   const mappedFields = mappings.filter((row) => row.status === 'mapped').length
   const totalFields = mappings.length
   const readinessScore = deriveReadinessScore(checks)
+  const readinessStatus = deriveReadinessStatus(checks)
+  const identityCount = namespaces.reduce((total, namespace) => total + namespace.identityCount, 0)
 
   return {
     connectorState,
@@ -458,9 +656,17 @@ function buildOverview({
     },
     readiness: {
       score: readinessScore,
-      status: deriveReadinessStatus(checks),
+      status: readinessStatus,
       checks,
     },
+    setupSteps: buildConnectorSetupSteps({
+      connectorState,
+      mappedFields,
+      namespaceCount: namespaces.length,
+      identityCount,
+      readinessStatus,
+      isActive,
+    }),
     mappings,
     namespaces,
     transferModes: TRANSFER_MODES,
@@ -567,22 +773,14 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     ])
 
   const connection =
-    connectionRow.error || !connectionRow.data
-      ? null
-      : (connectionRow.data as ErpConnectionRow)
-  const rawMappings = mappingsRow.error
-    ? []
-    : ((mappingsRow.data ?? []) as ErpFieldMappingRow[])
+    connectionRow.error || !connectionRow.data ? null : (connectionRow.data as ErpConnectionRow)
+  const rawMappings = mappingsRow.error ? [] : ((mappingsRow.data ?? []) as ErpFieldMappingRow[])
   const batches = batchesRow.error ? [] : ((batchesRow.data ?? []) as ErpSyncBatchRow[])
-  const readiness = readinessRow.error
-    ? null
-    : (readinessRow.data as SetupReadinessRow | null)
+  const readiness = readinessRow.error ? null : (readinessRow.data as SetupReadinessRow | null)
   const rawNamespaces = namespacesRow.error
     ? []
     : ((namespacesRow.data ?? []) as SourceNamespaceRow[])
-  const identities = identitiesRow.error
-    ? []
-    : ((identitiesRow.data ?? []) as EntityIdentityRow[])
+  const identities = identitiesRow.error ? [] : ((identitiesRow.data ?? []) as EntityIdentityRow[])
 
   const identityCounts = identities.reduce<Record<string, number>>((counts, row) => {
     const namespaceId = row.source_namespace_id

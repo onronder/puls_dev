@@ -181,6 +181,17 @@ PR14.2 adds the missing first `/erp` state: a new customer tenant can have no co
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | Shows onboarding empty state before connector metadata exists |
 | [`scripts/verify-14-erp-connector-empty-state.sh`](../../scripts/verify-14-erp-connector-empty-state.sh) | PR14.2 verify gate |
 
+## PR14.3 Connector setup workbench
+
+PR14.3 upgrades `/erp` into a provider-agnostic setup workbench: provider selection, canonical mapping, namespace, preflight, and runtime boundary are visible as separate steps without enabling connector runtime.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_connector_setup_workbench.md](./14_connector_setup_workbench.md) | Setup workbench UX model, provider preview, and acceptance criteria |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts) | Adds product-owned setup steps and provider preview requirements |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | Shows the setup stepper and selectable provider preview state |
+| [`scripts/verify-14-connector-setup-workbench.sh`](../../scripts/verify-14-connector-setup-workbench.sh) | PR14.3 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |

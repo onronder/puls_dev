@@ -144,6 +144,13 @@ describe('ERP connector overview helpers', () => {
 
     expect(overview.provider.code).toBe('canias')
     expect(overview.readiness.checks.length).toBeGreaterThan(0)
+    expect(overview.setupSteps.map((step) => step.id)).toEqual([
+      'source',
+      'mapping',
+      'namespace',
+      'preflight',
+      'runtime',
+    ])
     expect(overview.guardrails.some((guardrail) => guardrail.id === 'no_erp_writes')).toBe(true)
     expect(isErpOverviewEmpty(overview)).toBe(false)
   })
@@ -164,6 +171,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.status).toBe('success')
     expect(result.data.provider.label).toBe('Canias ERP (Pasif)')
     expect(result.data.provider.status).toBe('runtime_inactive')
+    expect(result.data.setupSteps.every((step) => step.status === 'ready')).toBe(true)
     expect(result.data.namespaces).toHaveLength(1)
     expect(result.data.mappings).toHaveLength(1)
     expect(result.data.mappings[0].canonicalField).toBe('puls_core.employees.employee_code')
@@ -181,6 +189,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.source).toBe('real')
     expect(result.status).toBe('empty')
     expect(result.data.readiness.status).toBe('blocked')
+    expect(result.data.setupSteps.every((step) => step.status === 'blocked')).toBe(true)
   })
 
   it('returns real no-connector onboarding state without demo fallback', async () => {
@@ -198,12 +207,23 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
     expect(result.data.connectorState).toBe('no_connector')
+    expect(result.data.setupSteps.map((step) => step.status)).toEqual([
+      'partial',
+      'blocked',
+      'blocked',
+      'blocked',
+      'blocked',
+    ])
     expect(result.data.providerOptions.map((option) => option.id)).toEqual([
       'canias',
       'logo',
       'csv_import',
       'custom_api',
     ])
+    expect(result.data.providerOptions.every((option) => option.requirements.length > 0)).toBe(true)
+    expect(result.data.providerOptions[0].readinessLabelKey).toBe(
+      'erp.providerOptions.canias.readiness',
+    )
     expect(isErpOverviewEmpty(result.data)).toBe(false)
   })
 

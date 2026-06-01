@@ -705,6 +705,32 @@
     "title": "Connector preflight",
     "subtitle": "Provider, canonical mapping, and namespace readiness for source-independent data connections.",
     "badge": "Pending",
+    "workbench": {
+      "title": "Connector setup workbench",
+      "description": "Data source selection, canonical mapping, namespace, and preflight are verified as separate steps."
+    },
+    "setupSteps": {
+      "source": {
+        "label": "Source",
+        "description": "Select the provider or file source."
+      },
+      "mapping": {
+        "label": "Mapping",
+        "description": "Map source fields into the PULS canonical model."
+      },
+      "namespace": {
+        "label": "Namespace",
+        "description": "Resolve external IDs inside a unified namespace."
+      },
+      "preflight": {
+        "label": "Preflight",
+        "description": "Check metadata, mapping, and identity proof."
+      },
+      "runtime": {
+        "label": "Runtime",
+        "description": "Live sync and ERP write boundaries remain closed."
+      }
+    },
     "metrics": {
       "provider": "Provider",
       "preflight": "Preflight",
@@ -727,19 +753,54 @@
     "providerOptions": {
       "canias": {
         "label": "Canias",
-        "description": "First customer track; metadata and mapping preflight are ready."
+        "description": "First customer track; metadata and mapping preflight are ready.",
+        "readiness": "Seed proof exists; live runtime is closed."
       },
       "logo": {
         "label": "Logo",
-        "description": "Future provider candidate using the same canonical mapping model."
+        "description": "Future provider candidate using the same canonical mapping model.",
+        "readiness": "Discovery and mapping draft required."
       },
       "csv_import": {
         "label": "CSV / Excel",
-        "description": "File or template-based transfer for sources without an API."
+        "description": "File or template-based transfer for sources without an API.",
+        "readiness": "Lowest-risk starting path for file-based sources."
       },
       "custom_api": {
         "label": "Custom API",
-        "description": "Customer-specific connection; runtime boundary opens in a future phase."
+        "description": "Customer-specific connection; runtime boundary opens in a future phase.",
+        "readiness": "Customer discovery and service boundary required."
+      }
+    },
+    "providerPreview": {
+      "eyebrow": "Selection preview",
+      "description": "This selection previews the flow only; it does not create connector metadata.",
+      "requirements": "Readiness requirements"
+    },
+    "providerRequirements": {
+      "sourceProfile": {
+        "label": "Source profile",
+        "description": "Provider type, ownership, and data scope are clarified."
+      },
+      "canonicalMapping": {
+        "label": "Canonical mapping",
+        "description": "External source fields map to PULS canonical data fields."
+      },
+      "sourceNamespace": {
+        "label": "Source namespace",
+        "description": "External IDs become tenant-scoped, unique, and traceable."
+      },
+      "identityStrategy": {
+        "label": "Identity strategy",
+        "description": "Source records link to PULS canonical records through reconciliation rules."
+      },
+      "transferMode": {
+        "label": "Transfer mode",
+        "description": "CSV, Excel, file, or API boundary is selected for a human-confirmed flow."
+      },
+      "runtimeBoundary": {
+        "label": "Runtime boundary",
+        "description": "Live connector calls, credential storage, and ERP writes remain closed for a future phase."
       }
     },
     "preflightNote": "This screen shows connection readiness; it does not enable runtime sync, credential storage, or ERP writes.",
@@ -849,8 +910,7 @@
       "costCentersDetail": "{{mapped}} mapped · {{unmapped}} unmapped · {{total}} total"
     },
     "boundary": {
-      "erpNoWrite":
-        "PULS does not modify ERP master data; the source system remains finance/ERP.",
+      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP.",
       "readOnly": "Read-only setup view.",
       "crudDeferred": "Create and edit actions will arrive in a later release."
     }
@@ -930,8 +990,7 @@
       "open": "Open details"
     },
     "boundary": {
-      "erpNoWrite":
-        "PULS does not modify ERP master data; the source system remains finance/ERP."
+      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP."
     },
     "issues": {
       "sourceUnknown": {
@@ -1115,8 +1174,7 @@
     },
     "boundary": {
       "readOnly": "This view audits employee assignments; editing flows will open in a later release.",
-      "erpNoWrite":
-        "PULS does not modify ERP master data; the source system remains finance/ERP."
+      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP."
     }
   },
   "requestCreationReadiness": {
