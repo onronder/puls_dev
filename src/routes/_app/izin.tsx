@@ -13,7 +13,7 @@ import {
   Plus,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -187,12 +187,7 @@ function IzinPage() {
   const historyCount = data?.requests.length ?? 0
   const showApprovals = activePersona === 'manager'
   const approvalCount = showApprovals ? (data?.pendingApprovals.length ?? 0) : 0
-
-  useEffect(() => {
-    if (!showApprovals && tab === 'approvals') {
-      setTab('mine')
-    }
-  }, [showApprovals, tab])
+  const activeTab: LeaveTab = showApprovals || tab !== 'approvals' ? tab : 'mine'
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -265,7 +260,7 @@ function IzinPage() {
           <div className="mt-6">
             <Segmented
               ariaLabel={t('leaveSetup.tabs.ariaLabel')}
-              value={tab}
+              value={activeTab}
               onChange={setTab}
               options={[
                 {
@@ -285,11 +280,11 @@ function IzinPage() {
             />
           </div>
 
-          {tab === 'mine' ? (
+          {activeTab === 'mine' ? (
             <MineTab upcoming={data.upcoming} requests={data.requests} locale={i18n.language} t={t} />
           ) : null}
 
-          {tab === 'approvals' ? (
+          {activeTab === 'approvals' ? (
             <ApprovalsTab
               approvals={data.pendingApprovals}
               locale={i18n.language}
@@ -299,7 +294,7 @@ function IzinPage() {
             />
           ) : null}
 
-          {tab === 'calendar' ? (
+          {activeTab === 'calendar' ? (
             <section className="mt-6 rounded-lg border border-border bg-card">
               <EmptyState
                 icon={Inbox}
