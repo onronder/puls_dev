@@ -7,6 +7,7 @@ import {
   emptyDashboardPageData,
   fetchDashboardOverviewWithMeta,
   isDashboardEmpty,
+  mapDashboardErpProvider,
 } from '#/lib/data/dashboard/overview'
 import type { DemoDashboardOverview } from '#/lib/demo/puls-demo-data'
 
@@ -85,13 +86,14 @@ describe('buildDashboardQueue', () => {
 describe('buildDashboardErpStatus', () => {
   it('uses connected label when ERP is active', () => {
     const status = buildDashboardErpStatus({
+      hasConnection: true,
       isActive: true,
       mappedFields: 8,
       totalFields: 10,
       readiness: 80,
     })
 
-    expect(status.statusLabelKey).toBe('dashboard.erpConnected')
+    expect(status.statusLabelKey).toBe('dashboardSetup.erpCard.statusConnected')
     expect(status.mappedFields).toBe(8)
     expect(status.totalFields).toBe(10)
     expect(status.readiness).toBe(80)
@@ -99,6 +101,7 @@ describe('buildDashboardErpStatus', () => {
 
   it('uses pending label when ERP is inactive', () => {
     const status = buildDashboardErpStatus({
+      hasConnection: true,
       isActive: false,
       mappedFields: 0,
       totalFields: 10,
@@ -106,6 +109,34 @@ describe('buildDashboardErpStatus', () => {
     })
 
     expect(status.statusLabelKey).toBe('dashboardSetup.erpCard.statusPending')
+    expect(status.lastAttemptKey).toBe('dashboardSetup.erpCard.lastAttemptNone')
+  })
+
+  it('uses not configured copy when no ERP connection exists', () => {
+    const status = buildDashboardErpStatus({
+      hasConnection: false,
+      isActive: null,
+      mappedFields: 0,
+      totalFields: 0,
+      readiness: 0,
+    })
+
+    expect(status.statusLabelKey).toBe('dashboardSetup.erpCard.statusNotConfigured')
+    expect(status.descriptionKey).toBe('dashboardSetup.erpCard.descriptionNotConfigured')
+    expect(status.lastAttemptKey).toBe('dashboardSetup.erpCard.lastAttemptNone')
+  })
+})
+
+describe('mapDashboardErpProvider', () => {
+  it('maps known provider codes to product labels', () => {
+    expect(mapDashboardErpProvider('canias')).toBe('Canias')
+    expect(mapDashboardErpProvider('logo')).toBe('Logo')
+    expect(mapDashboardErpProvider('csv_import')).toBe('CSV / Excel')
+  })
+
+  it('keeps unknown provider names and returns null for empty input', () => {
+    expect(mapDashboardErpProvider('custom_erp')).toBe('custom_erp')
+    expect(mapDashboardErpProvider(null)).toBeNull()
   })
 })
 
@@ -121,7 +152,7 @@ describe('buildDashboardPageDataFromDemo', () => {
         totalFields: 10,
         lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
         readiness: 60,
-        descriptionKey: 'dashboardSetup.erpCard.description',
+        descriptionKey: 'dashboardSetup.erpCard.descriptionPending',
       },
     } satisfies DemoDashboardOverview
 

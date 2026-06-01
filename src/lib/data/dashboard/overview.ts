@@ -40,6 +40,7 @@ export type BuildDashboardQueueInput = {
 }
 
 export type BuildDashboardErpStatusInput = {
+  hasConnection: boolean
   isActive: boolean | null | undefined
   mappedFields: number
   totalFields: number
@@ -57,12 +58,12 @@ export function emptyDashboardOverview(): DemoDashboardOverview {
     queue: [],
     recentActivities: [],
     erpStatus: {
-      statusLabelKey: 'dashboardSetup.erpCard.statusPending',
+      statusLabelKey: 'dashboardSetup.erpCard.statusNotConfigured',
       mappedFields: 0,
       totalFields: 0,
-      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
+      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
       readiness: 0,
-      descriptionKey: 'dashboardSetup.erpCard.description',
+      descriptionKey: 'dashboardSetup.erpCard.descriptionNotConfigured',
     },
   }
 }
@@ -150,16 +151,42 @@ export function buildDashboardQueue(input: BuildDashboardQueueInput): DemoDashbo
 export function buildDashboardErpStatus(
   input: BuildDashboardErpStatusInput,
 ): DemoDashboardOverview['erpStatus'] {
+  if (!input.hasConnection) {
+    return {
+      statusLabelKey: 'dashboardSetup.erpCard.statusNotConfigured',
+      mappedFields: input.mappedFields,
+      totalFields: input.totalFields,
+      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
+      readiness: input.readiness,
+      descriptionKey: 'dashboardSetup.erpCard.descriptionNotConfigured',
+    }
+  }
+
   return {
     statusLabelKey: input.isActive
-      ? 'dashboard.erpConnected'
+      ? 'dashboardSetup.erpCard.statusConnected'
       : 'dashboardSetup.erpCard.statusPending',
     mappedFields: input.mappedFields,
     totalFields: input.totalFields,
-    lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
+    lastAttemptKey: input.isActive
+      ? 'dashboardSetup.erpCard.lastAttemptValue'
+      : 'dashboardSetup.erpCard.lastAttemptNone',
     readiness: input.readiness,
-    descriptionKey: 'dashboardSetup.erpCard.description',
+    descriptionKey: input.isActive
+      ? 'dashboardSetup.erpCard.descriptionConnected'
+      : 'dashboardSetup.erpCard.descriptionPending',
   }
+}
+
+export function mapDashboardErpProvider(provider: string | null | undefined): string | null {
+  if (!provider) return null
+
+  const normalized = provider.trim().toLowerCase()
+  if (normalized === 'canias') return 'Canias'
+  if (normalized === 'logo') return 'Logo'
+  if (normalized === 'csv' || normalized === 'csv_import') return 'CSV / Excel'
+
+  return provider
 }
 
 export function buildDashboardPageDataFromDemo({
@@ -222,7 +249,8 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
         .from('erp_connections')
         .select('provider, is_active')
         .eq('tenant_id', ctx.tenantId)
-        .eq('is_active', true)
+        .order('is_active', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
       ctx.employeeId
@@ -303,6 +331,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
     }),
     recentActivities: [],
     erpStatus: buildDashboardErpStatus({
+      hasConnection: Boolean(erpRow.data),
       isActive: erpRow.data?.is_active,
       mappedFields,
       totalFields,
@@ -319,7 +348,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
       competencyCount: Number(dashboardRow.data?.competency_template_count ?? 0),
       positionCount: Number(dashboardRow.data?.position_count ?? 0),
       erpConnected: Boolean(erpRow.data?.is_active),
-      erpProvider: (erpRow.data?.provider as string | null) ?? null,
+      erpProvider: mapDashboardErpProvider(erpRow.data?.provider as string | null),
       dataReadinessPct: readiness,
     },
     overview,

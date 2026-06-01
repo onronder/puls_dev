@@ -73,6 +73,8 @@
     "welcome": "Hoş geldin, {{name}}",
     "noTenant": "Organizasyon bağlantısı bulunamadı.",
     "erpCaniasInactive": "Canias pasif (hazırlık)",
+    "erpNoSourceValue": "Kaynak yok",
+    "erpNoSourceHint": "Henüz veri kaynağı seçilmedi",
     "subtitle": "İK operasyonlarının bugünkü özetini buradan takip et.",
     "meta": {
       "title": "Ana Sayfa — PULS",
@@ -102,7 +104,7 @@
       "itemCount": "{{count}} öğe"
     },
     "setup": {
-      "erpTitle": "Canias ERP bağlantısı",
+      "erpTitle": "Veri bağlantısı",
       "inactive": "Pasif",
       "approvalsTitle": "Bekleyen onaylar",
       "approvalsHint": "İzin ve masraf onay kuyruğu"
@@ -148,7 +150,7 @@
         "meta": "2026 Q2 değerlendirmesi"
       },
       "fieldMapping": {
-        "title": "Canias alan eşleştirmesi bekliyor",
+        "title": "Alan eşleştirmesi bekliyor",
         "meta": "{{mapped}} / {{total}} alan tamamlandı"
       },
       "leaveApproval": {
@@ -162,12 +164,18 @@
     },
     "erpCard": {
       "title": "ERP entegrasyon hazırlığı",
-      "description": "Canias bağlantısı, müşteri tarafında API erişimi açıldığında devreye alınacak.",
-      "statusPending": "API erişimi bekleniyor",
+      "description": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
+      "descriptionNotConfigured": "Veri bağlantısı henüz seçilmedi. Kaynak, alan ve kimlik eşleştirmesini başlatmak için ERP ekranını kullan.",
+      "descriptionPending": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
+      "descriptionConnected": "Veri bağlantısı aktif. Eşleştirme ve aktarım kontrollerini ERP ekranından izleyebilirsin.",
+      "statusConnected": "Bağlı",
+      "statusPending": "Bağlantı hazırlığı",
+      "statusNotConfigured": "Kaynak seçilecek",
       "fieldMapping": "Alan eşleştirme",
       "dataReadiness": "Veri hazırlığı",
       "lastAttempt": "Son deneme",
       "lastAttemptValue": "Dün, 18:42",
+      "lastAttemptNone": "Henüz yok",
       "openMapping": "Alan eşleştirmeyi aç",
       "viewSyncLogs": "Sync loglarını gör"
     },

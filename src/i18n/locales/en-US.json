@@ -73,6 +73,8 @@
     "welcome": "Welcome, {{name}}",
     "noTenant": "No organization is linked.",
     "erpCaniasInactive": "Canias inactive (preparation)",
+    "erpNoSourceValue": "No source",
+    "erpNoSourceHint": "No data source selected yet",
     "subtitle": "Track today's HR operations summary here.",
     "meta": {
       "title": "Dashboard — PULS",
@@ -102,7 +104,7 @@
       "itemCount": "{{count}} items"
     },
     "setup": {
-      "erpTitle": "Canias ERP connection",
+      "erpTitle": "Data connection",
       "inactive": "Inactive",
       "approvalsTitle": "Pending approvals",
       "approvalsHint": "Leave and expense approval queue"
@@ -148,7 +150,7 @@
         "meta": "2026 Q2 review"
       },
       "fieldMapping": {
-        "title": "Canias field mapping pending",
+        "title": "Field mapping pending",
         "meta": "{{mapped}} / {{total}} fields completed"
       },
       "leaveApproval": {
@@ -162,12 +164,18 @@
     },
     "erpCard": {
       "title": "ERP integration readiness",
-      "description": "Canias connection will go live when API access is enabled on the customer side.",
-      "statusPending": "Awaiting API access",
+      "description": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
+      "descriptionNotConfigured": "No data connection has been selected yet. Use the ERP screen to start source, field, and identity mapping.",
+      "descriptionPending": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
+      "descriptionConnected": "The data connection is active. Track mapping and transfer checks from the ERP screen.",
+      "statusConnected": "Connected",
+      "statusPending": "Connection preparation",
+      "statusNotConfigured": "Source not selected",
       "fieldMapping": "Field mapping",
       "dataReadiness": "Data readiness",
       "lastAttempt": "Last attempt",
       "lastAttemptValue": "Yesterday, 18:42",
+      "lastAttemptNone": "Not yet",
       "openMapping": "Open field mapping",
       "viewSyncLogs": "View sync logs"
     },
