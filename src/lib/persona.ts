@@ -16,6 +16,20 @@ export async function resolvePersonaForUser(userId: string): Promise<{
   personaRole: PersonaRole
   tenantId: string | null
 }> {
+  const { data: coreEmployee } = await supabase
+    .schema('puls_core')
+    .from('employees')
+    .select('persona_role, tenant_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (coreEmployee?.persona_role) {
+    return {
+      personaRole: mapPersonaRole(coreEmployee.persona_role as PersonaRole),
+      tenantId: coreEmployee.tenant_id ?? null,
+    }
+  }
+
   const { data: employee } = await supabase
     .from('employees')
     .select('persona_role, tenant_id')

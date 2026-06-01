@@ -1114,7 +1114,7 @@
     },
     "checklist": {
       "tenant": "Tenant oluşturuldu",
-      "employees": "Demo çalışanlar eklendi",
+      "employees": "Çalışanlar eklendi",
       "erpMapping": "ERP alan eşleştirme bekliyor",
       "performanceCycle": "Performans dönemi bekliyor"
     },
@@ -2031,7 +2031,7 @@
       },
       "tenant": {
         "title": "Tenant ayarları",
-        "summary": "Mert Teknik A.Ş. · Pilot paket",
+        "summary": "Tenant ayarları · Pilot paket",
         "action": "Aç",
         "sheetDescription": "Tenant yapılandırması pilot sonrası genişletilecek.",
         "sheetBody": "Paket, lisans ve tenant düzeyi tercihler burada yönetilecek."
@@ -2041,7 +2041,7 @@
         "summary": "E-posta · Uygulama içi",
         "action": "Düzenle",
         "sheetDescription": "Bildirim kanalları pilot sonrası özelleştirilebilecek.",
-        "sheetBody": "E-posta ve uygulama içi bildirim tercihleri şu an demo özet olarak gösterilir."
+        "sheetBody": "E-posta ve uygulama içi bildirim tercihleri şu an salt okunur özet olarak gösterilir."
       },
       "locale": {
         "title": "Dil ve bölge",

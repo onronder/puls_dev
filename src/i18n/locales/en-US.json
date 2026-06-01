@@ -1114,7 +1114,7 @@
     },
     "checklist": {
       "tenant": "Tenant created",
-      "employees": "Demo employees added",
+      "employees": "Employees added",
       "erpMapping": "ERP field mapping pending",
       "performanceCycle": "Performance cycle pending"
     },
@@ -2031,7 +2031,7 @@
       },
       "tenant": {
         "title": "Tenant settings",
-        "summary": "Mert Teknik A.Ş. · Pilot plan",
+        "summary": "Tenant settings · Pilot plan",
         "action": "Open",
         "sheetDescription": "Tenant configuration will expand after the pilot.",
         "sheetBody": "Plan, license, and tenant-level preferences will be managed here."
@@ -2041,7 +2041,7 @@
         "summary": "Email · In-app",
         "action": "Edit",
         "sheetDescription": "Notification channels will be customizable after the pilot.",
-        "sheetBody": "Email and in-app notification preferences are shown as a demo summary for now."
+        "sheetBody": "Email and in-app notification preferences are shown as a read-only summary for now."
       },
       "locale": {
         "title": "Language & region",

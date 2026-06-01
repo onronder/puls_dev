@@ -13,8 +13,8 @@ PR13 closeout is limited to local proof, remote tenant proof, route smoke, and f
 | W1 | Local Supabase seed/proof | Done | PR13.8 | SQL `00-09` passed locally |
 | W2 | Mandatory auth persona proof | Done | PR13.8 | `05`/`06` and password-grant smoke passed locally |
 | W3 | Remote Puls Teknik tenant proof | Done | PR13.9 | Remote SQL/auth proof passed |
-| W4 | Demo-off route smoke | Not started | PR13.10 | Local/remote proof complete |
-| W5 | Screen readiness truth table + fallback guard | Not started | PR13.10 | Route smoke observations |
+| W4 | Demo-off route smoke | Done | PR13.10 | 20-route truth table recorded; persona/deep-link blockers fixed |
+| W5 | Screen readiness truth table + fallback guard | Done | PR13.10 | Closeout doc, copy cleanup, and fallback regression guard added |
 | W6 | Canias customer discovery | Waiting | PR14+ | Customer export/API/data model |
 | W7 | Live AI / LLM gateway | Waiting | PR14+ | Product decision + security boundary |
 | W8 | Production hardening | Waiting | PR14+ | Post-demo acceptance |
@@ -69,26 +69,26 @@ PR13.8 is signed off locally. Do not fake the same auth proof remotely; PR13.9 s
 
 | Route | Target Status | Smoke Status | Notes |
 |-------|---------------|--------------|-------|
-| `/dashboard` | demo_ready_core | Pending | Calc KPIs and queues |
-| `/sirket-kurulum` | demo_ready_core | Pending | Setup readiness |
-| `/calisanlar` | demo_ready_core | Pending | 120 employees |
-| `/departmanlar` | demo_ready_core | Pending | PULS-owned + imported read-only |
-| `/pozisyonlar` | demo_ready_core | Pending | PULS-owned + imported read-only |
-| `/izin-tanimlari` | demo_ready_core | Pending | Types + lifecycle history |
-| `/izin` | demo_ready_core | Pending | Balances + scenario requests |
-| `/masraf-kategorileri` | demo_ready_core | Pending | Categories + cost center readiness |
-| `/masraf` | demo_ready_core | Pending | Claims + policy status examples |
-| `/performans` | partial_v1 | Pending | Demo-ready, production depth limited |
-| `/performans-parametreleri` | demo_ready_core | Pending | Params from seed |
-| `/kariyer` | partial_v1 | Pending | Representative career profiles |
-| `/egitim` | partial_v1 | Pending | Training needs baseline |
-| `/is-degerleme` | placeholder_future | Pending | Future/not V1 |
-| `/sozlesmeler` | demo_ready_core | Pending | Metadata/risk surface |
-| `/profil` | requires_auth_persona | Pending | Needs linked employee |
-| `/ayarlar` | partial_v1 | Pending | Hub/read-only settings |
-| `/erp` | partial_v1 | Pending | Metadata/discovery only, no runtime |
-| `/ai-koc` | partial_v1 | Pending | Context readiness, no live chat |
-| `/menu` | demo_ready_core | Pending | Shell exception |
+| `/dashboard` | demo_ready_core | Passed | Calc KPIs and queues |
+| `/sirket-kurulum` | demo_ready_core | Passed | Setup readiness |
+| `/calisanlar` | demo_ready_core | Passed | 120 employees |
+| `/departmanlar` | demo_ready_core | Passed | PULS-owned + imported read-only |
+| `/pozisyonlar` | demo_ready_core | Passed | PULS-owned + imported read-only |
+| `/izin-tanimlari` | demo_ready_core | Passed | Types + lifecycle history |
+| `/izin` | demo_ready_core | Passed | Balances + scenario requests |
+| `/masraf-kategorileri` | demo_ready_core | Passed | Categories + cost center readiness |
+| `/masraf` | demo_ready_core | Passed | Claims + policy status examples |
+| `/performans` | demo_ready_core | Passed | DB-backed demo-ready, production depth limited |
+| `/performans-parametreleri` | demo_ready_core | Passed | Params from seed |
+| `/kariyer` | partial_v1 | Passed | Representative career profiles |
+| `/egitim` | partial_v1 | Passed | Training needs baseline |
+| `/is-degerleme` | placeholder_future | Passed | Future/not V1 |
+| `/sozlesmeler` | demo_ready_core | Passed | Metadata/risk surface |
+| `/profil` | requires_auth_persona | Passed | Linked employee persona |
+| `/ayarlar` | partial_v1 | Passed | Hub/read-only settings |
+| `/erp` | partial_v1 | Passed | Metadata/discovery only, no runtime |
+| `/ai-koc` | partial_v1 | Passed | Context readiness, no live chat |
+| `/menu` | demo_ready_core | Passed | Shell exception |
 
 Smoke evidence should record:
 
@@ -96,6 +96,7 @@ Smoke evidence should record:
 - no visible demo pill where route uses `DemoSourcePill`
 - expected core content present
 - accepted gaps
+- PR13.10 app fixes: `puls_core`-first persona resolver and persona-aware setup route guard
 
 ### W5 — Screen Readiness Truth Table + Demo Fallback Guard
 
@@ -117,10 +118,10 @@ This is the document that answers: "What is actually ready, what is demo-ready, 
 
 | Task | Status | Notes |
 |------|--------|-------|
-| List current `fetchDemo*` product-path imports | Pending | Baseline only; not all must be removed |
-| Add guard for new `fetchDemo*` product additions | Pending | Classification required |
-| Update retirement docs with final packaging posture | Pending | Demo fallback remains dev-only |
-| Final PR13 closeout doc | Pending | Claims and non-claims |
+| List current `fetchDemo*` product-path imports | Passed | Baseline remains documented; not all dev fallback removed |
+| Add guard for new `fetchDemo*` product additions | Passed | `check-13-demo-fallback-regression.sh` |
+| Update retirement docs with final packaging posture | Passed | Demo fallback remains dev-only |
+| Final PR13 closeout doc | Passed | Claims and non-claims recorded |
 
 ### W6 — Canias Customer Discovery
 
