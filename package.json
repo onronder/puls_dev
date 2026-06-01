@@ -17,6 +17,7 @@
     "audit:supabase": "node scripts/audit-supabase-schema.mjs",
     "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
+    "test:e2e:auth": "E2E_REQUIRE_AUTH=true playwright test e2e/ui-stabilization.spec.ts --grep \"authenticated stabilization\"",
     "cap:sync": "pnpm run build && node scripts/write-capacitor-shell.mjs && pnpm exec cap sync",
     "cap:add": "pnpm exec cap add ios && pnpm exec cap add android",
     "cap:verify": "pnpm run cap:sync",

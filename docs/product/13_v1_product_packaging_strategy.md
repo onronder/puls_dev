@@ -134,6 +134,7 @@ Use across PR13 docs — **not every table must be seeded**:
 | **PR14.3** | Connector setup workbench |
 | **PR14.4** | Tenant rollout readiness |
 | **PR14.5** | Remote tenant rollout smoke results |
+| **PR14.6** | Authenticated E2E gate |
 
 ## Definition of done before PR13.7
 
@@ -148,6 +149,7 @@ Use across PR13 docs — **not every table must be seeded**:
 - [x] `/erp` exposes provider selection as local preview before runtime integration (PR14.3)
 - [x] Tenant rollout readiness documents Puls Teknik A.S. and PULS Connector Lab as separate proof postures (PR14.4)
 - [x] Remote Vercel smoke confirms both tenant postures on `/dashboard` and `/erp` (PR14.5)
+- [x] Authenticated route stabilization can run against live Vercel when repository secrets are configured (PR14.6)
 
 ## Risks and mitigations
 
