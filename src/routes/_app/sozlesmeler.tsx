@@ -73,7 +73,7 @@ function EmployeeAvatar({ initials }: { initials: string }) {
 
 function SozlesmelerPage() {
   const { t, i18n: i18nInstance } = useTranslation()
-  const { user } = useAuth()
+  const { user, activePersona } = useAuth()
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [detailSheetOpen, setDetailSheetOpen] = useState(false)
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false)
@@ -86,6 +86,14 @@ function SozlesmelerPage() {
 
   const data = contractsOverviewResult?.data
   const isEmptyList = !isLoading && (data?.contracts.length ?? 0) === 0
+  const isSelfScopedEmpty =
+    isEmptyList && activePersona === 'employee' && (data?.activeContractCount ?? 0) > 0
+  const emptyTitleKey = isSelfScopedEmpty
+    ? 'contractsSetup.empty.selfTitle'
+    : 'contractsSetup.empty.title'
+  const emptyDescriptionKey = isSelfScopedEmpty
+    ? 'contractsSetup.empty.selfDescription'
+    : 'contractsSetup.empty.description'
 
   const selectedContract = useMemo(() => {
     if (!data?.contracts.length) return undefined
@@ -197,8 +205,8 @@ function SozlesmelerPage() {
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
               <EmptyState
                 icon={FileText}
-                title={t('contractsSetup.empty.title')}
-                description={t('contractsSetup.empty.description')}
+                title={t(emptyTitleKey)}
+                description={t(emptyDescriptionKey)}
               />
             </div>
           ) : (
@@ -248,8 +256,8 @@ function SozlesmelerPage() {
                   <li className="px-4 py-6">
                     <EmptyState
                       icon={FileText}
-                      title={t('contractsSetup.empty.title')}
-                      description={t('contractsSetup.empty.description')}
+                      title={t(emptyTitleKey)}
+                      description={t(emptyDescriptionKey)}
                     />
                   </li>
                 )
