@@ -93,7 +93,7 @@ function ErpPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [selectedProviderId, setSelectedProviderId] =
-    useState<ConnectorProviderOption['id']>('canias')
+    useState<ConnectorProviderOption['id'] | null>(null)
   const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],
     queryFn: () => fetchErpOverviewWithMeta(user!.id),
@@ -104,8 +104,9 @@ function ErpPage() {
   const hasSelectedConnector = data?.connectorState === 'connector_selected'
   const hasNoConnector = data?.connectorState === 'no_connector'
   const selectedProvider =
-    data?.providerOptions.find((option) => option.id === selectedProviderId) ??
-    data?.providerOptions[0]
+    selectedProviderId == null
+      ? null
+      : data?.providerOptions.find((option) => option.id === selectedProviderId)
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -215,51 +216,62 @@ function ErpPage() {
           />
           <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="grid gap-3 md:grid-cols-2">
-              {data.providerOptions.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  aria-pressed={selectedProvider?.id === option.id}
-                  onClick={() => setSelectedProviderId(option.id)}
-                  className={cn(
-                    'touch-target rounded-xl border bg-[var(--color-bg-card)] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
-                    selectedProvider?.id === option.id
-                      ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_30%,transparent)]'
-                      : 'border-[var(--color-border)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)]',
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
-                      <ProviderOptionIcon id={option.id} />
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                          {t(option.labelKey)}
+              {data.providerOptions.map((option) => {
+                const isSelected = selectedProvider?.id === option.id
+
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedProviderId(option.id)}
+                    className={cn(
+                      'touch-target rounded-xl border bg-[var(--color-bg-card)] p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
+                      isSelected
+                        ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_30%,transparent)]'
+                        : 'border-[var(--color-border)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)] hover:bg-[var(--color-bg-elevated)]',
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={cn(
+                          'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                          isSelected
+                            ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                            : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]',
+                        )}
+                      >
+                        <ProviderOptionIcon id={option.id} />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {t(option.labelKey)}
+                          </p>
+                          {isSelected ? (
+                            <CheckCircle2
+                              className="h-4 w-4 text-[var(--color-success)]"
+                              aria-hidden
+                            />
+                          ) : null}
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                          {t(option.descriptionKey)}
                         </p>
-                        {selectedProvider?.id === option.id ? (
-                          <CheckCircle2
-                            className="h-4 w-4 text-[var(--color-success)]"
-                            aria-hidden
-                          />
-                        ) : null}
+                        <p className="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
+                          {t(option.readinessLabelKey)}
+                        </p>
                       </div>
-                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                        {t(option.descriptionKey)}
-                      </p>
-                      <p className="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
-                        {t(option.readinessLabelKey)}
-                      </p>
                     </div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <StatusPill tone={readinessTone(option.status)}>
-                      {t(`erp.readinessStatus.${option.status}`)}
-                    </StatusPill>
-                    <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" aria-hidden />
-                  </div>
-                </button>
-              ))}
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <StatusPill tone={readinessTone(option.status)}>
+                        {t(`erp.readinessStatus.${option.status}`)}
+                      </StatusPill>
+                      <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" aria-hidden />
+                    </div>
+                  </button>
+                )
+              })}
             </div>
 
             {selectedProvider ? (
@@ -306,7 +318,24 @@ function ErpPage() {
                   </ul>
                 </div>
               </aside>
-            ) : null}
+            ) : (
+              <aside className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex h-full min-h-[240px] flex-col justify-center">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]">
+                    <Plug className="h-5 w-5" aria-hidden />
+                  </span>
+                  <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.providerPreview.eyebrow')}
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                    {t('erp.providerPreview.emptyTitle')}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {t('erp.providerPreview.emptyDescription')}
+                  </p>
+                </div>
+              </aside>
+            )}
           </div>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -317,7 +346,9 @@ function ErpPage() {
               disabled
             >
               <Plug className="h-4 w-4" />
-              {t('erp.onboarding.selectProvider')}
+              {selectedProvider
+                ? t('erp.onboarding.providerSelected')
+                : t('erp.onboarding.selectProvider')}
             </Button>
             <Button
               type="button"
