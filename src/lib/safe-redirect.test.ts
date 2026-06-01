@@ -34,4 +34,9 @@ describe('buildRedirectPath', () => {
     expect(buildRedirectPath('/izin')).toBe('/izin')
     expect(buildRedirectPath('/izin', '?tab=mine')).toBe('/izin?tab=mine')
   })
+
+  it('does not nest login redirects', () => {
+    expect(buildRedirectPath('/login', '?redirect=/dashboard')).toBe('/dashboard')
+    expect(buildRedirectPath('/login', '?redirect=/login?redirect=/dashboard')).toBe('/dashboard')
+  })
 })

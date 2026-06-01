@@ -17,6 +17,7 @@ vi.mock('#/lib/data/demo-mode', () => ({
 vi.mock('#/lib/data/client', () => ({
   pulsCalc: vi.fn(),
   pulsIntegration: vi.fn(),
+  pulsWorkflow: vi.fn(),
   resolveTenantContext: vi.fn(),
 }))
 

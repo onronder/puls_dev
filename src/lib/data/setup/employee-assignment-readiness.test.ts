@@ -5,6 +5,7 @@ import {
   buildEmployeeAssignmentReadinessFlags,
   buildEmployeeAssignmentReadinessSummary,
   computeEmployeeAssignmentReadiness,
+  mapManagerRefFromVisibleRow,
   pickCurrentCostCenterAssignment,
   pickCurrentPrimaryManager,
   type EmployeeAssignmentReadinessEmployee,
@@ -198,5 +199,16 @@ describe('pickCurrentPrimaryManager', () => {
 
   it('falls back to cache manager id when no reporting line', () => {
     expect(pickCurrentPrimaryManager([], 'mgr-cache')).toBe('mgr-cache')
+  })
+})
+
+describe('mapManagerRefFromVisibleRow', () => {
+  it('keeps readiness manager-positive when RLS hides the manager detail row', () => {
+    expect(mapManagerRefFromVisibleRow('mgr-hidden', undefined)).toEqual({
+      id: 'mgr-hidden',
+      displayName: '—',
+      email: null,
+      isActive: true,
+    })
   })
 })

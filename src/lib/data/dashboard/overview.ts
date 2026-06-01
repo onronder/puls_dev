@@ -9,7 +9,7 @@ import type {
   DemoLeaveOverview,
 } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
-import { pulsCalc, pulsIntegration, resolveTenantContext } from '#/lib/data/client'
+import { pulsCalc, pulsIntegration, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type DashboardStats = {
@@ -44,6 +44,11 @@ export type BuildDashboardErpStatusInput = {
   mappedFields: number
   totalFields: number
   readiness: number
+}
+
+type DashboardLeaveBalanceRow = {
+  remaining_days?: number | null
+  leave_types?: { code?: string | null } | null
 }
 
 export function emptyDashboardOverview(): DemoDashboardOverview {
@@ -204,7 +209,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) return emptyDashboardPageData()
 
-  const [dashboardRow, erpRow, leaveRow, expenseRow, mappingCount, mappingTotal] =
+  const [dashboardRow, erpRow, leaveRow, leaveBalancesRow, expenseRow, mappingCount, mappingTotal] =
     await Promise.all([
       pulsCalc()
         .from('dashboard_overview')
@@ -228,6 +233,14 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
             .eq('employee_id', ctx.employeeId)
             .maybeSingle()
         : Promise.resolve({ data: null, error: null }),
+      ctx.employeeId
+        ? pulsWorkflow()
+            .from('leave_balances')
+            .select('remaining_days, leave_types ( code )')
+            .eq('tenant_id', ctx.tenantId)
+            .eq('employee_id', ctx.employeeId)
+            .eq('period_year', new Date().getFullYear())
+        : Promise.resolve({ data: [], error: null }),
       ctx.employeeId
         ? pulsCalc()
             .from('expense_overview')
@@ -256,6 +269,14 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
   if (leaveRow.error) {
     throw fromSupabaseError(leaveRow.error, 'fetchDashboardOverview', 'puls_calc', 'leave_overview')
   }
+  if (leaveBalancesRow.error) {
+    throw fromSupabaseError(
+      leaveBalancesRow.error,
+      'fetchDashboardOverview',
+      'puls_workflow',
+      'leave_balances',
+    )
+  }
   if (expenseRow.error) {
     throw fromSupabaseError(expenseRow.error, 'fetchDashboardOverview', 'puls_calc', 'expense_overview')
   }
@@ -265,6 +286,11 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
   const readiness = Number(dashboardRow.data?.data_readiness_pct ?? 0)
   const pendingLeave = Number(dashboardRow.data?.pending_leave_count ?? 0)
   const pendingExpense = Number(dashboardRow.data?.pending_expense_count ?? 0)
+  const annualBalance = ((leaveBalancesRow.data ?? []) as DashboardLeaveBalanceRow[]).find(
+    (row) => row.leave_types?.code === 'annual' || row.leave_types?.code === 'yillik',
+  )
+  const annualLeaveRemaining =
+    annualBalance?.remaining_days ?? Number(leaveRow.data?.annual_leave_remaining ?? 0)
 
   const overview: DemoDashboardOverview = {
     positionCount: Number(dashboardRow.data?.position_count ?? 0),
@@ -298,7 +324,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
     },
     overview,
     leaveSummary: {
-      heroRemainingAnnual: Number(leaveRow.data?.annual_leave_remaining ?? 0),
+      heroRemainingAnnual: Number(annualLeaveRemaining),
       pendingCount: Number(leaveRow.data?.pending_leave_count ?? pendingLeave),
     },
     expenseSummary: {

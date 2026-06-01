@@ -6,12 +6,13 @@ import type {
   DemoContractSignedStatus,
 } from '#/lib/demo/puls-demo-data'
 import { fromSupabaseError } from '#/lib/data/errors'
-import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
+import { pulsCalc, pulsCore, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type ContractsOverview = DemoContractsOverview
 
 const CONTRACT_TYPE_KEYS: Record<string, string> = {
+  employment: 'contractsSetup.types.indefinite',
   indefinite: 'contractsSetup.types.indefinite',
   fixed_term: 'contractsSetup.types.fixedTerm',
   probation: 'contractsSetup.types.probation',
@@ -19,11 +20,13 @@ const CONTRACT_TYPE_KEYS: Record<string, string> = {
 
 export type ContractRowInput = {
   id: string
+  employee_id?: string | null
   contract_type: string
   start_date: string
   end_date?: string | null
   signature_status?: string | null
   risk_band?: string | null
+  employeeName?: string | null
   employees?: { full_name?: string } | null
 }
 
@@ -71,7 +74,7 @@ export function mapContractRiskStatus({
 }
 
 export function mapContractRow(row: ContractRowInput, options?: MapContractRowOptions): DemoContractItem {
-  const employeeName = row.employees?.full_name ?? '—'
+  const employeeName = row.employeeName ?? row.employees?.full_name ?? '—'
   const contractType = row.contract_type
   const signatureStatus = row.signature_status ?? null
   const endDate = row.end_date ?? null
@@ -118,12 +121,12 @@ async function fetchRealContractsOverview(userId: string): Promise<ContractsOver
       .select(
         `
         id,
+        employee_id,
         contract_type,
         start_date,
         end_date,
         signature_status,
-        risk_band,
-        employees ( full_name )
+        risk_band
       `,
       )
       .eq('tenant_id', ctx.tenantId)
@@ -144,8 +147,36 @@ async function fetchRealContractsOverview(userId: string): Promise<ContractsOver
     throw fromSupabaseError(contractsRow.error, 'fetchContractsOverview', 'puls_workflow', 'contracts')
   }
 
-  const contracts = (contractsRow.data ?? []).map((row) =>
-    mapContractRow(row as ContractRowInput),
+  const contractRows = (contractsRow.data ?? []) as ContractRowInput[]
+  const employeeIds = [
+    ...new Set(contractRows.map((row) => row.employee_id).filter(Boolean) as string[]),
+  ]
+  let employeeNameMap = new Map<string, string>()
+
+  if (employeeIds.length > 0) {
+    const { data: employeeRows, error: employeesError } = await pulsCore()
+      .from('employees')
+      .select('id, full_name')
+      .eq('tenant_id', ctx.tenantId)
+      .in('id', employeeIds)
+
+    if (employeesError) {
+      throw fromSupabaseError(employeesError, 'fetchContractsOverview', 'puls_core', 'employees')
+    }
+
+    employeeNameMap = new Map(
+      (employeeRows ?? []).map((row) => [
+        row.id as string,
+        (row.full_name as string | null) ?? '—',
+      ]),
+    )
+  }
+
+  const contracts = contractRows.map((row) =>
+    mapContractRow({
+      ...row,
+      employeeName: row.employee_id ? employeeNameMap.get(row.employee_id) : null,
+    }),
   )
 
   const pendingSignatureCount = contracts.filter((row) => row.signed === 'pending').length
