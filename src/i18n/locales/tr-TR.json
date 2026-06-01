@@ -756,6 +756,7 @@
       "description": "Önce veri kaynağını seç, ardından alan ve kimlik eşleştirmesini tamamla.",
       "selectProvider": "Kaynak seç",
       "providerSelected": "Seçim taslağı hazır",
+      "reviewDraft": "Taslağı incele",
       "importMapping": "Eşleştirme yükle",
       "guardrail": "Bu aşamada yalnızca kurulum hazırlanır; canlı aktarım, kimlik bilgisi saklama ve ERP'ye yazma kapalıdır."
     },
@@ -787,6 +788,16 @@
       "emptyTitle": "Bir kaynak seçerek başla",
       "emptyDescription": "Canias, Logo, CSV / Excel veya özel API seçeneklerinden birini seçtiğinde hazırlık gereksinimleri burada görünür.",
       "requirements": "Hazırlık gereksinimleri"
+    },
+    "draftSheet": {
+      "title": "{{provider}} kurulum taslağı",
+      "description": "Bu panel kaynak seçimini ve hazırlık gereksinimlerini özetler; bağlantı kaydı oluşturmaz.",
+      "summary": "Kaynak taslağı",
+      "requirements": "Hazırlık kontrol listesi",
+      "guardrailTitle": "Canlı bağlantı kapalı",
+      "guardrailBody": "Bu seçim yalnızca inceleme amaçlıdır. Kimlik bilgisi saklama, canlı aktarım ve ERP'ye yazma işlemleri ayrı onay olmadan başlatılmaz.",
+      "close": "Kapat",
+      "createDisabled": "Bağlantı kaydı oluşturma kapalı"
     },
     "providerRequirements": {
       "sourceProfile": {
