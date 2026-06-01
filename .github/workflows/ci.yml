@@ -53,8 +53,16 @@ jobs:
       E2E_BASE_URL: https://puls-dev.vercel.app
       E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
       E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_HR_EMAIL: ${{ secrets.E2E_HR_EMAIL }}
+      E2E_HR_PASSWORD: ${{ secrets.E2E_HR_PASSWORD }}
+      E2E_MANAGER_EMAIL: ${{ secrets.E2E_MANAGER_EMAIL }}
+      E2E_MANAGER_PASSWORD: ${{ secrets.E2E_MANAGER_PASSWORD }}
       E2E_EMPLOYEE_EMAIL: ${{ secrets.E2E_EMPLOYEE_EMAIL }}
       E2E_EMPLOYEE_PASSWORD: ${{ secrets.E2E_EMPLOYEE_PASSWORD }}
+      E2E_CONNECTOR_ADMIN_EMAIL: ${{ secrets.E2E_CONNECTOR_ADMIN_EMAIL }}
+      E2E_CONNECTOR_ADMIN_PASSWORD: ${{ secrets.E2E_CONNECTOR_ADMIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 

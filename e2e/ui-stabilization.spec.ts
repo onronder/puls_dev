@@ -51,7 +51,7 @@ test('unauthenticated redirect preserves path in query', async ({ page }) => {
   await expect(page).toHaveURL(/redirect=.*izin/)
 })
 
-test.describe('authenticated stabilization', () => {
+test.describe('@auth authenticated stabilization', () => {
   test.skip(!hasCredentials && !requireAuth, 'Set E2E_EMAIL and E2E_PASSWORD for authenticated flows')
   test.describe.configure({ mode: 'serial' })
 

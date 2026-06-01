@@ -22,7 +22,6 @@ import { MetricCard } from '#/components/puls/MetricCard'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
-import { Card, CardContent } from '#/components/ui/card'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
@@ -186,6 +185,8 @@ function DashboardPage() {
 
   const dataReadiness = stats?.dataReadinessPct ?? overview?.erpStatus.readiness ?? 0
   const showLoading = isLoading || (isFetching && data ? isDashboardEmpty(data) : false)
+  const isEmptyRealDashboard =
+    !showLoading && dashboardResult?.source === 'real' && data ? isDashboardEmpty(data) : false
 
   const welcomeName = stats?.displayName?.split(' ')[0] ?? null
 
@@ -248,6 +249,45 @@ function DashboardPage() {
             }
           />
         </div>
+      ) : null}
+
+      {isEmptyRealDashboard ? (
+        <section className="mt-6 rounded-xl border border-[color-mix(in_srgb,var(--color-primary)_24%,transparent)] bg-[var(--color-bg-card)] p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                  <Plug className="h-[18px] w-[18px]" aria-hidden />
+                </span>
+                <StatusPill tone="warning">{t('dashboard.emptyTenant.badge')}</StatusPill>
+              </div>
+              <h2 className="mt-3 text-lg font-semibold text-[var(--color-text-primary)]">
+                {t('dashboard.emptyTenant.title')}
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                {t('dashboard.emptyTenant.description')}
+              </p>
+              <ol className="mt-4 grid gap-2 text-xs text-[var(--color-text-secondary)] sm:grid-cols-3">
+                {['source', 'mapping', 'team'].map((step) => (
+                  <li key={step} className="rounded-lg bg-[var(--color-bg-elevated)] px-3 py-2">
+                    {t(`dashboard.emptyTenant.steps.${step}`)}
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
+              <Button type="button" className="touch-target" asChild>
+                <Link to="/erp">
+                  {t('dashboard.emptyTenant.primaryAction')}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+              <Button type="button" variant="outline" className="touch-target" asChild>
+                <Link to="/sirket-kurulum">{t('dashboard.emptyTenant.secondaryAction')}</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
       ) : null}
 
       <section
@@ -474,16 +514,6 @@ function DashboardPage() {
         </div>
       </section>
 
-      {!isLoading && dashboardResult?.source === 'real' && data && isDashboardEmpty(data) ? (
-        <Card className="mt-6 border-dashed border-[var(--color-border-strong)]">
-          <CardContent className="p-6">
-            <p className="font-semibold">{t('dashboard.emptyTenant.title')}</p>
-            <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-              {t('dashboard.emptyTenant.description')}
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   )
 }

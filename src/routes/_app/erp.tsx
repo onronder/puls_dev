@@ -109,6 +109,9 @@ function ErpPage() {
     selectedProviderId == null
       ? null
       : data?.providerOptions.find((option) => option.id === selectedProviderId)
+  const pageTitle = data && hasNoConnector ? t('erp.noConnector.title') : t('erp.title')
+  const pageSubtitle =
+    data && hasNoConnector ? t('erp.noConnector.subtitle') : t('erp.subtitle')
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -117,8 +120,8 @@ function ErpPage() {
       </p>
       <PageHeader
         className="mt-1"
-        title={t('erp.title')}
-        subtitle={t('erp.subtitle')}
+        title={pageTitle}
+        subtitle={pageSubtitle}
         badge={
           <StatusPill tone={data ? readinessTone(data.readiness.status) : 'neutral'}>
             {data ? t(data.provider.statusLabelKey) : t('erp.badge')}
@@ -131,8 +134,12 @@ function ErpPage() {
       {data ? (
         <section className="mt-6">
           <SectionHeader
-            title={t('erp.workbench.title')}
-            description={t('erp.workbench.description')}
+            title={data && hasNoConnector ? t('erp.noConnector.stepsTitle') : t('erp.workbench.title')}
+            description={
+              data && hasNoConnector
+                ? t('erp.noConnector.stepsDescription')
+                : t('erp.workbench.description')
+            }
           />
           <ol className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0">
             {data.setupSteps.map((step, index) => (
@@ -213,8 +220,8 @@ function ErpPage() {
       {data && hasNoConnector ? (
         <section className="mt-8">
           <SectionHeader
-            title={t('erp.onboarding.title')}
-            description={t('erp.onboarding.description')}
+            title={t('erp.noConnector.sourceStepTitle')}
+            description={t('erp.noConnector.sourceStepDescription')}
           />
           <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="grid gap-3 md:grid-cols-2">

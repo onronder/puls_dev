@@ -42,7 +42,7 @@ done
 for needle in \
   '"test:e2e:auth"' \
   "E2E_REQUIRE_AUTH=true" \
-  "authenticated stabilization"; do
+  "@auth"; do
   if ! grep -Fq "$needle" <<< "$PACKAGE_JSON"; then
     echo "FAIL: package.json missing authenticated e2e script needle: $needle" >&2
     exit 1
@@ -82,6 +82,9 @@ for needle in \
   "https://puls-dev.vercel.app" \
   "secrets.E2E_EMAIL" \
   "secrets.E2E_PASSWORD" \
+  "secrets.E2E_HR_EMAIL" \
+  "secrets.E2E_MANAGER_EMAIL" \
+  "secrets.E2E_CONNECTOR_ADMIN_EMAIL" \
   "secrets.E2E_EMPLOYEE_EMAIL" \
   "secrets.E2E_EMPLOYEE_PASSWORD" \
   "pnpm run test:e2e:auth" \
