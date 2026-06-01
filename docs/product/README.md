@@ -201,6 +201,15 @@ PR14.4 records the two tenant postures needed before remote rollout: Puls Teknik
 | [14_tenant_rollout_readiness.md](./14_tenant_rollout_readiness.md) | Tenant posture matrix, auth boundary, rollout order, and `/dashboard` + `/erp` smoke expectations |
 | [`scripts/verify-14-tenant-rollout-readiness.sh`](../../scripts/verify-14-tenant-rollout-readiness.sh) | PR14.4 verify gate |
 
+## PR14.5 Remote tenant rollout smoke results
+
+PR14.5 records the live remote UI smoke for the two PR14 tenant postures: PULS Connector Lab as no-connector onboarding and Puls Teknik as seeded inactive connector metadata.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_remote_tenant_rollout_smoke_results.md](./14_remote_tenant_rollout_smoke_results.md) | Sanitized live remote UI smoke results for `/dashboard` and `/erp` |
+| [`scripts/verify-14-remote-tenant-rollout-smoke-results.sh`](../../scripts/verify-14-remote-tenant-rollout-smoke-results.sh) | PR14.5 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |

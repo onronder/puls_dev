@@ -133,6 +133,7 @@ Use across PR13 docs — **not every table must be seeded**:
 | **PR14.2** | ERP connector onboarding empty state |
 | **PR14.3** | Connector setup workbench |
 | **PR14.4** | Tenant rollout readiness |
+| **PR14.5** | Remote tenant rollout smoke results |
 
 ## Definition of done before PR13.7
 
@@ -146,6 +147,7 @@ Use across PR13 docs — **not every table must be seeded**:
 - [x] `/erp` has a no-connector PULS empty state before provider metadata exists (PR14.2)
 - [x] `/erp` exposes provider selection as local preview before runtime integration (PR14.3)
 - [x] Tenant rollout readiness documents Puls Teknik A.S. and PULS Connector Lab as separate proof postures (PR14.4)
+- [x] Remote Vercel smoke confirms both tenant postures on `/dashboard` and `/erp` (PR14.5)
 
 ## Risks and mitigations
 
