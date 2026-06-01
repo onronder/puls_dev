@@ -86,8 +86,7 @@ function SozlesmelerPage() {
 
   const data = contractsOverviewResult?.data
   const isEmptyList = !isLoading && (data?.contracts.length ?? 0) === 0
-  const isSelfScopedEmpty =
-    isEmptyList && activePersona === 'employee' && (data?.activeContractCount ?? 0) > 0
+  const isSelfScopedEmpty = isEmptyList && activePersona === 'employee'
   const emptyTitleKey = isSelfScopedEmpty
     ? 'contractsSetup.empty.selfTitle'
     : 'contractsSetup.empty.title'
