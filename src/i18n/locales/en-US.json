@@ -717,6 +717,31 @@
       "mapFields": "Mapping draft",
       "testConnection": "Preflight test"
     },
+    "onboarding": {
+      "title": "No connector configured yet",
+      "description": "A new customer tenant starts by selecting a data source, then preparing canonical mapping and namespace readiness.",
+      "selectProvider": "Select provider",
+      "importMapping": "Import mapping",
+      "guardrail": "This initial state shows preparation only; it does not enable runtime sync, credential storage, or ERP writes."
+    },
+    "providerOptions": {
+      "canias": {
+        "label": "Canias",
+        "description": "First customer track; metadata and mapping preflight are ready."
+      },
+      "logo": {
+        "label": "Logo",
+        "description": "Future provider candidate using the same canonical mapping model."
+      },
+      "csv_import": {
+        "label": "CSV / Excel",
+        "description": "File or template-based transfer for sources without an API."
+      },
+      "custom_api": {
+        "label": "Custom API",
+        "description": "Customer-specific connection; runtime boundary opens in a future phase."
+      }
+    },
     "preflightNote": "This screen shows connection readiness; it does not enable runtime sync, credential storage, or ERP writes.",
     "toast": {
       "apiPendingTitle": "Connector runtime is out of scope.",

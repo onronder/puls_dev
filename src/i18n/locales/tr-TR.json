@@ -717,6 +717,31 @@
       "mapFields": "Mapping taslağı",
       "testConnection": "Preflight testi"
     },
+    "onboarding": {
+      "title": "Henüz connector tanımlı değil",
+      "description": "Yeni müşteri tenant'ında önce veri kaynağı seçilir; sonra canonical mapping ve namespace hazırlığı yapılır.",
+      "selectProvider": "Provider seç",
+      "importMapping": "Mapping içe aktar",
+      "guardrail": "Bu başlangıç state'i yalnızca hazırlık akışını gösterir; runtime sync, credential saklama veya ERP yazma işlemi açmaz."
+    },
+    "providerOptions": {
+      "canias": {
+        "label": "Canias",
+        "description": "İlk müşteri track'i; metadata ve mapping preflight hazır."
+      },
+      "logo": {
+        "label": "Logo",
+        "description": "Gelecek provider adayı; aynı canonical mapping modelini kullanır."
+      },
+      "csv_import": {
+        "label": "CSV / Excel",
+        "description": "API olmayan kaynaklar için dosya veya template tabanlı aktarım."
+      },
+      "custom_api": {
+        "label": "Custom API",
+        "description": "Müşteri özel bağlantısı; runtime boundary gelecek fazda açılır."
+      }
+    },
     "preflightNote": "Bu ekran bağlantı hazırlığını gösterir; runtime sync, kimlik bilgisi saklama veya ERP yazma işlemi açmaz.",
     "toast": {
       "apiPendingTitle": "Connector runtime kapsam dışı.",

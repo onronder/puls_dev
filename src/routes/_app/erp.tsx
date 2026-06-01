@@ -77,6 +77,8 @@ function ErpPage() {
   })
 
   const data = erpResult?.data
+  const hasSelectedConnector = data?.connectorState === 'connector_selected'
+  const hasNoConnector = data?.connectorState === 'no_connector'
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -103,7 +105,7 @@ function ErpPage() {
           <Skeleton className="h-28 min-w-[140px] rounded-xl" />
           <Skeleton className="h-28 min-w-[140px] rounded-xl" />
         </div>
-      ) : data ? (
+      ) : data && hasSelectedConnector ? (
         <div className="-mx-4 mt-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
           <MetricCard
             compact
@@ -137,19 +139,69 @@ function ErpPage() {
         </div>
       ) : null}
 
-      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <Button type="button" className="touch-target w-full sm:w-auto" disabled>
+      {data && hasNoConnector ? (
+        <section className="mt-8">
+          <SectionHeader
+            title={t('erp.onboarding.title')}
+            description={t('erp.onboarding.description')}
+          />
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              {data.providerOptions.map((option) => (
+                <div
+                  key={option.id}
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(option.labelKey)}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                        {t(option.descriptionKey)}
+                      </p>
+                    </div>
+                    <StatusPill tone={readinessTone(option.status)}>
+                      {t(`erp.readinessStatus.${option.status}`)}
+                    </StatusPill>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
+                <Plug className="h-4 w-4" />
+                {t('erp.onboarding.selectProvider')}
+              </Button>
+              <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
+                <Link2 className="h-4 w-4" />
+                {t('erp.onboarding.importMapping')}
+              </Button>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
+              {t('erp.onboarding.guardrail')}
+            </p>
+          </div>
+        </section>
+      ) : null}
+
+      {data && hasSelectedConnector ? (
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
           <Link2 className="h-4 w-4" />
           {t('erp.actions.mapFields')}
-        </Button>
-        <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
-          <RefreshCw className="h-4 w-4" />
-          {t('erp.actions.testConnection')}
-        </Button>
-      </div>
-      <p className="mt-2 text-xs text-[var(--color-text-muted)]">{t('erp.preflightNote')}</p>
-
+          </Button>
+          <Button type="button" variant="outline" className="touch-target w-full sm:w-auto" disabled>
+            <RefreshCw className="h-4 w-4" />
+            {t('erp.actions.testConnection')}
+          </Button>
+        </div>
+      ) : null}
       {data ? (
+        <p className="mt-2 text-xs text-[var(--color-text-muted)]">{t('erp.preflightNote')}</p>
+      ) : null}
+
+      {data && hasSelectedConnector ? (
         <>
           <section className="mt-8">
             <SectionHeader
