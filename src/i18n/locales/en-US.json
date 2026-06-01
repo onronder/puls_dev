@@ -756,6 +756,7 @@
       "description": "Choose a data source, then complete field and identity matching.",
       "selectProvider": "Select source",
       "providerSelected": "Selection draft ready",
+      "reviewDraft": "Review draft",
       "importMapping": "Upload mapping",
       "guardrail": "This step only prepares the setup; live transfer, credential storage, and ERP writes remain off."
     },
@@ -787,6 +788,16 @@
       "emptyTitle": "Start by choosing a source",
       "emptyDescription": "Choose Canias, Logo, CSV / Excel, or Custom API to preview the readiness requirements here.",
       "requirements": "Readiness requirements"
+    },
+    "draftSheet": {
+      "title": "{{provider}} setup draft",
+      "description": "This panel summarizes the source choice and readiness requirements; it does not create a connection record.",
+      "summary": "Source draft",
+      "requirements": "Readiness checklist",
+      "guardrailTitle": "Live connection is off",
+      "guardrailBody": "This choice is for review only. Credential storage, live transfer, and ERP writes do not start without separate approval.",
+      "close": "Close",
+      "createDisabled": "Connection record creation is off"
     },
     "providerRequirements": {
       "sourceProfile": {
