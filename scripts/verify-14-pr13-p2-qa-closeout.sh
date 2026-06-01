@@ -21,12 +21,17 @@ CONTRACTS_TEST="$(file_at_ref src/lib/data/contracts/overview.test.ts)"
 QA_RESULTS="$(file_at_ref docs/product/13_role_route_product_qa_results.md)"
 VERIFY_SELF="$(file_at_ref scripts/verify-14-pr13-p2-qa-closeout.sh)"
 
-for needle in "activePersona" "selfTitle" "selfDescription" "emptyTitleKey" "emptyDescriptionKey"; do
+for needle in "isSelfScopedEmpty = isEmptyList && activePersona === 'employee'" "selfTitle" "selfDescription" "emptyTitleKey" "emptyDescriptionKey"; do
   if ! grep -Fq "$needle" <<< "$CONTRACTS_ROUTE"; then
     echo "FAIL: sozlesmeler route missing self-scope empty-state needle: $needle" >&2
     exit 1
   fi
 done
+
+if grep -Fq "isSelfScopedEmpty =" <<< "$CONTRACTS_ROUTE" && grep -F "isSelfScopedEmpty =" <<< "$CONTRACTS_ROUTE" | grep -Fq "activeContractCount"; then
+  echo "FAIL: employee self-scope empty copy must not depend on tenant-wide activeContractCount; employee RLS may return zero" >&2
+  exit 1
+fi
 
 for needle in "Sana ait sözleşme kaydı yok" "Tenant sözleşme metadata'sı mevcut"; do
   if ! grep -Fq "$needle" <<< "$TR_LOCALE"; then
