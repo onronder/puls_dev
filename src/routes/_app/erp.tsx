@@ -31,7 +31,13 @@ import { Button } from '#/components/ui/button'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import { useAuth } from '#/lib/auth'
-import { fetchErpOverviewWithMeta, startConnectorSetup, type ErpOverview } from '#/lib/data'
+import {
+  fetchErpOverviewWithMeta,
+  mapConnectorSetupError,
+  startConnectorSetup,
+  type ErpOverview,
+} from '#/lib/data'
+import { captureAppError } from '#/lib/observability/sentry'
 import { canShowSetupHub } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
@@ -96,8 +102,9 @@ function ErpPage() {
   const { t } = useTranslation()
   const { user, personaRole, activePersona } = useAuth()
   const queryClient = useQueryClient()
-  const [selectedProviderId, setSelectedProviderId] =
-    useState<ConnectorProviderOption['id'] | null>(null)
+  const [selectedProviderId, setSelectedProviderId] = useState<
+    ConnectorProviderOption['id'] | null
+  >(null)
   const [draftSheetOpen, setDraftSheetOpen] = useState(false)
   const canManageConnectors = canShowSetupHub(personaRole, activePersona)
   const { data: erpResult, isLoading } = useQuery({
@@ -115,8 +122,15 @@ function ErpPage() {
       void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
       void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
     },
-    onError: () => {
-      toast.error(t('erp.toast.setupCreateFailed'))
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'startConnectorSetup',
+        providerId: selectedProviderId,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
     },
   })
 
@@ -129,8 +143,7 @@ function ErpPage() {
       : data?.providerOptions.find((option) => option.id === selectedProviderId)
   const selectedProviderCanStart = selectedProvider?.setupAvailable === true
   const pageTitle = data && hasNoConnector ? t('erp.noConnector.title') : t('erp.title')
-  const pageSubtitle =
-    data && hasNoConnector ? t('erp.noConnector.subtitle') : t('erp.subtitle')
+  const pageSubtitle = data && hasNoConnector ? t('erp.noConnector.subtitle') : t('erp.subtitle')
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -153,7 +166,9 @@ function ErpPage() {
       {data ? (
         <section className="mt-6">
           <SectionHeader
-            title={data && hasNoConnector ? t('erp.noConnector.stepsTitle') : t('erp.workbench.title')}
+            title={
+              data && hasNoConnector ? t('erp.noConnector.stepsTitle') : t('erp.workbench.title')
+            }
             description={
               data && hasNoConnector
                 ? t('erp.noConnector.stepsDescription')
@@ -300,7 +315,10 @@ function ErpPage() {
                       <StatusPill tone={readinessTone(option.status)}>
                         {t(`erp.readinessStatus.${option.status}`)}
                       </StatusPill>
-                      <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" aria-hidden />
+                      <ChevronRight
+                        className="h-4 w-4 text-[var(--color-text-muted)]"
+                        aria-hidden
+                      />
                     </div>
                   </button>
                 )

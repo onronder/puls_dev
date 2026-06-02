@@ -17,6 +17,12 @@
     "pilotOutOfScope": "Outside pilot scope",
     "apiPending": "Will activate when Canias API access is enabled"
   },
+  "appError": {
+    "title": "Let’s recover this screen",
+    "description": "Something unexpected happened. Your data is safe; refresh the page or return to the dashboard.",
+    "reload": "Refresh page",
+    "dashboard": "Go to dashboard"
+  },
   "auth": {
     "loginTitle": "Sign in",
     "email": "Email",
@@ -885,6 +891,13 @@
       "testDescription": "This check does not call a live API; it only shows preparation status.",
       "setupCreated": "Setup draft is ready. You can move to field mapping.",
       "setupCreateFailed": "Setup draft could not be saved. Check permission and connection state."
+    },
+    "errors": {
+      "tenantMissing": "Company setup must be completed before this action can run.",
+      "adminRequired": "Admin permission is required to start a connection draft.",
+      "providerUnavailable": "This source type is not open for setup yet. Continue with Canias or CSV / Excel.",
+      "permissionDenied": "You do not have permission to save this connection. Try again with an admin role.",
+      "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment."
     },
     "sections": {
       "preflight": "Connection check",

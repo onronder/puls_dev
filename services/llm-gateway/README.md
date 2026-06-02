@@ -4,12 +4,12 @@ Health-only skeleton for future AI Coach LLM gateway. **Not used by app runtime 
 
 ## Posture
 
-| Property | Value |
-|----------|-------|
-| Version | `0.1.0-skeleton` |
-| Runtime | Health endpoint only (`GET` → JSON `{ status: "ok" }`) |
-| App integration | None — `/ai-koc` uses DB context readiness adapters only |
-| Production deployment | Not expected in PR13.7 |
+| Property              | Value                                                    |
+| --------------------- | -------------------------------------------------------- |
+| Version               | `0.1.0-skeleton`                                         |
+| Runtime               | Health endpoint only (`GET` → JSON `{ status: "ok" }`)   |
+| App integration       | None — `/ai-koc` uses DB context readiness adapters only |
+| Production deployment | Not expected in PR13.7                                   |
 
 ## What this service is
 
@@ -30,6 +30,10 @@ Future PR will wire tenant-scoped context from PR13.6 read models and enforce PR
 - No live chat in PR13.7 — `/ai-koc` remains context readiness + guardrails teaser
 - Source disclosure required for all data references
 
+## Observability
+
+PR14.9 defines the Sentry posture for future backend diagnostics, but this service remains health-only. When runtime begins, telemetry must use scrubbed route/action/status context only; prompts, auth tokens, customer records, API keys, and tool payloads must never be attached raw.
+
 ## Local dev (skeleton only)
 
 ```bash
@@ -42,3 +46,4 @@ node --import tsx src/index.ts
 
 - [`docs/product/13_ai_coach_action_boundary.md`](../../docs/product/13_ai_coach_action_boundary.md)
 - [`docs/product/13_ai_coach_db_context_readiness.md`](../../docs/product/13_ai_coach_db_context_readiness.md)
+- [`docs/product/14_error_observability_sentry.md`](../../docs/product/14_error_observability_sentry.md)

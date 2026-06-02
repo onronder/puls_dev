@@ -4,9 +4,11 @@ import {
   buildDemoErpOverview,
   fetchErpOverviewWithMeta,
   isErpOverviewEmpty,
+  mapConnectorSetupError,
   mapProviderLabel,
   startConnectorSetup,
 } from '#/lib/data/setup/erp'
+import { DataAdapterError } from '#/lib/data/errors'
 
 vi.mock('#/lib/data/demo-mode', () => ({
   isPulsDemoModeEnabled: vi.fn(),
@@ -309,17 +311,17 @@ describe('fetchErpOverviewWithMeta', () => {
     setupSeededMocks({
       erp_connections: {
         data: {
-            provider: 'logo',
-            id: 'connection-2',
-            display_name: null,
-            is_active: false,
-            last_sync_at: null,
-            last_status: null,
-            setup_status: 'draft',
-            setup_step: 'mapping',
-            is_enabled: true,
-            owned_domains: [],
-          },
+          provider: 'logo',
+          id: 'connection-2',
+          display_name: null,
+          is_active: false,
+          last_sync_at: null,
+          last_status: null,
+          setup_status: 'draft',
+          setup_step: 'mapping',
+          is_enabled: true,
+          owned_domains: [],
+        },
       },
     })
 
@@ -377,6 +379,27 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(integrationClient.from).toHaveBeenCalledTimes(1)
   })
 
+  it('rejects setup when tenant context is missing', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContextWithoutTenant())
+
+    await expect(startConnectorSetup('user-1', { providerId: 'canias' })).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  })
+
+  it('rejects setup when persona is not admin scoped', async () => {
+    resolveTenant.mockResolvedValue({
+      ...mockTenantContext(),
+      personaRole: 'employee',
+    })
+
+    await expect(startConnectorSetup('user-1', { providerId: 'canias' })).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  })
+
   it('rejects unsupported provider setup before writing', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
     const integrationClient = client({
@@ -385,7 +408,38 @@ describe('fetchErpOverviewWithMeta', () => {
     vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
 
     await expect(startConnectorSetup('user-1', { providerId: 'logo' })).rejects.toThrow(
-      'Provider setup is not available yet',
+      'Connector provider setup is not available',
     )
+  })
+
+  it('maps connector setup errors to safe user messages', () => {
+    expect(
+      mapConnectorSetupError(
+        new DataAdapterError({
+          code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+          message: 'Connector setup requires admin permission',
+          source: 'adapter',
+          operation: 'startConnectorSetup',
+        }),
+      ),
+    ).toEqual({ code: 'admin_required', toastKey: 'erp.errors.adminRequired' })
+
+    expect(
+      mapConnectorSetupError(
+        new DataAdapterError({
+          code: '42501',
+          message: 'permission denied for table erp_connections',
+          source: 'supabase',
+          operation: 'startConnectorSetup',
+          schema: 'puls_integration',
+          table: 'erp_connections',
+        }),
+      ),
+    ).toEqual({ code: 'permission_denied', toastKey: 'erp.errors.permissionDenied' })
+
+    expect(mapConnectorSetupError(new Error('raw db failure'))).toEqual({
+      code: 'save_failed',
+      toastKey: 'erp.errors.setupSaveFailed',
+    })
   })
 })
