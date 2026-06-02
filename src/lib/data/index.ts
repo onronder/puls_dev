@@ -127,6 +127,7 @@ export {
   type ConnectorSetupStep,
   type ConnectorSetupStepId,
   type ConnectorSetupCurrentStep,
+  type ConnectorSetupSummary,
   type ConnectorSetupStatus,
   type ConnectorSyncLog,
   type ConnectorSyncLogLevel,
