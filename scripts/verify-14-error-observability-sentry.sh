@@ -22,9 +22,11 @@ README="$(file_at_ref docs/product/README.md)"
 STRATEGY="$(file_at_ref docs/product/13_v1_product_packaging_strategy.md)"
 PACKAGE_JSON="$(file_at_ref package.json)"
 ENV_EXAMPLE="$(file_at_ref .env.example)"
+VITE_CONFIG="$(file_at_ref vite.config.ts)"
 SENTRY_TS="$(file_at_ref src/lib/observability/sentry.ts)"
 SENTRY_TEST="$(file_at_ref src/lib/observability/sentry.test.ts)"
 ROOT_ROUTE="$(file_at_ref src/routes/__root.tsx)"
+ERROR_BOUNDARY="$(file_at_ref src/components/puls/AppErrorBoundary.tsx)"
 ERROR_FALLBACK="$(file_at_ref src/components/puls/AppErrorFallback.tsx)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
 ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
@@ -40,6 +42,7 @@ for required in \
   scripts/verify-14-error-observability-sentry.sh \
   src/lib/observability/sentry.ts \
   src/lib/observability/sentry.test.ts \
+  src/components/puls/AppErrorBoundary.tsx \
   src/components/puls/AppErrorFallback.tsx; do
   if [[ "$REF" == "WORKTREE" ]]; then
     [[ -f "$required" ]] || { echo "FAIL: missing required file $required" >&2; exit 1; }
@@ -83,6 +86,7 @@ for needle in \
   "sanitizeSentryEvent" \
   "redactSensitiveText" \
   "SENSITIVE_QUERY_KEYS" \
+  "loadBrowserSentry" \
   "captureAppError" \
   "isObservabilityConfigured"; do
   if ! grep -Fq "$needle" <<< "$SENTRY_TS"; then
@@ -90,6 +94,11 @@ for needle in \
     exit 1
   fi
 done
+
+if grep -Fq "@sentry" <<< "$VITE_CONFIG"; then
+  echo "FAIL: vite config must not externalize or special-case Sentry in the server bundle" >&2
+  exit 1
+fi
 
 for needle in \
   "redacts sensitive text" \
@@ -103,10 +112,20 @@ done
 
 for needle in \
   "initObservability()" \
-  "Sentry.ErrorBoundary" \
-  "AppErrorFallback"; do
+  "AppErrorBoundary" \
+  "Outlet"; do
   if ! grep -Fq "$needle" <<< "$ROOT_ROUTE"; then
     echo "FAIL: root route missing Sentry boundary needle: $needle" >&2
+    exit 1
+  fi
+done
+
+for needle in \
+  "captureAppError" \
+  "react_error_boundary" \
+  "AppErrorFallback"; do
+  if ! grep -Fq "$needle" <<< "$ERROR_BOUNDARY"; then
+    echo "FAIL: app error boundary missing observability needle: $needle" >&2
     exit 1
   fi
 done
@@ -220,6 +239,8 @@ if [[ -n "$CHANGED_FILES" ]]; then
       package.json) ;;
       pnpm-lock.yaml) ;;
       scripts/verify-14-error-observability-sentry.sh) ;;
+      vite.config.ts) ;;
+      src/components/puls/AppErrorBoundary.tsx) ;;
       services/erp-connector/README.md) ;;
       services/llm-gateway/README.md) ;;
       src/components/puls/AppErrorFallback.tsx) ;;

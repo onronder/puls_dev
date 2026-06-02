@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react'
 import type { ErrorEvent } from '@sentry/react'
 
 import { DataAdapterError, isDataAdapterError } from '#/lib/data/errors'
@@ -44,6 +43,7 @@ const SENSITIVE_QUERY_KEYS = new Set([
 ])
 
 let sentryStarted = false
+let sentryModulePromise: Promise<typeof import('@sentry/react')> | null = null
 
 function currentEnv(): ObservabilityEnv {
   return import.meta.env as ObservabilityEnv
@@ -64,6 +64,15 @@ function traceSampleRate(env: ObservabilityEnv): number {
 
 export function isObservabilityConfigured(env: ObservabilityEnv = currentEnv()): boolean {
   return Boolean(env.VITE_SENTRY_DSN?.trim())
+}
+
+function loadBrowserSentry(): Promise<typeof import('@sentry/react')> {
+  if (import.meta.env.SSR) {
+    return Promise.reject(new Error('Sentry browser SDK is not available during SSR'))
+  }
+
+  sentryModulePromise ??= import('@sentry/react')
+  return sentryModulePromise
 }
 
 export function redactSensitiveText(value: string): string {
@@ -160,20 +169,31 @@ export function sanitizeSentryEvent(event: ErrorEvent): ErrorEvent {
 }
 
 export function initObservability(env: ObservabilityEnv = currentEnv()): boolean {
-  if (sentryStarted || typeof window === 'undefined' || !isObservabilityConfigured(env)) {
+  if (
+    import.meta.env.SSR ||
+    sentryStarted ||
+    typeof window === 'undefined' ||
+    !isObservabilityConfigured(env)
+  ) {
     return false
   }
 
-  Sentry.init({
-    dsn: env.VITE_SENTRY_DSN,
-    environment: envName(env),
-    release: env.VITE_SENTRY_RELEASE,
-    sendDefaultPii: false,
-    tracesSampleRate: traceSampleRate(env),
-    beforeSend: (event) => sanitizeSentryEvent(event),
-  })
-
   sentryStarted = true
+  void loadBrowserSentry()
+    .then((Sentry) => {
+      Sentry.init({
+        dsn: env.VITE_SENTRY_DSN,
+        environment: envName(env),
+        release: env.VITE_SENTRY_RELEASE,
+        sendDefaultPii: false,
+        tracesSampleRate: traceSampleRate(env),
+        beforeSend: (event) => sanitizeSentryEvent(event),
+      })
+    })
+    .catch(() => {
+      sentryStarted = false
+    })
+
   return true
 }
 
@@ -190,22 +210,28 @@ export function normalizeCapturedError(error: unknown, operation: string): Error
 }
 
 export function captureAppError(error: unknown, context: AppErrorContext): void {
+  if (import.meta.env.SSR || typeof window === 'undefined' || !isObservabilityConfigured()) {
+    return
+  }
+
   const normalized = normalizeCapturedError(error, context.operation)
   const adapter = isDataAdapterError(normalized) ? normalized : null
 
-  Sentry.withScope((scope) => {
-    scope.setTag('operation', context.operation)
-    scope.setTag('area', context.area ?? 'unknown')
-    if (context.route) scope.setTag('route', context.route)
-    if (context.providerId) scope.setTag('provider', context.providerId)
-    if (context.source) scope.setTag('source', context.source)
-    if (adapter) {
-      scope.setTag('adapter_source', adapter.source)
-      scope.setTag('adapter_code', adapter.code)
-      if (adapter.schema) scope.setTag('schema', adapter.schema)
-      if (adapter.table) scope.setTag('table', adapter.table)
-    }
+  void loadBrowserSentry().then((Sentry) => {
+    Sentry.withScope((scope) => {
+      scope.setTag('operation', context.operation)
+      scope.setTag('area', context.area ?? 'unknown')
+      if (context.route) scope.setTag('route', context.route)
+      if (context.providerId) scope.setTag('provider', context.providerId)
+      if (context.source) scope.setTag('source', context.source)
+      if (adapter) {
+        scope.setTag('adapter_source', adapter.source)
+        scope.setTag('adapter_code', adapter.code)
+        if (adapter.schema) scope.setTag('schema', adapter.schema)
+        if (adapter.table) scope.setTag('table', adapter.table)
+      }
 
-    Sentry.captureException(normalized)
+      Sentry.captureException(normalized)
+    })
   })
 }
