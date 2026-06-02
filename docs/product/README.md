@@ -266,6 +266,17 @@ PR14.9 adds the first production-grade observability boundary for app errors and
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                             | Connector setup error mapping                                                 |
 | [`scripts/verify-14-error-observability-sentry.sh`](../../scripts/verify-14-error-observability-sentry.sh) | PR14.9 verify gate                                                            |
 
+## PR14.9A Sentry source maps and setup check
+
+PR14.9A adds build-time source map upload and a guarded setup-check event. Source maps upload only when `SENTRY_SOURCE_MAPS=true` and Sentry build env is present; setup check requires `VITE_SENTRY_ALLOW_TEST_EVENT=true` plus `?sentry_setup_check=1`.
+
+| Document / artifact                                                                                      | Purpose                                                                 |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [14_sentry_source_maps.md](./14_sentry_source_maps.md)                                                   | Source map upload policy, setup-check flow, and acceptance criteria     |
+| [`vite.config.ts`](../../vite.config.ts)                                                                 | Gated Sentry Vite plugin and public `.map` deletion after upload        |
+| [`src/lib/observability/sentry.ts`](../../src/lib/observability/sentry.ts)                               | Browser-only setup-check capture guarded by env and query param         |
+| [`scripts/verify-14-sentry-source-maps.sh`](../../scripts/verify-14-sentry-source-maps.sh)               | PR14.9A verify gate                                                     |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

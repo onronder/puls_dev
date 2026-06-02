@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   isObservabilityConfigured,
+  isSentrySetupCheckRequested,
   redactSensitiveText,
   sanitizeSentryEvent,
   sanitizeUrl,
@@ -26,6 +27,27 @@ describe('observability sanitization', () => {
     expect(sanitizeUrl('https://puls.app/erp?provider=canias&token=secret#frag')).toBe(
       'https://puls.app/erp?provider=canias&token=[Filtered]',
     )
+  })
+
+  it('requires both setup-check env and query param before sending a verification event', () => {
+    expect(
+      isSentrySetupCheckRequested(
+        { VITE_SENTRY_ALLOW_TEST_EVENT: 'true' },
+        'https://puls.app/dashboard?sentry_setup_check=1',
+      ),
+    ).toBe(true)
+    expect(
+      isSentrySetupCheckRequested(
+        { VITE_SENTRY_ALLOW_TEST_EVENT: 'false' },
+        'https://puls.app/dashboard?sentry_setup_check=1',
+      ),
+    ).toBe(false)
+    expect(
+      isSentrySetupCheckRequested(
+        { VITE_SENTRY_ALLOW_TEST_EVENT: 'true' },
+        'https://puls.app/dashboard',
+      ),
+    ).toBe(false)
   })
 
   it('removes user identity and request secrets from Sentry events', () => {

@@ -138,6 +138,7 @@ Use across PR13 docs — **not every table must be seeded**:
 | **PR14.7**  | Role + tenant empty-state gate                                     |
 | **PR14.8**  | Connector setup persistence                                        |
 | **PR14.9**  | Error observability and Sentry                                     |
+| **PR14.9A** | Sentry source maps and setup check                                 |
 | **PR14.10** | Mapping discovery                                                  |
 | **PR14.11** | Connector preflight execution                                      |
 
@@ -158,6 +159,7 @@ Use across PR13 docs — **not every table must be seeded**:
 - [x] Role and tenant posture matrix covers Puls Teknik seeded state and PULS Connector Lab first-run empty state (PR14.7)
 - [x] Connector setup persistence writes tenant-scoped setup lifecycle state without runtime sync (PR14.8)
 - [x] Connector setup errors are observable, scrubbed, and user-friendly (PR14.9)
+- [x] Sentry source maps and guarded setup-check event are ready without exposing public maps or test UI (PR14.9A)
 - [ ] Connector mapping discovery connects source fields to canonical PULS data classes without import execution (PR14.10)
 - [ ] Connector preflight validates readiness as a dry run with no ERP writes (PR14.11)
 
