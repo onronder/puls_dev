@@ -2235,9 +2235,74 @@
       "description": "Güvenlik, erişim, bildirim ve kurulum tercihleri."
     },
     "sectionsList": "Ayar alanları",
+    "sectionsDescription": "Her alan kendi hazır olma durumunu ve hangi veriye dayandığını gösterir.",
+    "state": {
+      "ready": "Hazır",
+      "attention": "İlgi gerekiyor",
+      "locked": "Kapalı"
+    },
+    "values": {
+      "linked": "Bağlı",
+      "notLinked": "Çalışan kaydı bağlı değil",
+      "noEmployee": "Çalışan kaydı yok",
+      "noTenant": "Şirket alanı yok",
+      "noSource": "Kaynak yok",
+      "noRole": "Rol bulunamadı",
+      "draft": "Taslak",
+      "setupInProgress": "Kurulum sürüyor",
+      "preflightReady": "Kontrole hazır",
+      "connected": "Canlı",
+      "disabled": "Pasif",
+      "policyPending": "Kural seti bekliyor",
+      "roleBased": "Rol ve süreç bazlı",
+      "enabled": "Açık",
+      "reviewOnly": "İnceleme yetkisi",
+      "superadmin": "Süper admin",
+      "hr_admin": "İK admin",
+      "hrAdmin": "İK admin",
+      "manager": "Yönetici",
+      "employee": "Çalışan",
+      "localeDefault": "tr-TR",
+      "timezoneDefault": "Europe/Istanbul",
+      "themeDefault": "Sistem koyu teması",
+      "preferencePending": "Kişisel tercih saklama bekliyor",
+      "percent": "%{{value}}",
+      "auditCount": "{{count}} kayıt"
+    },
+    "helpers": {
+      "accountLinked": "Oturumun çalışan kaydıyla eşleşiyor; kişisel ayarlar güvenli şekilde okunabilir.",
+      "accountNeedsEmployee": "Oturum şirket alanında var, ama çalışan kaydıyla eşleşmeli.",
+      "accountNoTenant": "Önce kullanıcı bir şirket alanına bağlanmalı.",
+      "tenantReady": "Bu oturum bir şirket alanı içinde çalışıyor.",
+      "tenantMissing": "Şirket alanı bulunmadan yönetici ayarları açılamaz.",
+      "notificationsPending": "Bildirim tercihleri süreç bazlı politika ile açılacak; şu an sadece kapsam görünür.",
+      "notificationsNoTenant": "Bildirim kapsamı şirket alanı bağlandıktan sonra belirlenir.",
+      "localeReady": "Dil ve saat bölgesi uygulamanın mevcut çalışma kapsamıyla uyumlu.",
+      "themePending": "Tema görünümü çalışıyor; kişisel tema seçimi henüz kaydedilmiyor.",
+      "roleAdmin": "Bu rol kurulum ekranlarını yönetebilir.",
+      "roleLimited": "Bu rol ayarları inceleyebilir; değişiklik için admin gerekir.",
+      "roleNoTenant": "Rol kapsamı şirket alanı bağlandıktan sonra çözümlenir."
+    },
+    "evidence": {
+      "account": "Hesap bağlantısı",
+      "employee": "Çalışan kaydı",
+      "tenant": "Şirket alanı",
+      "readiness": "Kurulum hazırlığı",
+      "scope": "Kapsam",
+      "audit": "Güvenlik geçmişi",
+      "locale": "Dil",
+      "timezone": "Saat bölgesi",
+      "theme": "Tema",
+      "preference": "Tercih saklama",
+      "role": "Rol",
+      "setupAccess": "Kurulum erişimi"
+    },
     "sheet": {
       "mvpBadge": "Salt okunur",
-      "submit": "Kaydet"
+      "submit": "Kaydet",
+      "currentState": "Mevcut durum",
+      "evidence": "Kanıt",
+      "actionUnavailable": "Bu alan şimdilik görüntüleme modunda"
     },
     "sections": {
       "accountSecurity": {
@@ -2290,7 +2355,15 @@
     },
     "setupHub": {
       "title": "Kurulum merkezi",
-      "description": "Şirket yapısı, veri bağlantıları ve süreç parametreleri için başlangıç noktası."
+      "description": "Şirket yapısı, veri bağlantıları ve süreç parametreleri için başlangıç noktası.",
+      "hints": {
+        "ready": "Bu kurulum alanı hazır görünüyor",
+        "attention": "Kurulum ilerlemiş; eksik adımlar olabilir",
+        "locked": "Başlamak için önce temel veri gerekir",
+        "connectorMissing": "Önce veri kaynağı seçilmeli",
+        "connectorSelected": "Bağlantı taslağı seçildi",
+        "connectorMapped": "Kaynak ve eşleştirme kanıtı var"
+      }
     }
   },
   "aiCoachSetup": {
