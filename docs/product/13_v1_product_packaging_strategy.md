@@ -32,15 +32,15 @@ V1 product intent: [`../specs/05-frontend-sayfa-gelistirme-spec.md`](../specs/05
 
 ### In scope (PR13 program)
 
-| Area | PR13 deliverable |
-|------|------------------|
-| Feature + DB coverage | PR13.1 inventory |
-| Embedded demo retirement | PR13.2 inventory |
-| Demo company spec | PR13.3 |
-| CSV fixture pack | PR13.4 |
-| Bootstrap / reset / smoke | PR13.5 |
-| AI Coach DB context | PR13.6 |
-| Canias mapping discovery | PR13.7 |
+| Area                      | PR13 deliverable |
+| ------------------------- | ---------------- |
+| Feature + DB coverage     | PR13.1 inventory |
+| Embedded demo retirement  | PR13.2 inventory |
+| Demo company spec         | PR13.3           |
+| CSV fixture pack          | PR13.4           |
+| Bootstrap / reset / smoke | PR13.5           |
+| AI Coach DB context       | PR13.6           |
+| Canias mapping discovery  | PR13.7           |
 
 ### Out of scope (PR13.0 and non-goals for MVP)
 
@@ -83,13 +83,13 @@ Allowed interim: dev-only fallback under explicit env flags until PR13.5 bootstr
 
 ## Full-stack readiness definition
 
-| Layer | Question |
-|-------|----------|
-| Route | V1 route exists and matches spec? |
-| Adapter | Reads/writes real backend when tenant has data? |
-| Backend | RPC / table / view / RLS documented? |
-| DB | Demo seed or import fills required completeness class? |
-| UI | Empty/error states honest (no silent demo masking)? |
+| Layer   | Question                                               |
+| ------- | ------------------------------------------------------ |
+| Route   | V1 route exists and matches spec?                      |
+| Adapter | Reads/writes real backend when tenant has data?        |
+| Backend | RPC / table / view / RLS documented?                   |
+| DB      | Demo seed or import fills required completeness class? |
+| UI      | Empty/error states honest (no silent demo masking)?    |
 
 Reference inventories: [`../data/11_sidebar_data_api_inventory.md`](../data/11_sidebar_data_api_inventory.md), [`../data/11_org_setup_crud_readiness_matrix.md`](../data/11_org_setup_crud_readiness_matrix.md) (departments/positions source-aware mixed CRUD).
 
@@ -109,37 +109,37 @@ Reference inventories: [`../data/11_sidebar_data_api_inventory.md`](../data/11_s
 
 Use across PR13 docs — **not every table must be seeded**:
 
-| Class | Meaning |
-|-------|---------|
-| `required seeded` | Demo tenant must have baseline rows for V1 packaging proof |
+| Class                         | Meaning                                                              |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `required seeded`             | Demo tenant must have baseline rows for V1 packaging proof           |
 | `required scenario-generated` | Created by workflow smoke / scenario scripts (e.g. pending approval) |
-| `readable empty-ok` | UI valid with zero rows; empty state is honest |
-| `future/not V1` | Out of V1 packaging scope |
-| `sensitive/system` | Auth, audit, vault — not demo narrative content |
+| `readable empty-ok`           | UI valid with zero rows; empty state is honest                       |
+| `future/not V1`               | Out of V1 packaging scope                                            |
+| `sensitive/system`            | Auth, audit, vault — not demo narrative content                      |
 
 ## PR13 roadmap
 
-| PR | Deliverable |
-|----|-------------|
-| **PR13.0** | Scope lock + strategy docs (this PR) |
-| **PR13.1** | Feature + DB table coverage inventory (deepen traceability matrix) |
-| **PR13.2** | Embedded demo data retirement inventory |
-| **PR13.3** | DB-backed demo company data spec (`puls_*` aligned) |
-| **PR13.4** | CSV fixture pack |
-| **PR13.5** | Demo bootstrap / reset / smoke |
-| **PR13.6** | AI Coach DB context readiness |
-| **PR13.7** | Canias connector discovery + AI action boundary |
-| **PR14.1** | Provider-agnostic connector preflight readiness |
-| **PR14.2** | ERP connector onboarding empty state |
-| **PR14.3** | Connector setup workbench |
-| **PR14.4** | Tenant rollout readiness |
-| **PR14.5** | Remote tenant rollout smoke results |
-| **PR14.6** | Authenticated E2E gate |
-| **PR14.7** | Role + tenant empty-state gate |
-| **PR14.8** | Connector setup persistence |
-| **PR14.9** | Error observability and Sentry |
-| **PR14.10** | Mapping discovery |
-| **PR14.11** | Connector preflight execution |
+| PR          | Deliverable                                                        |
+| ----------- | ------------------------------------------------------------------ |
+| **PR13.0**  | Scope lock + strategy docs (this PR)                               |
+| **PR13.1**  | Feature + DB table coverage inventory (deepen traceability matrix) |
+| **PR13.2**  | Embedded demo data retirement inventory                            |
+| **PR13.3**  | DB-backed demo company data spec (`puls_*` aligned)                |
+| **PR13.4**  | CSV fixture pack                                                   |
+| **PR13.5**  | Demo bootstrap / reset / smoke                                     |
+| **PR13.6**  | AI Coach DB context readiness                                      |
+| **PR13.7**  | Canias connector discovery + AI action boundary                    |
+| **PR14.1**  | Provider-agnostic connector preflight readiness                    |
+| **PR14.2**  | ERP connector onboarding empty state                               |
+| **PR14.3**  | Connector setup workbench                                          |
+| **PR14.4**  | Tenant rollout readiness                                           |
+| **PR14.5**  | Remote tenant rollout smoke results                                |
+| **PR14.6**  | Authenticated E2E gate                                             |
+| **PR14.7**  | Role + tenant empty-state gate                                     |
+| **PR14.8**  | Connector setup persistence                                        |
+| **PR14.9**  | Error observability and Sentry                                     |
+| **PR14.10** | Mapping discovery                                                  |
+| **PR14.11** | Connector preflight execution                                      |
 
 ## Definition of done before PR13.7
 
@@ -157,20 +157,20 @@ Use across PR13 docs — **not every table must be seeded**:
 - [x] Authenticated route stabilization can run against live Vercel when repository secrets are configured (PR14.6)
 - [x] Role and tenant posture matrix covers Puls Teknik seeded state and PULS Connector Lab first-run empty state (PR14.7)
 - [x] Connector setup persistence writes tenant-scoped setup lifecycle state without runtime sync (PR14.8)
-- [ ] Connector setup errors are observable, scrubbed, and user-friendly (PR14.9)
+- [x] Connector setup errors are observable, scrubbed, and user-friendly (PR14.9)
 - [ ] Connector mapping discovery connects source fields to canonical PULS data classes without import execution (PR14.10)
 - [ ] Connector preflight validates readiness as a dry run with no ERP writes (PR14.11)
 
 ## Risks and mitigations
 
-| Risk | Mitigation |
-|------|------------|
+| Risk                         | Mitigation                                                       |
+| ---------------------------- | ---------------------------------------------------------------- |
 | Demo fallback masks empty DB | DB-backed demo + retirement of TS fixtures; honest matrix status |
-| Legacy `public.*` seed drift | PR13.3 targets `puls_*` schemas |
-| AI over-promised in V1 | Teaser-only today; guardrails doc; PR13.6 context gate |
-| Destructive ERP writes | MVP ban in strategy + Canias doc |
-| Public API scope creep | Explicit future candidate; Canias-first track |
-| Silent “ready” labels | PR13 status taxonomy; no `production_ready` if demo-only |
+| Legacy `public.*` seed drift | PR13.3 targets `puls_*` schemas                                  |
+| AI over-promised in V1       | Teaser-only today; guardrails doc; PR13.6 context gate           |
+| Destructive ERP writes       | MVP ban in strategy + Canias doc                                 |
+| Public API scope creep       | Explicit future candidate; Canias-first track                    |
+| Silent “ready” labels        | PR13 status taxonomy; no `production_ready` if demo-only         |
 
 ## Related documents
 

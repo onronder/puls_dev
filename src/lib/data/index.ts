@@ -114,7 +114,9 @@ export {
 export {
   fetchErpOverview,
   fetchErpOverviewWithMeta,
+  mapConnectorSetupError,
   startConnectorSetup,
+  type ConnectorSetupErrorMapping,
   type ConnectorFieldMapping,
   type ConnectorGuardrail,
   type ConnectorLifecycleState,

@@ -1,6 +1,6 @@
 import { fetchDemoErpOverview } from '#/lib/demo/puls-demo-data'
 import { pulsCalc, pulsIntegration, resolveTenantContext } from '#/lib/data/client'
-import { fromSupabaseError } from '#/lib/data/errors'
+import { DataAdapterError, fromSupabaseError, isDataAdapterError } from '#/lib/data/errors'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type ConnectorReadinessStatus = 'ready' | 'partial' | 'blocked'
@@ -225,6 +225,16 @@ export type StartConnectorSetupResult = {
   currentStep: ConnectorSetupCurrentStep
 }
 
+export type ConnectorSetupErrorMapping = {
+  code:
+    | 'missing_tenant'
+    | 'admin_required'
+    | 'provider_unavailable'
+    | 'permission_denied'
+    | 'save_failed'
+  toastKey: string
+}
+
 const PROVIDER_LABELS: Record<string, string> = {
   canias: 'Canias',
   logo: 'Logo',
@@ -263,6 +273,25 @@ const SETUP_PROVIDER_CONFIG: Partial<
     ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
     sourceType: 'file',
   },
+}
+
+export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMapping {
+  if (isDataAdapterError(error)) {
+    if (error.code === 'PULS_CONNECTOR_TENANT_REQUIRED') {
+      return { code: 'missing_tenant', toastKey: 'erp.errors.tenantMissing' }
+    }
+    if (error.code === 'PULS_CONNECTOR_ADMIN_REQUIRED') {
+      return { code: 'admin_required', toastKey: 'erp.errors.adminRequired' }
+    }
+    if (error.code === 'PULS_CONNECTOR_PROVIDER_UNAVAILABLE') {
+      return { code: 'provider_unavailable', toastKey: 'erp.errors.providerUnavailable' }
+    }
+    if (error.code === '42501') {
+      return { code: 'permission_denied', toastKey: 'erp.errors.permissionDenied' }
+    }
+  }
+
+  return { code: 'save_failed', toastKey: 'erp.errors.setupSaveFailed' }
 }
 
 const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
@@ -693,11 +722,17 @@ function buildConnectorSetupSummary({
   }
 
   if (namespaceCount === 0) {
-    return summary('erp.setupSummary.values.mappingReady', 'erp.setupSummary.hints.namespacePending')
+    return summary(
+      'erp.setupSummary.values.mappingReady',
+      'erp.setupSummary.hints.namespacePending',
+    )
   }
 
   if (identityCount === 0) {
-    return summary('erp.setupSummary.values.namespaceReady', 'erp.setupSummary.hints.identityPending')
+    return summary(
+      'erp.setupSummary.values.namespaceReady',
+      'erp.setupSummary.hints.identityPending',
+    )
   }
 
   if (setupStatus === 'preflight_ready' || readinessStatus === 'ready') {
@@ -708,7 +743,10 @@ function buildConnectorSetupSummary({
     )
   }
 
-  return summary('erp.setupSummary.values.setupInProgress', 'erp.setupSummary.hints.preflightPending')
+  return summary(
+    'erp.setupSummary.values.setupInProgress',
+    'erp.setupSummary.hints.preflightPending',
+  )
 }
 
 function buildConnectorSetupSteps({
@@ -1094,15 +1132,33 @@ export async function startConnectorSetup(
 ): Promise<StartConnectorSetupResult> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) {
-    throw new Error('Missing tenant context')
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector setup requires tenant context',
+      source: 'adapter',
+      operation: 'startConnectorSetup',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
   }
   if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
-    throw new Error('Admin role required')
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector setup requires admin permission',
+      source: 'adapter',
+      operation: 'startConnectorSetup',
+      i18nKey: 'erp.errors.adminRequired',
+    })
   }
 
   const config = SETUP_PROVIDER_CONFIG[input.providerId]
   if (!config) {
-    throw new Error('Provider setup is not available yet')
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_PROVIDER_UNAVAILABLE',
+      message: 'Connector provider setup is not available',
+      source: 'adapter',
+      operation: 'startConnectorSetup',
+      i18nKey: 'erp.errors.providerUnavailable',
+    })
   }
 
   const existing = await pulsIntegration()

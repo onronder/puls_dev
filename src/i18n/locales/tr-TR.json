@@ -17,6 +17,12 @@
     "pilotOutOfScope": "Pilot kapsamı dışında",
     "apiPending": "Canias API erişimi açılınca etkinleşecek"
   },
+  "appError": {
+    "title": "Bu ekranı yeniden toparlayalım",
+    "description": "Beklenmeyen bir sorun oluştu. Verilerin korunuyor; sayfayı yenileyebilir veya ana sayfaya dönebilirsin.",
+    "reload": "Sayfayı yenile",
+    "dashboard": "Ana sayfaya dön"
+  },
   "auth": {
     "loginTitle": "Giriş Yap",
     "email": "E-posta",
@@ -885,6 +891,13 @@
       "testDescription": "Bu kontrol canlı API çağrısı yapmaz; yalnızca hazırlık durumunu gösterir.",
       "setupCreated": "Kurulum taslağı hazır. Alan eşleştirme adımına geçebilirsin.",
       "setupCreateFailed": "Kurulum taslağı kaydedilemedi. Yetkiyi ve bağlantı durumunu kontrol et."
+    },
+    "errors": {
+      "tenantMissing": "Bu işlem için önce şirket bağlantısının tamamlanması gerekiyor.",
+      "adminRequired": "Bağlantı taslağını başlatmak için admin yetkisi gerekir.",
+      "providerUnavailable": "Bu kaynak tipi henüz kuruluma açılmadı. Canias veya CSV / Excel ile devam edebilirsin.",
+      "permissionDenied": "Bu bağlantıyı kaydetme yetkin yok. Admin rolüyle tekrar dene.",
+      "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin."
     },
     "sections": {
       "preflight": "Bağlantı kontrolü",
