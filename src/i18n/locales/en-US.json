@@ -174,9 +174,13 @@
       "title": "ERP integration readiness",
       "description": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
       "descriptionNotConfigured": "No data connection has been selected yet. Use the ERP screen to start source, field, and identity mapping.",
+      "descriptionSetupDraft": "A data source has been selected. Live transfer stays off until field and identity mapping are complete.",
+      "descriptionDisabled": "The data connection record remains in place, but it is disabled in the product.",
       "descriptionPending": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
       "descriptionConnected": "The data connection is active. Track mapping and transfer checks from the ERP screen.",
       "statusConnected": "Connected",
+      "statusSetupDraft": "Setup draft",
+      "statusDisabled": "Disabled",
       "statusPending": "Connection preparation",
       "statusNotConfigured": "Source not selected",
       "fieldMapping": "Field mapping",
@@ -727,7 +731,7 @@
       "stepsTitle": "Setup steps",
       "stepsDescription": "Start with source selection; field mapping, identity matching, and preflight checks follow in order.",
       "sourceStepTitle": "1. Choose data source",
-      "sourceStepDescription": "Start a setup draft with Canias, Logo, CSV / Excel, or Custom API sources."
+      "sourceStepDescription": "Start a persistent setup draft with Canias or CSV / Excel. Logo and Custom API stay visible for future connections."
     },
     "workbench": {
       "title": "Connection setup steps",
@@ -774,7 +778,8 @@
       "providerSelected": "Selection draft ready",
       "reviewDraft": "Review draft",
       "importMapping": "Upload mapping",
-      "guardrail": "This step only prepares the setup; live transfer, credential storage, and ERP writes remain off."
+      "guardrail": "This step only prepares the setup; live transfer, credential storage, and ERP writes remain off.",
+      "adminRequired": "This screen can be read-only for managers; admin permission is required to start setup."
     },
     "providerOptions": {
       "canias": {
@@ -800,20 +805,25 @@
     },
     "providerPreview": {
       "eyebrow": "Selection preview",
-      "description": "This selection shows the setup steps; it does not create a record.",
+      "description": "This selection shows the setup steps; a record is created only when setup starts.",
       "emptyTitle": "Start by choosing a source",
       "emptyDescription": "Choose Canias, Logo, CSV / Excel, or Custom API to preview the readiness requirements here.",
       "requirements": "Readiness requirements"
     },
     "draftSheet": {
       "title": "{{provider}} setup draft",
-      "description": "This panel summarizes the source choice and readiness requirements; it does not create a connection record.",
+      "description": "This panel summarizes the source choice and readiness requirements. Starting setup saves a tenant-scoped connection draft.",
       "summary": "Source draft",
       "requirements": "Readiness checklist",
       "guardrailTitle": "Live connection is off",
-      "guardrailBody": "This choice is for review only. Credential storage, live transfer, and ERP writes do not start without separate approval.",
+      "guardrailBody": "The setup draft is recorded, but credential storage, live transfer, and ERP writes do not start without separate approval.",
+      "persistedSetupHint": "A setup draft can be saved for this source and will survive page refresh.",
+      "futureProviderHint": "This provider remains visible in the product model; setup records will open in a later phase.",
       "close": "Close",
-      "createDisabled": "Connection record creation is off"
+      "startSetup": "Start setup",
+      "creating": "Saving",
+      "futureProvider": "Coming soon",
+      "adminRequiredAction": "Admin permission required"
     },
     "providerRequirements": {
       "sourceProfile": {
@@ -845,7 +855,9 @@
     "toast": {
       "apiPendingTitle": "Live connection is off.",
       "mapDescription": "Field mapping opens after a connection is selected.",
-      "testDescription": "The check does not make live API calls."
+      "testDescription": "The check does not make live API calls.",
+      "setupCreated": "Setup draft saved.",
+      "setupCreateFailed": "Setup draft could not be saved. Check permissions and connection state."
     },
     "sections": {
       "preflight": "Connection check",
@@ -868,6 +880,10 @@
     },
     "providerStatus": {
       "not_configured": "Source not configured",
+      "setup_draft": "Setup draft",
+      "setup_in_progress": "Setup in progress",
+      "preflight_ready": "Ready for check",
+      "disabled": "Disabled",
       "metadata_only": "Setup record",
       "runtime_inactive": "Live connection inactive",
       "runtime_active": "Live connection active"

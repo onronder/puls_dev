@@ -29,6 +29,10 @@ export function canShowSetupHub(
   return isSetupAdmin(personaRole) && activePersona === 'manager'
 }
 
+export function canInspectConnectorSetup(personaRole: PersonaRole | null | undefined): boolean {
+  return personaRole === 'manager' || isSetupAdmin(personaRole)
+}
+
 export function isSetupRoutePath(pathname: string): boolean {
   return SETUP_ROUTE_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),

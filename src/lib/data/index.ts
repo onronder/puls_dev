@@ -114,6 +114,7 @@ export {
 export {
   fetchErpOverview,
   fetchErpOverviewWithMeta,
+  startConnectorSetup,
   type ConnectorFieldMapping,
   type ConnectorGuardrail,
   type ConnectorLifecycleState,
@@ -125,10 +126,14 @@ export {
   type ConnectorReadinessStatus,
   type ConnectorSetupStep,
   type ConnectorSetupStepId,
+  type ConnectorSetupCurrentStep,
+  type ConnectorSetupStatus,
   type ConnectorSyncLog,
   type ConnectorSyncLogLevel,
   type ConnectorTransferMode,
   type ErpOverview,
+  type StartConnectorSetupInput,
+  type StartConnectorSetupResult,
 } from '#/lib/data/setup/erp'
 
 export {

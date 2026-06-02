@@ -242,6 +242,18 @@ This roadmap documents the agreed implementation order after PR14.7: connector s
 |---------------------|---------|
 | [14_connector_implementation_roadmap.md](./14_connector_implementation_roadmap.md) | PR14.8-PR14.11 implementation sequence, product boundaries, and acceptance criteria |
 
+## PR14.8 Connector setup persistence
+
+PR14.8 persists the connector setup selection as tenant-scoped DB state. Canias and CSV / Excel can create setup drafts; Logo and Custom API remain future candidates. Runtime sync, credentials, imports, and ERP writes stay closed.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_connector_setup_persistence.md](./14_connector_setup_persistence.md) | Persisted setup lifecycle, role boundary, data model, and rollout proof |
+| [`supabase/migrations/20260602090000_puls_integration_connector_setup_lifecycle.sql`](../../supabase/migrations/20260602090000_puls_integration_connector_setup_lifecycle.sql) | Adds setup lifecycle columns, tenant key, manager read policies, and admin write boundary |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts) | Connector setup persistence adapter and provider setup config |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | Admin setup action and manager read-only notice |
+| [`scripts/verify-14-connector-setup-persistence.sh`](../../scripts/verify-14-connector-setup-persistence.sh) | PR14.8 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |

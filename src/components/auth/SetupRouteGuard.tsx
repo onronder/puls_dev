@@ -3,12 +3,20 @@ import { useEffect, type ReactNode } from 'react'
 
 import { Skeleton } from '#/components/ui/skeleton'
 import { useAuth } from '#/lib/auth'
-import { canShowSetupHub } from '#/lib/setup-access'
+import { canInspectConnectorSetup, canShowSetupHub } from '#/lib/setup-access'
 
-export function SetupRouteGuard({ children }: { children: ReactNode }) {
+export function SetupRouteGuard({
+  children,
+  allowConnectorReadOnly = false,
+}: {
+  children: ReactNode
+  allowConnectorReadOnly?: boolean
+}) {
   const { personaRole, activePersona, isLoading } = useAuth()
   const navigate = useNavigate()
-  const allowed = canShowSetupHub(personaRole, activePersona)
+  const allowed =
+    canShowSetupHub(personaRole, activePersona) ||
+    (allowConnectorReadOnly && canInspectConnectorSetup(personaRole))
   const isPersonaPending = !isLoading && personaRole === null
 
   useEffect(() => {

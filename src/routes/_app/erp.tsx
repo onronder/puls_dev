@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   Braces,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
@@ -30,7 +31,8 @@ import { Button } from '#/components/ui/button'
 import { Progress } from '#/components/ui/progress'
 import { Skeleton } from '#/components/ui/skeleton'
 import { useAuth } from '#/lib/auth'
-import { fetchErpOverviewWithMeta, type ErpOverview } from '#/lib/data'
+import { fetchErpOverviewWithMeta, startConnectorSetup, type ErpOverview } from '#/lib/data'
+import { canShowSetupHub } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/erp')({
@@ -42,7 +44,7 @@ export const Route = createFileRoute('/_app/erp')({
 
 function ErpRoute() {
   return (
-    <SetupRouteGuard>
+    <SetupRouteGuard allowConnectorReadOnly>
       <ErpPage />
     </SetupRouteGuard>
   )
@@ -92,14 +94,30 @@ function SetupStepIcon({ status }: { status: ConnectorStatus }) {
 
 function ErpPage() {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, personaRole, activePersona } = useAuth()
+  const queryClient = useQueryClient()
   const [selectedProviderId, setSelectedProviderId] =
     useState<ConnectorProviderOption['id'] | null>(null)
   const [draftSheetOpen, setDraftSheetOpen] = useState(false)
+  const canManageConnectors = canShowSetupHub(personaRole, activePersona)
   const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],
     queryFn: () => fetchErpOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
+  })
+  const startSetupMutation = useMutation({
+    mutationFn: (providerId: ConnectorProviderOption['id']) =>
+      startConnectorSetup(user!.id, { providerId }),
+    onSuccess: () => {
+      toast.success(t('erp.toast.setupCreated'))
+      setDraftSheetOpen(false)
+      setSelectedProviderId(null)
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+    },
+    onError: () => {
+      toast.error(t('erp.toast.setupCreateFailed'))
+    },
   })
 
   const data = erpResult?.data
@@ -109,6 +127,7 @@ function ErpPage() {
     selectedProviderId == null
       ? null
       : data?.providerOptions.find((option) => option.id === selectedProviderId)
+  const selectedProviderCanStart = selectedProvider?.setupAvailable === true
   const pageTitle = data && hasNoConnector ? t('erp.noConnector.title') : t('erp.title')
   const pageSubtitle =
     data && hasNoConnector ? t('erp.noConnector.subtitle') : t('erp.subtitle')
@@ -378,6 +397,11 @@ function ErpPage() {
           <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
             {t('erp.onboarding.guardrail')}
           </p>
+          {!canManageConnectors ? (
+            <p className="mt-2 rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_28%,transparent)] bg-[var(--color-warning-soft)] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+              {t('erp.onboarding.adminRequired')}
+            </p>
+          ) : null}
 
           {selectedProvider ? (
             <SheetShell
@@ -395,8 +419,27 @@ function ErpPage() {
                   >
                     {t('erp.draftSheet.close')}
                   </Button>
-                  <Button type="button" className="touch-target w-full sm:w-auto" disabled>
-                    {t('erp.draftSheet.createDisabled')}
+                  <Button
+                    type="button"
+                    className="touch-target w-full sm:w-auto"
+                    disabled={
+                      !canManageConnectors ||
+                      !selectedProviderCanStart ||
+                      startSetupMutation.isPending
+                    }
+                    onClick={() => {
+                      if (selectedProviderCanStart) {
+                        void startSetupMutation.mutateAsync(selectedProvider.id)
+                      }
+                    }}
+                  >
+                    {startSetupMutation.isPending
+                      ? t('erp.draftSheet.creating')
+                      : !canManageConnectors
+                        ? t('erp.draftSheet.adminRequiredAction')
+                        : selectedProviderCanStart
+                          ? t('erp.draftSheet.startSetup')
+                          : t('erp.draftSheet.futureProvider')}
                   </Button>
                 </div>
               }
@@ -413,6 +456,11 @@ function ErpPage() {
                       </h3>
                       <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
                         {t(selectedProvider.readinessLabelKey)}
+                      </p>
+                      <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                        {selectedProvider.setupAvailable
+                          ? t('erp.draftSheet.persistedSetupHint')
+                          : t('erp.draftSheet.futureProviderHint')}
                       </p>
                     </div>
                     <StatusPill tone={readinessTone(selectedProvider.status)}>
