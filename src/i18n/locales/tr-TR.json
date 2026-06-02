@@ -139,8 +139,16 @@
       "description": "Bu ekranı doldurmak için şirket kurulumunu tamamlayın veya organizasyon verisini içe aktarın."
     },
     "emptyTenant": {
-      "title": "Henüz organizasyon verisi yok",
-      "description": "Kiracınız için gösterilecek dashboard metriği bulunmuyor. Bu özeti doldurmak için şirket kurulumunu tamamlayın veya organizasyon verisini içe aktarın."
+      "badge": "Kurulum bekliyor",
+      "title": "PULS çalışma alanın hazır, veriler bekleniyor",
+      "description": "Önce veri kaynağını seç veya şirket kurulumunu tamamla. Ekip, izin, masraf ve performans ekranları veri geldikçe dolacak.",
+      "primaryAction": "Veri kaynağını seç",
+      "secondaryAction": "Şirket kurulumunu aç",
+      "steps": {
+        "source": "1. Kaynak seç",
+        "mapping": "2. Alanları eşleştir",
+        "team": "3. Organizasyon verisini içe al"
+      }
     }
   },
   "dashboardSetup": {
@@ -713,6 +721,14 @@
     "title": "Veri bağlantıları",
     "subtitle": "ERP, dosya veya özel API kaynaklarını PULS veri alanlarına bağla.",
     "badge": "Beklemede",
+    "noConnector": {
+      "title": "Bağlantı kurulumu",
+      "subtitle": "İlk adım veri kaynağını seçmek. Kayıt, kimlik bilgisi ve canlı aktarım bu aşamada kapalı kalır.",
+      "stepsTitle": "Kurulum adımları",
+      "stepsDescription": "Kaynak seçimiyle başla; alan eşleştirme, kimlik eşleştirme ve kontrol adımları sırayla tamamlanır.",
+      "sourceStepTitle": "1. Veri kaynağını seç",
+      "sourceStepDescription": "Canias, Logo, CSV / Excel veya özel API kaynaklarından biriyle kurulum taslağını başlat."
+    },
     "workbench": {
       "title": "Bağlantı kurulum adımları",
       "description": "Veri kaynağı, alan eşleştirme, kimlik eşleştirme ve kontrol adımları sırayla tamamlanır."

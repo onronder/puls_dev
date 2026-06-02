@@ -222,6 +222,18 @@ PR14.6 enables live login coverage for authenticated route stabilization before 
 | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) | Adds live authenticated e2e job when secrets are present |
 | [`scripts/verify-14-authenticated-e2e-gate.sh`](../../scripts/verify-14-authenticated-e2e-gate.sh) | PR14.6 verify gate |
 
+## PR14.7 Role + tenant empty-state gate
+
+PR14.7 expands authenticated e2e into a role and tenant posture matrix. It treats PULS Connector Lab as the first-run empty-state tenant, keeps Puls Teknik as the seeded operational tenant, and makes dashboard/ERP empty-state behavior part of the product contract before connector setup persistence.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_role_tenant_empty_state_matrix.md](./14_role_tenant_empty_state_matrix.md) | Role matrix, tenant posture contract, and empty-state acceptance criteria |
+| [`e2e/role-tenant-matrix.spec.ts`](../../e2e/role-tenant-matrix.spec.ts) | Live role + tenant e2e coverage for seeded and empty tenant behavior |
+| [`src/routes/_app/dashboard.tsx`](../../src/routes/_app/dashboard.tsx) | First-run dashboard empty-state callout and setup actions |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | No-connector setup wizard posture |
+| [`scripts/verify-14-role-tenant-empty-state-gate.sh`](../../scripts/verify-14-role-tenant-empty-state-gate.sh) | PR14.7 verify gate |
+
 ## Related packs
 
 | Pack | Entry point |

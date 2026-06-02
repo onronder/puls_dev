@@ -139,8 +139,16 @@
       "description": "Complete company setup or import organization data to populate this screen."
     },
     "emptyTenant": {
-      "title": "No organization data yet",
-      "description": "Your tenant has no dashboard metrics to show. Complete company setup or import organization data to populate this overview."
+      "badge": "Setup pending",
+      "title": "Your PULS workspace is ready; data is next",
+      "description": "Choose a data source or complete company setup first. Team, leave, expense, and performance screens will populate as data arrives.",
+      "primaryAction": "Choose data source",
+      "secondaryAction": "Open company setup",
+      "steps": {
+        "source": "1. Choose source",
+        "mapping": "2. Map fields",
+        "team": "3. Import organization data"
+      }
     }
   },
   "dashboardSetup": {
@@ -713,6 +721,14 @@
     "title": "Data connections",
     "subtitle": "Connect ERP, file, or custom API sources to PULS data fields.",
     "badge": "Pending",
+    "noConnector": {
+      "title": "Connection setup",
+      "subtitle": "The first step is choosing a data source. Records, credentials, and live transfer stay off at this stage.",
+      "stepsTitle": "Setup steps",
+      "stepsDescription": "Start with source selection; field mapping, identity matching, and preflight checks follow in order.",
+      "sourceStepTitle": "1. Choose data source",
+      "sourceStepDescription": "Start a setup draft with Canias, Logo, CSV / Excel, or Custom API sources."
+    },
     "workbench": {
       "title": "Connection setup steps",
       "description": "Data source, field mapping, identity matching, and connection checks are completed step by step."
