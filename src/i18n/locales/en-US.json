@@ -723,40 +723,40 @@
   "erp": {
     "eyebrow": "Setup & Configuration",
     "title": "Data connections",
-    "subtitle": "Connect ERP, file, or custom API sources to PULS data fields.",
+    "subtitle": "Connect ERP, file, and custom API sources safely into the shared PULS data model.",
     "badge": "Pending",
     "noConnector": {
       "title": "Connection setup",
-      "subtitle": "The first step is choosing a data source. Records, credentials, and live transfer stay off at this stage.",
+      "subtitle": "Start by choosing a data source. Credentials, live transfer, and ERP writes stay off until you explicitly approve them.",
       "stepsTitle": "Setup steps",
-      "stepsDescription": "Start with source selection; field mapping, identity matching, and preflight checks follow in order.",
+      "stepsDescription": "Setup starts with source selection; fields, identities, and checks are completed in order.",
       "sourceStepTitle": "1. Choose data source",
-      "sourceStepDescription": "Start a persistent setup draft with Canias or CSV / Excel. Logo and Custom API stay visible for future connections."
+      "sourceStepDescription": "Start a safe setup draft with Canias or CSV / Excel. Logo and Custom API can be added later through the same model."
     },
     "workbench": {
       "title": "Connection setup steps",
-      "description": "Data source, field mapping, identity matching, and connection checks are completed step by step."
+      "description": "This workspace shows where the source is, which fields are mapped, and what needs to happen next."
     },
     "setupSteps": {
       "source": {
         "label": "Source",
-        "description": "Select an ERP, file, or custom API source."
+        "description": "Select the ERP, file, or custom API source to connect."
       },
       "mapping": {
         "label": "Fields",
-        "description": "Map source fields into PULS data fields."
+        "description": "Map source fields into the canonical PULS data model."
       },
       "namespace": {
         "label": "Identities",
-        "description": "Make external record IDs traceable inside the organization."
+        "description": "Make external records traceable inside PULS without collisions."
       },
       "preflight": {
         "label": "Check",
-        "description": "Check the source, field mapping, and identity matching status."
+        "description": "Surface gaps and risks before the connection moves closer to live use."
       },
       "runtime": {
         "label": "Live connection",
-        "description": "Transfer and ERP write permissions are enabled separately."
+        "description": "Transfer and write permissions open separately, behind their own approval boundary."
       }
     },
     "metrics": {
@@ -800,52 +800,52 @@
     },
     "onboarding": {
       "title": "No data connection yet",
-      "description": "Choose a data source, then complete field and identity matching.",
+      "description": "Choose a source first; then define how its data lands in PULS.",
       "selectProvider": "Select source",
       "providerSelected": "Selection draft ready",
       "reviewDraft": "Review draft",
       "importMapping": "Upload mapping",
-      "guardrail": "This step only prepares the setup; live transfer, credential storage, and ERP writes remain off.",
-      "adminRequired": "This screen can be read-only for managers; admin permission is required to start setup."
+      "guardrail": "This stage only prepares setup. Live transfer, credential storage, and ERP writes remain off.",
+      "adminRequired": "Managers can review setup; admin permission is required to start a connection draft."
     },
     "providerOptions": {
       "canias": {
         "label": "Canias",
-        "description": "ERP connection model supported by PULS.",
-        "readiness": "Field mapping and safe transfer rules are ready."
+        "description": "The first ERP connection model supported by PULS.",
+        "readiness": "Field mapping and safe transfer boundaries are defined."
       },
       "logo": {
         "label": "Logo",
-        "description": "Can be added through the same connection model.",
-        "readiness": "Source fields and access method need confirmation."
+        "description": "Can be added through the same source-independent connection model.",
+        "readiness": "Source fields and access method need customer confirmation."
       },
       "csv_import": {
         "label": "CSV / Excel",
         "description": "File or template-based transfer for sources without an API.",
-        "readiness": "Lowest-risk starting path for file-based sources."
+        "readiness": "Lowest-risk starting path for first customer setup."
       },
       "custom_api": {
         "label": "Custom API",
-        "description": "Customer-specific API connection.",
-        "readiness": "Access method and data contract are required."
+        "description": "Customer-specific API or intermediate service connection.",
+        "readiness": "Access method, authorization model, and data contract are required."
       }
     },
     "providerPreview": {
       "eyebrow": "Selection preview",
-      "description": "This selection shows the setup steps; a record is created only when setup starts.",
+      "description": "Preview the preparation needed for this source; a record is created only when you start setup.",
       "emptyTitle": "Start by choosing a source",
-      "emptyDescription": "Choose Canias, Logo, CSV / Excel, or Custom API to preview the readiness requirements here.",
+      "emptyDescription": "Choose a source to see connection scope, mapping needs, and safety boundaries.",
       "requirements": "Readiness requirements"
     },
     "draftSheet": {
       "title": "{{provider}} setup draft",
-      "description": "This panel summarizes the source choice and readiness requirements. Starting setup saves a tenant-scoped connection draft.",
+      "description": "This panel summarizes the source choice and first preparation steps. Starting setup saves a secure company-scoped connection draft.",
       "summary": "Source draft",
       "requirements": "Readiness checklist",
       "guardrailTitle": "Live connection is off",
-      "guardrailBody": "The setup draft is recorded, but credential storage, live transfer, and ERP writes do not start without separate approval.",
-      "persistedSetupHint": "A setup draft can be saved for this source and will survive page refresh.",
-      "futureProviderHint": "This provider remains visible in the product model; setup records will open in a later phase.",
+      "guardrailBody": "This step only creates a draft. Credential storage, live transfer, and ERP writes do not start without separate approval.",
+      "persistedSetupHint": "The draft is saved, so you can refresh the page and continue from the same point.",
+      "futureProviderHint": "This source type is prepared in the product model; setup will open in a later phase.",
       "close": "Close",
       "startSetup": "Start setup",
       "creating": "Saving",
@@ -855,50 +855,50 @@
     "providerRequirements": {
       "sourceProfile": {
         "label": "Source profile",
-        "description": "Source type, ownership, and data scope are clarified."
+        "description": "Clarify the source type, owner, and data scope."
       },
       "canonicalMapping": {
         "label": "Field mapping",
-        "description": "External source fields map to PULS data fields."
+        "description": "Connect external source fields to the shared PULS data model."
       },
       "sourceNamespace": {
         "label": "Source identity",
-        "description": "External IDs become tenant-scoped, unique, and traceable."
+        "description": "Make external IDs unique and traceable within the company scope."
       },
       "identityStrategy": {
         "label": "Record matching",
-        "description": "Source records link to PULS records through matching rules."
+        "description": "Link source records to PULS records through clear matching rules."
       },
       "transferMode": {
         "label": "Transfer mode",
-        "description": "CSV, Excel, file, or API boundary is selected for a human-confirmed flow."
+        "description": "Choose CSV, Excel, file, or API transfer with a human-confirmed path."
       },
       "runtimeBoundary": {
         "label": "Live connection boundary",
-        "description": "Live transfer, credential storage, and ERP writes require separate approval."
+        "description": "Live transfer, credential storage, and ERP writes always require separate approval."
       }
     },
-    "preflightNote": "This screen shows connection readiness; it does not start live transfer, credential storage, or ERP writes.",
+    "preflightNote": "This screen makes readiness visible; it does not start live transfer, credential storage, or ERP writes.",
     "toast": {
       "apiPendingTitle": "Live connection is off.",
-      "mapDescription": "Field mapping opens after a connection is selected.",
-      "testDescription": "The check does not make live API calls.",
-      "setupCreated": "Setup draft saved.",
-      "setupCreateFailed": "Setup draft could not be saved. Check permissions and connection state."
+      "mapDescription": "Field mapping opens after a connection draft is ready.",
+      "testDescription": "This check does not call a live API; it only shows preparation status.",
+      "setupCreated": "Setup draft is ready. You can move to field mapping.",
+      "setupCreateFailed": "Setup draft could not be saved. Check permission and connection state."
     },
     "sections": {
       "preflight": "Connection check",
-      "preflightDescription": "Source information, field mapping, and identity matching status.",
+      "preflightDescription": "Review source, field, and identity readiness before any live connection.",
       "namespaces": "Source identities",
-      "namespacesDescription": "External records are matched to PULS records here.",
+      "namespacesDescription": "Shows the scope used to match external records with PULS records.",
       "mapping": "Field mapping",
-      "mappingDescription": "PULS field → source field.",
+      "mappingDescription": "The explicit contract between a PULS field and a source field.",
       "transferModes": "Transfer modes",
-      "transferModesDescription": "CSV, file, and API transfer options.",
+      "transferModesDescription": "Safe transfer paths available for the selected source.",
       "guardrails": "Safety limits",
-      "guardrailsDescription": "Live transfer and ERP writes are off.",
+      "guardrailsDescription": "Shows which actions remain closed while setup is being prepared.",
       "syncLogs": "Check history",
-      "syncLogsDescription": "Recent connection readiness records."
+      "syncLogsDescription": "Recent records from setup and readiness checks."
     },
     "columns": {
       "canonicalField": "PULS field",
@@ -946,9 +946,9 @@
     },
     "identityCount": "{{count}} identities",
     "empty": {
-      "namespaces": "No active source scope.",
-      "mappings": "No field mapping record.",
-      "syncLogs": "No check records."
+      "namespaces": "No active source identity yet. This scope appears after field mapping is prepared.",
+      "mappings": "No field mappings yet. Mapped source fields will appear here.",
+      "syncLogs": "No check records yet. Setup history will appear as the connection progresses."
     },
     "status": {
       "mapped": "Matched",
@@ -957,7 +957,7 @@
   },
   "orgSetupReadiness": {
     "sections": {
-      "summary": "Organization setup readiness"
+      "summary": "Organization readiness"
     },
     "status": {
       "ready": "Ready",
@@ -974,12 +974,12 @@
       "unknown": "Unknown"
     },
     "empty": {
-      "departmentsTitle": "No departments",
-      "departments": "No department data found. Employee assignments and approval routes require department master data.",
-      "positionsTitle": "No positions",
-      "positions": "No position data found. Employee assignments require position master data.",
-      "costCentersTitle": "No cost centers",
-      "costCenters": "No cost center data found. Expense routing and export readiness depend on cost center master data."
+      "departmentsTitle": "Departments pending",
+      "departments": "Without departments, employee assignments, reporting, and approval routes cannot be set up reliably.",
+      "positionsTitle": "Positions pending",
+      "positions": "Without positions, employee roles, headcount planning, and competency links remain incomplete.",
+      "costCentersTitle": "Cost centers pending",
+      "costCenters": "Without cost centers, expense routing and finance transfer readiness remain incomplete."
     },
     "metrics": {
       "departments": "Departments",
@@ -991,9 +991,9 @@
       "costCentersDetail": "{{mapped}} mapped · {{unmapped}} unmapped · {{total}} total"
     },
     "boundary": {
-      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP.",
-      "readOnly": "Read-only setup view.",
-      "crudDeferred": "Create and edit actions will arrive in a later release."
+      "erpNoWrite": "PULS does not change source-system master data; ERP or finance remains the record owner.",
+      "readOnly": "This view helps you understand readiness; it does not change source data.",
+      "crudDeferred": "Create and edit actions will open as the safe setup flow matures."
     }
   },
   "orgSetupCrud": {
@@ -1041,8 +1041,8 @@
     "discardConfirm": "Discard unsaved changes?"
   },
   "setupReadinessDashboard": {
-    "title": "Setup readiness checklist",
-    "subtitle": "Review expense, leave, organization, and assignment readiness in one place.",
+    "title": "Setup roadmap",
+    "subtitle": "Track organization, request, and approval readiness before live use.",
     "overall": "Overall status",
     "generatedAt": "Last updated: {{time}}",
     "severity": {
@@ -1065,23 +1065,23 @@
       "noneActive": "No active records"
     },
     "empty": {
-      "ready": "All setup areas appear ready."
+      "ready": "Core setup areas are ready. This list updates again when a new source or rule is added."
     },
     "actions": {
       "open": "Open details"
     },
     "boundary": {
-      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP."
+      "erpNoWrite": "This checklist only reads PULS readiness; it does not change ERP or finance records."
     },
     "issues": {
       "sourceUnknown": {
-        "title": "Data source unavailable",
-        "description": "Readiness signals could not be loaded for this area. Refresh the page or open the related setup screen."
+        "title": "Readiness signal unavailable",
+        "description": "We could not read this area's status. Refresh the page or open the related setup screen for details."
       },
       "expense": {
         "noActiveCategories": {
           "title": "No active expense categories",
-          "description": "At least one active category is required to create expense requests."
+          "description": "Employees need at least one active category before they can create expense requests."
         },
         "inactiveCategories": {
           "title": "Inactive expense categories present",
@@ -1089,13 +1089,13 @@
         },
         "policyNotReady": {
           "title": "Expense approval policy not ready",
-          "description": "Some active categories have unbound policies or missing steps; RPC/resolver remains authoritative."
+          "description": "Some active categories are missing a policy or approval step. Complete this path before opening request flow."
         }
       },
       "leave": {
         "noActiveLeaveTypes": {
           "title": "No active leave types",
-          "description": "At least one active leave type is required to create leave requests."
+          "description": "Employees need at least one active leave type before they can create leave requests."
         },
         "inactiveLeaveTypes": {
           "title": "Inactive leave types present",
@@ -1103,19 +1103,19 @@
         },
         "policyNotReady": {
           "title": "Leave approval policy not ready",
-          "description": "Some active leave types have unbound policies or missing steps; RPC/resolver remains authoritative."
+          "description": "Some active leave types are missing a policy or approval step. Complete the approval path before submission."
         }
       },
       "approvalPolicies": {
         "notReady": {
           "title": "Approval policy bindings incomplete",
-          "description": "Unbound, inactive, or incomplete policies exist; they warn on request creation but do not alone block the dashboard."
+          "description": "Some policies are unbound, inactive, or missing steps. They will create warnings during request creation."
         }
       },
       "org": {
         "departmentsEmpty": {
           "title": "No departments defined",
-          "description": "Department master data is required for organization setup."
+          "description": "Department master data is the first foundation for the organization."
         },
         "departmentsPartial": {
           "title": "Department setup is partial",
@@ -1123,7 +1123,7 @@
         },
         "positionsEmpty": {
           "title": "No positions defined",
-          "description": "Position master data is required for employee assignments."
+          "description": "Position master data is required to connect employees to the right roles."
         },
         "positionsPartial": {
           "title": "Position setup is partial",
@@ -1131,7 +1131,7 @@
         },
         "costCentersUnmapped": {
           "title": "Organization cost center mapping gaps",
-          "description": "Some cost centers are not yet mapped for export readiness."
+          "description": "Some cost centers are not linked to a source identity yet; finance transfer needs that link."
         },
         "costCentersEmpty": {
           "title": "No cost centers defined",
@@ -1141,7 +1141,7 @@
       "assignments": {
         "inactiveReferences": {
           "title": "Inactive assignment references",
-          "description": "Active employees reference inactive departments, positions, cost centers, or managers."
+          "description": "Some active employees point to inactive departments, positions, cost centers, or managers."
         },
         "missingCostCenter": {
           "title": "Missing cost center assignments",
@@ -1173,11 +1173,11 @@
       "requestCreation": {
         "expenseBlocked": {
           "title": "Expense request creation blocked",
-          "description": "Current setup or assignment state prevents creating expense requests."
+          "description": "Missing setup or assignment data currently blocks expense request creation."
         },
         "leaveBlocked": {
           "title": "Leave request creation blocked",
-          "description": "Current setup or assignment state prevents creating leave requests."
+          "description": "Missing setup or assignment data currently blocks leave request creation."
         },
         "missingManager": {
           "title": "Manager assignment missing",
@@ -1302,10 +1302,10 @@
   "companySetup": {
     "eyebrow": "Setup & Configuration",
     "title": "Company Setup",
-    "description": "Manage tenant, company details, and default work settings.",
+    "description": "Manage the company profile, work defaults, and readiness for live use in one place.",
     "meta": {
       "title": "Company Setup — PULS",
-      "description": "Tenant, company details, and default work settings."
+      "description": "Company profile, work defaults, and setup readiness."
     },
     "metrics": {
       "completion": "Completion",
@@ -1324,13 +1324,13 @@
     },
     "sections": {
       "companyInfo": "Company information",
-      "checklist": "Setup checklist"
+      "checklist": "Setup steps"
     },
     "checklist": {
       "tenant": "Tenant created",
       "employees": "Employees added",
-      "erpMapping": "ERP field mapping pending",
-      "performanceCycle": "Performance cycle pending"
+      "erpMapping": "Data source field mapping pending",
+      "performanceCycle": "Performance cycle waiting to open"
     },
     "status": {
       "done": "Done",
@@ -1340,18 +1340,18 @@
   "departments": {
     "eyebrow": "Setup & Configuration",
     "title": "Departments",
-    "description": "Manage organization structure, department managers, and employee distribution.",
+    "description": "See the organization backbone, department ownership, and employee distribution clearly.",
     "meta": {
       "title": "Departments — PULS",
-      "description": "Organization structure, department managers, and employee distribution."
+      "description": "Organization backbone, department ownership, and employee distribution."
     },
     "metrics": {
       "departments": "Departments",
       "activeEmployees": "Active employees",
       "assignedManagers": "Department manager",
-      "assignedManagersHint": "Measures manager assignment coverage on department records.",
+      "assignedManagersHint": "Shows responsible manager coverage on department records.",
       "emptyManagers": "Manager assignment pending",
-      "emptyManagersHint": "Employee approval managers are validated separately under employees."
+      "emptyManagersHint": "Employee approval managers are validated separately in employee assignments."
     },
     "sections": {
       "list": "Department list"
@@ -1373,7 +1373,7 @@
     },
     "sheet": {
       "title": "Add department",
-      "description": "Creating new departments will be enabled after the pilot.",
+      "description": "Department creation will open inside the safe setup flow.",
       "mvpBadge": "Read-only",
       "fields": {
         "name": "Department name",
@@ -1389,10 +1389,10 @@
   "positions": {
     "eyebrow": "Setup & Configuration",
     "title": "Positions",
-    "description": "Track positions, department links, and competency templates.",
+    "description": "Track roles, department links, and competency foundations in a clean position catalog.",
     "meta": {
       "title": "Positions — PULS",
-      "description": "Positions, department links, and competency templates."
+      "description": "Position catalog, department links, and competency foundations."
     },
     "metrics": {
       "positions": "Positions",
@@ -1423,7 +1423,7 @@
     },
     "sheet": {
       "title": "Add position",
-      "description": "Creating new positions will be enabled after the pilot.",
+      "description": "Position creation will open inside the safe setup flow.",
       "mvpBadge": "Read-only",
       "fields": {
         "name": "Position name",
@@ -1441,10 +1441,10 @@
   "leaveTypeSetup": {
     "eyebrow": "Setup & Configuration",
     "title": "Leave Definitions",
-    "description": "Define leave types, entitlements, document and approval rules.",
+    "description": "Manage the leave types employees can request, together with entitlement, document, and approval rules.",
     "meta": {
       "title": "Leave Definitions — PULS",
-      "description": "Leave types, entitlements, document and approval rules."
+      "description": "Leave types, entitlements, document rules, and approval rules."
     },
     "metrics": {
       "typeCount": "Leave types",
@@ -1526,7 +1526,7 @@
       },
       "sheet": {
         "inactiveTitle": "Inactive leave type",
-        "inactiveDescription": "This leave type is inactive. Historical leave records remain readable; it cannot be selected for new requests."
+        "inactiveDescription": "This leave type cannot be used for new requests. Historical records remain readable."
       }
     },
     "lifecycleAudit": {
@@ -1568,15 +1568,15 @@
     "sheet": {
       "create": {
         "title": "Add leave type",
-        "description": "Define a new leave type used inside PULS."
+        "description": "Define a new leave type that appears in the employee request flow."
       },
       "edit": {
         "title": "Edit leave type",
-        "description": "Update leave type entitlements, document rules, and optional policy binding."
+        "description": "Safely update entitlement, document rules, and approval policy binding."
       },
       "detail": {
         "title": "Leave type details",
-        "description": "Read-only view of leave type setup and approval policy binding."
+        "description": "Review leave type setup and approval policy binding."
       },
       "mvpBadge": "Read-only",
       "fields": {
@@ -1610,10 +1610,10 @@
   "expenseCategorySetup": {
     "eyebrow": "Setup & Configuration",
     "title": "Expense Categories",
-    "description": "Manage expense categories, limits, and document requirements.",
+    "description": "Manage the categories, limits, document thresholds, and finance readiness used in expense entry.",
     "meta": {
       "title": "Expense Categories — PULS",
-      "description": "Expense categories, limits, and document requirements."
+      "description": "Expense categories, limits, document thresholds, and finance readiness."
     },
     "metrics": {
       "categoryCount": "Categories",
@@ -1709,10 +1709,10 @@
       },
       "inactive": {
         "title": "Inactive category",
-        "description": "This category is inactive. Fields are read-only; restore it to use again in new expense entries."
+        "description": "This category cannot be used for new expense entries. Restore it to make it selectable again."
       },
       "policyBound": "Approval policy bound: {{policy}}",
-      "boundaryNote": "This only updates the PULS expense category setup; external financial master data is unchanged.",
+      "boundaryNote": "This only updates the PULS expense category setup; ERP or finance master data is unchanged.",
       "mvpBadge": "Read-only",
       "fields": {
         "name": "Category name",
@@ -1757,8 +1757,8 @@
     },
     "costCenterMappings": {
       "title": "Cost center mappings",
-      "description": "This section shows external mapping for the cost center dimension used in expense claims—not expense categories.",
-      "boundaryNote": "PULS does not create or update financial system master data. The financial system is the source of truth.",
+      "description": "Shows how the cost center dimension used in expense records maps to an external source.",
+      "boundaryNote": "PULS does not change finance master data. The finance system remains the record owner.",
       "summary": "{{exportReady}} mapped · {{needsMapping}} need mapping",
       "columns": {
         "name": "Cost center",
@@ -1776,7 +1776,7 @@
       },
       "sheet": {
         "title": "Cost center detail",
-        "description": "Read-only mapping information.",
+        "description": "Source scope and external identity information.",
         "fields": {
           "code": "PULS code",
           "source": "Source scope",
@@ -1794,7 +1794,7 @@
   "performanceParamsSetup": {
     "eyebrow": "Setup & Configuration",
     "title": "Performance Parameters",
-    "description": "Manage competency templates, KPI weights, and score bands.",
+    "description": "Manage competency templates, KPI weights, and score bands that define the shared language of performance cycles.",
     "meta": {
       "title": "Performance Parameters — PULS",
       "description": "Competency templates, KPI weights, and score bands."
@@ -2228,13 +2228,13 @@
     "eyebrow": "Admin settings",
     "eyebrowPersonal": "Personal settings",
     "title": "Settings",
-    "description": "Manage security, notifications, language, and system preferences.",
-    "descriptionPersonal": "Manage account, notifications, language, and theme preferences.",
+    "description": "Manage company security, access, notifications, and setup preferences safely.",
+    "descriptionPersonal": "Review account, notification, language, and appearance preferences for your own workday.",
     "meta": {
       "title": "Settings — PULS",
-      "description": "Security, notifications, language, and system preferences."
+      "description": "Security, access, notifications, and setup preferences."
     },
-    "sectionsList": "Preferences",
+    "sectionsList": "Settings areas",
     "sheet": {
       "mvpBadge": "Read-only",
       "submit": "Save"
@@ -2242,55 +2242,55 @@
     "sections": {
       "accountSecurity": {
         "title": "Account & security",
-        "summary": "Password, 2FA, session history",
+        "summary": "Password, two-step verification, and session security",
         "action": "Manage",
-        "sheetDescription": "Account and security settings are read-only in this release.",
-        "sheetBody": "Password change, two-factor authentication, and session history are read-only in this release."
+        "sheetDescription": "Account security will open in a separate controlled flow.",
+        "sheetBody": "Password changes, two-step verification, and session history will be managed here once security policies are complete."
       },
       "tenant": {
-        "title": "Tenant settings",
-        "summary": "Tenant settings · Pilot plan",
+        "title": "Company workspace",
+        "summary": "Plan, license, and company scope",
         "action": "Open",
-        "sheetDescription": "Tenant configuration will expand after the pilot.",
-        "sheetBody": "Plan, license, and tenant-level preferences will be managed here."
+        "sheetDescription": "Company workspace settings will expand as setup matures.",
+        "sheetBody": "Plan, license, company scope, and tenant-level preferences will be managed here."
       },
       "notifications": {
         "title": "Notification preferences",
-        "summary": "Email · In-app",
+        "summary": "Email, in-app, and future mobile notifications",
         "action": "Edit",
-        "sheetDescription": "Notification channels will be customizable after the pilot.",
-        "sheetBody": "Email and in-app notification preferences are shown as a read-only summary for now."
+        "sheetDescription": "Notification channels will open by role and process.",
+        "sheetBody": "Email and in-app notifications will be tailored to leave, expense, performance, and setup events."
       },
       "locale": {
         "title": "Language & region",
         "summary": "tr-TR · Europe/Istanbul",
         "action": "Change",
-        "sheetDescription": "Language and region selection will roll out app-wide after the pilot.",
-        "sheetBody": "Current language is tr-TR, timezone Europe/Istanbul."
+        "sheetDescription": "Language, date, and time formats will be managed by company and user preference.",
+        "sheetBody": "Current setup runs with tr-TR and Europe/Istanbul. Multi-language and region selection will open in a controlled rollout."
       },
       "theme": {
         "title": "Theme",
         "summary": "System · Light · Dark",
         "action": "Choose",
-        "sheetDescription": "Theme selection will be enabled after the pilot.",
-        "sheetBody": "System, light, and dark theme options are being prepared."
+        "sheetDescription": "Theme preferences will open gradually without disrupting the product experience.",
+        "sheetBody": "System, light, and dark theme options are being prepared and will be saved per user."
       },
       "roleAccess": {
         "title": "Role & access",
-        "summary": "HR Admin · 3 modules full access",
+        "summary": "Role scope, module access, and admin permissions",
         "action": "Review",
-        "sheetDescription": "Role and access details are read-only in this release.",
-        "sheetBody": "Module-level permissions and role assignments will be managed on this screen."
+        "sheetDescription": "Role and access design stays separate for operational safety.",
+        "sheetBody": "Module permissions, admin boundaries, and role assignments will be managed transparently here."
       }
     },
     "auditLog": {
-      "title": "Audit log",
-      "summary": "{{count}} sensitive operations recorded in the last {{days}} days.",
-      "note": "Detailed log list is read-only for now."
+      "title": "Security history",
+      "summary": "{{count}} sensitive operations were recorded in the last {{days}} days.",
+      "note": "When the detailed list opens, authorized users will review the history here."
     },
     "setupHub": {
-      "title": "Setup & definitions",
-      "description": "ERP, company structure, and parameter screens."
+      "title": "Setup center",
+      "description": "Starting point for company structure, data connections, and process parameters."
     }
   },
   "aiCoachSetup": {
