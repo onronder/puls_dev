@@ -181,11 +181,13 @@
       "description": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
       "descriptionNotConfigured": "No data connection has been selected yet. Use the ERP screen to start source, field, and identity mapping.",
       "descriptionSetupDraft": "A data source has been selected. Live transfer stays off until field and identity mapping are complete.",
+      "descriptionMappingReady": "The field contract is ready. Source identity, record matching, and safe checks are next.",
       "descriptionDisabled": "The data connection record remains in place, but it is disabled in the product.",
       "descriptionPending": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
       "descriptionConnected": "The data connection is active. Track mapping and transfer checks from the ERP screen.",
       "statusConnected": "Connected",
       "statusSetupDraft": "Setup draft",
+      "statusMappingReady": "Fields ready",
       "statusDisabled": "Disabled",
       "statusPending": "Connection preparation",
       "statusNotConfigured": "Source not selected",
@@ -802,6 +804,7 @@
     },
     "actions": {
       "mapFields": "Map fields",
+      "reviewMapping": "Review field contract",
       "testConnection": "Check connection"
     },
     "onboarding": {
@@ -904,6 +907,8 @@
       "preflightDescription": "Review source, field, and identity readiness before any live connection.",
       "namespaces": "Source identities",
       "namespacesDescription": "Shows the scope used to match external records with PULS records.",
+      "canonicalClasses": "Canonical data classes",
+      "canonicalClassesDescription": "Shows which PULS master-data classes are covered by source fields and whether required fields are complete.",
       "mapping": "Field mapping",
       "mappingDescription": "The explicit contract between a PULS field and a source field.",
       "transferModes": "Transfer modes",
@@ -922,6 +927,7 @@
       "not_configured": "Source not configured",
       "setup_draft": "Setup draft",
       "setup_in_progress": "Setup in progress",
+      "mapping_ready": "Fields ready",
       "preflight_ready": "Ready for check",
       "disabled": "Disabled",
       "metadata_only": "Setup record",
@@ -957,7 +963,35 @@
       "noErpWrites": "PULS does not write ERP master data automatically.",
       "noCredentialsInRepo": "Credentials and API keys are not stored in application files."
     },
+    "canonicalClasses": {
+      "employees": {
+        "label": "Employees",
+        "description": "Core people fields such as employee code, full name, email, and hire date."
+      },
+      "departments": {
+        "label": "Departments",
+        "description": "Organization structure, department code, department name, and manager relation."
+      },
+      "positions": {
+        "label": "Positions",
+        "description": "Position codes and role names used for employee placement."
+      },
+      "costCenters": {
+        "label": "Cost centers",
+        "description": "Cost center codes used across finance and organization dimensions."
+      },
+      "locations": {
+        "label": "Locations",
+        "description": "Physical scope such as branches, plants, or work locations."
+      },
+      "mappedFields": "Mapped fields",
+      "requiredFields": "Required fields"
+    },
     "identityCount": "{{count}} identities",
+    "mapping": {
+      "required": "Required",
+      "optional": "Optional"
+    },
     "empty": {
       "namespaces": "No active source identity yet. This scope appears after field mapping is prepared.",
       "mappings": "No field mappings yet. Mapped source fields will appear here.",

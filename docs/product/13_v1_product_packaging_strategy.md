@@ -160,7 +160,7 @@ Use across PR13 docs — **not every table must be seeded**:
 - [x] Connector setup persistence writes tenant-scoped setup lifecycle state without runtime sync (PR14.8)
 - [x] Connector setup errors are observable, scrubbed, and user-friendly (PR14.9)
 - [x] Sentry source maps and guarded setup-check event are ready without exposing public maps or test UI (PR14.9A)
-- [ ] Connector mapping discovery connects source fields to canonical PULS data classes without import execution (PR14.10)
+- [x] Connector mapping discovery connects source fields to canonical PULS data classes without import execution (PR14.10)
 - [ ] Connector preflight validates readiness as a dry run with no ERP writes (PR14.11)
 
 ## Risks and mitigations

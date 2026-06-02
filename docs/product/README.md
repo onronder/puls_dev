@@ -277,6 +277,17 @@ PR14.9A adds build-time source map upload and a guarded setup-check event. Sourc
 | [`src/lib/observability/sentry.ts`](../../src/lib/observability/sentry.ts)                               | Browser-only setup-check capture guarded by env and query param         |
 | [`scripts/verify-14-sentry-source-maps.sh`](../../scripts/verify-14-sentry-source-maps.sh)               | PR14.9A verify gate                                                     |
 
+## PR14.10 Mapping discovery
+
+PR14.10 persists the first connector field contract. Canias and CSV / Excel setup drafts can create deterministic mapping rows in `puls_integration.erp_field_mappings`; `/erp` shows canonical data class completeness without import execution, credentials, runtime sync, or ERP writes.
+
+| Document / artifact                                                                                      | Purpose                                                                 |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [14_mapping_discovery.md](./14_mapping_discovery.md)                                                     | Mapping discovery scope, canonical classes, defaults, and acceptance    |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Default mapping contract, canonical class completeness, setup promotion |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Mapping discovery workbench and source-to-PULS field contract           |
+| [`scripts/verify-14-mapping-discovery.sh`](../../scripts/verify-14-mapping-discovery.sh)                 | PR14.10 verify gate                                                     |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

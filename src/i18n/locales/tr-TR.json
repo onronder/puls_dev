@@ -181,11 +181,13 @@
       "description": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
       "descriptionNotConfigured": "Veri bağlantısı henüz seçilmedi. Kaynak, alan ve kimlik eşleştirmesini başlatmak için ERP ekranını kullan.",
       "descriptionSetupDraft": "Veri kaynağı seçildi. Alan ve kimlik eşleştirmesi tamamlanmadan canlı aktarım başlamaz.",
+      "descriptionMappingReady": "Alan sözleşmesi hazır. Sırada kaynak kimliği, kayıt eşleştirme ve güvenli kontrol adımları var.",
       "descriptionDisabled": "Veri bağlantısı kaydı duruyor, ancak ürün içinde devre dışı.",
       "descriptionPending": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
       "descriptionConnected": "Veri bağlantısı aktif. Eşleştirme ve aktarım kontrollerini ERP ekranından izleyebilirsin.",
       "statusConnected": "Bağlı",
       "statusSetupDraft": "Kurulum taslağı",
+      "statusMappingReady": "Alanlar hazır",
       "statusDisabled": "Devre dışı",
       "statusPending": "Bağlantı hazırlığı",
       "statusNotConfigured": "Kaynak seçilecek",
@@ -802,6 +804,7 @@
     },
     "actions": {
       "mapFields": "Alanları eşleştir",
+      "reviewMapping": "Alan sözleşmesini incele",
       "testConnection": "Bağlantıyı kontrol et"
     },
     "onboarding": {
@@ -904,6 +907,8 @@
       "preflightDescription": "Kaynak, alan ve kimlik hazırlığını canlı bağlantıdan önce birlikte kontrol et.",
       "namespaces": "Kaynak kimlikleri",
       "namespacesDescription": "Dış kaynaktan gelen kayıtların PULS kayıtlarıyla hangi kapsamda eşleştiğini gösterir.",
+      "canonicalClasses": "Kanonik veri sınıfları",
+      "canonicalClassesDescription": "Kaynak alanlarının PULS içinde hangi ana veri sınıflarına bağlandığını ve zorunlu alanların tamamlanıp tamamlanmadığını gösterir.",
       "mapping": "Alan eşleştirme",
       "mappingDescription": "PULS alanı ile kaynak alanı arasındaki açık sözleşme.",
       "transferModes": "Transfer modları",
@@ -922,6 +927,7 @@
       "not_configured": "Kaynak tanımlı değil",
       "setup_draft": "Kurulum taslağı",
       "setup_in_progress": "Kurulum devam ediyor",
+      "mapping_ready": "Alanlar hazır",
       "preflight_ready": "Kontrole hazır",
       "disabled": "Devre dışı",
       "metadata_only": "Hazırlık kaydı",
@@ -957,7 +963,35 @@
       "noErpWrites": "PULS ERP ana verisine otomatik yazmaz.",
       "noCredentialsInRepo": "Kimlik bilgileri ve API anahtarları uygulama dosyalarında tutulmaz."
     },
+    "canonicalClasses": {
+      "employees": {
+        "label": "Çalışanlar",
+        "description": "Çalışan kodu, ad-soyad, e-posta ve işe giriş tarihi gibi temel kişi alanları."
+      },
+      "departments": {
+        "label": "Departmanlar",
+        "description": "Organizasyon yapısı, departman kodu, departman adı ve yönetici ilişkisi."
+      },
+      "positions": {
+        "label": "Pozisyonlar",
+        "description": "Pozisyon kodu ve rol adları; çalışan yerleşimi için temel sınıf."
+      },
+      "costCenters": {
+        "label": "Masraf merkezleri",
+        "description": "Finans ve organizasyon kırılımlarında kullanılan masraf merkezi kodları."
+      },
+      "locations": {
+        "label": "Lokasyonlar",
+        "description": "Şube, fabrika veya çalışma lokasyonu gibi fiziksel kapsam bilgisi."
+      },
+      "mappedFields": "Eşleşen alan",
+      "requiredFields": "Zorunlu alan"
+    },
     "identityCount": "{{count}} kimlik",
+    "mapping": {
+      "required": "Zorunlu",
+      "optional": "Opsiyonel"
+    },
     "empty": {
       "namespaces": "Henüz aktif kaynak kimliği yok. Alan eşleştirmeden sonra bu kapsam oluşacak.",
       "mappings": "Henüz alan eşleştirme yok. Kaynak alanları PULS alanlarına bağlandığında burada görünecek.",

@@ -190,6 +190,17 @@ export function buildDashboardErpStatus(
     }
   }
 
+  if (input.setupStatus === 'mapping_ready') {
+    return {
+      statusLabelKey: 'dashboardSetup.erpCard.statusMappingReady',
+      mappedFields: input.mappedFields,
+      totalFields: input.totalFields,
+      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
+      readiness: input.readiness,
+      descriptionKey: 'dashboardSetup.erpCard.descriptionMappingReady',
+    }
+  }
+
   return {
     statusLabelKey: input.isActive
       ? 'dashboardSetup.erpCard.statusConnected'

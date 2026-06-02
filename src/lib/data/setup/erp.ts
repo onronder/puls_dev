@@ -20,6 +20,7 @@ export type ConnectorProviderStatus =
   | 'not_configured'
   | 'setup_draft'
   | 'setup_in_progress'
+  | 'mapping_ready'
   | 'preflight_ready'
   | 'disabled'
   | 'metadata_only'
@@ -27,6 +28,12 @@ export type ConnectorProviderStatus =
   | 'runtime_active'
 export type ConnectorSyncLogLevel = 'success' | 'warning' | 'info'
 export type ConnectorSetupStepId = 'source' | 'mapping' | 'namespace' | 'preflight' | 'runtime'
+export type ConnectorCanonicalDataClassId =
+  | 'employees'
+  | 'departments'
+  | 'positions'
+  | 'cost_centers'
+  | 'locations'
 
 export type ConnectorSetupStep = {
   id: ConnectorSetupStepId
@@ -71,10 +78,25 @@ export type ConnectorReadinessCheck = {
 
 export type ConnectorFieldMapping = {
   canonicalField: string
+  targetSchema: string
+  targetTable: string
+  targetField: string
   sourceField: string
   sourceEntity: string
   status: ConnectorMappingStatus
   required: boolean
+}
+
+export type ConnectorCanonicalDataClass = {
+  id: ConnectorCanonicalDataClassId
+  labelKey: string
+  descriptionKey: string
+  pulsTarget: string
+  mappedFields: number
+  totalFields: number
+  mappedRequiredFields: number
+  requiredFields: number
+  status: ConnectorReadinessStatus
 }
 
 export type ConnectorNamespaceSummary = {
@@ -147,6 +169,7 @@ export type ErpOverview = {
   }
   setupSummary: ConnectorSetupSummary
   setupSteps: ConnectorSetupStep[]
+  canonicalClasses: ConnectorCanonicalDataClass[]
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
   transferModes: ConnectorTransferMode[]
@@ -253,7 +276,7 @@ const SETUP_PROVIDER_CONFIG: Partial<
       connectionMethod: 'rest_api' | 'manual_import'
       connectionKey: string
       ownedDomains: string[]
-      sourceType: 'erp' | 'file'
+  sourceType: 'erp' | 'file'
     }
   >
 > = {
@@ -273,6 +296,342 @@ const SETUP_PROVIDER_CONFIG: Partial<
     ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
     sourceType: 'file',
   },
+}
+
+export type ConnectorDefaultFieldMapping = {
+  sourceEntity: string
+  sourceField: string
+  targetSchema: string
+  targetTable: string
+  targetField: string
+  required: boolean
+}
+
+type ConnectorCanonicalField = {
+  targetField: string
+  required: boolean
+}
+
+type ConnectorCanonicalDataClassDefinition = {
+  id: ConnectorCanonicalDataClassId
+  labelKey: string
+  descriptionKey: string
+  pulsTarget: string
+  targetSchema: string
+  targetTable: string
+  fields: ConnectorCanonicalField[]
+}
+
+const CANONICAL_DATA_CLASSES: ConnectorCanonicalDataClassDefinition[] = [
+  {
+    id: 'employees',
+    labelKey: 'erp.canonicalClasses.employees.label',
+    descriptionKey: 'erp.canonicalClasses.employees.description',
+    pulsTarget: 'puls_core.employees',
+    targetSchema: 'puls_core',
+    targetTable: 'employees',
+    fields: [
+      { targetField: 'employee_code', required: true },
+      { targetField: 'full_name', required: true },
+      { targetField: 'email', required: false },
+      { targetField: 'hire_date', required: false },
+    ],
+  },
+  {
+    id: 'departments',
+    labelKey: 'erp.canonicalClasses.departments.label',
+    descriptionKey: 'erp.canonicalClasses.departments.description',
+    pulsTarget: 'puls_core.departments',
+    targetSchema: 'puls_core',
+    targetTable: 'departments',
+    fields: [
+      { targetField: 'code', required: true },
+      { targetField: 'name', required: true },
+      { targetField: 'manager_employee_id', required: false },
+    ],
+  },
+  {
+    id: 'positions',
+    labelKey: 'erp.canonicalClasses.positions.label',
+    descriptionKey: 'erp.canonicalClasses.positions.description',
+    pulsTarget: 'puls_core.positions',
+    targetSchema: 'puls_core',
+    targetTable: 'positions',
+    fields: [
+      { targetField: 'code', required: true },
+      { targetField: 'name', required: true },
+    ],
+  },
+  {
+    id: 'cost_centers',
+    labelKey: 'erp.canonicalClasses.costCenters.label',
+    descriptionKey: 'erp.canonicalClasses.costCenters.description',
+    pulsTarget: 'puls_core.cost_centers',
+    targetSchema: 'puls_core',
+    targetTable: 'cost_centers',
+    fields: [
+      { targetField: 'code', required: true },
+      { targetField: 'name', required: true },
+    ],
+  },
+  {
+    id: 'locations',
+    labelKey: 'erp.canonicalClasses.locations.label',
+    descriptionKey: 'erp.canonicalClasses.locations.description',
+    pulsTarget: 'puls_core.locations',
+    targetSchema: 'puls_core',
+    targetTable: 'locations',
+    fields: [{ targetField: 'code', required: false }],
+  },
+]
+
+const DEFAULT_FIELD_MAPPINGS: Partial<
+  Record<ConnectorProviderOption['id'], ConnectorDefaultFieldMapping[]>
+> = {
+  canias: [
+    {
+      sourceEntity: 'employee',
+      sourceField: 'EMPLOYEE_CODE',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'employee_code',
+      required: true,
+    },
+    {
+      sourceEntity: 'employee',
+      sourceField: 'FULL_NAME',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'full_name',
+      required: true,
+    },
+    {
+      sourceEntity: 'employee',
+      sourceField: 'EMAIL',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'email',
+      required: false,
+    },
+    {
+      sourceEntity: 'employee',
+      sourceField: 'HIRE_DATE',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'hire_date',
+      required: false,
+    },
+    {
+      sourceEntity: 'department',
+      sourceField: 'DEPT_CODE',
+      targetSchema: 'puls_core',
+      targetTable: 'departments',
+      targetField: 'code',
+      required: true,
+    },
+    {
+      sourceEntity: 'department',
+      sourceField: 'DEPT_NAME',
+      targetSchema: 'puls_core',
+      targetTable: 'departments',
+      targetField: 'name',
+      required: true,
+    },
+    {
+      sourceEntity: 'department',
+      sourceField: 'MANAGER_CODE',
+      targetSchema: 'puls_core',
+      targetTable: 'departments',
+      targetField: 'manager_employee_id',
+      required: false,
+    },
+    {
+      sourceEntity: 'position',
+      sourceField: 'POS_CODE',
+      targetSchema: 'puls_core',
+      targetTable: 'positions',
+      targetField: 'code',
+      required: true,
+    },
+    {
+      sourceEntity: 'position',
+      sourceField: 'POS_NAME',
+      targetSchema: 'puls_core',
+      targetTable: 'positions',
+      targetField: 'name',
+      required: true,
+    },
+    {
+      sourceEntity: 'cost_center',
+      sourceField: 'CC_CODE',
+      targetSchema: 'puls_core',
+      targetTable: 'cost_centers',
+      targetField: 'code',
+      required: true,
+    },
+    {
+      sourceEntity: 'cost_center',
+      sourceField: 'CC_NAME',
+      targetSchema: 'puls_core',
+      targetTable: 'cost_centers',
+      targetField: 'name',
+      required: true,
+    },
+    {
+      sourceEntity: 'location',
+      sourceField: 'LOC_CODE',
+      targetSchema: 'puls_core',
+      targetTable: 'locations',
+      targetField: 'code',
+      required: false,
+    },
+  ],
+  csv_import: [
+    {
+      sourceEntity: 'employee',
+      sourceField: 'employee_code',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'employee_code',
+      required: true,
+    },
+    {
+      sourceEntity: 'employee',
+      sourceField: 'full_name',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'full_name',
+      required: true,
+    },
+    {
+      sourceEntity: 'employee',
+      sourceField: 'email',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'email',
+      required: false,
+    },
+    {
+      sourceEntity: 'department',
+      sourceField: 'department_code',
+      targetSchema: 'puls_core',
+      targetTable: 'departments',
+      targetField: 'code',
+      required: true,
+    },
+    {
+      sourceEntity: 'department',
+      sourceField: 'department_name',
+      targetSchema: 'puls_core',
+      targetTable: 'departments',
+      targetField: 'name',
+      required: true,
+    },
+    {
+      sourceEntity: 'position',
+      sourceField: 'position_code',
+      targetSchema: 'puls_core',
+      targetTable: 'positions',
+      targetField: 'code',
+      required: true,
+    },
+    {
+      sourceEntity: 'position',
+      sourceField: 'position_name',
+      targetSchema: 'puls_core',
+      targetTable: 'positions',
+      targetField: 'name',
+      required: true,
+    },
+    {
+      sourceEntity: 'cost_center',
+      sourceField: 'cost_center_code',
+      targetSchema: 'puls_core',
+      targetTable: 'cost_centers',
+      targetField: 'code',
+      required: true,
+    },
+    {
+      sourceEntity: 'cost_center',
+      sourceField: 'cost_center_name',
+      targetSchema: 'puls_core',
+      targetTable: 'cost_centers',
+      targetField: 'name',
+      required: true,
+    },
+  ],
+}
+
+export function buildDefaultConnectorFieldMappings(
+  providerId: ConnectorProviderOption['id'],
+): ConnectorDefaultFieldMapping[] {
+  return [...(DEFAULT_FIELD_MAPPINGS[providerId] ?? [])]
+}
+
+async function ensureDefaultConnectorFieldMappings({
+  tenantId,
+  connectionId,
+  providerId,
+}: {
+  tenantId: string
+  connectionId: string
+  providerId: ConnectorProviderOption['id']
+}): Promise<boolean> {
+  const defaults = buildDefaultConnectorFieldMappings(providerId)
+  if (defaults.length === 0) return false
+
+  const existing = await pulsIntegration()
+    .from('erp_field_mappings')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('connection_id', connectionId)
+    .limit(1)
+
+  if (existing.error) {
+    throw fromSupabaseError(
+      existing.error,
+      'ensureDefaultConnectorFieldMappings',
+      'puls_integration',
+      'erp_field_mappings',
+    )
+  }
+
+  if (Array.isArray(existing.data) && existing.data.length > 0) {
+    return true
+  }
+
+  const write = await pulsIntegration()
+    .from('erp_field_mappings')
+    .insert(
+      defaults.map((mapping) => ({
+        tenant_id: tenantId,
+        connection_id: connectionId,
+        source_entity: mapping.sourceEntity,
+        source_field: mapping.sourceField,
+        target_schema: mapping.targetSchema,
+        target_table: mapping.targetTable,
+        target_field: mapping.targetField,
+        transform_rule: {
+          discovery_source: 'pr14_10_default',
+          runtime_boundary: 'closed',
+        },
+        is_required: mapping.required,
+        is_sensitive: false,
+        is_active: true,
+      })),
+    )
+    .select('id')
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'ensureDefaultConnectorFieldMappings',
+      'puls_integration',
+      'erp_field_mappings',
+    )
+  }
+
+  return true
 }
 
 export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMapping {
@@ -663,6 +1022,51 @@ function deriveReadinessScore(checks: ConnectorReadinessCheck[]): number {
   return Math.round((score / checks.length) * 100)
 }
 
+function mappingKey(mapping: Pick<ConnectorFieldMapping, 'targetSchema' | 'targetTable' | 'targetField'>) {
+  return `${mapping.targetSchema}.${mapping.targetTable}.${mapping.targetField}`
+}
+
+function buildConnectorCanonicalClasses(
+  mappings: ConnectorFieldMapping[],
+): ConnectorCanonicalDataClass[] {
+  const mappedFields = new Set(
+    mappings.filter((mapping) => mapping.status === 'mapped').map((mapping) => mappingKey(mapping)),
+  )
+
+  return CANONICAL_DATA_CLASSES.map((definition) => {
+    const totalFields = definition.fields.length
+    const requiredFields = definition.fields.filter((field) => field.required).length
+    const mappedCount = definition.fields.filter((field) =>
+      mappedFields.has(
+        `${definition.targetSchema}.${definition.targetTable}.${field.targetField}`,
+      ),
+    ).length
+    const mappedRequiredFields = definition.fields.filter(
+      (field) =>
+        field.required &&
+        mappedFields.has(
+          `${definition.targetSchema}.${definition.targetTable}.${field.targetField}`,
+        ),
+    ).length
+    const hasRequiredCoverage =
+      requiredFields > 0 ? mappedRequiredFields >= requiredFields : mappedCount === totalFields
+    const status: ConnectorReadinessStatus =
+      mappedCount > 0 && hasRequiredCoverage ? 'ready' : mappedCount > 0 ? 'partial' : 'blocked'
+
+    return {
+      id: definition.id,
+      labelKey: definition.labelKey,
+      descriptionKey: definition.descriptionKey,
+      pulsTarget: definition.pulsTarget,
+      mappedFields: mappedCount,
+      totalFields,
+      mappedRequiredFields,
+      requiredFields,
+      status,
+    }
+  })
+}
+
 function buildConnectorSetupSummary({
   connectorState,
   setupStatus,
@@ -861,6 +1265,7 @@ function buildOverview({
 }): ErpOverview {
   const mappedFields = mappings.filter((row) => row.status === 'mapped').length
   const totalFields = mappings.length
+  const canonicalClasses = buildConnectorCanonicalClasses(mappings)
   const readinessScore = deriveReadinessScore(checks)
   const readinessStatus = deriveReadinessStatus(checks)
   const identityCount = namespaces.reduce((total, namespace) => total + namespace.identityCount, 0)
@@ -910,6 +1315,7 @@ function buildOverview({
       readinessStatus,
       isActive,
     }),
+    canonicalClasses,
     mappings,
     namespaces,
     transferModes: TRANSFER_MODES,
@@ -959,6 +1365,9 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
     checks,
     mappings: demo.mappings.map((mapping) => ({
       canonicalField: mapping.puls,
+      targetSchema: mapping.puls.split('.')[0] ?? 'puls',
+      targetTable: mapping.puls.split('.')[1] ?? 'canonical',
+      targetField: mapping.puls.split('.')[2] ?? 'field',
       sourceField: mapping.erp,
       sourceEntity: 'demo',
       status: mapping.status,
@@ -1042,14 +1451,20 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   const mappings = rawMappings
     .filter((row) => row.is_sensitive !== true)
     .map((row) => {
+      const targetSchema = row.target_schema ?? 'puls'
+      const targetTable = row.target_table ?? 'canonical'
+      const targetField = row.target_field ?? 'field'
       const canonicalField = [
-        row.target_schema ?? 'puls',
-        row.target_table ?? 'canonical',
-        row.target_field ?? 'field',
+        targetSchema,
+        targetTable,
+        targetField,
       ].join('.')
 
       return {
         canonicalField,
+        targetSchema,
+        targetTable,
+        targetField,
         sourceField: row.source_field ?? '—',
         sourceEntity: row.source_entity ?? '—',
         status: row.is_active === false ? ('pending' as const) : ('mapped' as const),
@@ -1088,8 +1503,10 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       ? 'disabled'
       : isActive || setupStatus === 'connected'
         ? 'runtime_active'
-        : setupStatus === 'preflight_ready' || mappedFields > 0
+        : setupStatus === 'preflight_ready'
           ? 'preflight_ready'
+          : setupStatus === 'mapping_ready' || mappedFields > 0
+            ? 'mapping_ready'
           : setupStatus === 'setup_in_progress'
             ? 'setup_in_progress'
             : setupStatus === 'draft'
@@ -1239,11 +1656,40 @@ export async function startConnectorSetup(
     )
   }
 
-  return {
-    connectionId: (write.data?.id as string | undefined) ?? existingId ?? '',
+  const connectionId = (write.data?.id as string | undefined) ?? existingId ?? ''
+  const hasMappingContract = await ensureDefaultConnectorFieldMappings({
+    tenantId: ctx.tenantId,
+    connectionId,
     providerId: input.providerId,
-    setupStatus: 'draft',
-    currentStep: 'mapping',
+  })
+
+  if (hasMappingContract) {
+    const promote = await pulsIntegration()
+      .from('erp_connections')
+      .update({
+        setup_status: 'mapping_ready',
+        setup_step: 'namespace',
+        updated_by_employee_id: ctx.employeeId,
+      })
+      .eq('id', connectionId)
+      .select('id')
+      .single()
+
+    if (promote.error) {
+      throw fromSupabaseError(
+        promote.error,
+        'startConnectorSetup',
+        'puls_integration',
+        'erp_connections',
+      )
+    }
+  }
+
+  return {
+    connectionId,
+    providerId: input.providerId,
+    setupStatus: hasMappingContract ? 'mapping_ready' : 'draft',
+    currentStep: hasMappingContract ? 'namespace' : 'mapping',
   }
 }
 
