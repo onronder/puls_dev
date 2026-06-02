@@ -1,9 +1,8 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import * as Sentry from '@sentry/react'
 import { Toaster } from 'sonner'
 
-import { AppErrorFallback } from '#/components/puls/AppErrorFallback'
+import { AppErrorBoundary } from '#/components/puls/AppErrorBoundary'
 import { AuthProvider } from '#/lib/auth'
 import { initObservability } from '#/lib/observability/sentry'
 import '#/i18n'
@@ -31,11 +30,9 @@ function RootComponent() {
     <RootDocument>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Sentry.ErrorBoundary
-            fallback={({ resetError }) => <AppErrorFallback onReset={resetError} />}
-          >
+          <AppErrorBoundary>
             <Outlet />
-          </Sentry.ErrorBoundary>
+          </AppErrorBoundary>
           <Toaster theme="dark" position="top-center" richColors />
         </AuthProvider>
       </QueryClientProvider>
