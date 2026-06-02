@@ -5,6 +5,7 @@ import {
   fetchErpOverviewWithMeta,
   isErpOverviewEmpty,
   mapProviderLabel,
+  startConnectorSetup,
 } from '#/lib/data/setup/erp'
 
 vi.mock('#/lib/data/demo-mode', () => ({
@@ -43,7 +44,14 @@ function mockTenantContextWithoutTenant() {
   }
 }
 
-type QueryResult = { data?: unknown; error?: unknown }
+type QueryResult = {
+  data?: unknown
+  error?: unknown
+  maybeSingleData?: unknown
+  maybeSingleError?: unknown
+  singleData?: unknown
+  singleError?: unknown
+}
 
 function query(result: QueryResult) {
   const builder = {
@@ -51,7 +59,16 @@ function query(result: QueryResult) {
     eq: vi.fn(() => builder),
     order: vi.fn(() => builder),
     limit: vi.fn(() => builder),
-    maybeSingle: vi.fn(async () => result),
+    maybeSingle: vi.fn(async () => ({
+      data: 'maybeSingleData' in result ? result.maybeSingleData : result.data,
+      error: 'maybeSingleError' in result ? result.maybeSingleError : result.error,
+    })),
+    single: vi.fn(async () => ({
+      data: 'singleData' in result ? result.singleData : result.data,
+      error: 'singleError' in result ? result.singleError : result.error,
+    })),
+    insert: vi.fn(() => builder),
+    update: vi.fn(() => builder),
     then(onFulfilled: (value: QueryResult) => unknown, onRejected?: (reason: unknown) => unknown) {
       return Promise.resolve(result).then(onFulfilled, onRejected)
     },
@@ -73,10 +90,15 @@ function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) 
         erp_connections: {
           data: {
             provider: 'canias',
+            id: 'connection-1',
             display_name: 'Canias ERP (Pasif)',
             is_active: false,
             last_sync_at: null,
             last_status: null,
+            setup_status: 'preflight_ready',
+            setup_step: 'preflight',
+            is_enabled: true,
+            owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
           },
         },
         erp_field_mappings: {
@@ -170,7 +192,8 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
     expect(result.data.provider.label).toBe('Canias ERP (Pasif)')
-    expect(result.data.provider.status).toBe('runtime_inactive')
+    expect(result.data.provider.status).toBe('preflight_ready')
+    expect(result.data.setup.status).toBe('preflight_ready')
     expect(result.data.setupSteps.every((step) => step.status === 'ready')).toBe(true)
     expect(result.data.namespaces).toHaveLength(1)
     expect(result.data.mappings).toHaveLength(1)
@@ -245,12 +268,17 @@ describe('fetchErpOverviewWithMeta', () => {
     setupSeededMocks({
       erp_connections: {
         data: {
-          provider: 'logo',
-          display_name: null,
-          is_active: false,
-          last_sync_at: null,
-          last_status: null,
-        },
+            provider: 'logo',
+            id: 'connection-2',
+            display_name: null,
+            is_active: false,
+            last_sync_at: null,
+            last_status: null,
+            setup_status: 'draft',
+            setup_step: 'mapping',
+            is_enabled: true,
+            owned_domains: [],
+          },
       },
     })
 
@@ -259,5 +287,64 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.source).toBe('real')
     expect(result.data.provider.label).toBe('Logo')
     expect(result.data.status.system).toBe('Logo')
+  })
+
+  it('creates an admin-scoped Canias setup draft', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const integrationClient = client({
+      erp_connections: {
+        maybeSingleData: null,
+        error: null,
+        singleData: { id: 'connection-new' },
+      },
+    })
+    vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
+
+    const result = await startConnectorSetup('user-1', { providerId: 'canias' })
+
+    expect(result).toEqual({
+      connectionId: 'connection-new',
+      providerId: 'canias',
+      setupStatus: 'draft',
+      currentStep: 'mapping',
+    })
+    expect(integrationClient.from).toHaveBeenCalledWith('erp_connections')
+  })
+
+  it('keeps existing connector setup posture instead of downgrading to draft', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const integrationClient = client({
+      erp_connections: {
+        data: {
+          id: 'connection-existing',
+          setup_status: 'preflight_ready',
+          setup_step: 'preflight',
+        },
+        error: null,
+      },
+    })
+    vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
+
+    const result = await startConnectorSetup('user-1', { providerId: 'canias' })
+
+    expect(result).toEqual({
+      connectionId: 'connection-existing',
+      providerId: 'canias',
+      setupStatus: 'preflight_ready',
+      currentStep: 'preflight',
+    })
+    expect(integrationClient.from).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects unsupported provider setup before writing', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const integrationClient = client({
+      erp_connections: { data: null, error: null },
+    })
+    vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
+
+    await expect(startConnectorSetup('user-1', { providerId: 'logo' })).rejects.toThrow(
+      'Provider setup is not available yet',
+    )
   })
 })

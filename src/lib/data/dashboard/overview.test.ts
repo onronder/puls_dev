@@ -112,6 +112,21 @@ describe('buildDashboardErpStatus', () => {
     expect(status.lastAttemptKey).toBe('dashboardSetup.erpCard.lastAttemptNone')
   })
 
+  it('uses setup draft label when a source is selected but mapping has not started', () => {
+    const status = buildDashboardErpStatus({
+      hasConnection: true,
+      isActive: false,
+      setupStatus: 'draft',
+      isEnabled: true,
+      mappedFields: 0,
+      totalFields: 0,
+      readiness: 0,
+    })
+
+    expect(status.statusLabelKey).toBe('dashboardSetup.erpCard.statusSetupDraft')
+    expect(status.descriptionKey).toBe('dashboardSetup.erpCard.descriptionSetupDraft')
+  })
+
   it('uses not configured copy when no ERP connection exists', () => {
     const status = buildDashboardErpStatus({
       hasConnection: false,

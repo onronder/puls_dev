@@ -42,6 +42,8 @@ export type BuildDashboardQueueInput = {
 export type BuildDashboardErpStatusInput = {
   hasConnection: boolean
   isActive: boolean | null | undefined
+  setupStatus?: string | null
+  isEnabled?: boolean | null
   mappedFields: number
   totalFields: number
   readiness: number
@@ -162,6 +164,32 @@ export function buildDashboardErpStatus(
     }
   }
 
+  if (input.isEnabled === false || input.setupStatus === 'disabled') {
+    return {
+      statusLabelKey: 'dashboardSetup.erpCard.statusDisabled',
+      mappedFields: input.mappedFields,
+      totalFields: input.totalFields,
+      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
+      readiness: input.readiness,
+      descriptionKey: 'dashboardSetup.erpCard.descriptionDisabled',
+    }
+  }
+
+  if (
+    input.setupStatus === 'draft' ||
+    input.setupStatus === 'setup_in_progress' ||
+    (input.mappedFields === 0 && input.totalFields === 0)
+  ) {
+    return {
+      statusLabelKey: 'dashboardSetup.erpCard.statusSetupDraft',
+      mappedFields: input.mappedFields,
+      totalFields: input.totalFields,
+      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
+      readiness: input.readiness,
+      descriptionKey: 'dashboardSetup.erpCard.descriptionSetupDraft',
+    }
+  }
+
   return {
     statusLabelKey: input.isActive
       ? 'dashboardSetup.erpCard.statusConnected'
@@ -247,7 +275,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
         .maybeSingle(),
       pulsIntegration()
         .from('erp_connections')
-        .select('provider, is_active')
+        .select('*')
         .eq('tenant_id', ctx.tenantId)
         .order('is_active', { ascending: false })
         .order('created_at', { ascending: false })
@@ -333,6 +361,8 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
     erpStatus: buildDashboardErpStatus({
       hasConnection: Boolean(erpRow.data),
       isActive: erpRow.data?.is_active,
+      setupStatus: erpRow.data?.setup_status as string | null | undefined,
+      isEnabled: erpRow.data?.is_enabled as boolean | null | undefined,
       mappedFields,
       totalFields,
       readiness,

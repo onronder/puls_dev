@@ -1,12 +1,27 @@
 import { fetchDemoErpOverview } from '#/lib/demo/puls-demo-data'
 import { pulsCalc, pulsIntegration, resolveTenantContext } from '#/lib/data/client'
+import { fromSupabaseError } from '#/lib/data/errors'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type ConnectorReadinessStatus = 'ready' | 'partial' | 'blocked'
 export type ConnectorMappingStatus = 'mapped' | 'pending'
 export type ConnectorLifecycleState = 'no_tenant' | 'no_connector' | 'connector_selected'
+export type ConnectorSetupStatus =
+  | 'draft'
+  | 'setup_in_progress'
+  | 'mapping_ready'
+  | 'preflight_ready'
+  | 'connected'
+  | 'disabled'
+  | 'archived'
+  | 'error'
+export type ConnectorSetupCurrentStep = 'source' | 'mapping' | 'namespace' | 'preflight' | 'runtime'
 export type ConnectorProviderStatus =
   | 'not_configured'
+  | 'setup_draft'
+  | 'setup_in_progress'
+  | 'preflight_ready'
+  | 'disabled'
   | 'metadata_only'
   | 'runtime_inactive'
   | 'runtime_active'
@@ -94,12 +109,14 @@ export type ConnectorProviderOption = {
   descriptionKey: string
   readinessLabelKey: string
   status: ConnectorReadinessStatus
+  setupAvailable: boolean
   requirements: ConnectorProviderRequirement[]
 }
 
 export type ErpOverview = {
   connectorState: ConnectorLifecycleState
   provider: {
+    id: string | null
     code: string | null
     label: string
     displayName: string | null
@@ -107,6 +124,14 @@ export type ErpOverview = {
     statusLabelKey: string
     isActive: boolean
     lastAttempt: string
+  }
+  setup: {
+    status: ConnectorSetupStatus | null
+    currentStep: ConnectorSetupCurrentStep | null
+    isEnabled: boolean
+    ownedDomains: string[]
+    selectedAt: string | null
+    setupStartedAt: string | null
   }
   readiness: {
     score: number
@@ -132,11 +157,18 @@ export type ErpOverview = {
 }
 
 type ErpConnectionRow = {
+  id?: string | null
   provider?: string | null
   display_name?: string | null
   is_active?: boolean | null
   last_sync_at?: string | null
   last_status?: string | null
+  setup_status?: ConnectorSetupStatus | null
+  setup_step?: ConnectorSetupCurrentStep | null
+  is_enabled?: boolean | null
+  owned_domains?: string[] | null
+  selected_at?: string | null
+  setup_started_at?: string | null
 }
 
 type ErpFieldMappingRow = {
@@ -174,6 +206,17 @@ type SetupReadinessRow = {
   integration_setup_pct?: number | null
 }
 
+export type StartConnectorSetupInput = {
+  providerId: ConnectorProviderOption['id']
+}
+
+export type StartConnectorSetupResult = {
+  connectionId: string
+  providerId: ConnectorProviderOption['id']
+  setupStatus: ConnectorSetupStatus
+  currentStep: ConnectorSetupCurrentStep
+}
+
 const PROVIDER_LABELS: Record<string, string> = {
   canias: 'Canias',
   logo: 'Logo',
@@ -183,6 +226,37 @@ const PROVIDER_LABELS: Record<string, string> = {
 
 const FALLBACK_PROVIDER_LABEL = 'External data source'
 
+const SETUP_PROVIDER_CONFIG: Partial<
+  Record<
+    ConnectorProviderOption['id'],
+    {
+      provider: 'canias' | 'csv'
+      displayName: string
+      connectionMethod: 'rest_api' | 'manual_import'
+      connectionKey: string
+      ownedDomains: string[]
+      sourceType: 'erp' | 'file'
+    }
+  >
+> = {
+  canias: {
+    provider: 'canias',
+    displayName: 'Canias',
+    connectionMethod: 'rest_api',
+    connectionKey: 'canias-default',
+    ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
+    sourceType: 'erp',
+  },
+  csv_import: {
+    provider: 'csv',
+    displayName: 'CSV / Excel',
+    connectionMethod: 'manual_import',
+    connectionKey: 'csv-excel-default',
+    ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
+    sourceType: 'file',
+  },
+}
+
 const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
   {
     id: 'canias',
@@ -190,6 +264,7 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     descriptionKey: 'erp.providerOptions.canias.description',
     readinessLabelKey: 'erp.providerOptions.canias.readiness',
     status: 'ready',
+    setupAvailable: true,
     requirements: [
       {
         id: 'source_profile',
@@ -223,6 +298,7 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     descriptionKey: 'erp.providerOptions.logo.description',
     readinessLabelKey: 'erp.providerOptions.logo.readiness',
     status: 'partial',
+    setupAvailable: false,
     requirements: [
       {
         id: 'source_profile',
@@ -256,6 +332,7 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     descriptionKey: 'erp.providerOptions.csv_import.description',
     readinessLabelKey: 'erp.providerOptions.csv_import.readiness',
     status: 'ready',
+    setupAvailable: true,
     requirements: [
       {
         id: 'transfer_mode',
@@ -289,6 +366,7 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     descriptionKey: 'erp.providerOptions.custom_api.description',
     readinessLabelKey: 'erp.providerOptions.custom_api.readiness',
     status: 'blocked',
+    setupAvailable: false,
     requirements: [
       {
         id: 'source_profile',
@@ -392,6 +470,7 @@ function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant')
 
   return buildOverview({
     connectorState,
+    connectionId: null,
     providerCode: null,
     providerLabel: FALLBACK_PROVIDER_LABEL,
     displayName: null,
@@ -399,6 +478,12 @@ function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant')
     providerStatusLabelKey: 'erp.providerStatus.not_configured',
     isActive: false,
     lastAttempt: '—',
+    setupStatus: null,
+    setupStep: null,
+    isEnabled: false,
+    ownedDomains: [],
+    selectedAt: null,
+    setupStartedAt: null,
     checks,
     mappings: [],
     namespaces: [],
@@ -612,6 +697,7 @@ function buildConnectorSetupSteps({
 
 function buildOverview({
   connectorState,
+  connectionId,
   providerCode,
   providerLabel,
   displayName,
@@ -619,12 +705,19 @@ function buildOverview({
   providerStatusLabelKey,
   isActive,
   lastAttempt,
+  setupStatus,
+  setupStep,
+  isEnabled,
+  ownedDomains,
+  selectedAt,
+  setupStartedAt,
   checks,
   mappings,
   namespaces,
   syncLogs,
 }: {
   connectorState: ConnectorLifecycleState
+  connectionId: string | null
   providerCode: string | null
   providerLabel: string
   displayName: string | null
@@ -632,6 +725,12 @@ function buildOverview({
   providerStatusLabelKey: string
   isActive: boolean
   lastAttempt: string
+  setupStatus: ConnectorSetupStatus | null
+  setupStep: ConnectorSetupCurrentStep | null
+  isEnabled: boolean
+  ownedDomains: string[]
+  selectedAt: string | null
+  setupStartedAt: string | null
   checks: ConnectorReadinessCheck[]
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
@@ -646,6 +745,7 @@ function buildOverview({
   return {
     connectorState,
     provider: {
+      id: connectionId,
       code: providerCode,
       label: providerLabel,
       displayName,
@@ -653,6 +753,14 @@ function buildOverview({
       statusLabelKey: providerStatusLabelKey,
       isActive,
       lastAttempt,
+    },
+    setup: {
+      status: setupStatus,
+      currentStep: setupStep,
+      isEnabled,
+      ownedDomains,
+      selectedAt,
+      setupStartedAt,
     },
     readiness: {
       score: readinessScore,
@@ -699,6 +807,7 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
 
   return buildOverview({
     connectorState: 'connector_selected',
+    connectionId: 'demo-canias',
     providerCode: 'canias',
     providerLabel: demo.status.system,
     displayName: demo.status.system,
@@ -706,6 +815,12 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
     providerStatusLabelKey: 'erp.providerStatus.metadata_only',
     isActive: false,
     lastAttempt: demo.status.lastAttempt,
+    setupStatus: 'preflight_ready',
+    setupStep: 'preflight',
+    isEnabled: true,
+    ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
+    selectedAt: null,
+    setupStartedAt: null,
     checks,
     mappings: demo.mappings.map((mapping) => ({
       canonicalField: mapping.puls,
@@ -735,7 +850,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     await Promise.all([
       pulsIntegration()
         .from('erp_connections')
-        .select('provider, display_name, is_active, last_sync_at, last_status')
+        .select('*')
         .eq('tenant_id', ctx.tenantId)
         .order('updated_at', { ascending: false })
         .limit(1)
@@ -817,6 +932,10 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   }))
   const identityCount = identities.length
   const setupReadinessPct = Number(readiness?.integration_setup_pct ?? 0)
+  const setupStatus = connection?.setup_status ?? null
+  const setupStep = connection?.setup_step ?? null
+  const isEnabled = connection?.is_enabled !== false
+  const ownedDomains = Array.isArray(connection?.owned_domains) ? connection.owned_domains : []
   const checks = buildReadinessChecks({
     hasConnection: Boolean(connection),
     isActive: connection?.is_active === true,
@@ -830,14 +949,23 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   const providerLabel = mapProviderLabel(providerCode, connection?.display_name ?? null)
   const isActive = connection?.is_active === true
   const providerStatus: ConnectorProviderStatus = connection
-    ? isActive
-      ? 'runtime_active'
-      : 'runtime_inactive'
+    ? !isEnabled || setupStatus === 'disabled'
+      ? 'disabled'
+      : isActive || setupStatus === 'connected'
+        ? 'runtime_active'
+        : setupStatus === 'preflight_ready' || mappedFields > 0
+          ? 'preflight_ready'
+          : setupStatus === 'setup_in_progress'
+            ? 'setup_in_progress'
+            : setupStatus === 'draft'
+              ? 'setup_draft'
+              : 'runtime_inactive'
     : 'not_configured'
   const providerStatusLabelKey = `erp.providerStatus.${providerStatus}`
 
   return buildOverview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
+    connectionId: connection?.id ?? null,
     providerCode,
     providerLabel,
     displayName: connection?.display_name ?? null,
@@ -845,6 +973,12 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     providerStatusLabelKey,
     isActive,
     lastAttempt: formatSyncTimestamp(connection?.last_sync_at as string | null),
+    setupStatus,
+    setupStep,
+    isEnabled,
+    ownedDomains,
+    selectedAt: connection?.selected_at ?? null,
+    setupStartedAt: connection?.setup_started_at ?? null,
     checks,
     mappings,
     namespaces,
@@ -855,6 +989,109 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       message: row.error_summary ?? `${row.sync_type ?? 'check'} · ${row.status ?? 'pending'}`,
     })),
   })
+}
+
+export async function startConnectorSetup(
+  userId: string,
+  input: StartConnectorSetupInput,
+): Promise<StartConnectorSetupResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new Error('Admin role required')
+  }
+
+  const config = SETUP_PROVIDER_CONFIG[input.providerId]
+  if (!config) {
+    throw new Error('Provider setup is not available yet')
+  }
+
+  const existing = await pulsIntegration()
+    .from('erp_connections')
+    .select('id, setup_status, setup_step')
+    .eq('tenant_id', ctx.tenantId)
+    .eq('connection_key', config.connectionKey)
+    .maybeSingle()
+
+  if (existing.error) {
+    throw fromSupabaseError(
+      existing.error,
+      'startConnectorSetup',
+      'puls_integration',
+      'erp_connections',
+    )
+  }
+
+  const existingConnection =
+    (existing.data as {
+      id?: string
+      setup_status?: ConnectorSetupStatus | null
+      setup_step?: ConnectorSetupCurrentStep | null
+    } | null) ?? null
+  const existingId = existingConnection?.id ?? null
+  if (existingId && existingConnection?.setup_status !== 'draft') {
+    return {
+      connectionId: existingId,
+      providerId: input.providerId,
+      setupStatus: existingConnection?.setup_status ?? 'draft',
+      currentStep: existingConnection?.setup_step ?? 'mapping',
+    }
+  }
+
+  const now = new Date().toISOString()
+  const payload = {
+    tenant_id: ctx.tenantId,
+    provider: config.provider,
+    display_name: config.displayName,
+    connection_method: config.connectionMethod,
+    is_active: false,
+    sync_direction: 'erp_to_puls',
+    connection_key: config.connectionKey,
+    setup_status: 'draft',
+    setup_step: 'mapping',
+    is_enabled: true,
+    selected_at: now,
+    setup_started_at: now,
+    owned_domains: config.ownedDomains,
+    setup_metadata: {
+      source_type: config.sourceType,
+      runtime_boundary: 'closed',
+      credential_boundary: 'reference_only_future',
+      source_ownership: 'domain_level',
+    },
+    updated_by_employee_id: ctx.employeeId,
+  }
+
+  const write = existingId
+    ? await pulsIntegration()
+        .from('erp_connections')
+        .update(payload)
+        .eq('id', existingId)
+        .select('id')
+        .single()
+    : await pulsIntegration()
+        .from('erp_connections')
+        .insert({ ...payload, created_by_employee_id: ctx.employeeId })
+        .select('id')
+        .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'startConnectorSetup',
+      'puls_integration',
+      'erp_connections',
+    )
+  }
+
+  return {
+    connectionId: (write.data?.id as string | undefined) ?? existingId ?? '',
+    providerId: input.providerId,
+    setupStatus: 'draft',
+    currentStep: 'mapping',
+  }
 }
 
 export async function fetchErpOverview(userId: string): Promise<ErpOverview> {

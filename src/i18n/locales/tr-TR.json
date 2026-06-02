@@ -174,9 +174,13 @@
       "title": "ERP entegrasyon hazırlığı",
       "description": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
       "descriptionNotConfigured": "Veri bağlantısı henüz seçilmedi. Kaynak, alan ve kimlik eşleştirmesini başlatmak için ERP ekranını kullan.",
+      "descriptionSetupDraft": "Veri kaynağı seçildi. Alan ve kimlik eşleştirmesi tamamlanmadan canlı aktarım başlamaz.",
+      "descriptionDisabled": "Veri bağlantısı kaydı duruyor, ancak ürün içinde devre dışı.",
       "descriptionPending": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
       "descriptionConnected": "Veri bağlantısı aktif. Eşleştirme ve aktarım kontrollerini ERP ekranından izleyebilirsin.",
       "statusConnected": "Bağlı",
+      "statusSetupDraft": "Kurulum taslağı",
+      "statusDisabled": "Devre dışı",
       "statusPending": "Bağlantı hazırlığı",
       "statusNotConfigured": "Kaynak seçilecek",
       "fieldMapping": "Alan eşleştirme",
@@ -727,7 +731,7 @@
       "stepsTitle": "Kurulum adımları",
       "stepsDescription": "Kaynak seçimiyle başla; alan eşleştirme, kimlik eşleştirme ve kontrol adımları sırayla tamamlanır.",
       "sourceStepTitle": "1. Veri kaynağını seç",
-      "sourceStepDescription": "Canias, Logo, CSV / Excel veya özel API kaynaklarından biriyle kurulum taslağını başlat."
+      "sourceStepDescription": "Canias veya CSV / Excel ile kalıcı kurulum taslağı başlat. Logo ve özel API seçenekleri gelecek bağlantılar için görünür kalır."
     },
     "workbench": {
       "title": "Bağlantı kurulum adımları",
@@ -774,7 +778,8 @@
       "providerSelected": "Seçim taslağı hazır",
       "reviewDraft": "Taslağı incele",
       "importMapping": "Eşleştirme yükle",
-      "guardrail": "Bu aşamada yalnızca kurulum hazırlanır; canlı aktarım, kimlik bilgisi saklama ve ERP'ye yazma kapalıdır."
+      "guardrail": "Bu aşamada yalnızca kurulum hazırlanır; canlı aktarım, kimlik bilgisi saklama ve ERP'ye yazma kapalıdır.",
+      "adminRequired": "Bu ekran yöneticiler için salt okunur görünebilir; kurulum başlatmak için admin yetkisi gerekir."
     },
     "providerOptions": {
       "canias": {
@@ -800,20 +805,25 @@
     },
     "providerPreview": {
       "eyebrow": "Seçim önizlemesi",
-      "description": "Bu seçim kurulum adımlarını gösterir; kayıt oluşturmaz.",
+      "description": "Bu seçim kurulum adımlarını gösterir; kayıt yalnızca kurulumu başlatınca oluşur.",
       "emptyTitle": "Bir kaynak seçerek başla",
       "emptyDescription": "Canias, Logo, CSV / Excel veya özel API seçeneklerinden birini seçtiğinde hazırlık gereksinimleri burada görünür.",
       "requirements": "Hazırlık gereksinimleri"
     },
     "draftSheet": {
       "title": "{{provider}} kurulum taslağı",
-      "description": "Bu panel kaynak seçimini ve hazırlık gereksinimlerini özetler; bağlantı kaydı oluşturmaz.",
+      "description": "Bu panel kaynak seçimini ve hazırlık gereksinimlerini özetler. Kurulumu başlatınca tenant kapsamlı bağlantı taslağı kaydedilir.",
       "summary": "Kaynak taslağı",
       "requirements": "Hazırlık kontrol listesi",
       "guardrailTitle": "Canlı bağlantı kapalı",
-      "guardrailBody": "Bu seçim yalnızca inceleme amaçlıdır. Kimlik bilgisi saklama, canlı aktarım ve ERP'ye yazma işlemleri ayrı onay olmadan başlatılmaz.",
+      "guardrailBody": "Kurulum taslağı kayıt altına alınır, ancak kimlik bilgisi saklama, canlı aktarım ve ERP'ye yazma işlemleri ayrı onay olmadan başlatılmaz.",
+      "persistedSetupHint": "Bu kaynak için kurulum taslağı kaydedilebilir ve sayfa yenilense de korunur.",
+      "futureProviderHint": "Bu sağlayıcı ürün modelinde görünür kalır; kurulum kaydı sonraki aşamada açılacak.",
       "close": "Kapat",
-      "createDisabled": "Bağlantı kaydı oluşturma kapalı"
+      "startSetup": "Kurulumu başlat",
+      "creating": "Kaydediliyor",
+      "futureProvider": "Bu kaynak yakında",
+      "adminRequiredAction": "Admin yetkisi gerekir"
     },
     "providerRequirements": {
       "sourceProfile": {
@@ -845,7 +855,9 @@
     "toast": {
       "apiPendingTitle": "Canlı bağlantı kapalı.",
       "mapDescription": "Alan eşleştirme ekranı bağlantı seçildikten sonra açılacak.",
-      "testDescription": "Kontrol işlemi canlı API çağrısı yapmaz."
+      "testDescription": "Kontrol işlemi canlı API çağrısı yapmaz.",
+      "setupCreated": "Kurulum taslağı kaydedildi.",
+      "setupCreateFailed": "Kurulum taslağı kaydedilemedi. Yetki ve bağlantı durumunu kontrol et."
     },
     "sections": {
       "preflight": "Bağlantı kontrolü",
@@ -868,6 +880,10 @@
     },
     "providerStatus": {
       "not_configured": "Kaynak tanımlı değil",
+      "setup_draft": "Kurulum taslağı",
+      "setup_in_progress": "Kurulum devam ediyor",
+      "preflight_ready": "Kontrole hazır",
+      "disabled": "Devre dışı",
       "metadata_only": "Hazırlık kaydı",
       "runtime_inactive": "Canlı bağlantı pasif",
       "runtime_active": "Canlı bağlantı aktif"

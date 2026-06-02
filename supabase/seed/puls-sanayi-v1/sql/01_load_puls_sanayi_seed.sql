@@ -21,9 +21,26 @@ CREATE TEMP TABLE st_erp_conn (
   base_url text, firm_code text, is_active text, sync_direction text, sync_schedule text
 );
 \copy st_erp_conn FROM 'csv/16_erp_connections.csv' CSV HEADER
-INSERT INTO puls_integration.erp_connections (id,tenant_id,provider,display_name,connection_method,base_url,firm_code,is_active,sync_direction,sync_schedule)
+INSERT INTO puls_integration.erp_connections (
+  id,tenant_id,provider,display_name,connection_method,base_url,firm_code,is_active,
+  sync_direction,sync_schedule,connection_key,setup_status,setup_step,is_enabled,
+  selected_at,setup_started_at,owned_domains,setup_metadata
+)
 SELECT id,tenant_id,provider::puls_integration.erp_provider,display_name,connection_method::puls_integration.connection_method,
-  NULLIF(base_url,''),NULLIF(firm_code,''),is_active::boolean,sync_direction::puls_integration.sync_direction,NULLIF(sync_schedule,'')
+  NULLIF(base_url,''),NULLIF(firm_code,''),is_active::boolean,sync_direction::puls_integration.sync_direction,NULLIF(sync_schedule,''),
+  lower(provider) || '-default',
+  'preflight_ready'::puls_integration.connector_setup_status,
+  'preflight'::puls_integration.connector_setup_step,
+  true,
+  now(),
+  now(),
+  ARRAY['employees','departments','positions','cost_centers']::text[],
+  jsonb_build_object(
+    'runtime_boundary', 'closed',
+    'credential_boundary', 'reference_only_future',
+    'source_ownership', 'domain_level',
+    'seed_source', 'pr13_puls_sanayi'
+  )
 FROM st_erp_conn ON CONFLICT (id) DO NOTHING;
 
 -- Phase 3: source_namespaces
