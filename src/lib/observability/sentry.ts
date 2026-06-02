@@ -7,6 +7,7 @@ type ObservabilityEnv = {
   VITE_APP_ENV?: string
   VITE_SENTRY_DSN?: string
   VITE_SENTRY_ENVIRONMENT?: string
+  VITE_SENTRY_ALLOW_TEST_EVENT?: string
   VITE_SENTRY_RELEASE?: string
   VITE_SENTRY_TRACES_SAMPLE_RATE?: string
 }
@@ -44,6 +45,7 @@ const SENSITIVE_QUERY_KEYS = new Set([
 
 let sentryStarted = false
 let sentryModulePromise: Promise<typeof import('@sentry/react')> | null = null
+const SENTRY_SETUP_CHECK_KEY = 'puls:sentry-setup-check'
 
 function currentEnv(): ObservabilityEnv {
   return import.meta.env as ObservabilityEnv
@@ -73,6 +75,37 @@ function loadBrowserSentry(): Promise<typeof import('@sentry/react')> {
 
   sentryModulePromise ??= import('@sentry/react')
   return sentryModulePromise
+}
+
+export function isSentrySetupCheckRequested(env: ObservabilityEnv, rawUrl: string): boolean {
+  if (env.VITE_SENTRY_ALLOW_TEST_EVENT !== 'true') {
+    return false
+  }
+
+  try {
+    const url = new URL(rawUrl)
+    return url.searchParams.get('sentry_setup_check') === '1'
+  } catch {
+    return false
+  }
+}
+
+function captureSetupCheckOnce(Sentry: typeof import('@sentry/react'), env: ObservabilityEnv): void {
+  if (
+    typeof window === 'undefined' ||
+    !isSentrySetupCheckRequested(env, window.location.href) ||
+    sessionStorage.getItem(SENTRY_SETUP_CHECK_KEY) === 'sent'
+  ) {
+    return
+  }
+
+  sessionStorage.setItem(SENTRY_SETUP_CHECK_KEY, 'sent')
+  Sentry.withScope((scope) => {
+    scope.setTag('operation', 'sentry_setup_check')
+    scope.setTag('area', 'route')
+    scope.setTag('route', window.location.pathname)
+    Sentry.captureException(new Error('PULS Sentry setup check'))
+  })
 }
 
 export function redactSensitiveText(value: string): string {
@@ -189,6 +222,7 @@ export function initObservability(env: ObservabilityEnv = currentEnv()): boolean
         tracesSampleRate: traceSampleRate(env),
         beforeSend: (event) => sanitizeSentryEvent(event),
       })
+      captureSetupCheckOnce(Sentry, env)
     })
     .catch(() => {
       sentryStarted = false
