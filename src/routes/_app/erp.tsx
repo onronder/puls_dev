@@ -534,10 +534,14 @@ function ErpPage() {
             type="button"
             variant="outline"
             className="touch-target w-full sm:w-auto"
-            disabled
+            onClick={() => {
+              document
+                .getElementById('erp-mapping-discovery')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
           >
             <Link2 className="h-4 w-4" />
-            {t('erp.actions.mapFields')}
+            {t('erp.actions.reviewMapping')}
           </Button>
           <Button
             type="button"
@@ -613,6 +617,56 @@ function ErpPage() {
             </ul>
           </section>
 
+          <section id="erp-mapping-discovery" className="mt-8 scroll-mt-6">
+            <SectionHeader
+              title={t('erp.sections.canonicalClasses')}
+              description={t('erp.sections.canonicalClassesDescription')}
+            />
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {data.canonicalClasses.map((canonicalClass) => (
+                <li
+                  key={canonicalClass.id}
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(canonicalClass.labelKey)}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                        {t(canonicalClass.descriptionKey)}
+                      </p>
+                    </div>
+                    <StatusPill tone={readinessTone(canonicalClass.status)}>
+                      {t(`erp.readinessStatus.${canonicalClass.status}`)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-3 font-mono text-xs text-[var(--color-text-muted)]">
+                    {canonicalClass.pulsTarget}
+                  </p>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                        {t('erp.canonicalClasses.mappedFields')}
+                      </p>
+                      <p className="mt-1 font-mono text-base text-[var(--color-text-primary)]">
+                        {canonicalClass.mappedFields} / {canonicalClass.totalFields}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                        {t('erp.canonicalClasses.requiredFields')}
+                      </p>
+                      <p className="mt-1 font-mono text-base text-[var(--color-text-primary)]">
+                        {canonicalClass.mappedRequiredFields} / {canonicalClass.requiredFields}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+
           <section className="mt-8">
             <SectionHeader
               title={t('erp.sections.mapping')}
@@ -634,7 +688,8 @@ function ErpPage() {
                       <div>
                         <p className="font-mono text-sm font-medium">{mapping.canonicalField}</p>
                         <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                          {mapping.sourceEntity}
+                          {mapping.sourceEntity} ·{' '}
+                          {mapping.required ? t('erp.mapping.required') : t('erp.mapping.optional')}
                         </p>
                       </div>
                       <div className="font-mono text-sm text-[var(--color-text-muted)] sm:text-[var(--color-text-secondary)]">

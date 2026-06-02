@@ -127,6 +127,21 @@ describe('buildDashboardErpStatus', () => {
     expect(status.descriptionKey).toBe('dashboardSetup.erpCard.descriptionSetupDraft')
   })
 
+  it('uses mapping-ready copy when field contract exists but preflight has not run', () => {
+    const status = buildDashboardErpStatus({
+      hasConnection: true,
+      isActive: false,
+      setupStatus: 'mapping_ready',
+      isEnabled: true,
+      mappedFields: 12,
+      totalFields: 12,
+      readiness: 57,
+    })
+
+    expect(status.statusLabelKey).toBe('dashboardSetup.erpCard.statusMappingReady')
+    expect(status.descriptionKey).toBe('dashboardSetup.erpCard.descriptionMappingReady')
+  })
+
   it('uses not configured copy when no ERP connection exists', () => {
     const status = buildDashboardErpStatus({
       hasConnection: false,

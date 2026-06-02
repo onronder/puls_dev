@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  buildDefaultConnectorFieldMappings,
   buildDemoErpOverview,
   fetchErpOverviewWithMeta,
   isErpOverviewEmpty,
@@ -178,6 +179,24 @@ describe('ERP connector overview helpers', () => {
     expect(overview.guardrails.some((guardrail) => guardrail.id === 'no_erp_writes')).toBe(true)
     expect(isErpOverviewEmpty(overview)).toBe(false)
   })
+
+  it('builds a seed-proven default Canias mapping contract without customer-specific fields', () => {
+    const mappings = buildDefaultConnectorFieldMappings('canias')
+
+    expect(mappings).toHaveLength(12)
+    expect(mappings.filter((mapping) => mapping.required)).toHaveLength(8)
+    expect(mappings).toContainEqual({
+      sourceEntity: 'employee',
+      sourceField: 'EMPLOYEE_CODE',
+      targetSchema: 'puls_core',
+      targetTable: 'employees',
+      targetField: 'employee_code',
+      required: true,
+    })
+    expect(mappings.some((mapping) => mapping.sourceField === 'TBD_FROM_CUSTOMER_DISCOVERY')).toBe(
+      false,
+    )
+  })
 })
 
 describe('fetchErpOverviewWithMeta', () => {
@@ -204,6 +223,12 @@ describe('fetchErpOverviewWithMeta', () => {
     })
     expect(result.data.setupSteps.every((step) => step.status === 'ready')).toBe(true)
     expect(result.data.namespaces).toHaveLength(1)
+    expect(result.data.canonicalClasses.find((row) => row.id === 'employees')).toMatchObject({
+      mappedFields: 1,
+      mappedRequiredFields: 1,
+      requiredFields: 2,
+      status: 'partial',
+    })
     expect(result.data.mappings).toHaveLength(1)
     expect(result.data.mappings[0].canonicalField).toBe('puls_core.employees.employee_code')
     expect(result.data.mappings.some((mapping) => mapping.sourceField === 'REDACTED_FIELD')).toBe(
@@ -258,7 +283,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(isErpOverviewEmpty(result.data)).toBe(false)
   })
 
-  it('shows a draft setup summary instead of a misleading readiness percentage', async () => {
+  it('shows mapping-ready setup summary without implying preflight readiness', async () => {
     demoEnabled.mockReturnValue(false)
     setupSeededMocks({
       erp_connections: {
@@ -275,7 +300,41 @@ describe('fetchErpOverviewWithMeta', () => {
           owned_domains: [],
         },
       },
-      erp_field_mappings: { data: [], error: null },
+      erp_field_mappings: {
+        data: [
+          {
+            source_entity: 'employee',
+            source_field: 'EMPLOYEE_CODE',
+            target_schema: 'puls_core',
+            target_table: 'employees',
+            target_field: 'employee_code',
+            is_required: true,
+            is_sensitive: false,
+            is_active: true,
+          },
+          {
+            source_entity: 'employee',
+            source_field: 'FULL_NAME',
+            target_schema: 'puls_core',
+            target_table: 'employees',
+            target_field: 'full_name',
+            is_required: true,
+            is_sensitive: false,
+            is_active: true,
+          },
+          {
+            source_entity: 'location',
+            source_field: 'LOC_CODE',
+            target_schema: 'puls_core',
+            target_table: 'locations',
+            target_field: 'code',
+            is_required: false,
+            is_sensitive: false,
+            is_active: true,
+          },
+        ],
+        error: null,
+      },
       source_namespaces: { data: [], error: null },
       entity_identity_map: { data: [], error: null },
     })
@@ -283,13 +342,20 @@ describe('fetchErpOverviewWithMeta', () => {
     const result = await fetchErpOverviewWithMeta('user-1')
 
     expect(result.source).toBe('real')
-    expect(result.data.provider.status).toBe('setup_draft')
+    expect(result.data.provider.status).toBe('mapping_ready')
     expect(result.data.readiness.score).toBeGreaterThan(0)
     expect(result.data.setupSummary).toEqual({
       labelKey: 'erp.metrics.setup',
-      valueKey: 'erp.setupSummary.values.draft',
-      hintKey: 'erp.setupSummary.hints.mappingPending',
+      valueKey: 'erp.setupSummary.values.mappingReady',
+      hintKey: 'erp.setupSummary.hints.namespacePending',
       progress: null,
+    })
+    expect(result.data.canonicalClasses.find((row) => row.id === 'locations')).toMatchObject({
+      mappedFields: 1,
+      totalFields: 1,
+      mappedRequiredFields: 0,
+      requiredFields: 0,
+      status: 'ready',
     })
   })
 
@@ -340,6 +406,7 @@ describe('fetchErpOverviewWithMeta', () => {
         error: null,
         singleData: { id: 'connection-new' },
       },
+      erp_field_mappings: { data: [], error: null },
     })
     vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
 
@@ -348,10 +415,11 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result).toEqual({
       connectionId: 'connection-new',
       providerId: 'canias',
-      setupStatus: 'draft',
-      currentStep: 'mapping',
+      setupStatus: 'mapping_ready',
+      currentStep: 'namespace',
     })
     expect(integrationClient.from).toHaveBeenCalledWith('erp_connections')
+    expect(integrationClient.from).toHaveBeenCalledWith('erp_field_mappings')
   })
 
   it('keeps existing connector setup posture instead of downgrading to draft', async () => {
