@@ -106,6 +106,7 @@ function ErpPage() {
     ConnectorProviderOption['id'] | null
   >(null)
   const [draftSheetOpen, setDraftSheetOpen] = useState(false)
+  const [preflightHasRun, setPreflightHasRun] = useState(false)
   const canManageConnectors = canShowSetupHub(personaRole, activePersona)
   const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],
@@ -131,6 +132,21 @@ function ErpPage() {
         route: '/erp',
       })
       toast.error(t(mapped.toastKey))
+    },
+  })
+  const runPreflightMutation = useMutation({
+    mutationFn: async () => {
+      await queryClient.refetchQueries({ queryKey: ['erp-overview', user?.id] })
+      return data?.preflight.status ?? 'blocked'
+    },
+    onSuccess: (status) => {
+      setPreflightHasRun(true)
+      toast.success(t(`erp.toast.preflight.${status}`))
+      window.setTimeout(() => {
+        document
+          .getElementById('erp-preflight-result')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 80)
     },
   })
 
@@ -547,10 +563,17 @@ function ErpPage() {
             type="button"
             variant="outline"
             className="touch-target w-full sm:w-auto"
-            disabled
+            disabled={!canManageConnectors || runPreflightMutation.isPending}
+            onClick={() => void runPreflightMutation.mutateAsync()}
           >
-            <RefreshCw className="h-4 w-4" />
-            {t('erp.actions.testConnection')}
+            <RefreshCw
+              className={cn('h-4 w-4', runPreflightMutation.isPending ? 'animate-spin' : null)}
+            />
+            {canManageConnectors
+              ? runPreflightMutation.isPending
+                ? t('erp.actions.runningPreflight')
+                : t('erp.actions.runPreflight')
+              : t('erp.actions.adminPreflightRequired')}
           </Button>
         </div>
       ) : null}
@@ -560,13 +583,61 @@ function ErpPage() {
 
       {data && hasSelectedConnector ? (
         <>
-          <section className="mt-8">
+          <section id="erp-preflight-result" className="mt-8 scroll-mt-6">
             <SectionHeader
               title={t('erp.sections.preflight')}
               description={t('erp.sections.preflightDescription')}
             />
+            <div className="mb-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      {t(data.preflight.summaryKey)}
+                    </h2>
+                    <StatusPill tone={readinessTone(data.preflight.status)}>
+                      {t(data.preflight.statusLabelKey)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {t(data.preflight.nextStepKey)}
+                  </p>
+                  <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                    {preflightHasRun
+                      ? t('erp.preflightResult.sessionRun')
+                      : t('erp.preflightResult.computedFromSetup')}
+                  </p>
+                </div>
+                <div className="grid min-w-[220px] grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <p className="font-mono text-lg font-semibold text-[var(--color-success)]">
+                      {data.preflight.passedCount}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                      {t('erp.preflightResult.passed')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <p className="font-mono text-lg font-semibold text-[var(--color-warning)]">
+                      {data.preflight.warningCount}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                      {t('erp.preflightResult.warning')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <p className="font-mono text-lg font-semibold text-[var(--color-danger)]">
+                      {data.preflight.blockedCount}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                      {t('erp.preflightResult.blocked')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
             <ul className="grid gap-3 sm:grid-cols-2">
-              {data.readiness.checks.map((check) => (
+              {data.preflight.checks.map((check) => (
                 <li
                   key={check.id}
                   className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4"
@@ -579,8 +650,8 @@ function ErpPage() {
                       {t(`erp.readinessStatus.${check.status}`)}
                     </StatusPill>
                   </div>
-                  <p className="mt-2 font-mono text-sm text-[var(--color-text-muted)]">
-                    {String(check.value)}
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {t(check.descriptionKey)}
                   </p>
                 </li>
               ))}

@@ -34,6 +34,14 @@ export type ConnectorCanonicalDataClassId =
   | 'positions'
   | 'cost_centers'
   | 'locations'
+export type ConnectorPreflightCheckId =
+  | 'source_profile'
+  | 'required_mapping'
+  | 'source_namespace'
+  | 'identity_reconciliation'
+  | 'credential_boundary'
+  | 'runtime_boundary'
+  | 'write_guardrail'
 
 export type ConnectorSetupStep = {
   id: ConnectorSetupStepId
@@ -97,6 +105,26 @@ export type ConnectorCanonicalDataClass = {
   mappedRequiredFields: number
   requiredFields: number
   status: ConnectorReadinessStatus
+}
+
+export type ConnectorPreflightCheck = {
+  id: ConnectorPreflightCheckId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+}
+
+export type ConnectorPreflightResult = {
+  status: ConnectorReadinessStatus
+  statusLabelKey: string
+  summaryKey: string
+  nextStepKey: string
+  passedCount: number
+  warningCount: number
+  blockedCount: number
+  safeToRunRuntime: false
+  runtimeExecution: 'not_started'
+  checks: ConnectorPreflightCheck[]
 }
 
 export type ConnectorNamespaceSummary = {
@@ -169,6 +197,7 @@ export type ErpOverview = {
   }
   setupSummary: ConnectorSetupSummary
   setupSteps: ConnectorSetupStep[]
+  preflight: ConnectorPreflightResult
   canonicalClasses: ConnectorCanonicalDataClass[]
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
@@ -1067,6 +1096,98 @@ function buildConnectorCanonicalClasses(
   })
 }
 
+function deriveRequiredMappingStatus(
+  canonicalClasses: ConnectorCanonicalDataClass[],
+): ConnectorReadinessStatus {
+  const classesWithRequiredFields = canonicalClasses.filter((row) => row.requiredFields > 0)
+  if (classesWithRequiredFields.length === 0) return 'blocked'
+
+  const readyCount = classesWithRequiredFields.filter((row) => row.status === 'ready').length
+  if (readyCount === classesWithRequiredFields.length) return 'ready'
+  if (readyCount > 0 || canonicalClasses.some((row) => row.mappedFields > 0)) return 'partial'
+  return 'blocked'
+}
+
+function buildConnectorPreflightResult({
+  connectorState,
+  isActive,
+  isEnabled,
+  canonicalClasses,
+  namespaceCount,
+  identityCount,
+}: {
+  connectorState: ConnectorLifecycleState
+  isActive: boolean
+  isEnabled: boolean
+  canonicalClasses: ConnectorCanonicalDataClass[]
+  namespaceCount: number
+  identityCount: number
+}): ConnectorPreflightResult {
+  const hasConnection = connectorState === 'connector_selected'
+  const checks: ConnectorPreflightCheck[] = [
+    {
+      id: 'source_profile',
+      labelKey: 'erp.preflightChecks.sourceProfile.label',
+      descriptionKey: 'erp.preflightChecks.sourceProfile.description',
+      status: hasConnection && isEnabled ? 'ready' : hasConnection ? 'partial' : 'blocked',
+    },
+    {
+      id: 'required_mapping',
+      labelKey: 'erp.preflightChecks.requiredMapping.label',
+      descriptionKey: 'erp.preflightChecks.requiredMapping.description',
+      status: hasConnection ? deriveRequiredMappingStatus(canonicalClasses) : 'blocked',
+    },
+    {
+      id: 'source_namespace',
+      labelKey: 'erp.preflightChecks.sourceNamespace.label',
+      descriptionKey: 'erp.preflightChecks.sourceNamespace.description',
+      status: namespaceCount > 0 ? 'ready' : hasConnection ? 'partial' : 'blocked',
+    },
+    {
+      id: 'identity_reconciliation',
+      labelKey: 'erp.preflightChecks.identityReconciliation.label',
+      descriptionKey: 'erp.preflightChecks.identityReconciliation.description',
+      status: identityCount > 0 ? 'ready' : namespaceCount > 0 ? 'partial' : 'blocked',
+    },
+    {
+      id: 'credential_boundary',
+      labelKey: 'erp.preflightChecks.credentialBoundary.label',
+      descriptionKey: 'erp.preflightChecks.credentialBoundary.description',
+      status: hasConnection ? 'ready' : 'blocked',
+    },
+    {
+      id: 'runtime_boundary',
+      labelKey: 'erp.preflightChecks.runtimeBoundary.label',
+      descriptionKey: 'erp.preflightChecks.runtimeBoundary.description',
+      status: hasConnection ? (isActive ? 'partial' : 'ready') : 'blocked',
+    },
+    {
+      id: 'write_guardrail',
+      labelKey: 'erp.preflightChecks.writeGuardrail.label',
+      descriptionKey: 'erp.preflightChecks.writeGuardrail.description',
+      status: hasConnection ? 'ready' : 'blocked',
+    },
+  ]
+  const passedCount = checks.filter((check) => check.status === 'ready').length
+  const warningCount = checks.filter((check) => check.status === 'partial').length
+  const blockedCount = checks.filter((check) => check.status === 'blocked').length
+  const status: ConnectorReadinessStatus =
+    blockedCount > 0 ? 'blocked' : warningCount > 0 ? 'partial' : 'ready'
+
+  return {
+    status,
+    statusLabelKey: `erp.preflightResult.status.${status}`,
+    summaryKey: `erp.preflightResult.summary.${status}`,
+    nextStepKey: `erp.preflightResult.nextStep.${status}`,
+    passedCount,
+    warningCount,
+    blockedCount,
+    safeToRunRuntime: false,
+    runtimeExecution: 'not_started',
+    checks,
+  }
+}
+
 function buildConnectorSetupSummary({
   connectorState,
   setupStatus,
@@ -1269,6 +1390,14 @@ function buildOverview({
   const readinessScore = deriveReadinessScore(checks)
   const readinessStatus = deriveReadinessStatus(checks)
   const identityCount = namespaces.reduce((total, namespace) => total + namespace.identityCount, 0)
+  const preflight = buildConnectorPreflightResult({
+    connectorState,
+    isActive,
+    isEnabled,
+    canonicalClasses,
+    namespaceCount: namespaces.length,
+    identityCount,
+  })
 
   return {
     connectorState,
@@ -1315,6 +1444,7 @@ function buildOverview({
       readinessStatus,
       isActive,
     }),
+    preflight,
     canonicalClasses,
     mappings,
     namespaces,

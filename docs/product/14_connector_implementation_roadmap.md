@@ -141,7 +141,7 @@ Before runtime sync exists, PULS needs a trustworthy dry-run gate. PR14.11 valid
 |------|------------------|
 | Dry-run preflight | Validate provider metadata, lifecycle state, mapping completeness, namespace readiness, identity strategy, and credential-boundary posture. |
 | No runtime sync | Preflight does not import, export, sync, or write to ERP. |
-| Result model | Persist or display preflight result state with clear pass, warning, and blocked outcomes. |
+| Result model | Display deterministic preflight result state with clear pass, warning, and blocked outcomes. |
 | Recovery | Show which setup step needs attention. |
 | Role boundary | Admin can run preflight. Manager can inspect results. Employee cannot access setup. |
 | Audit posture | Preflight result metadata is safe to display and does not include secrets. |
@@ -150,7 +150,7 @@ Before runtime sync exists, PULS needs a trustworthy dry-run gate. PR14.11 valid
 
 - Admin can run a dry-run preflight for a setup draft.
 - Preflight produces actionable pass/warning/blocked results.
-- Results survive refresh if persistence is in scope for the PR.
+- Results survive refresh by being recomputed from the persisted setup, mapping, namespace, and identity state.
 - Manager can inspect results read-only.
 - No import, export, sync, or ERP write occurs.
 - Tests prove preflight does not mutate seeded Puls Teknik data unexpectedly.

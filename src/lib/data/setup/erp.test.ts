@@ -106,16 +106,16 @@ function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) 
         },
         erp_field_mappings: {
           data: [
-            {
-              source_entity: 'employee',
-              source_field: 'EMPLOYEE_CODE',
-              target_schema: 'puls_core',
-              target_table: 'employees',
-              target_field: 'employee_code',
-              is_required: false,
+            ...buildDefaultConnectorFieldMappings('canias').map((mapping) => ({
+              source_entity: mapping.sourceEntity,
+              source_field: mapping.sourceField,
+              target_schema: mapping.targetSchema,
+              target_table: mapping.targetTable,
+              target_field: mapping.targetField,
+              is_required: mapping.required,
               is_sensitive: false,
               is_active: true,
-            },
+            })),
             {
               source_entity: 'employee',
               source_field: 'REDACTED_FIELD',
@@ -224,12 +224,29 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.setupSteps.every((step) => step.status === 'ready')).toBe(true)
     expect(result.data.namespaces).toHaveLength(1)
     expect(result.data.canonicalClasses.find((row) => row.id === 'employees')).toMatchObject({
-      mappedFields: 1,
-      mappedRequiredFields: 1,
+      mappedFields: 4,
+      mappedRequiredFields: 2,
       requiredFields: 2,
-      status: 'partial',
+      status: 'ready',
     })
-    expect(result.data.mappings).toHaveLength(1)
+    expect(result.data.preflight).toMatchObject({
+      status: 'ready',
+      passedCount: 7,
+      warningCount: 0,
+      blockedCount: 0,
+      safeToRunRuntime: false,
+      runtimeExecution: 'not_started',
+    })
+    expect(result.data.preflight.checks.map((check) => check.id)).toEqual([
+      'source_profile',
+      'required_mapping',
+      'source_namespace',
+      'identity_reconciliation',
+      'credential_boundary',
+      'runtime_boundary',
+      'write_guardrail',
+    ])
+    expect(result.data.mappings).toHaveLength(12)
     expect(result.data.mappings[0].canonicalField).toBe('puls_core.employees.employee_code')
     expect(result.data.mappings.some((mapping) => mapping.sourceField === 'REDACTED_FIELD')).toBe(
       false,
@@ -263,6 +280,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
     expect(result.data.connectorState).toBe('no_connector')
+    expect(result.data.preflight.status).toBe('blocked')
     expect(result.data.setupSteps.map((step) => step.status)).toEqual([
       'partial',
       'blocked',
@@ -356,6 +374,12 @@ describe('fetchErpOverviewWithMeta', () => {
       mappedRequiredFields: 0,
       requiredFields: 0,
       status: 'ready',
+    })
+    expect(result.data.preflight).toMatchObject({
+      status: 'blocked',
+      blockedCount: 1,
+      safeToRunRuntime: false,
+      runtimeExecution: 'not_started',
     })
   })
 
