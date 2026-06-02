@@ -723,40 +723,40 @@
   "erp": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Veri bağlantıları",
-    "subtitle": "ERP, dosya veya özel API kaynaklarını PULS veri alanlarına bağla.",
+    "subtitle": "ERP, dosya ve özel API kaynaklarını PULS'un ortak veri modeline güvenli biçimde bağla.",
     "badge": "Beklemede",
     "noConnector": {
       "title": "Bağlantı kurulumu",
-      "subtitle": "İlk adım veri kaynağını seçmek. Kayıt, kimlik bilgisi ve canlı aktarım bu aşamada kapalı kalır.",
+      "subtitle": "Önce veri kaynağını seç. Kimlik bilgisi, canlı aktarım ve ERP'ye yazma adımları sen onaylamadan açılmaz.",
       "stepsTitle": "Kurulum adımları",
-      "stepsDescription": "Kaynak seçimiyle başla; alan eşleştirme, kimlik eşleştirme ve kontrol adımları sırayla tamamlanır.",
+      "stepsDescription": "Kurulum kaynak seçimiyle başlar; alanlar, kimlikler ve kontrol adımları sırayla tamamlanır.",
       "sourceStepTitle": "1. Veri kaynağını seç",
-      "sourceStepDescription": "Canias veya CSV / Excel ile kalıcı kurulum taslağı başlat. Logo ve özel API seçenekleri gelecek bağlantılar için görünür kalır."
+      "sourceStepDescription": "Canias veya CSV / Excel ile güvenli bir kurulum taslağı başlat. Logo ve özel API kaynakları aynı modelle ileride eklenebilir."
     },
     "workbench": {
       "title": "Bağlantı kurulum adımları",
-      "description": "Veri kaynağı, alan eşleştirme, kimlik eşleştirme ve kontrol adımları sırayla tamamlanır."
+      "description": "Bu çalışma alanı kaynağın nerede olduğunu, hangi alanların bağlandığını ve hangi adımın sırada olduğunu gösterir."
     },
     "setupSteps": {
       "source": {
         "label": "Kaynak",
-        "description": "ERP, dosya veya özel API kaynağı seçilir."
+        "description": "Bağlanacak ERP, dosya veya özel API kaynağı seçilir."
       },
       "mapping": {
         "label": "Alanlar",
-        "description": "Kaynak alanlar PULS veri alanlarına bağlanır."
+        "description": "Kaynak alanlar PULS'un kanonik veri alanlarıyla eşleşir."
       },
       "namespace": {
         "label": "Kimlikler",
-        "description": "Dış kayıt kimlikleri organizasyon içinde izlenebilir hale gelir."
+        "description": "Dış sistem kayıtları PULS içinde izlenebilir ve çakışmadan ayrışır."
       },
       "preflight": {
         "label": "Kontrol",
-        "description": "Kaynak, alan ve kimlik eşleştirme durumu kontrol edilir."
+        "description": "Kurulum canlıya yaklaşmadan önce eksikler ve riskler görünür olur."
       },
       "runtime": {
         "label": "Canlı bağlantı",
-        "description": "Aktarım ve ERP yazma yetkileri ayrıca açılır."
+        "description": "Aktarım ve yazma yetkileri ayrı onayla, ayrı güvenlik sınırında açılır."
       }
     },
     "metrics": {
@@ -800,52 +800,52 @@
     },
     "onboarding": {
       "title": "Henüz veri bağlantısı yok",
-      "description": "Önce veri kaynağını seç, ardından alan ve kimlik eşleştirmesini tamamla.",
+      "description": "Önce kaynağı seç; sonra hangi verinin PULS'ta hangi alana düşeceğini birlikte netleştirelim.",
       "selectProvider": "Kaynak seç",
       "providerSelected": "Seçim taslağı hazır",
       "reviewDraft": "Taslağı incele",
       "importMapping": "Eşleştirme yükle",
-      "guardrail": "Bu aşamada yalnızca kurulum hazırlanır; canlı aktarım, kimlik bilgisi saklama ve ERP'ye yazma kapalıdır.",
-      "adminRequired": "Bu ekran yöneticiler için salt okunur görünebilir; kurulum başlatmak için admin yetkisi gerekir."
+      "guardrail": "Bu aşama yalnızca hazırlık içindir. Canlı aktarım, kimlik bilgisi saklama ve ERP'ye yazma kapalı kalır.",
+      "adminRequired": "Yöneticiler kurulumu görebilir; bağlantı taslağı başlatmak için admin yetkisi gerekir."
     },
     "providerOptions": {
       "canias": {
         "label": "Canias",
-        "description": "PULS'un desteklediği ERP bağlantı modeli.",
-        "readiness": "Alan eşleştirme ve güvenli aktarım kuralları hazır."
+        "description": "PULS'un ilk desteklenen ERP bağlantı modeli.",
+        "readiness": "Alan eşleştirme ve güvenli aktarım sınırları tanımlı."
       },
       "logo": {
         "label": "Logo",
-        "description": "Aynı bağlantı modeliyle eklenebilir.",
-        "readiness": "Kaynak alanları ve erişim yöntemi netleşmeli."
+        "description": "Aynı kaynak bağımsız bağlantı modeliyle eklenebilir.",
+        "readiness": "Kaynak alanları ve erişim yöntemi müşteriyle netleşmeli."
       },
       "csv_import": {
         "label": "CSV / Excel",
         "description": "API olmayan kaynaklar için dosya veya şablon tabanlı aktarım.",
-        "readiness": "Dosya tabanlı başlangıç için en düşük riskli yol."
+        "readiness": "İlk müşteri kurulumu için en düşük riskli başlangıç yolu."
       },
       "custom_api": {
         "label": "Özel API",
-        "description": "Müşteri özel API bağlantısı.",
-        "readiness": "Erişim yöntemi ve veri sözleşmesi gerekir."
+        "description": "Müşteriye özel API veya ara servis bağlantısı.",
+        "readiness": "Erişim yöntemi, yetki modeli ve veri sözleşmesi gerekir."
       }
     },
     "providerPreview": {
       "eyebrow": "Seçim önizlemesi",
-      "description": "Bu seçim kurulum adımlarını gösterir; kayıt yalnızca kurulumu başlatınca oluşur.",
+      "description": "Seçtiğin kaynak için hangi hazırlıkların gerektiğini burada görürsün; kayıt yalnızca sen başlatınca oluşur.",
       "emptyTitle": "Bir kaynak seçerek başla",
-      "emptyDescription": "Canias, Logo, CSV / Excel veya özel API seçeneklerinden birini seçtiğinde hazırlık gereksinimleri burada görünür.",
+      "emptyDescription": "Bir kaynak seçtiğinde bağlantı kapsamı, eşleştirme ihtiyacı ve güvenlik sınırları burada özetlenir.",
       "requirements": "Hazırlık gereksinimleri"
     },
     "draftSheet": {
       "title": "{{provider}} kurulum taslağı",
-      "description": "Bu panel kaynak seçimini ve hazırlık gereksinimlerini özetler. Kurulumu başlatınca tenant kapsamlı bağlantı taslağı kaydedilir.",
+      "description": "Bu panel kaynak seçimini ve ilk hazırlık adımlarını özetler. Başlattığında şirketine ait güvenli bir bağlantı taslağı kaydedilir.",
       "summary": "Kaynak taslağı",
       "requirements": "Hazırlık kontrol listesi",
       "guardrailTitle": "Canlı bağlantı kapalı",
-      "guardrailBody": "Kurulum taslağı kayıt altına alınır, ancak kimlik bilgisi saklama, canlı aktarım ve ERP'ye yazma işlemleri ayrı onay olmadan başlatılmaz.",
-      "persistedSetupHint": "Bu kaynak için kurulum taslağı kaydedilebilir ve sayfa yenilense de korunur.",
-      "futureProviderHint": "Bu sağlayıcı ürün modelinde görünür kalır; kurulum kaydı sonraki aşamada açılacak.",
+      "guardrailBody": "Bu adım sadece taslak oluşturur. Kimlik bilgisi saklama, canlı aktarım ve ERP'ye yazma ayrı onay olmadan başlamaz.",
+      "persistedSetupHint": "Taslak kaydedilir; sayfa yenilense bile kaldığın yerden devam edebilirsin.",
+      "futureProviderHint": "Bu kaynak tipi ürün modelinde hazır tutulur; kurulum akışı sonraki aşamada açılır.",
       "close": "Kapat",
       "startSetup": "Kurulumu başlat",
       "creating": "Kaydediliyor",
@@ -855,50 +855,50 @@
     "providerRequirements": {
       "sourceProfile": {
         "label": "Kaynak profili",
-        "description": "Kaynak tipi, sahiplik ve veri kapsamı netleşir."
+        "description": "Kaynağın türü, sahibi ve hangi verileri taşıyacağı netleşir."
       },
       "canonicalMapping": {
         "label": "Alan eşleştirme",
-        "description": "Dış kaynak alanları PULS veri alanlarına eşleşir."
+        "description": "Dış kaynaktaki alanlar PULS'un ortak veri modeline bağlanır."
       },
       "sourceNamespace": {
         "label": "Kaynak kimliği",
-        "description": "External ID alanı tenant içinde benzersiz ve izlenebilir olur."
+        "description": "Dış kimlikler şirket içinde benzersiz ve izlenebilir hale gelir."
       },
       "identityStrategy": {
         "label": "Kayıt eşleştirme",
-        "description": "Kaynak kayıtları PULS kayıtlarıyla eşleştirme kuralı üzerinden bağlanır."
+        "description": "Kaynak kayıtları PULS kayıtlarına açık bir eşleştirme kuralıyla bağlanır."
       },
       "transferMode": {
         "label": "Transfer modu",
-        "description": "CSV, Excel, dosya veya API sınırı insan onaylı akışa göre seçilir."
+        "description": "CSV, Excel, dosya veya API akışı insan onaylı ilerleyecek şekilde seçilir."
       },
       "runtimeBoundary": {
         "label": "Canlı bağlantı sınırı",
-        "description": "Canlı aktarım, kimlik bilgisi saklama ve ERP yazma ayrı onay gerektirir."
+        "description": "Canlı aktarım, kimlik bilgisi saklama ve ERP yazma her zaman ayrı onay gerektirir."
       }
     },
-    "preflightNote": "Bu ekran bağlantı hazırlığını gösterir; canlı aktarım, kimlik bilgisi saklama veya ERP'ye yazma başlatmaz.",
+    "preflightNote": "Bu ekran hazırlığı görünür kılar; canlı aktarım, kimlik bilgisi saklama veya ERP'ye yazma başlatmaz.",
     "toast": {
       "apiPendingTitle": "Canlı bağlantı kapalı.",
-      "mapDescription": "Alan eşleştirme ekranı bağlantı seçildikten sonra açılacak.",
-      "testDescription": "Kontrol işlemi canlı API çağrısı yapmaz.",
-      "setupCreated": "Kurulum taslağı kaydedildi.",
-      "setupCreateFailed": "Kurulum taslağı kaydedilemedi. Yetki ve bağlantı durumunu kontrol et."
+      "mapDescription": "Alan eşleştirme adımı bağlantı taslağı hazırlandıktan sonra açılacak.",
+      "testDescription": "Bu kontrol canlı API çağrısı yapmaz; yalnızca hazırlık durumunu gösterir.",
+      "setupCreated": "Kurulum taslağı hazır. Alan eşleştirme adımına geçebilirsin.",
+      "setupCreateFailed": "Kurulum taslağı kaydedilemedi. Yetkiyi ve bağlantı durumunu kontrol et."
     },
     "sections": {
       "preflight": "Bağlantı kontrolü",
-      "preflightDescription": "Kaynak bilgisi, alan eşleştirme ve kimlik eşleştirme durumu.",
+      "preflightDescription": "Kaynak, alan ve kimlik hazırlığını canlı bağlantıdan önce birlikte kontrol et.",
       "namespaces": "Kaynak kimlikleri",
-      "namespacesDescription": "Dış kaynaklardan gelen kayıtların PULS kayıtlarıyla eşleştiği alan.",
+      "namespacesDescription": "Dış kaynaktan gelen kayıtların PULS kayıtlarıyla hangi kapsamda eşleştiğini gösterir.",
       "mapping": "Alan eşleştirme",
-      "mappingDescription": "PULS alanı → kaynak alanı.",
+      "mappingDescription": "PULS alanı ile kaynak alanı arasındaki açık sözleşme.",
       "transferModes": "Transfer modları",
-      "transferModesDescription": "CSV, dosya ve API aktarım seçenekleri.",
+      "transferModesDescription": "Kaynağa göre kullanılabilecek güvenli aktarım yolları.",
       "guardrails": "Güvenlik sınırları",
-      "guardrailsDescription": "Canlı aktarım ve ERP'ye yazma kapalıdır.",
+      "guardrailsDescription": "Bağlantı hazırlığı yapılırken hangi işlemlerin kapalı kaldığını açıkça gösterir.",
       "syncLogs": "Kontrol geçmişi",
-      "syncLogsDescription": "Son bağlantı hazırlığı kayıtları."
+      "syncLogsDescription": "Kurulum ve kontrol adımlarında oluşan son kayıtlar."
     },
     "columns": {
       "canonicalField": "PULS alanı",
@@ -946,9 +946,9 @@
     },
     "identityCount": "{{count}} kimlik",
     "empty": {
-      "namespaces": "Aktif kaynak kapsamı yok.",
-      "mappings": "Alan eşleştirme kaydı yok.",
-      "syncLogs": "Kontrol kaydı yok."
+      "namespaces": "Henüz aktif kaynak kimliği yok. Alan eşleştirmeden sonra bu kapsam oluşacak.",
+      "mappings": "Henüz alan eşleştirme yok. Kaynak alanları PULS alanlarına bağlandığında burada görünecek.",
+      "syncLogs": "Henüz kontrol kaydı yok. Kurulum adımları ilerledikçe geçmiş burada birikecek."
     },
     "status": {
       "mapped": "Eşleşti",
@@ -957,7 +957,7 @@
   },
   "orgSetupReadiness": {
     "sections": {
-      "summary": "Organizasyon kurulum hazırlığı"
+      "summary": "Organizasyon hazırlığı"
     },
     "status": {
       "ready": "Hazır",
@@ -974,12 +974,12 @@
       "unknown": "Bilinmiyor"
     },
     "empty": {
-      "departmentsTitle": "Departman yok",
-      "departments": "Departman verisi bulunamadı. Çalışan atamaları ve onay rotaları departman ana verisine bağlıdır.",
-      "positionsTitle": "Pozisyon yok",
-      "positions": "Pozisyon verisi bulunamadı. Çalışan atamaları pozisyon ana verisine bağlıdır.",
-      "costCentersTitle": "Masraf merkezi yok",
-      "costCenters": "Masraf merkezi verisi bulunamadı. Masraf yönlendirme ve dışa aktarma hazırlığı masraf merkezi ana verisine bağlıdır."
+      "departmentsTitle": "Departmanlar bekleniyor",
+      "departments": "Departmanlar gelmeden çalışan atamaları, raporlama ve onay rotaları güvenilir şekilde kurulamaz.",
+      "positionsTitle": "Pozisyonlar bekleniyor",
+      "positions": "Pozisyonlar gelmeden çalışan görevleri, norm kadro ve yetkinlik bağlantıları tamamlanamaz.",
+      "costCentersTitle": "Masraf merkezleri bekleniyor",
+      "costCenters": "Masraf merkezi olmadan masraf yönlendirme ve finans aktarım hazırlığı eksik kalır."
     },
     "metrics": {
       "departments": "Departman",
@@ -991,9 +991,9 @@
       "costCentersDetail": "{{mapped}} eşleşmiş · {{unmapped}} eşleşmemiş · {{total}} toplam"
     },
     "boundary": {
-      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır.",
-      "readOnly": "Salt okunur kurulum görünümü.",
-      "crudDeferred": "Oluşturma ve düzenleme işlemleri sonraki sürümde gelecek."
+      "erpNoWrite": "PULS kaynak sistemdeki ana veriyi değiştirmez; ERP veya finans sistemi kayıt sahibi olmaya devam eder.",
+      "readOnly": "Bu görünüm hazırlığı anlamak içindir; kaynak veriyi değiştirmez.",
+      "crudDeferred": "Oluşturma ve düzenleme adımları güvenli kurulum akışı tamamlandıkça açılacak."
     }
   },
   "orgSetupCrud": {
@@ -1041,8 +1041,8 @@
     "discardConfirm": "Kaydedilmemiş değişiklikler silinsin mi?"
   },
   "setupReadinessDashboard": {
-    "title": "Kurulum kontrol listesi",
-    "subtitle": "Masraf, izin, organizasyon ve atama hazırlığını tek ekranda görüntüleyin.",
+    "title": "Kurulum yol haritası",
+    "subtitle": "Canlı kullanıma geçmeden önce organizasyon, talep ve onay hazırlığını tek yerden takip et.",
     "overall": "Genel durum",
     "generatedAt": "Son güncelleme: {{time}}",
     "severity": {
@@ -1065,23 +1065,23 @@
       "noneActive": "0 aktif kayıt"
     },
     "empty": {
-      "ready": "Tüm kurulum alanları hazır görünüyor."
+      "ready": "Temel kurulum alanları hazır. Yeni veri kaynağı veya kural eklendiğinde bu liste yeniden güncellenir."
     },
     "actions": {
       "open": "Detaya git"
     },
     "boundary": {
-      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
+      "erpNoWrite": "Bu kontrol listesi yalnızca PULS hazırlığını okur; ERP veya finans sisteminde kayıt değiştirmez."
     },
     "issues": {
       "sourceUnknown": {
-        "title": "Veri kaynağı okunamadı",
-        "description": "Bu alan için hazırlık sinyalleri alınamadı. Sayfayı yenileyin veya ilgili kurulum ekranını kontrol edin."
+        "title": "Hazırlık sinyali alınamadı",
+        "description": "Bu alanın durumunu okuyamadık. Sayfayı yenileyebilir veya ilgili kurulum ekranından ayrıntıya bakabilirsin."
       },
       "expense": {
         "noActiveCategories": {
           "title": "Aktif masraf kategorisi yok",
-          "description": "Masraf talebi oluşturmak için en az bir aktif kategori gerekir."
+          "description": "Çalışanların masraf girebilmesi için en az bir aktif kategori gerekir."
         },
         "inactiveCategories": {
           "title": "Pasif masraf kategorileri var",
@@ -1089,13 +1089,13 @@
         },
         "policyNotReady": {
           "title": "Masraf onay politikası hazır değil",
-          "description": "Bazı aktif kategorilerde onay politikası bağlantısı veya adım eksikliği var; RPC/çözümleyici nihai otoritedir."
+          "description": "Bazı aktif kategorilerde onay politikası veya adım eksik. Talep akışına açmadan önce bu bağı tamamla."
         }
       },
       "leave": {
         "noActiveLeaveTypes": {
           "title": "Aktif izin türü yok",
-          "description": "İzin talebi oluşturmak için en az bir aktif izin türü gerekir."
+          "description": "Çalışanların izin talebi oluşturabilmesi için en az bir aktif izin türü gerekir."
         },
         "inactiveLeaveTypes": {
           "title": "Pasif izin türleri var",
@@ -1103,19 +1103,19 @@
         },
         "policyNotReady": {
           "title": "İzin onay politikası hazır değil",
-          "description": "Bazı aktif izin türlerinde onay politikası bağlantısı veya adım eksikliği var; RPC/çözümleyici nihai otoritedir."
+          "description": "Bazı aktif izin türlerinde onay politikası veya adım eksik. Gönderimden önce onay yolunu tamamla."
         }
       },
       "approvalPolicies": {
         "notReady": {
           "title": "Onay politikası bağlantıları tamamlanmadı",
-          "description": "Bağlanmamış, pasif veya eksik adımlı politikalar var; talep oluşturma uyarısı üretir, tek başına genel engel sayılmaz."
+          "description": "Bazı politikalar bağlı değil, pasif veya adım eksiği taşıyor. Bu durum talep oluştururken uyarı üretir."
         }
       },
       "org": {
         "departmentsEmpty": {
           "title": "Departman tanımı yok",
-          "description": "Organizasyon kurulumu için departman ana verisi gerekir."
+          "description": "Organizasyonun çalışması için departman ana verisi ilk temel taştır."
         },
         "departmentsPartial": {
           "title": "Departman kurulumu kısmi",
@@ -1123,7 +1123,7 @@
         },
         "positionsEmpty": {
           "title": "Pozisyon tanımı yok",
-          "description": "Çalışan atamaları için pozisyon ana verisi gerekir."
+          "description": "Çalışanları doğru role bağlamak için pozisyon ana verisi gerekir."
         },
         "positionsPartial": {
           "title": "Pozisyon kurulumu kısmi",
@@ -1131,7 +1131,7 @@
         },
         "costCentersUnmapped": {
           "title": "Organizasyon masraf merkezi eşleşmesi eksik",
-          "description": "Bazı masraf merkezleri henüz dışa aktarım için eşleşmemiş."
+          "description": "Bazı masraf merkezleri henüz kaynak kimliğiyle eşleşmedi; finans aktarımı için bu bağ gerekir."
         },
         "costCentersEmpty": {
           "title": "Masraf merkezi tanımı yok",
@@ -1141,7 +1141,7 @@
       "assignments": {
         "inactiveReferences": {
           "title": "Pasif atama referansları",
-          "description": "Aktif çalışanlarda pasif departman, pozisyon, masraf merkezi veya yönetici referansı var."
+          "description": "Bazı aktif çalışanlar pasif departman, pozisyon, masraf merkezi veya yönetici kaydına bağlı."
         },
         "missingCostCenter": {
           "title": "Eksik masraf merkezi ataması",
@@ -1173,11 +1173,11 @@
       "requestCreation": {
         "expenseBlocked": {
           "title": "Masraf talebi oluşturma engelli",
-          "description": "Mevcut kurulum veya atama durumu masraf talebi oluşturmayı engelliyor."
+          "description": "Eksik kurulum veya atama bilgisi masraf talebi oluşturmayı şu an engelliyor."
         },
         "leaveBlocked": {
           "title": "İzin talebi oluşturma engelli",
-          "description": "Mevcut kurulum veya atama durumu izin talebi oluşturmayı engelliyor."
+          "description": "Eksik kurulum veya atama bilgisi izin talebi oluşturmayı şu an engelliyor."
         },
         "missingManager": {
           "title": "Yönetici ataması eksik",
@@ -1301,11 +1301,11 @@
   },
   "companySetup": {
     "eyebrow": "Tanım & Kurulum",
-    "title": "Şirket Kurulum",
-    "description": "Tenant, şirket bilgileri ve varsayılan çalışma ayarlarını yönet.",
+    "title": "Şirket kurulumu",
+    "description": "Şirket profilini, çalışma varsayılanlarını ve canlı kullanıma hazırlık durumunu tek yerden yönet.",
     "meta": {
-      "title": "Şirket Kurulum — PULS",
-      "description": "Tenant, şirket bilgileri ve varsayılan çalışma ayarları."
+      "title": "Şirket kurulumu — PULS",
+      "description": "Şirket profili, çalışma varsayılanları ve kurulum hazırlığı."
     },
     "metrics": {
       "completion": "Tamamlanma",
@@ -1324,13 +1324,13 @@
     },
     "sections": {
       "companyInfo": "Şirket bilgileri",
-      "checklist": "Kurulum checklist"
+      "checklist": "Kurulum adımları"
     },
     "checklist": {
       "tenant": "Tenant oluşturuldu",
       "employees": "Çalışanlar eklendi",
-      "erpMapping": "ERP alan eşleştirme bekliyor",
-      "performanceCycle": "Performans dönemi bekliyor"
+      "erpMapping": "Veri kaynağı alan eşleştirmesi bekliyor",
+      "performanceCycle": "Performans dönemi açılmayı bekliyor"
     },
     "status": {
       "done": "Tamam",
@@ -1340,18 +1340,18 @@
   "departments": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Departmanlar",
-    "description": "Organizasyon yapısını, departman yöneticilerini ve çalışan dağılımını yönet.",
+    "description": "Organizasyon omurgasını, departman sahipliğini ve çalışan dağılımını net gör.",
     "meta": {
       "title": "Departmanlar — PULS",
-      "description": "Organizasyon yapısı, departman yöneticileri ve çalışan dağılımı."
+      "description": "Organizasyon omurgası, departman sahipliği ve çalışan dağılımı."
     },
     "metrics": {
       "departments": "Departman",
       "activeEmployees": "Aktif çalışan",
       "assignedManagers": "Departman yöneticisi",
-      "assignedManagersHint": "Departman kayıtlarında yönetici atama kapsamını ölçer.",
+      "assignedManagersHint": "Departman kayıtlarında sorumlu yönetici atamasını gösterir.",
       "emptyManagers": "Yönetici ataması bekliyor",
-      "emptyManagersHint": "Çalışan onay yöneticileri /calisanlar altında ayrı doğrulanır."
+      "emptyManagersHint": "Çalışan onay yöneticileri çalışan atamalarında ayrıca doğrulanır."
     },
     "sections": {
       "list": "Departman listesi"
@@ -1373,7 +1373,7 @@
     },
     "sheet": {
       "title": "Departman ekle",
-      "description": "Yeni departman oluşturma pilot sonrası açılacak.",
+      "description": "Departman oluşturma güvenli kurulum akışı içinde açılacak.",
       "mvpBadge": "Salt okunur",
       "fields": {
         "name": "Departman adı",
@@ -1389,10 +1389,10 @@
   "positions": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Pozisyonlar",
-    "description": "Pozisyonları, departman bağlantılarını ve yetkinlik şablonlarını takip et.",
+    "description": "Rolleri, bağlı departmanları ve yetkinlik temelini düzenli bir pozisyon kataloğunda takip et.",
     "meta": {
       "title": "Pozisyonlar — PULS",
-      "description": "Pozisyonlar, departman bağlantıları ve yetkinlik şablonları."
+      "description": "Pozisyon kataloğu, departman bağlantıları ve yetkinlik temeli."
     },
     "metrics": {
       "positions": "Pozisyon",
@@ -1423,7 +1423,7 @@
     },
     "sheet": {
       "title": "Pozisyon ekle",
-      "description": "Yeni pozisyon oluşturma pilot sonrası açılacak.",
+      "description": "Pozisyon oluşturma güvenli kurulum akışı içinde açılacak.",
       "mvpBadge": "Salt okunur",
       "fields": {
         "name": "Pozisyon adı",
@@ -1441,10 +1441,10 @@
   "leaveTypeSetup": {
     "eyebrow": "Tanım & Kurulum",
     "title": "İzin Tanımları",
-    "description": "İzin tiplerini, hakları, belge ve onay kurallarını tanımla.",
+    "description": "Çalışanların talep edebileceği izin türlerini, hakları, belge ve onay kurallarıyla birlikte yönet.",
     "meta": {
       "title": "İzin Tanımları — PULS",
-      "description": "İzin tipleri, haklar, belge ve onay kuralları."
+      "description": "İzin türleri, haklar, belge ve onay kuralları."
     },
     "metrics": {
       "typeCount": "İzin tipi",
@@ -1526,7 +1526,7 @@
       },
       "sheet": {
         "inactiveTitle": "Pasif izin tipi",
-        "inactiveDescription": "Bu izin tipi pasif. Geçmiş izin kayıtları okunabilir; yeni taleplerde seçilemez."
+        "inactiveDescription": "Bu izin tipi yeni taleplerde kullanılamaz. Geçmiş kayıtlar okunabilir kalır."
       }
     },
     "lifecycleAudit": {
@@ -1568,15 +1568,15 @@
     "sheet": {
       "create": {
         "title": "İzin tipi ekle",
-        "description": "PULS içinde kullanılacak yeni bir izin tipi tanımla."
+        "description": "Çalışan talep akışında görünecek yeni bir izin tipi tanımla."
       },
       "edit": {
         "title": "İzin tipi düzenle",
-        "description": "Gün hakkı, belge kuralları ve isteğe bağlı politika bağlantısını güncelle."
+        "description": "Hak, belge ve onay politikası bağlantısını güvenle güncelle."
       },
       "detail": {
         "title": "İzin tipi detayı",
-        "description": "İzin tipi kurulumu ve onay politikası bağlantısının salt okunur görünümü."
+        "description": "İzin tipi kurulumu ve onay politikası bağlantısını gözden geçir."
       },
       "mvpBadge": "Salt okunur",
       "fields": {
@@ -1610,10 +1610,10 @@
   "expenseCategorySetup": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Masraf Kategorileri",
-    "description": "Harcama kategorilerini, limitleri ve belge zorunluluklarını yönet.",
+    "description": "Masraf girişlerinde kullanılacak kategorileri, limitleri, belge eşiklerini ve finans hazırlığını yönet.",
     "meta": {
       "title": "Masraf Kategorileri — PULS",
-      "description": "Harcama kategorileri, limitler ve belge zorunlulukları."
+      "description": "Masraf kategorileri, limitler, belge eşikleri ve finans hazırlığı."
     },
     "metrics": {
       "categoryCount": "Kategori",
@@ -1709,10 +1709,10 @@
       },
       "inactive": {
         "title": "Pasif kategori",
-        "description": "Bu kategori pasif. Alanlar salt okunurdur; geri yükleyerek yeni masraf girişlerinde tekrar kullanılabilir."
+        "description": "Bu kategori yeni masraf girişlerinde kullanılamaz. Geri yüklendiğinde tekrar seçilebilir olur."
       },
       "policyBound": "Onay politikası bağlı: {{policy}}",
-      "boundaryNote": "Bu işlem yalnızca PULS masraf kategori tanımını günceller; ERP veya finans sistemine veri yazmaz.",
+      "boundaryNote": "Bu işlem yalnızca PULS içindeki masraf kategori tanımını günceller; ERP veya finans sistemine veri yazmaz.",
       "mvpBadge": "Salt okunur",
       "fields": {
         "name": "Kategori adı",
@@ -1757,8 +1757,8 @@
     },
     "costCenterMappings": {
       "title": "Masraf merkezi eşleşmeleri",
-      "description": "Bu bölüm masraf kategorilerini değil, masraf bildirimlerinde kullanılacak masraf merkezi boyutunun dış kaynak eşleşmesini gösterir.",
-      "boundaryNote": "PULS ERP ana verisi yazmaz. Finans sistemi kaynak sistemdir.",
+      "description": "Masraf kayıtlarında kullanılacak masraf merkezi boyutunun dış kaynakla nasıl eşleştiğini gösterir.",
+      "boundaryNote": "PULS finans ana verisini değiştirmez. Finans sistemi kayıt sahibi olmaya devam eder.",
       "summary": "{{exportReady}} eşleşmiş · {{needsMapping}} eşleşme gerekiyor",
       "columns": {
         "name": "Masraf merkezi",
@@ -1776,7 +1776,7 @@
       },
       "sheet": {
         "title": "Masraf merkezi detayı",
-        "description": "Salt okunur eşleşme bilgisi.",
+        "description": "Kaynak kapsamı ve dış kimlik bilgisi.",
         "fields": {
           "code": "PULS kodu",
           "source": "Kaynak kapsamı",
@@ -1794,7 +1794,7 @@
   "performanceParamsSetup": {
     "eyebrow": "Tanım & Kurulum",
     "title": "Performans Parametreleri",
-    "description": "Yetkinlik şablonları, KPI ağırlıkları ve skor bandlarını yönet.",
+    "description": "Performans dönemlerinin ortak dilini oluşturan yetkinlik şablonlarını, KPI ağırlıklarını ve skor bandlarını yönet.",
     "meta": {
       "title": "Performans Parametreleri — PULS",
       "description": "Yetkinlik şablonları, KPI ağırlıkları ve skor bandları."
@@ -2228,13 +2228,13 @@
     "eyebrow": "Yönetici Ayarları",
     "eyebrowPersonal": "Kişisel Ayarlar",
     "title": "Ayarlar",
-    "description": "Güvenlik, bildirim, dil ve sistem tercihlerini yönet.",
-    "descriptionPersonal": "Hesap, bildirim, dil ve tema tercihlerini yönet.",
+    "description": "Şirket alanının güvenlik, erişim, bildirim ve kurulum tercihlerini güvenli biçimde yönet.",
+    "descriptionPersonal": "Hesap, bildirim, dil ve görünüm tercihlerini kendi çalışma düzenine göre gözden geçir.",
     "meta": {
       "title": "Ayarlar — PULS",
-      "description": "Güvenlik, bildirim, dil ve sistem tercihleri."
+      "description": "Güvenlik, erişim, bildirim ve kurulum tercihleri."
     },
-    "sectionsList": "Tercihler",
+    "sectionsList": "Ayar alanları",
     "sheet": {
       "mvpBadge": "Salt okunur",
       "submit": "Kaydet"
@@ -2242,55 +2242,55 @@
     "sections": {
       "accountSecurity": {
         "title": "Hesap & güvenlik",
-        "summary": "Şifre, 2FA, oturum geçmişi",
+        "summary": "Şifre, iki adımlı doğrulama ve oturum güvenliği",
         "action": "Yönet",
-        "sheetDescription": "Hesap ve güvenlik ayarları bu sürümde salt okunur.",
-        "sheetBody": "Şifre değiştirme, iki faktörlü doğrulama ve oturum geçmişi bu sürümde salt okunurdur."
+        "sheetDescription": "Hesap güvenliği ayrı ve kontrollü bir akışta açılacak.",
+        "sheetBody": "Şifre değişikliği, iki adımlı doğrulama ve oturum geçmişi güvenlik politikaları tamamlandığında buradan yönetilecek."
       },
       "tenant": {
-        "title": "Tenant ayarları",
-        "summary": "Tenant ayarları · Pilot paket",
+        "title": "Şirket alanı",
+        "summary": "Paket, lisans ve şirket kapsamı",
         "action": "Aç",
-        "sheetDescription": "Tenant yapılandırması pilot sonrası genişletilecek.",
-        "sheetBody": "Paket, lisans ve tenant düzeyi tercihler burada yönetilecek."
+        "sheetDescription": "Şirket alanı ayarları kurulum olgunlaştıkça genişleyecek.",
+        "sheetBody": "Paket, lisans, şirket kapsamı ve tenant düzeyi tercihler bu alanda yönetilecek."
       },
       "notifications": {
         "title": "Bildirim tercihleri",
-        "summary": "E-posta · Uygulama içi",
+        "summary": "E-posta, uygulama içi ve ileride mobil bildirimler",
         "action": "Düzenle",
-        "sheetDescription": "Bildirim kanalları pilot sonrası özelleştirilebilecek.",
-        "sheetBody": "E-posta ve uygulama içi bildirim tercihleri şu an salt okunur özet olarak gösterilir."
+        "sheetDescription": "Bildirim kanalları rol ve süreç bazlı açılacak.",
+        "sheetBody": "E-posta ve uygulama içi bildirimler, izin, masraf, performans ve kurulum olaylarına göre kişiselleştirilecek."
       },
       "locale": {
         "title": "Dil ve bölge",
         "summary": "tr-TR · Europe/Istanbul",
         "action": "Değiştir",
-        "sheetDescription": "Dil ve bölge seçimi pilot sonrası uygulama genelinde açılacak.",
-        "sheetBody": "Mevcut dil tr-TR, saat dilimi Europe/Istanbul olarak ayarlı."
+        "sheetDescription": "Dil, tarih ve saat biçimi şirket ve kullanıcı tercihlerine göre yönetilecek.",
+        "sheetBody": "Mevcut kurulum tr-TR ve Europe/Istanbul ile çalışıyor. Çoklu dil ve bölge seçimi kontrollü şekilde açılacak."
       },
       "theme": {
         "title": "Tema",
         "summary": "Sistem · Açık · Koyu",
         "action": "Seç",
-        "sheetDescription": "Tema seçimi pilot sonrası etkinleştirilecek.",
-        "sheetBody": "Sistem, açık ve koyu tema seçenekleri hazırlanıyor."
+        "sheetDescription": "Tema tercihleri kullanıcı deneyimini bozmadan aşamalı olarak açılacak.",
+        "sheetBody": "Sistem, açık ve koyu tema seçenekleri hazırlanıyor; seçim kullanıcı bazında saklanacak."
       },
       "roleAccess": {
         "title": "Rol & erişim",
-        "summary": "İK Admin · 3 modül tam yetki",
+        "summary": "Rol kapsamı, modül erişimi ve admin yetkileri",
         "action": "İncele",
-        "sheetDescription": "Rol ve erişim detayları bu sürümde salt okunur.",
-        "sheetBody": "Modül bazlı yetkiler ve rol atamaları bu ekranda yönetilecek."
+        "sheetDescription": "Rol ve erişim modeli canlı operasyon güvenliği için ayrı tutulur.",
+        "sheetBody": "Modül bazlı yetkiler, admin sınırları ve rol atamaları bu ekranda şeffaf biçimde yönetilecek."
       }
     },
     "auditLog": {
-      "title": "Audit log",
-      "summary": "Son {{days}} günde {{count}} hassas işlem kaydı bulunuyor.",
-      "note": "Detaylı kayıt listesi henüz salt okunur."
+      "title": "Güvenlik geçmişi",
+      "summary": "Son {{days}} günde {{count}} hassas işlem kaydı var.",
+      "note": "Detaylı kayıt listesi açıldığında yetkili kullanıcılar geçmişi buradan inceleyebilecek."
     },
     "setupHub": {
-      "title": "Kurulum & tanımlar",
-      "description": "ERP, şirket yapısı ve parametre ekranları."
+      "title": "Kurulum merkezi",
+      "description": "Şirket yapısı, veri bağlantıları ve süreç parametreleri için başlangıç noktası."
     }
   },
   "aiCoachSetup": {
