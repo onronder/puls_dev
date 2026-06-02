@@ -234,6 +234,14 @@ PR14.7 expands authenticated e2e into a role and tenant posture matrix. It treat
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx) | No-connector setup wizard posture |
 | [`scripts/verify-14-role-tenant-empty-state-gate.sh`](../../scripts/verify-14-role-tenant-empty-state-gate.sh) | PR14.7 verify gate |
 
+## PR14.8-PR14.11 Connector implementation roadmap
+
+This roadmap documents the agreed implementation order after PR14.7: connector setup persistence, observability, mapping discovery, and dry-run preflight. It keeps PULS source-independent while allowing Canias and CSV / Excel to become the first MVP setup paths.
+
+| Document / artifact | Purpose |
+|---------------------|---------|
+| [14_connector_implementation_roadmap.md](./14_connector_implementation_roadmap.md) | PR14.8-PR14.11 implementation sequence, product boundaries, and acceptance criteria |
+
 ## Related packs
 
 | Pack | Entry point |
