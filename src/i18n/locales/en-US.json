@@ -2235,9 +2235,74 @@
       "description": "Security, access, notifications, and setup preferences."
     },
     "sectionsList": "Settings areas",
+    "sectionsDescription": "Each area shows its current state and the data behind it.",
+    "state": {
+      "ready": "Ready",
+      "attention": "Needs attention",
+      "locked": "Closed"
+    },
+    "values": {
+      "linked": "Linked",
+      "notLinked": "No employee record linked",
+      "noEmployee": "No employee record",
+      "noTenant": "No company workspace",
+      "noSource": "No source",
+      "noRole": "No role found",
+      "draft": "Draft",
+      "setupInProgress": "Setup in progress",
+      "preflightReady": "Ready to check",
+      "connected": "Live",
+      "disabled": "Inactive",
+      "policyPending": "Policy pending",
+      "roleBased": "Role and process based",
+      "enabled": "Enabled",
+      "reviewOnly": "Review access",
+      "superadmin": "Super admin",
+      "hr_admin": "HR admin",
+      "hrAdmin": "HR admin",
+      "manager": "Manager",
+      "employee": "Employee",
+      "localeDefault": "en-US",
+      "timezoneDefault": "Europe/Istanbul",
+      "themeDefault": "System dark theme",
+      "preferencePending": "Personal preference storage pending",
+      "percent": "{{value}}%",
+      "auditCount": "{{count}} records"
+    },
+    "helpers": {
+      "accountLinked": "Your session is linked to an employee record, so personal settings can be read safely.",
+      "accountNeedsEmployee": "Your session belongs to the company workspace, but it still needs an employee link.",
+      "accountNoTenant": "The user must be linked to a company workspace first.",
+      "tenantReady": "This session is operating inside a company workspace.",
+      "tenantMissing": "Admin settings cannot open until a company workspace is resolved.",
+      "notificationsPending": "Notification preferences will open through process-level policy; only scope is visible for now.",
+      "notificationsNoTenant": "Notification scope is resolved after the company workspace is linked.",
+      "localeReady": "Language and timezone match the current operating scope.",
+      "themePending": "The current theme is active; personal theme preference is not stored yet.",
+      "roleAdmin": "This role can manage setup screens.",
+      "roleLimited": "This role can review settings; admin permission is required for changes.",
+      "roleNoTenant": "Role scope is resolved after the company workspace is linked."
+    },
+    "evidence": {
+      "account": "Account link",
+      "employee": "Employee record",
+      "tenant": "Company workspace",
+      "readiness": "Setup readiness",
+      "scope": "Scope",
+      "audit": "Security history",
+      "locale": "Language",
+      "timezone": "Timezone",
+      "theme": "Theme",
+      "preference": "Preference storage",
+      "role": "Role",
+      "setupAccess": "Setup access"
+    },
     "sheet": {
       "mvpBadge": "Read-only",
-      "submit": "Save"
+      "submit": "Save",
+      "currentState": "Current state",
+      "evidence": "Evidence",
+      "actionUnavailable": "This area is view-only for now"
     },
     "sections": {
       "accountSecurity": {
@@ -2290,7 +2355,15 @@
     },
     "setupHub": {
       "title": "Setup center",
-      "description": "Starting point for company structure, data connections, and process parameters."
+      "description": "Starting point for company structure, data connections, and process parameters.",
+      "hints": {
+        "ready": "This setup area looks ready",
+        "attention": "Setup has started; some steps may still be open",
+        "locked": "Start with the required baseline data",
+        "connectorMissing": "Choose a data source first",
+        "connectorSelected": "Connection draft selected",
+        "connectorMapped": "Source and mapping evidence exists"
+      }
     }
   },
   "aiCoachSetup": {
