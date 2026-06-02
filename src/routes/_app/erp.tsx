@@ -214,11 +214,13 @@ function ErpPage() {
           <div className="min-w-[140px] shrink-0">
             <MetricCard
               compact
-              label={t('erp.metrics.preflight')}
-              value={`${data.readiness.score}%`}
-              hint={t(`erp.readinessStatus.${data.readiness.status}`)}
+              label={t(data.setupSummary.labelKey)}
+              value={t(data.setupSummary.valueKey)}
+              hint={t(data.setupSummary.hintKey)}
             />
-            <Progress className="mt-2 h-1.5" value={data.readiness.score} />
+            {data.setupSummary.progress === null ? null : (
+              <Progress className="mt-2 h-1.5" value={data.setupSummary.progress} />
+            )}
           </div>
           <MetricCard
             compact

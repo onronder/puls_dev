@@ -194,6 +194,12 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.provider.label).toBe('Canias ERP (Pasif)')
     expect(result.data.provider.status).toBe('preflight_ready')
     expect(result.data.setup.status).toBe('preflight_ready')
+    expect(result.data.setupSummary).toEqual({
+      labelKey: 'erp.metrics.setup',
+      valueKey: 'erp.setupSummary.values.preflightReady',
+      hintKey: 'erp.setupSummary.hints.preflightReady',
+      progress: 100,
+    })
     expect(result.data.setupSteps.every((step) => step.status === 'ready')).toBe(true)
     expect(result.data.namespaces).toHaveLength(1)
     expect(result.data.mappings).toHaveLength(1)
@@ -248,6 +254,41 @@ describe('fetchErpOverviewWithMeta', () => {
       'erp.providerOptions.canias.readiness',
     )
     expect(isErpOverviewEmpty(result.data)).toBe(false)
+  })
+
+  it('shows a draft setup summary instead of a misleading readiness percentage', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      erp_connections: {
+        data: {
+          provider: 'canias',
+          id: 'connection-draft',
+          display_name: 'Canias',
+          is_active: false,
+          last_sync_at: null,
+          last_status: null,
+          setup_status: 'draft',
+          setup_step: 'mapping',
+          is_enabled: true,
+          owned_domains: [],
+        },
+      },
+      erp_field_mappings: { data: [], error: null },
+      source_namespaces: { data: [], error: null },
+      entity_identity_map: { data: [], error: null },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('real')
+    expect(result.data.provider.status).toBe('setup_draft')
+    expect(result.data.readiness.score).toBeGreaterThan(0)
+    expect(result.data.setupSummary).toEqual({
+      labelKey: 'erp.metrics.setup',
+      valueKey: 'erp.setupSummary.values.draft',
+      hintKey: 'erp.setupSummary.hints.mappingPending',
+      progress: null,
+    })
   })
 
   it('uses enriched demo fallback only when demo mode is enabled', async () => {

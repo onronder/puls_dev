@@ -762,10 +762,37 @@
     "metrics": {
       "provider": "Kaynak",
       "preflight": "Kontrol",
+      "setup": "Kurulum",
       "fieldMapping": "Alan eşleştirme",
       "fieldMappingHint": "PULS / kaynak",
       "namespaces": "Kaynak kimlikleri",
       "namespacesHint": "Aktif kapsam"
+    },
+    "setupSummary": {
+      "values": {
+        "notConfigured": "Kaynak yok",
+        "draft": "Taslak",
+        "mapping": "Alanlar",
+        "mappingReady": "Alanlar hazır",
+        "namespaceReady": "Kimlikler hazır",
+        "setupInProgress": "Kurulum",
+        "preflightReady": "Kontrole hazır",
+        "connected": "Canlı",
+        "disabled": "Pasif",
+        "error": "Hata"
+      },
+      "hints": {
+        "notConfigured": "Önce veri kaynağı seç",
+        "mappingPending": "Alan eşleştirme bekliyor",
+        "mappingInProgress": "Alan eşleştirme tamamlanmalı",
+        "namespacePending": "Kaynak kimliği bekliyor",
+        "identityPending": "Kayıt eşleştirme bekliyor",
+        "preflightPending": "Kontrol adımı bekliyor",
+        "preflightReady": "Alan ve kimlik eşleşmeleri hazır",
+        "connected": "Canlı bağlantı aktif",
+        "disabled": "Kaynak devre dışı",
+        "error": "Kurulum hatası incelenmeli"
+      }
     },
     "actions": {
       "mapFields": "Alanları eşleştir",

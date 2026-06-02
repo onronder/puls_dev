@@ -762,10 +762,37 @@
     "metrics": {
       "provider": "Source",
       "preflight": "Check",
+      "setup": "Setup",
       "fieldMapping": "Field mapping",
       "fieldMappingHint": "PULS / source",
       "namespaces": "Source identities",
       "namespacesHint": "Active scope"
+    },
+    "setupSummary": {
+      "values": {
+        "notConfigured": "No source",
+        "draft": "Draft",
+        "mapping": "Fields",
+        "mappingReady": "Fields ready",
+        "namespaceReady": "Identities ready",
+        "setupInProgress": "Setup",
+        "preflightReady": "Ready to check",
+        "connected": "Live",
+        "disabled": "Inactive",
+        "error": "Error"
+      },
+      "hints": {
+        "notConfigured": "Choose a data source first",
+        "mappingPending": "Field mapping pending",
+        "mappingInProgress": "Field mapping must be completed",
+        "namespacePending": "Source identity pending",
+        "identityPending": "Record matching pending",
+        "preflightPending": "Check step pending",
+        "preflightReady": "Field and identity matches are ready",
+        "connected": "Live connection active",
+        "disabled": "Source disabled",
+        "error": "Setup error needs review"
+      }
     },
     "actions": {
       "mapFields": "Map fields",

@@ -35,6 +35,13 @@ export type ConnectorSetupStep = {
   status: ConnectorReadinessStatus
 }
 
+export type ConnectorSetupSummary = {
+  labelKey: string
+  valueKey: string
+  hintKey: string
+  progress: number | null
+}
+
 export type ConnectorProviderRequirement = {
   id:
     | 'source_profile'
@@ -138,6 +145,7 @@ export type ErpOverview = {
     status: ConnectorReadinessStatus
     checks: ConnectorReadinessCheck[]
   }
+  setupSummary: ConnectorSetupSummary
   setupSteps: ConnectorSetupStep[]
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
@@ -626,6 +634,83 @@ function deriveReadinessScore(checks: ConnectorReadinessCheck[]): number {
   return Math.round((score / checks.length) * 100)
 }
 
+function buildConnectorSetupSummary({
+  connectorState,
+  setupStatus,
+  isActive,
+  isEnabled,
+  mappedFields,
+  totalFields,
+  namespaceCount,
+  identityCount,
+  readinessScore,
+  readinessStatus,
+}: {
+  connectorState: ConnectorLifecycleState
+  setupStatus: ConnectorSetupStatus | null
+  isActive: boolean
+  isEnabled: boolean
+  mappedFields: number
+  totalFields: number
+  namespaceCount: number
+  identityCount: number
+  readinessScore: number
+  readinessStatus: ConnectorReadinessStatus
+}): ConnectorSetupSummary {
+  const summary = (
+    valueKey: string,
+    hintKey: string,
+    progress: number | null = null,
+  ): ConnectorSetupSummary => ({
+    labelKey: 'erp.metrics.setup',
+    valueKey,
+    hintKey,
+    progress,
+  })
+
+  if (connectorState !== 'connector_selected') {
+    return summary('erp.setupSummary.values.notConfigured', 'erp.setupSummary.hints.notConfigured')
+  }
+
+  if (!isEnabled || setupStatus === 'disabled' || setupStatus === 'archived') {
+    return summary('erp.setupSummary.values.disabled', 'erp.setupSummary.hints.disabled')
+  }
+
+  if (setupStatus === 'error') {
+    return summary('erp.setupSummary.values.error', 'erp.setupSummary.hints.error')
+  }
+
+  if (isActive || setupStatus === 'connected') {
+    return summary('erp.setupSummary.values.connected', 'erp.setupSummary.hints.connected', 100)
+  }
+
+  if (mappedFields === 0) {
+    return summary('erp.setupSummary.values.draft', 'erp.setupSummary.hints.mappingPending')
+  }
+
+  if (totalFields > 0 && mappedFields < totalFields) {
+    return summary('erp.setupSummary.values.mapping', 'erp.setupSummary.hints.mappingInProgress')
+  }
+
+  if (namespaceCount === 0) {
+    return summary('erp.setupSummary.values.mappingReady', 'erp.setupSummary.hints.namespacePending')
+  }
+
+  if (identityCount === 0) {
+    return summary('erp.setupSummary.values.namespaceReady', 'erp.setupSummary.hints.identityPending')
+  }
+
+  if (setupStatus === 'preflight_ready' || readinessStatus === 'ready') {
+    return summary(
+      'erp.setupSummary.values.preflightReady',
+      'erp.setupSummary.hints.preflightReady',
+      readinessScore,
+    )
+  }
+
+  return summary('erp.setupSummary.values.setupInProgress', 'erp.setupSummary.hints.preflightPending')
+}
+
 function buildConnectorSetupSteps({
   connectorState,
   mappedFields,
@@ -767,6 +852,18 @@ function buildOverview({
       status: readinessStatus,
       checks,
     },
+    setupSummary: buildConnectorSetupSummary({
+      connectorState,
+      setupStatus,
+      isActive,
+      isEnabled,
+      mappedFields,
+      totalFields,
+      namespaceCount: namespaces.length,
+      identityCount,
+      readinessScore,
+      readinessStatus,
+    }),
     setupSteps: buildConnectorSetupSteps({
       connectorState,
       mappedFields,
