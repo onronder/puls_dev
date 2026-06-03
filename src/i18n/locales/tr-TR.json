@@ -808,6 +808,89 @@
         "error": "Kurulum hatası incelenmeli"
       }
     },
+    "lifecycleStages": {
+      "source_selection": {
+        "label": "Kaynak seçimi",
+        "description": "Kurulum veri kaynağının seçildiği ilk adımda.",
+        "nextAction": "Bir kaynak seçildiğinde alan eşleştirme ve kimlik kapsamı aynı akış içinde ilerler."
+      },
+      "mapping": {
+        "label": "Alan eşleştirme",
+        "description": "Kaynak alanları PULS'un kanonik veri alanlarına bağlanıyor.",
+        "nextAction": "Zorunlu alanlar tamamlandığında kaynak kimliği ve kayıt eşleştirme adımına geçilir."
+      },
+      "namespace": {
+        "label": "Kaynak kimliği",
+        "description": "Dış kayıtların hangi kaynak kapsamından geldiği ve PULS kayıtlarıyla nasıl eşleştiği netleşiyor.",
+        "nextAction": "Kimlik kapsamı tamamlandıktan sonra güvenli kimlik bilgisi durumu kontrol edilir."
+      },
+      "credential": {
+        "label": "Kimlik bilgisi bekliyor",
+        "description": "Bu kaynak canlı bağlantı öncesinde güvenli bir referans bekliyor.",
+        "nextAction": "Secret değeri bu ekranda toplanmaz; ileride server-side güvenli referans doğrulaması gerekir."
+      },
+      "preflight": {
+        "label": "Kurulum kontrolü",
+        "description": "Kaynak, alan, kimlik ve güvenlik sınırları canlı bağlantıdan önce kontrol ediliyor.",
+        "nextAction": "Uyarı veya eksik kalmadığında runtime sınırı ayrı bir onay konusu olur."
+      },
+      "runtime_closed": {
+        "label": "Runtime kapalı",
+        "description": "Hazırlık temiz olsa bile canlı aktarım ve yazma yetkileri bu PR kapsamında kapalı.",
+        "nextAction": "Canlı connector geliştirmesi ayrı credential, job ve rollback tasarımıyla açılmalı."
+      },
+      "connected": {
+        "label": "Canlı bağlantı",
+        "description": "Kaynak bağlantısı canlı görünüyor.",
+        "nextAction": "Aktarım geçmişi, hata yönetimi ve geri alma kontrolleri izlenmeli."
+      },
+      "disabled": {
+        "label": "Devre dışı",
+        "description": "Bu kaynak kurulumu aktif kullanımda değil.",
+        "nextAction": "Tekrar açılmadan önce alan sahipliği ve kimlik bilgisi sınırı yeniden kontrol edilmeli."
+      },
+      "error": {
+        "label": "İnceleme gerekiyor",
+        "description": "Kurulum güvenli ilerleyemeyecek bir hata durumunda.",
+        "nextAction": "Hata kaydı incelenmeli ve kontrol yeniden çalıştırılmalı."
+      }
+    },
+    "capabilities": {
+      "title": "Kaynak yetenekleri",
+      "description": "Bu kaynak tipinin PULS içinde hangi yetenekleri güvenli biçimde taşıyabildiğini gösterir.",
+      "sourceProfile": {
+        "label": "Kaynak profili",
+        "description": "Kaynağın türü, kapsamı ve kurulum sahibi belli."
+      },
+      "domainOwnership": {
+        "label": "Alan sahipliği",
+        "description": "Kaynak yalnızca kendi yönettiği kanonik veri alanlarını besler."
+      },
+      "canonicalMapping": {
+        "label": "Kanonik eşleştirme",
+        "description": "Kaynak alanları PULS'un ortak veri modeline bağlanır."
+      },
+      "identityNamespace": {
+        "label": "Kimlik kapsamı",
+        "description": "Dış kayıt kimlikleri kaynak kapsamına göre ayrışır."
+      },
+      "credentialReference": {
+        "label": "Güvenli referans",
+        "description": "Gerekli bağlantı bilgileri yalnızca güvenli referans olarak izlenir."
+      },
+      "transferMethod": {
+        "label": "Transfer yöntemi",
+        "description": "Dosya, manuel aktarım veya API yolu kaynak tipine göre ayrılır."
+      },
+      "apiRuntime": {
+        "label": "Canlı API runtime",
+        "description": "Canlı API çağrıları ayrı connector runtime geliştirmesiyle açılır."
+      },
+      "writeback": {
+        "label": "Dış sisteme yazma",
+        "description": "ERP veya dış sisteme yazma ayrı onay ve güvenlik sınırı gerektirir."
+      }
+    },
     "actions": {
       "mapFields": "Alanları eşleştir",
       "reviewMapping": "Alan sözleşmesini incele",
@@ -923,12 +1006,16 @@
       "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin."
     },
     "sections": {
+      "lifecycle": "Yaşam döngüsü",
+      "capabilities": "Kaynak yetenekleri",
       "preflight": "Kurulum kontrolü",
       "preflightDescription": "Canlı API çağrısı yapmadan kaynak, alan, kimlik ve güvenlik sınırlarını birlikte doğrula.",
       "credentialBoundary": "Kimlik bilgisi sınırı",
       "credentialBoundaryDescription": "Bu bölüm canlı bağlantı için gereken kimlik bilgisi durumunu gösterir; secret değeri bu ekranda toplanmaz, okunmaz veya gösterilmez.",
       "namespaces": "Kaynak kimlikleri",
       "namespacesDescription": "Dış kaynaktan gelen kayıtların PULS kayıtlarıyla hangi kapsamda eşleştiğini gösterir.",
+      "domainOwnership": "Alan sahipliği",
+      "domainOwnershipDescription": "Her kanonik veri sınıfının hangi kaynaktan beslendiğini veya boşta olduğunu gösterir.",
       "canonicalClasses": "Kanonik veri sınıfları",
       "canonicalClassesDescription": "Kaynak alanlarının PULS içinde hangi ana veri sınıflarına bağlandığını ve zorunlu alanların tamamlanıp tamamlanmadığını gösterir.",
       "mapping": "Alan eşleştirme",
@@ -939,6 +1026,15 @@
       "guardrailsDescription": "Bağlantı hazırlığı yapılırken hangi işlemlerin kapalı kaldığını açıkça gösterir.",
       "syncLogs": "Kontrol geçmişi",
       "syncLogsDescription": "Kurulum ve kontrol adımlarında oluşan son kayıtlar."
+    },
+    "domainOwnership": {
+      "owner": "{{source}} tarafından yönetiliyor",
+      "available": "Henüz bir kaynak tarafından sahiplenilmedi",
+      "status": {
+        "owned_by_current": "Bu kaynak",
+        "owned_by_other": "Başka kaynak",
+        "available": "Boşta"
+      }
     },
     "columns": {
       "canonicalField": "PULS alanı",

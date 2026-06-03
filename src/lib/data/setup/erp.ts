@@ -44,12 +44,35 @@ export type ConnectorProviderStatus =
   | 'runtime_active'
 export type ConnectorSyncLogLevel = 'success' | 'warning' | 'info'
 export type ConnectorSetupStepId = 'source' | 'mapping' | 'namespace' | 'preflight' | 'runtime'
+export type ConnectorLifecycleStage =
+  | 'source_selection'
+  | 'mapping'
+  | 'namespace'
+  | 'credential'
+  | 'preflight'
+  | 'runtime_closed'
+  | 'connected'
+  | 'disabled'
+  | 'error'
 export type ConnectorCanonicalDataClassId =
   | 'employees'
   | 'departments'
   | 'positions'
   | 'cost_centers'
   | 'locations'
+export type ConnectorSourceCapabilityId =
+  | 'source_profile'
+  | 'domain_ownership'
+  | 'canonical_mapping'
+  | 'identity_namespace'
+  | 'credential_reference'
+  | 'transfer_method'
+  | 'api_runtime'
+  | 'writeback'
+export type ConnectorDomainOwnershipStatus =
+  | 'owned_by_current'
+  | 'owned_by_other'
+  | 'available'
 export type ConnectorPreflightCheckId =
   | 'source_profile'
   | 'required_mapping'
@@ -71,6 +94,34 @@ export type ConnectorSetupSummary = {
   valueKey: string
   hintKey: string
   progress: number | null
+}
+
+export type ConnectorLifecycle = {
+  stage: ConnectorLifecycleStage
+  status: ConnectorReadinessStatus
+  labelKey: string
+  descriptionKey: string
+  nextActionKey: string
+  runtimeEligible: false
+}
+
+export type ConnectorSourceCapability = {
+  id: ConnectorSourceCapabilityId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+}
+
+export type ConnectorDomainOwnership = {
+  id: ConnectorCanonicalDataClassId
+  labelKey: string
+  pulsTarget: string
+  status: ConnectorDomainOwnershipStatus
+  ownerProviderCode: string | null
+  ownerProviderLabel: string | null
+  ownerConnectionId: string | null
+  mappedFields: number
+  totalFields: number
 }
 
 export type ConnectorProviderRequirement = {
@@ -228,10 +279,13 @@ export type ErpOverview = {
     status: ConnectorReadinessStatus
     checks: ConnectorReadinessCheck[]
   }
+  lifecycle: ConnectorLifecycle
   setupSummary: ConnectorSetupSummary
   setupSteps: ConnectorSetupStep[]
   preflight: ConnectorPreflightResult
   credentialBoundary: ConnectorCredentialBoundary
+  capabilities: ConnectorSourceCapability[]
+  domainOwnership: ConnectorDomainOwnership[]
   canonicalClasses: ConnectorCanonicalDataClass[]
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
@@ -991,6 +1045,8 @@ type ErpConnectionCandidate = Pick<
   ErpConnectionRow,
   | 'id'
   | 'provider'
+  | 'display_name'
+  | 'connection_method'
   | 'connection_key'
   | 'setup_status'
   | 'setup_step'
@@ -1598,6 +1654,190 @@ function buildConnectorSetupSteps({
   ]
 }
 
+function lifecycle(
+  stage: ConnectorLifecycleStage,
+  status: ConnectorReadinessStatus,
+): ConnectorLifecycle {
+  return {
+    stage,
+    status,
+    labelKey: `erp.lifecycleStages.${stage}.label`,
+    descriptionKey: `erp.lifecycleStages.${stage}.description`,
+    nextActionKey: `erp.lifecycleStages.${stage}.nextAction`,
+    runtimeEligible: false,
+  }
+}
+
+function buildConnectorLifecycle({
+  connectorState,
+  setupStatus,
+  isActive,
+  isEnabled,
+  credentialBoundary,
+  mappedFields,
+  totalFields,
+  namespaceCount,
+  identityCount,
+  preflightStatus,
+}: {
+  connectorState: ConnectorLifecycleState
+  setupStatus: ConnectorSetupStatus | null
+  isActive: boolean
+  isEnabled: boolean
+  credentialBoundary: ConnectorCredentialBoundary
+  mappedFields: number
+  totalFields: number
+  namespaceCount: number
+  identityCount: number
+  preflightStatus: ConnectorReadinessStatus
+}): ConnectorLifecycle {
+  if (connectorState === 'no_tenant') return lifecycle('source_selection', 'blocked')
+  if (connectorState === 'no_connector') return lifecycle('source_selection', 'partial')
+  if (!isEnabled || setupStatus === 'disabled' || setupStatus === 'archived') {
+    return lifecycle('disabled', 'blocked')
+  }
+  if (setupStatus === 'error') return lifecycle('error', 'blocked')
+  if (isActive || setupStatus === 'connected') return lifecycle('connected', 'ready')
+  if (mappedFields === 0 || (totalFields > 0 && mappedFields < totalFields)) {
+    return lifecycle('mapping', mappedFields > 0 ? 'partial' : 'blocked')
+  }
+  if (namespaceCount === 0 || identityCount === 0) return lifecycle('namespace', 'partial')
+  if (credentialBoundary.status !== 'ready') {
+    return lifecycle('credential', credentialBoundary.status)
+  }
+  if (preflightStatus === 'ready') return lifecycle('runtime_closed', 'ready')
+  return lifecycle('preflight', preflightStatus)
+}
+
+function buildConnectorSourceCapabilities({
+  connectorState,
+  connectionMethod,
+  credentialBoundary,
+  canonicalClasses,
+  namespaceCount,
+  identityCount,
+  ownedDomains,
+  isActive,
+}: {
+  connectorState: ConnectorLifecycleState
+  connectionMethod?: string | null
+  credentialBoundary: ConnectorCredentialBoundary
+  canonicalClasses: ConnectorCanonicalDataClass[]
+  namespaceCount: number
+  identityCount: number
+  ownedDomains: string[]
+  isActive: boolean
+}): ConnectorSourceCapability[] {
+  const hasConnection = connectorState === 'connector_selected'
+  const inactiveTenantStatus: ConnectorReadinessStatus =
+    connectorState === 'no_connector' ? 'partial' : 'blocked'
+  const namespaceStatus: ConnectorReadinessStatus = !hasConnection
+    ? inactiveTenantStatus
+    : namespaceCount > 0 && identityCount > 0
+      ? 'ready'
+      : namespaceCount > 0
+        ? 'partial'
+        : 'blocked'
+
+  return [
+    {
+      id: 'source_profile',
+      labelKey: 'erp.capabilities.sourceProfile.label',
+      descriptionKey: 'erp.capabilities.sourceProfile.description',
+      status: hasConnection ? 'ready' : inactiveTenantStatus,
+    },
+    {
+      id: 'domain_ownership',
+      labelKey: 'erp.capabilities.domainOwnership.label',
+      descriptionKey: 'erp.capabilities.domainOwnership.description',
+      status: !hasConnection ? inactiveTenantStatus : ownedDomains.length > 0 ? 'ready' : 'partial',
+    },
+    {
+      id: 'canonical_mapping',
+      labelKey: 'erp.capabilities.canonicalMapping.label',
+      descriptionKey: 'erp.capabilities.canonicalMapping.description',
+      status: hasConnection ? deriveRequiredMappingStatus(canonicalClasses) : inactiveTenantStatus,
+    },
+    {
+      id: 'identity_namespace',
+      labelKey: 'erp.capabilities.identityNamespace.label',
+      descriptionKey: 'erp.capabilities.identityNamespace.description',
+      status: namespaceStatus,
+    },
+    {
+      id: 'credential_reference',
+      labelKey: 'erp.capabilities.credentialReference.label',
+      descriptionKey: 'erp.capabilities.credentialReference.description',
+      status: hasConnection ? credentialBoundary.status : 'blocked',
+    },
+    {
+      id: 'transfer_method',
+      labelKey: 'erp.capabilities.transferMethod.label',
+      descriptionKey: 'erp.capabilities.transferMethod.description',
+      status: !hasConnection
+        ? inactiveTenantStatus
+        : connectionMethod === 'manual_import'
+          ? 'ready'
+          : 'partial',
+    },
+    {
+      id: 'api_runtime',
+      labelKey: 'erp.capabilities.apiRuntime.label',
+      descriptionKey: 'erp.capabilities.apiRuntime.description',
+      status: isActive ? 'partial' : 'blocked',
+    },
+    {
+      id: 'writeback',
+      labelKey: 'erp.capabilities.writeback.label',
+      descriptionKey: 'erp.capabilities.writeback.description',
+      status: 'blocked',
+    },
+  ]
+}
+
+function buildConnectorDomainOwnership({
+  connectorState,
+  currentConnectionId,
+  connections,
+  canonicalClasses,
+}: {
+  connectorState: ConnectorLifecycleState
+  currentConnectionId: string | null
+  connections: ErpConnectionCandidate[]
+  canonicalClasses: ConnectorCanonicalDataClass[]
+}): ConnectorDomainOwnership[] {
+  const activeConnections = connections.filter(
+    (connection) => connection.setup_status !== 'archived' && connection.is_enabled !== false,
+  )
+
+  return CANONICAL_DATA_CLASSES.map((definition) => {
+    const owner = pickCurrentErpConnection(
+      activeConnections.filter((connection) =>
+        normalizeOwnedDomains(connection.owned_domains).includes(definition.id),
+      ),
+    )
+    const canonicalClass = canonicalClasses.find((row) => row.id === definition.id)
+    const status: ConnectorDomainOwnershipStatus =
+      !owner || connectorState === 'no_connector'
+        ? 'available'
+        : owner.id === currentConnectionId
+          ? 'owned_by_current'
+          : 'owned_by_other'
+
+    return {
+      id: definition.id,
+      labelKey: definition.labelKey,
+      pulsTarget: definition.pulsTarget,
+      status,
+      ownerProviderCode: owner?.provider?.trim().toLowerCase() || null,
+      ownerProviderLabel: owner ? mapProviderLabel(owner.provider, owner.display_name) : null,
+      ownerConnectionId: owner?.id ?? null,
+      mappedFields: canonicalClass?.mappedFields ?? 0,
+      totalFields: canonicalClass?.totalFields ?? definition.fields.length,
+    }
+  })
+}
+
 function buildOverview({
   connectorState,
   connectionId,
@@ -1619,6 +1859,7 @@ function buildOverview({
   namespaces,
   syncLogs,
   credentialBoundary,
+  connections,
 }: {
   connectorState: ConnectorLifecycleState
   connectionId: string | null
@@ -1640,6 +1881,7 @@ function buildOverview({
   namespaces: ConnectorNamespaceSummary[]
   syncLogs: ConnectorSyncLog[]
   credentialBoundary: ConnectorCredentialBoundary
+  connections?: ErpConnectionCandidate[]
 }): ErpOverview {
   const mappedFields = mappings.filter((row) => row.status === 'mapped').length
   const totalFields = mappings.length
@@ -1655,6 +1897,34 @@ function buildOverview({
     canonicalClasses,
     namespaceCount: namespaces.length,
     identityCount,
+  })
+  const lifecycleState = buildConnectorLifecycle({
+    connectorState,
+    setupStatus,
+    isActive,
+    isEnabled,
+    credentialBoundary,
+    mappedFields,
+    totalFields,
+    namespaceCount: namespaces.length,
+    identityCount,
+    preflightStatus: preflight.status,
+  })
+  const capabilities = buildConnectorSourceCapabilities({
+    connectorState,
+    connectionMethod: connections?.find((row) => row.id === connectionId)?.connection_method,
+    credentialBoundary,
+    canonicalClasses,
+    namespaceCount: namespaces.length,
+    identityCount,
+    ownedDomains,
+    isActive,
+  })
+  const domainOwnership = buildConnectorDomainOwnership({
+    connectorState,
+    currentConnectionId: connectionId,
+    connections: connections ?? [],
+    canonicalClasses,
   })
 
   return {
@@ -1682,6 +1952,7 @@ function buildOverview({
       status: readinessStatus,
       checks,
     },
+    lifecycle: lifecycleState,
     setupSummary: buildConnectorSetupSummary({
       connectorState,
       setupStatus,
@@ -1705,6 +1976,8 @@ function buildOverview({
     }),
     preflight,
     credentialBoundary,
+    capabilities,
+    domainOwnership,
     canonicalClasses,
     mappings,
     namespaces,
@@ -1785,6 +2058,21 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
       kind: 'sync_batch' as const,
     })),
     credentialBoundary,
+    connections: [
+      {
+        id: 'demo-canias',
+        provider: 'canias',
+        display_name: demo.status.system,
+        connection_method: 'rest_api',
+        connection_key: 'demo-canias',
+        setup_status: 'preflight_ready',
+        setup_step: 'preflight',
+        is_enabled: true,
+        owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
+        created_at: null,
+        updated_at: null,
+      },
+    ],
   })
 }
 
@@ -2003,6 +2291,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       kind: row.sync_type === 'setup_preflight' ? 'setup_preflight' : 'sync_batch',
     })),
     credentialBoundary,
+    connections,
   })
 }
 

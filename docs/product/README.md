@@ -323,6 +323,17 @@ PR14.12B closes the dashboard/ERP state mismatch, duplicate provider/domain setu
 | [`src/lib/data/dashboard/overview.ts`](../../src/lib/data/dashboard/overview.ts)                                         | Dashboard ERP card uses credential-aware connector truth                  |
 | [`scripts/verify-14-connector-state-consistency.sh`](../../scripts/verify-14-connector-state-consistency.sh)             | PR14.12B verify gate                                                     |
 
+## PR14.13 Connector lifecycle capabilities
+
+PR14.13 adds the source-independent connector lifecycle contract to `/erp`: lifecycle stage, source capabilities, and canonical domain ownership are derived from real setup state. No migration, credential capture, runtime connector, sync execution, or ERP writeback is added.
+
+| Document / artifact                                                                             | Purpose                                                                 |
+|-------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [14_connector_lifecycle_capabilities.md](./14_connector_lifecycle_capabilities.md)              | Lifecycle, capability, and domain ownership acceptance                  |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                  | `lifecycle`, `capabilities`, and `domainOwnership` adapter contract     |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                      | Responsive lifecycle/capability/domain ownership workbench UI           |
+| [`scripts/verify-14-connector-lifecycle-capabilities.sh`](../../scripts/verify-14-connector-lifecycle-capabilities.sh) | PR14.13 verify gate                                                     |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

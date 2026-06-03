@@ -61,6 +61,7 @@ function ErpRoute() {
 type ConnectorStatus = ErpOverview['readiness']['status']
 type ConnectorSyncLevel = ErpOverview['syncLogs'][number]['level']
 type ConnectorProviderOption = ErpOverview['providerOptions'][number]
+type ConnectorDomainOwnership = ErpOverview['domainOwnership'][number]
 
 function readinessTone(status: ConnectorStatus): StatusTone {
   if (status === 'ready') return 'success'
@@ -77,6 +78,12 @@ function syncLogTone(level: ConnectorSyncLevel): string {
     default:
       return 'bg-[var(--color-primary-soft)] text-[var(--color-info)]'
   }
+}
+
+function domainOwnershipTone(status: ConnectorDomainOwnership['status']): StatusTone {
+  if (status === 'owned_by_current') return 'success'
+  if (status === 'owned_by_other') return 'warning'
+  return 'neutral'
 }
 
 function SyncLogIcon({ level }: { level: ConnectorSyncLevel }) {
@@ -215,11 +222,11 @@ function ErpPage() {
                 : t('erp.workbench.description')
             }
           />
-          <ol className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0">
+          <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {data.setupSteps.map((step, index) => (
               <li
                 key={step.id}
-                className="min-w-[176px] rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3"
+                className="min-h-[148px] rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span
@@ -251,14 +258,14 @@ function ErpPage() {
       ) : null}
 
       {isLoading ? (
-        <div className="-mx-4 mt-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
-          <Skeleton className="h-28 min-w-[140px] rounded-xl" />
-          <Skeleton className="h-28 min-w-[140px] rounded-xl" />
-          <Skeleton className="h-28 min-w-[140px] rounded-xl" />
-          <Skeleton className="h-28 min-w-[140px] rounded-xl" />
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
         </div>
       ) : data && hasSelectedConnector ? (
-        <div className="-mx-4 mt-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             compact
             label={t('erp.metrics.provider')}
@@ -266,7 +273,7 @@ function ErpPage() {
             hint={t(data.provider.statusLabelKey)}
             icon={Plug}
           />
-          <div className="min-w-[140px] shrink-0">
+          <div>
             <MetricCard
               compact
               label={t(data.setupSummary.labelKey)}
@@ -569,6 +576,70 @@ function ErpPage() {
       ) : null}
 
       {data && hasSelectedConnector ? (
+        <section className="mt-8 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {t('erp.sections.lifecycle')}
+                </p>
+                <h2 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                  {t(data.lifecycle.labelKey)}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                  {t(data.lifecycle.descriptionKey)}
+                </p>
+                <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                  {t(data.lifecycle.nextActionKey)}
+                </p>
+              </div>
+              <StatusPill tone={readinessTone(data.lifecycle.status)}>
+                {t(`erp.readinessStatus.${data.lifecycle.status}`)}
+              </StatusPill>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {t('erp.sections.capabilities')}
+                </p>
+                <h2 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                  {t('erp.capabilities.title')}
+                </h2>
+              </div>
+              <p className="text-xs leading-relaxed text-[var(--color-text-muted)] sm:max-w-[260px] sm:text-right">
+                {t('erp.capabilities.description')}
+              </p>
+            </div>
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+              {data.capabilities.map((capability) => (
+                <li
+                  key={capability.id}
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(capability.labelKey)}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                        {t(capability.descriptionKey)}
+                      </p>
+                    </div>
+                    <StatusPill tone={readinessTone(capability.status)}>
+                      {t(`erp.readinessStatus.${capability.status}`)}
+                    </StatusPill>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      ) : null}
+
+      {data && hasSelectedConnector ? (
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button
             type="button"
@@ -780,6 +851,41 @@ function ErpPage() {
           </section>
 
           <section id="erp-mapping-discovery" className="mt-8 scroll-mt-6">
+            <SectionHeader
+              title={t('erp.sections.domainOwnership')}
+              description={t('erp.sections.domainOwnershipDescription')}
+            />
+            <ul className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {data.domainOwnership.map((domain) => (
+                <li
+                  key={domain.id}
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(domain.labelKey)}
+                      </p>
+                      <p className="mt-1 font-mono text-xs text-[var(--color-text-muted)]">
+                        {domain.pulsTarget}
+                      </p>
+                    </div>
+                    <StatusPill tone={domainOwnershipTone(domain.status)}>
+                      {t(`erp.domainOwnership.status.${domain.status}`)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-3 text-xs text-[var(--color-text-secondary)]">
+                    {domain.ownerProviderLabel
+                      ? t('erp.domainOwnership.owner', { source: domain.ownerProviderLabel })
+                      : t('erp.domainOwnership.available')}
+                  </p>
+                  <p className="mt-2 font-mono text-xs text-[var(--color-text-muted)]">
+                    {domain.mappedFields} / {domain.totalFields}
+                  </p>
+                </li>
+              ))}
+            </ul>
+
             <SectionHeader
               title={t('erp.sections.canonicalClasses')}
               description={t('erp.sections.canonicalClassesDescription')}

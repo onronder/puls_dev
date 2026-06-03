@@ -247,6 +247,25 @@ describe('fetchErpOverviewWithMeta', () => {
       state: 'missing',
       status: 'partial',
     })
+    expect(result.data.lifecycle).toMatchObject({
+      stage: 'credential',
+      status: 'partial',
+      runtimeEligible: false,
+    })
+    expect(result.data.capabilities.find((capability) => capability.id === 'domain_ownership')).toMatchObject({
+      status: 'ready',
+    })
+    expect(result.data.capabilities.find((capability) => capability.id === 'api_runtime')).toMatchObject({
+      status: 'blocked',
+    })
+    expect(result.data.domainOwnership.find((domain) => domain.id === 'employees')).toMatchObject({
+      status: 'owned_by_current',
+      ownerProviderLabel: 'Canias ERP (Pasif)',
+    })
+    expect(result.data.domainOwnership.find((domain) => domain.id === 'locations')).toMatchObject({
+      status: 'available',
+      ownerProviderLabel: null,
+    })
     expect(result.data.namespaces).toHaveLength(1)
     expect(result.data.canonicalClasses.find((row) => row.id === 'employees')).toMatchObject({
       mappedFields: 4,
@@ -307,6 +326,11 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.status).toBe('success')
     expect(result.data.connectorState).toBe('no_connector')
     expect(result.data.preflight.status).toBe('blocked')
+    expect(result.data.lifecycle).toMatchObject({
+      stage: 'source_selection',
+      status: 'partial',
+    })
+    expect(result.data.domainOwnership.every((domain) => domain.status === 'available')).toBe(true)
     expect(result.data.setupSteps.map((step) => step.status)).toEqual([
       'partial',
       'blocked',
@@ -500,6 +524,13 @@ describe('fetchErpOverviewWithMeta', () => {
       required: false,
       state: 'not_required',
       status: 'ready',
+    })
+    expect(result.data.capabilities.find((capability) => capability.id === 'transfer_method')).toMatchObject({
+      status: 'ready',
+    })
+    expect(result.data.domainOwnership.find((domain) => domain.id === 'employees')).toMatchObject({
+      status: 'owned_by_current',
+      ownerProviderLabel: 'CSV / Excel',
     })
     expect(result.data.preflight.checks.find((check) => check.id === 'credential_boundary')).toMatchObject({
       status: 'ready',
