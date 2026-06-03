@@ -24,8 +24,8 @@ SET
   ),
   safe_error_code = CASE
     WHEN safe_error_code IS NOT NULL THEN safe_error_code
-    WHEN status = 'failed' THEN 'connector_activity_failed'
-    WHEN status IN ('partial', 'partial_success') AND records_failed > 0 THEN 'connector_activity_has_blockers'
+    WHEN status::TEXT = 'failed' THEN 'connector_activity_failed'
+    WHEN status::TEXT = 'partial_success' AND records_failed > 0 THEN 'connector_activity_has_blockers'
     ELSE NULL
   END,
   safe_error_context = CASE
@@ -45,7 +45,7 @@ SET
   next_action_key = COALESCE(
     next_action_key,
     CASE
-      WHEN sync_type = 'setup_preflight' AND status = 'success' THEN 'runtime_still_closed'
+      WHEN sync_type = 'setup_preflight' AND status::TEXT = 'success' THEN 'runtime_still_closed'
       WHEN sync_type = 'setup_preflight' THEN 'review_setup_findings'
       WHEN sync_type = 'credential_handoff' THEN 'wait_for_secure_reference'
       ELSE 'review_activity'
