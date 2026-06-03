@@ -402,6 +402,50 @@ export type ConnectorApplyReadiness = {
   checks: ConnectorApplyReadinessCheck[]
 }
 
+export type ConnectorControlledApplyPlanStatus =
+  | 'not_available'
+  | 'needs_preview'
+  | 'needs_review'
+  | 'design_ready'
+  | 'blocked'
+
+export type ConnectorControlledApplyGateId =
+  | 'preview_ready'
+  | 'human_review'
+  | 'source_checksum'
+  | 'approval_policy'
+  | 'batch_lock'
+  | 'rollback_strategy'
+  | 'audit_trail'
+  | 'notification_plan'
+  | 'runtime_credentials'
+  | 'execution_boundary'
+
+export type ConnectorControlledApplyGate = {
+  id: ConnectorControlledApplyGateId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+  valueKey: string
+}
+
+export type ConnectorControlledApplyPlan = {
+  status: ConnectorControlledApplyPlanStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  executionOpen: false
+  applyRpcExposed: false
+  batchId: string | null
+  sourceChecksum: string | null
+  gates: ConnectorControlledApplyGate[]
+  summary: {
+    readyCount: number
+    partialCount: number
+    blockedCount: number
+  }
+}
+
 export type ConnectorNamespaceSummary = {
   id: string
   code: string
@@ -515,6 +559,7 @@ export type ErpOverview = {
   credentialHandoff: ConnectorCredentialHandoff
   importPreview: ConnectorImportPreview
   applyReadiness: ConnectorApplyReadiness
+  controlledApplyPlan: ConnectorControlledApplyPlan
   capabilities: ConnectorSourceCapability[]
   domainOwnership: ConnectorDomainOwnership[]
   canonicalClasses: ConnectorCanonicalDataClass[]
@@ -1850,6 +1895,113 @@ function buildConnectorApplyReadiness({
   }
 }
 
+function buildConnectorControlledApplyPlan({
+  connectorState,
+  importPreview,
+  credentialBoundary,
+  applyReadiness,
+}: {
+  connectorState: ConnectorLifecycleState
+  importPreview: ConnectorImportPreview
+  credentialBoundary: ConnectorCredentialBoundary
+  applyReadiness: ConnectorApplyReadiness
+}): ConnectorControlledApplyPlan {
+  const batch = importPreview.batch
+  const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
+  const hasRowErrors = importPreview.summary.errorCount > 0
+  const reviewRecorded = Boolean(applyReadiness.reviewRequestedAt)
+  const credentialReady =
+    !credentialBoundary.required ||
+    credentialBoundary.state === 'verified' ||
+    credentialBoundary.state === 'not_required'
+  const hasChecksum = Boolean(batch?.sourceChecksum)
+
+  const status: ConnectorControlledApplyPlanStatus =
+    connectorState !== 'connector_selected' || !batch?.id
+      ? 'not_available'
+      : hasRowErrors
+        ? 'blocked'
+        : !previewReady
+          ? 'needs_preview'
+          : reviewRecorded
+            ? 'design_ready'
+            : 'needs_review'
+
+  const gate = (
+    id: ConnectorControlledApplyGateId,
+    statusValue: ConnectorReadinessStatus,
+    valueKey: string,
+  ): ConnectorControlledApplyGate => ({
+    id,
+    labelKey: `erp.controlledApply.gates.${id}.label`,
+    descriptionKey: `erp.controlledApply.gates.${id}.description`,
+    status: statusValue,
+    valueKey,
+  })
+
+  const gates: ConnectorControlledApplyGate[] = [
+    gate(
+      'preview_ready',
+      previewReady ? 'ready' : hasRowErrors ? 'blocked' : 'partial',
+      previewReady
+        ? 'erp.controlledApply.values.previewReady'
+        : hasRowErrors
+          ? 'erp.controlledApply.values.previewBlocked'
+          : 'erp.controlledApply.values.previewPending',
+    ),
+    gate(
+      'human_review',
+      reviewRecorded ? 'ready' : previewReady ? 'partial' : 'blocked',
+      reviewRecorded
+        ? 'erp.controlledApply.values.reviewRecorded'
+        : 'erp.controlledApply.values.reviewRequired',
+    ),
+    gate(
+      'source_checksum',
+      hasChecksum ? 'ready' : 'partial',
+      hasChecksum
+        ? 'erp.controlledApply.values.checksumReady'
+        : 'erp.controlledApply.values.checksumMissing',
+    ),
+    gate('approval_policy', 'partial', 'erp.controlledApply.values.policyNeeded'),
+    gate('batch_lock', batch?.id ? 'partial' : 'blocked', 'erp.controlledApply.values.lockNeeded'),
+    gate('rollback_strategy', 'blocked', 'erp.controlledApply.values.rollbackNeeded'),
+    gate(
+      'audit_trail',
+      reviewRecorded ? 'ready' : previewReady ? 'partial' : 'blocked',
+      reviewRecorded
+        ? 'erp.controlledApply.values.auditReady'
+        : 'erp.controlledApply.values.auditPending',
+    ),
+    gate('notification_plan', 'blocked', 'erp.controlledApply.values.notificationNeeded'),
+    gate(
+      'runtime_credentials',
+      credentialReady ? 'partial' : 'blocked',
+      credentialReady
+        ? 'erp.controlledApply.values.credentialBoundaryReady'
+        : 'erp.controlledApply.values.credentialBoundaryPending',
+    ),
+    gate('execution_boundary', 'blocked', 'erp.controlledApply.values.executionClosed'),
+  ]
+
+  return {
+    status,
+    readiness: status === 'blocked' ? 'blocked' : 'partial',
+    statusLabelKey: `erp.controlledApply.status.${status}`,
+    descriptionKey: `erp.controlledApply.descriptions.${status}`,
+    executionOpen: false,
+    applyRpcExposed: false,
+    batchId: batch?.id ?? null,
+    sourceChecksum: batch?.sourceChecksum ?? null,
+    gates,
+    summary: {
+      readyCount: gates.filter((item) => item.status === 'ready').length,
+      partialCount: gates.filter((item) => item.status === 'partial').length,
+      blockedCount: gates.filter((item) => item.status === 'blocked').length,
+    },
+  }
+}
+
 function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant'): ErpOverview {
   const credentialBoundary = buildConnectorCredentialBoundary({
     hasConnection: false,
@@ -2892,6 +3044,14 @@ function buildOverview({
     updatedAt: credentialHandoffUpdatedAt,
   })
   const resolvedImportPreview = importPreview ?? emptyConnectorImportPreview(connectorState)
+  const resolvedApplyReadiness =
+    applyReadiness ??
+    buildConnectorApplyReadiness({
+      connectorState,
+      importPreview: resolvedImportPreview,
+      credentialBoundary,
+      reviewEvent: null,
+    })
 
   return {
     connectorState,
@@ -2944,14 +3104,13 @@ function buildOverview({
     credentialBoundary,
     credentialHandoff,
     importPreview: resolvedImportPreview,
-    applyReadiness:
-      applyReadiness ??
-      buildConnectorApplyReadiness({
-        connectorState,
-        importPreview: resolvedImportPreview,
-        credentialBoundary,
-        reviewEvent: null,
-      }),
+    applyReadiness: resolvedApplyReadiness,
+    controlledApplyPlan: buildConnectorControlledApplyPlan({
+      connectorState,
+      importPreview: resolvedImportPreview,
+      credentialBoundary,
+      applyReadiness: resolvedApplyReadiness,
+    }),
     capabilities,
     domainOwnership,
     canonicalClasses,

@@ -1045,7 +1045,9 @@
       "activityTimeline": "Activity history",
       "activityTimelineDescription": "Safe records from setup, secure reference, and readiness-check steps.",
       "applyReadiness": "Apply readiness",
-      "applyReadinessDescription": "Review whether the prepared preview is ready for human decisioning. This records audit intent only; it does not apply records or write canonical data."
+      "applyReadinessDescription": "Review whether the prepared preview is ready for human decisioning. This records audit intent only; it does not apply records or write canonical data.",
+      "controlledApply": "Controlled apply design",
+      "controlledApplyDescription": "Shows the approval, lock, rollback, notification, and audit gates that must exist before canonical writes can open."
     },
     "domainOwnership": {
       "owner": "Managed by {{source}}",
@@ -1648,6 +1650,89 @@
         "apply_execution_closed": {
           "label": "Apply execution closed",
           "description": "This release records review intent only; canonical apply is not implemented."
+        }
+      }
+    },
+    "controlledApply": {
+      "executionClosed": "Execution closed",
+      "boundaryNote": "This plan makes decision gates visible only. This screen does not apply a batch, run a connector, read credentials, or write ERP or canonical records.",
+      "status": {
+        "not_available": "Apply plan not ready",
+        "needs_preview": "Preview pending",
+        "needs_review": "Human review pending",
+        "design_ready": "Design review ready",
+        "blocked": "Apply plan blocked"
+      },
+      "descriptions": {
+        "not_available": "A controlled apply plan cannot be evaluated until a source and dry-run batch exist.",
+        "needs_preview": "Rows must be previewed against the canonical model before apply gates can be evaluated reliably.",
+        "needs_review": "Preview is ready. Human review, approval policy, and operating gates must still be completed before apply can open.",
+        "design_ready": "Human review is recorded. This is not live-write permission; it means the controlled apply design gates are visible.",
+        "blocked": "Preview errors or missing evidence prevent the controlled apply plan from moving forward."
+      },
+      "metrics": {
+        "ready": "Ready",
+        "partial": "Missing",
+        "blocked": "Closed"
+      },
+      "values": {
+        "previewReady": "Preview classified",
+        "previewPending": "Preview pending",
+        "previewBlocked": "Preview has errors",
+        "reviewRecorded": "Review recorded",
+        "reviewRequired": "Human review required",
+        "checksumReady": "Source checksum present",
+        "checksumMissing": "Source checksum pending",
+        "policyNeeded": "Approval policy must be defined",
+        "lockNeeded": "Batch lock and single-run boundary must be verified",
+        "rollbackNeeded": "Rollback plan must be completed",
+        "auditReady": "Audit trail present",
+        "auditPending": "Audit trail pending",
+        "notificationNeeded": "Notification flow must be defined",
+        "credentialBoundaryReady": "Secure reference boundary defined",
+        "credentialBoundaryPending": "Secure reference must be verified",
+        "executionClosed": "Apply RPC is not exposed from product UI"
+      },
+      "gates": {
+        "preview_ready": {
+          "label": "Preview evidence",
+          "description": "Batch rows must be classified as create, update, or skip in dry-run mode."
+        },
+        "human_review": {
+          "label": "Human review",
+          "description": "An admin must mark preview results with review intent."
+        },
+        "source_checksum": {
+          "label": "Source checksum",
+          "description": "A source fingerprint is required to prevent repeat apply or content drift."
+        },
+        "approval_policy": {
+          "label": "Approval policy",
+          "description": "The role allowed to approve writes for each data class must be explicit."
+        },
+        "batch_lock": {
+          "label": "Batch lock",
+          "description": "Concurrent or repeated execution attempts for the same batch must be locked."
+        },
+        "rollback_strategy": {
+          "label": "Rollback strategy",
+          "description": "A safe rollback or correction path must exist for incorrect write outcomes."
+        },
+        "audit_trail": {
+          "label": "Audit trail",
+          "description": "Who decided what, when, and for which batch must be tracked safely."
+        },
+        "notification_plan": {
+          "label": "Notification plan",
+          "description": "Relevant roles need clear notifications before and after apply."
+        },
+        "runtime_credentials": {
+          "label": "Runtime credential boundary",
+          "description": "Live connector execution must use a verified secure reference, never a visible secret value."
+        },
+        "execution_boundary": {
+          "label": "Execution boundary",
+          "description": "The product screen does not open apply RPC or live connector execution today."
         }
       }
     }

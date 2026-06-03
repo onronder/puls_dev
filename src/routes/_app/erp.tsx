@@ -1177,6 +1177,95 @@ function ErpPage() {
             </div>
           </section>
 
+          <section id="erp-controlled-apply" className="mt-8 scroll-mt-6">
+            <SectionHeader
+              title={t('erp.sections.controlledApply')}
+              description={t('erp.sections.controlledApplyDescription')}
+            />
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      {t(data.controlledApplyPlan.statusLabelKey)}
+                    </h2>
+                    <StatusPill tone={readinessTone(data.controlledApplyPlan.readiness)}>
+                      {t(`erp.readinessStatus.${data.controlledApplyPlan.readiness}`)}
+                    </StatusPill>
+                    <StatusPill tone="neutral">
+                      {t('erp.controlledApply.executionClosed')}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {t(data.controlledApplyPlan.descriptionKey)}
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center sm:min-w-72">
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <p className="font-mono text-lg font-semibold text-[var(--color-success)]">
+                      {data.controlledApplyPlan.summary.readyCount}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.controlledApply.metrics.ready')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <p className="font-mono text-lg font-semibold text-[var(--color-warning)]">
+                      {data.controlledApplyPlan.summary.partialCount}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.controlledApply.metrics.partial')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <p className="font-mono text-lg font-semibold text-[var(--color-danger)]">
+                      {data.controlledApplyPlan.summary.blockedCount}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.controlledApply.metrics.blocked')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {data.controlledApplyPlan.gates.map((gate) => (
+                  <div
+                    key={gate.id}
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {t(gate.labelKey)}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                          {t(gate.descriptionKey)}
+                        </p>
+                      </div>
+                      <StatusPill tone={readinessTone(gate.status)}>
+                        {t(`erp.readinessStatus.${gate.status}`)}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
+                      {t(gate.valueKey)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3">
+                <ShieldCheck
+                  className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                  aria-hidden
+                />
+                <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+                  {t('erp.controlledApply.boundaryNote')}
+                </p>
+              </div>
+            </div>
+          </section>
+
           <section className="mt-8">
             <SectionHeader
               title={t('erp.sections.credentialBoundary')}

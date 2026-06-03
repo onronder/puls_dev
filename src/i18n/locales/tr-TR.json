@@ -1045,7 +1045,9 @@
       "activityTimeline": "Aktivite geçmişi",
       "activityTimelineDescription": "Kurulum, güvenli referans ve kontrol adımlarında oluşan güvenli kayıtlar.",
       "applyReadiness": "Uygulama hazırlığı",
-      "applyReadinessDescription": "Hazırlanan önizlemenin insan kararı için hazır olup olmadığını gösterir. Bu adım yalnızca denetim niyeti kaydeder; kayıt uygulamaz veya kanonik veri yazmaz."
+      "applyReadinessDescription": "Hazırlanan önizlemenin insan kararı için hazır olup olmadığını gösterir. Bu adım yalnızca denetim niyeti kaydeder; kayıt uygulamaz veya kanonik veri yazmaz.",
+      "controlledApply": "Kontrollü uygulama tasarımı",
+      "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
     "domainOwnership": {
       "owner": "{{source}} tarafından yönetiliyor",
@@ -1648,6 +1650,89 @@
         "apply_execution_closed": {
           "label": "Apply çalıştırma kapalı",
           "description": "Bu sürüm yalnızca inceleme niyeti kaydeder; kanonik apply uygulanmadı."
+        }
+      }
+    },
+    "controlledApply": {
+      "executionClosed": "Çalıştırma kapalı",
+      "boundaryNote": "Bu plan yalnızca karar kapılarını görünür kılar. Bu ekrandan batch uygulanmaz, connector çalıştırılmaz, kimlik bilgisi okunmaz ve ERP ya da kanonik kayda yazım yapılmaz.",
+      "status": {
+        "not_available": "Uygulama planı hazır değil",
+        "needs_preview": "Önizleme bekleniyor",
+        "needs_review": "İnsan incelemesi bekleniyor",
+        "design_ready": "Tasarım incelemesi hazır",
+        "blocked": "Uygulama planı blokeli"
+      },
+      "descriptions": {
+        "not_available": "Kaynak ve dry-run batch olmadan kontrollü uygulama planı değerlendirilemez.",
+        "needs_preview": "Satırlar kanonik modele göre önizlenmeden uygulama kapıları güvenilir biçimde değerlendirilemez.",
+        "needs_review": "Önizleme hazır. Apply açılmadan önce insan incelemesi, onay politikası ve operasyon kapıları ayrı ayrı tamamlanmalı.",
+        "design_ready": "İnsan incelemesi kaydedildi. Bu, canlı yazım izni değil; kontrollü apply tasarımı için kapıların görünür olduğunu gösterir.",
+        "blocked": "Önizleme hataları veya eksik kanıtlar varken kontrollü uygulama planı ilerletilemez."
+      },
+      "metrics": {
+        "ready": "Hazır",
+        "partial": "Eksik",
+        "blocked": "Kapalı"
+      },
+      "values": {
+        "previewReady": "Önizleme sınıflandırıldı",
+        "previewPending": "Önizleme bekleniyor",
+        "previewBlocked": "Önizleme hatalı",
+        "reviewRecorded": "İnceleme kaydı var",
+        "reviewRequired": "İnsan incelemesi gerekli",
+        "checksumReady": "Kaynak checksum mevcut",
+        "checksumMissing": "Kaynak checksum bekleniyor",
+        "policyNeeded": "Onay politikası tanımlanmalı",
+        "lockNeeded": "Batch kilidi ve tekil çalıştırma sınırı doğrulanmalı",
+        "rollbackNeeded": "Geri alma planı tamamlanmalı",
+        "auditReady": "Denetim izi mevcut",
+        "auditPending": "Denetim izi bekleniyor",
+        "notificationNeeded": "Bildirim akışı tanımlanmalı",
+        "credentialBoundaryReady": "Güvenli referans sınırı tanımlı",
+        "credentialBoundaryPending": "Güvenli referans doğrulanmalı",
+        "executionClosed": "Apply RPC ürün ekranından açık değil"
+      },
+      "gates": {
+        "preview_ready": {
+          "label": "Önizleme kanıtı",
+          "description": "Batch satırları dry-run modunda yarat, güncelle veya atla olarak sınıflandırılmalı."
+        },
+        "human_review": {
+          "label": "İnsan incelemesi",
+          "description": "Önizleme sonuçları admin tarafından denetim niyetiyle işaretlenmeli."
+        },
+        "source_checksum": {
+          "label": "Kaynak checksum",
+          "description": "Aynı batch'in tekrar uygulanmasını veya farklı içerikle ilerlemesini engelleyen kaynak izi gerekir."
+        },
+        "approval_policy": {
+          "label": "Onay politikası",
+          "description": "Hangi rolün hangi veri sınıfı için yazımı onaylayacağı açıkça tanımlanmalı."
+        },
+        "batch_lock": {
+          "label": "Batch kilidi",
+          "description": "Aynı batch için eş zamanlı veya tekrar eden çalıştırma girişimleri kilitlenmeli."
+        },
+        "rollback_strategy": {
+          "label": "Geri alma stratejisi",
+          "description": "Yazım sonrası hatalı sonuçlar için güvenli geri alma ya da düzeltme yolu tanımlanmalı."
+        },
+        "audit_trail": {
+          "label": "Denetim izi",
+          "description": "Kim, ne zaman, hangi batch için hangi kararı verdi güvenli biçimde izlenmeli."
+        },
+        "notification_plan": {
+          "label": "Bildirim planı",
+          "description": "Uygulama öncesi ve sonrası ilgili rollere anlaşılır bildirimler gitmeli."
+        },
+        "runtime_credentials": {
+          "label": "Runtime kimlik sınırı",
+          "description": "Canlı connector çalıştırması için secret değeri değil, doğrulanmış güvenli referans kullanılmalı."
+        },
+        "execution_boundary": {
+          "label": "Çalıştırma sınırı",
+          "description": "Ürün ekranı şu anda apply RPC veya canlı connector çalıştırması açmaz."
         }
       }
     }

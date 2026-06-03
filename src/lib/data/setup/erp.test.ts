@@ -555,7 +555,34 @@ describe('fetchErpOverviewWithMeta', () => {
       'dry_run_only',
       'apply_execution_closed',
     ])
+    expect(result.data.controlledApplyPlan).toMatchObject({
+      status: 'needs_review',
+      executionOpen: false,
+      applyRpcExposed: false,
+      batchId: 'batch-import-preview',
+      sourceChecksum: 'pr14_16_connector_preview_proof_v1',
+    })
+    expect(result.data.controlledApplyPlan.gates.map((gate) => gate.id)).toEqual([
+      'preview_ready',
+      'human_review',
+      'source_checksum',
+      'approval_policy',
+      'batch_lock',
+      'rollback_strategy',
+      'audit_trail',
+      'notification_plan',
+      'runtime_credentials',
+      'execution_boundary',
+    ])
+    expect(
+      result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'human_review'),
+    ).toMatchObject({ status: 'partial' })
+    expect(
+      result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'rollback_strategy'),
+    ).toMatchObject({ status: 'blocked' })
     expect(JSON.stringify(result.data.applyReadiness)).not.toContain('apply_import_batch')
+    expect(JSON.stringify(result.data.controlledApplyPlan)).not.toContain('apply_import_batch')
+    expect(JSON.stringify(result.data.controlledApplyPlan)).not.toContain('credentials_ref')
   })
 
   it('shows review requested only when the audit event is newer than the preview', async () => {
@@ -617,6 +644,20 @@ describe('fetchErpOverviewWithMeta', () => {
       safeToApply: false,
       reviewRequestedAt: '2026-06-03T14:02:00.000Z',
     })
+    expect(result.data.controlledApplyPlan).toMatchObject({
+      status: 'design_ready',
+      executionOpen: false,
+      applyRpcExposed: false,
+      summary: {
+        blockedCount: expect.any(Number),
+      },
+    })
+    expect(
+      result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'human_review'),
+    ).toMatchObject({ status: 'ready' })
+    expect(
+      result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'execution_boundary'),
+    ).toMatchObject({ status: 'blocked' })
     expect(result.data.activityTimeline[0]).toMatchObject({
       kind: 'import_apply_review',
       titleKey: 'erp.activityTimeline.events.import_apply_review_requested.title',
