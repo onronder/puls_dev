@@ -188,6 +188,9 @@ export type ConnectorSyncLog = {
   at: string
   level: ConnectorSyncLogLevel
   message: string
+  messageKey?: string
+  detail?: string
+  kind: 'setup_preflight' | 'sync_batch'
 }
 
 export type ConnectorProviderOption = {
@@ -267,6 +270,9 @@ type ErpConnectionRow = {
   credential_last_verified_at?: string | null
   credential_last_failed_at?: string | null
   credential_error_code?: string | null
+  connection_key?: string | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 type ErpFieldMappingRow = {
@@ -286,6 +292,10 @@ type ErpSyncBatchRow = {
   status?: string | null
   error_summary?: string | null
   sync_type?: string | null
+  records_seen?: number | null
+  records_inserted?: number | null
+  records_updated?: number | null
+  records_failed?: number | null
 }
 
 type SourceNamespaceRow = {
@@ -315,12 +325,22 @@ export type StartConnectorSetupResult = {
   currentStep: ConnectorSetupCurrentStep
 }
 
+export type RunConnectorPreflightResult = {
+  connectionId: string
+  status: ConnectorReadinessStatus
+  passedCount: number
+  warningCount: number
+  blockedCount: number
+}
+
 export type ConnectorSetupErrorMapping = {
   code:
     | 'missing_tenant'
     | 'admin_required'
     | 'provider_unavailable'
+    | 'source_missing'
     | 'permission_denied'
+    | 'domain_owned'
     | 'save_failed'
   toastKey: string
 }
@@ -718,6 +738,12 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
     if (error.code === 'PULS_CONNECTOR_PROVIDER_UNAVAILABLE') {
       return { code: 'provider_unavailable', toastKey: 'erp.errors.providerUnavailable' }
     }
+    if (error.code === 'PULS_CONNECTOR_SOURCE_REQUIRED') {
+      return { code: 'source_missing', toastKey: 'erp.errors.sourceMissing' }
+    }
+    if (error.code === 'PULS_CONNECTOR_DOMAIN_OWNED') {
+      return { code: 'domain_owned', toastKey: 'erp.errors.domainOwned' }
+    }
     if (error.code === '42501') {
       return { code: 'permission_denied', toastKey: 'erp.errors.permissionDenied' }
     }
@@ -950,6 +976,68 @@ const CONNECTOR_GUARDRAILS: ConnectorGuardrail[] = [
   },
 ]
 
+const SETUP_STATUS_RANK: Record<ConnectorSetupStatus, number> = {
+  connected: 80,
+  preflight_ready: 70,
+  mapping_ready: 60,
+  setup_in_progress: 50,
+  draft: 40,
+  error: 20,
+  disabled: 10,
+  archived: 0,
+}
+
+type ErpConnectionCandidate = Pick<
+  ErpConnectionRow,
+  | 'id'
+  | 'provider'
+  | 'connection_key'
+  | 'setup_status'
+  | 'setup_step'
+  | 'is_enabled'
+  | 'owned_domains'
+  | 'created_at'
+  | 'updated_at'
+>
+
+function normalizeOwnedDomains(domains: string[] | null | undefined): string[] {
+  return Array.isArray(domains) ? domains.map((domain) => domain.trim()).filter(Boolean) : []
+}
+
+function connectionUpdatedAt(connection: ErpConnectionCandidate): number {
+  const timestamp = connection.updated_at ?? connection.created_at
+  return timestamp ? new Date(timestamp).getTime() || 0 : 0
+}
+
+export function hasConnectorDomainOverlap(
+  first: string[] | null | undefined,
+  second: string[] | null | undefined,
+): boolean {
+  const firstDomains = normalizeOwnedDomains(first)
+  const secondDomains = new Set(normalizeOwnedDomains(second))
+  if (firstDomains.length === 0 || secondDomains.size === 0) return false
+  return firstDomains.some((domain) => secondDomains.has(domain))
+}
+
+export function pickCurrentErpConnection<T extends ErpConnectionCandidate>(
+  connections: T[],
+): T | null {
+  const candidates = connections.filter((connection) => connection.setup_status !== 'archived')
+  if (candidates.length === 0) return null
+
+  return [...candidates].sort((left, right) => {
+    const leftEnabled = left.is_enabled === false ? 0 : 1
+    const rightEnabled = right.is_enabled === false ? 0 : 1
+    if (leftEnabled !== rightEnabled) return rightEnabled - leftEnabled
+
+    const leftRank = SETUP_STATUS_RANK[left.setup_status ?? 'draft'] ?? 0
+    const rightRank = SETUP_STATUS_RANK[right.setup_status ?? 'draft'] ?? 0
+    if (leftRank !== rightRank) return rightRank - leftRank
+
+    return connectionUpdatedAt(right) - connectionUpdatedAt(left)
+  })[0]
+}
+
 function defaultAuthModeForMethod(method: string | null | undefined): ConnectorAuthMode {
   if (method === 'manual_import') return 'none'
   if (method === 'file_drop') return 'sftp_password'
@@ -1096,10 +1184,25 @@ function mapSyncLevel(status: string | null | undefined): ConnectorSyncLogLevel 
       return 'success'
     case 'failed':
     case 'partial':
+    case 'partial_success':
       return 'warning'
     default:
       return 'info'
   }
+}
+
+function mapPreflightStatusToSyncStatus(status: ConnectorReadinessStatus) {
+  if (status === 'ready') return 'success'
+  if (status === 'partial') return 'partial_success'
+  return 'failed'
+}
+
+function mapSyncLogMessageKey(row: ErpSyncBatchRow): string | undefined {
+  if (row.sync_type !== 'setup_preflight') return undefined
+  if (row.status === 'success') return 'erp.syncLogMessages.setupPreflight.success'
+  if (row.status === 'partial_success') return 'erp.syncLogMessages.setupPreflight.partial'
+  if (row.status === 'failed') return 'erp.syncLogMessages.setupPreflight.failed'
+  return 'erp.syncLogMessages.setupPreflight.pending'
 }
 
 function buildReadinessChecks({
@@ -1677,7 +1780,10 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
         identityCount: 0,
       },
     ],
-    syncLogs: demo.syncLogs,
+    syncLogs: demo.syncLogs.map((log) => ({
+      ...log,
+      kind: 'sync_batch' as const,
+    })),
     credentialBoundary,
   })
 }
@@ -1686,8 +1792,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) return emptyErpOverview('no_tenant')
 
-  const [connectionRow, mappingsRow, batchesRow, readinessRow, namespacesRow, identitiesRow] =
-    await Promise.all([
+  const [connectionsRow, readinessRow, namespacesRow, identitiesRow] = await Promise.all([
       pulsIntegration()
         .from('erp_connections')
         .select(
@@ -1696,6 +1801,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
             'provider',
             'display_name',
             'connection_method',
+            'connection_key',
             'is_active',
             'last_sync_at',
             'last_status',
@@ -1711,26 +1817,13 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
             'credential_last_verified_at',
             'credential_last_failed_at',
             'credential_error_code',
+            'created_at',
+            'updated_at',
           ].join(', '),
         )
         .eq('tenant_id', ctx.tenantId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      pulsIntegration()
-        .from('erp_field_mappings')
-        .select(
-          'source_entity, source_field, target_schema, target_table, target_field, is_required, is_sensitive, is_active',
-        )
-        .eq('tenant_id', ctx.tenantId)
-        .order('source_entity', { ascending: true })
-        .order('source_field', { ascending: true }),
-      pulsIntegration()
-        .from('erp_sync_batches')
-        .select('id, created_at, status, error_summary, sync_type')
-        .eq('tenant_id', ctx.tenantId)
         .order('created_at', { ascending: false })
-        .limit(4),
+        .limit(10),
       pulsCalc()
         .from('setup_readiness_summary')
         .select('integration_setup_pct')
@@ -1749,8 +1842,42 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
         .eq('is_active', true),
     ])
 
-  const connection =
-    connectionRow.error || !connectionRow.data ? null : (connectionRow.data as ErpConnectionRow)
+  if (connectionsRow.error) {
+    throw fromSupabaseError(
+      connectionsRow.error,
+      'fetchErpOverview',
+      'puls_integration',
+      'erp_connections',
+    )
+  }
+
+  const connections = ((connectionsRow.data ?? []) as ErpConnectionRow[])
+  const connection = pickCurrentErpConnection(connections)
+  const [mappingsRow, batchesRow] = connection?.id
+    ? await Promise.all([
+        pulsIntegration()
+          .from('erp_field_mappings')
+          .select(
+            'source_entity, source_field, target_schema, target_table, target_field, is_required, is_sensitive, is_active',
+          )
+          .eq('tenant_id', ctx.tenantId)
+          .eq('connection_id', connection.id)
+          .order('source_entity', { ascending: true })
+          .order('source_field', { ascending: true }),
+        pulsIntegration()
+          .from('erp_sync_batches')
+          .select(
+            'id, created_at, status, error_summary, sync_type, records_seen, records_inserted, records_updated, records_failed',
+          )
+          .eq('tenant_id', ctx.tenantId)
+          .eq('connection_id', connection.id)
+          .order('created_at', { ascending: false })
+          .limit(6),
+      ])
+    : [
+        { data: [], error: null },
+        { data: [], error: null },
+      ]
   const rawMappings = mappingsRow.error ? [] : ((mappingsRow.data ?? []) as ErpFieldMappingRow[])
   const batches = batchesRow.error ? [] : ((batchesRow.data ?? []) as ErpSyncBatchRow[])
   const readiness = readinessRow.error ? null : (readinessRow.data as SetupReadinessRow | null)
@@ -1868,6 +1995,12 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       at: formatSyncTimestamp(row.created_at),
       level: mapSyncLevel(row.status),
       message: row.error_summary ?? `${row.sync_type ?? 'check'} · ${row.status ?? 'pending'}`,
+      messageKey: mapSyncLogMessageKey(row),
+      detail:
+        row.sync_type === 'setup_preflight'
+          ? `${row.records_inserted ?? 0}/${row.records_updated ?? 0}/${row.records_failed ?? 0}`
+          : undefined,
+      kind: row.sync_type === 'setup_preflight' ? 'setup_preflight' : 'sync_batch',
     })),
     credentialBoundary,
   })
@@ -1910,10 +2043,11 @@ export async function startConnectorSetup(
 
   const existing = await pulsIntegration()
     .from('erp_connections')
-    .select('id, setup_status, setup_step')
+    .select(
+      'id, provider, connection_key, setup_status, setup_step, is_enabled, owned_domains, created_at, updated_at',
+    )
     .eq('tenant_id', ctx.tenantId)
-    .eq('connection_key', config.connectionKey)
-    .maybeSingle()
+    .order('updated_at', { ascending: false })
 
   if (existing.error) {
     throw fromSupabaseError(
@@ -1924,12 +2058,35 @@ export async function startConnectorSetup(
     )
   }
 
-  const existingConnection =
-    (existing.data as {
-      id?: string
-      setup_status?: ConnectorSetupStatus | null
-      setup_step?: ConnectorSetupCurrentStep | null
-    } | null) ?? null
+  const existingConnections = ((existing.data ?? []) as ErpConnectionRow[]).filter(
+    (connection) => connection.setup_status !== 'archived',
+  )
+  const existingConnection = pickCurrentErpConnection(
+    existingConnections.filter(
+      (connection) =>
+        connection.connection_key === config.connectionKey || connection.provider === config.provider,
+    ),
+  )
+  const conflictingOwner = pickCurrentErpConnection(
+    existingConnections.filter(
+      (connection) =>
+        connection.id !== existingConnection?.id &&
+        connection.is_enabled !== false &&
+        connection.provider !== config.provider &&
+        hasConnectorDomainOverlap(connection.owned_domains, config.ownedDomains),
+    ),
+  )
+
+  if (conflictingOwner?.id) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_DOMAIN_OWNED',
+      message: 'Connector domain ownership already belongs to another source',
+      source: 'adapter',
+      operation: 'startConnectorSetup',
+      i18nKey: 'erp.errors.domainOwned',
+    })
+  }
+
   const existingId = existingConnection?.id ?? null
   if (existingId && existingConnection?.setup_status !== 'draft') {
     return {
@@ -2028,6 +2185,110 @@ export async function startConnectorSetup(
     providerId: input.providerId,
     setupStatus: hasMappingContract ? 'mapping_ready' : 'draft',
     currentStep: hasMappingContract ? 'namespace' : 'mapping',
+  }
+}
+
+export async function runConnectorPreflight(userId: string): Promise<RunConnectorPreflightResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector setup check requires tenant context',
+      source: 'adapter',
+      operation: 'runConnectorPreflight',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector setup check requires admin permission',
+      source: 'adapter',
+      operation: 'runConnectorPreflight',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector setup check requires a selected source',
+      source: 'adapter',
+      operation: 'runConnectorPreflight',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+
+  const status = overview.preflight.status
+  const connectionUpdate =
+    status === 'ready'
+      ? {
+          setup_status: 'preflight_ready',
+          setup_step: 'preflight',
+          updated_by_employee_id: ctx.employeeId,
+        }
+      : overview.setup.status === 'preflight_ready'
+        ? {
+            setup_status: 'mapping_ready',
+            setup_step: 'preflight',
+            updated_by_employee_id: ctx.employeeId,
+          }
+        : null
+
+  if (connectionUpdate) {
+    const update = await pulsIntegration()
+      .from('erp_connections')
+      .update(connectionUpdate)
+      .eq('id', connectionId)
+      .eq('tenant_id', ctx.tenantId)
+      .select('id')
+      .single()
+
+    if (update.error) {
+      throw fromSupabaseError(
+        update.error,
+        'runConnectorPreflight',
+        'puls_integration',
+        'erp_connections',
+      )
+    }
+  }
+
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'setup_preflight',
+      status: mapPreflightStatusToSyncStatus(status),
+      started_at: new Date().toISOString(),
+      finished_at: new Date().toISOString(),
+      records_seen: overview.preflight.checks.length,
+      records_inserted: overview.preflight.passedCount,
+      records_updated: overview.preflight.warningCount,
+      records_failed: overview.preflight.blockedCount,
+      error_summary: null,
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'runConnectorPreflight',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    status,
+    passedCount: overview.preflight.passedCount,
+    warningCount: overview.preflight.warningCount,
+    blockedCount: overview.preflight.blockedCount,
   }
 }
 

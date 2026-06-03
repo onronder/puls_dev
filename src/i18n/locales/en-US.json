@@ -182,6 +182,7 @@
       "descriptionNotConfigured": "No data connection has been selected yet. Use the ERP screen to start source, field, and identity mapping.",
       "descriptionSetupDraft": "A data source has been selected. Live transfer stays off until field and identity mapping are complete.",
       "descriptionMappingReady": "The field contract is ready. Source identity, record matching, and safe checks are next.",
+      "descriptionCredentialPending": "Field mapping is ready; live connection still needs a secure credential reference.",
       "descriptionPreflightReady": "Setup check is clean. Live connection, credential verification, and ERP writes still require separate approval.",
       "descriptionDisabled": "The data connection record remains in place, but it is disabled in the product.",
       "descriptionPending": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
@@ -189,6 +190,7 @@
       "statusConnected": "Connected",
       "statusSetupDraft": "Setup draft",
       "statusMappingReady": "Fields ready",
+      "statusCredentialPending": "Credential pending",
       "statusPreflightReady": "Check clean",
       "statusDisabled": "Disabled",
       "statusPending": "Connection preparation",
@@ -915,6 +917,8 @@
       "tenantMissing": "Company setup must be completed before this action can run.",
       "adminRequired": "Admin permission is required to start a connection draft.",
       "providerUnavailable": "This source type is not open for setup yet. Continue with Canias or CSV / Excel.",
+      "sourceMissing": "Select a data source and start a setup draft first.",
+      "domainOwned": "This data domain is already managed by another source. Manage the existing setup or choose an empty domain.",
       "permissionDenied": "You do not have permission to save this connection. Try again with an admin role.",
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment."
     },
@@ -1022,6 +1026,7 @@
       },
       "computedFromSetup": "Result is computed from the current setup, mapping, and namespace records.",
       "sessionRun": "Setup check was rerun in this session.",
+      "persistedRun": "Result comes from the latest setup check saved in history.",
       "passed": "Passed",
       "warning": "Warning",
       "blocked": "Missing"
@@ -1104,6 +1109,14 @@
       "namespaces": "No active source identity yet. This scope appears after field mapping is prepared.",
       "mappings": "No field mappings yet. Mapped source fields will appear here.",
       "syncLogs": "No check records yet. Setup history will appear as the connection progresses."
+    },
+    "syncLogMessages": {
+      "setupPreflight": {
+        "success": "Setup check was saved as clean.",
+        "partial": "Setup check was saved with warnings.",
+        "failed": "Setup check was saved with missing steps.",
+        "pending": "Setup check record was created."
+      }
     },
     "status": {
       "mapped": "Matched",

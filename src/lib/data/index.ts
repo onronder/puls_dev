@@ -116,6 +116,7 @@ export {
   fetchErpOverviewWithMeta,
   buildDefaultConnectorFieldMappings,
   mapConnectorSetupError,
+  runConnectorPreflight,
   startConnectorSetup,
   type ConnectorCanonicalDataClass,
   type ConnectorCanonicalDataClassId,
@@ -142,6 +143,7 @@ export {
   type ConnectorSyncLogLevel,
   type ConnectorTransferMode,
   type ErpOverview,
+  type RunConnectorPreflightResult,
   type StartConnectorSetupInput,
   type StartConnectorSetupResult,
 } from '#/lib/data/setup/erp'

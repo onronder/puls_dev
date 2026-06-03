@@ -29,7 +29,7 @@ INSERT INTO puls_integration.erp_connections (
 SELECT id,tenant_id,provider::puls_integration.erp_provider,display_name,connection_method::puls_integration.connection_method,
   NULLIF(base_url,''),NULLIF(firm_code,''),is_active::boolean,sync_direction::puls_integration.sync_direction,NULLIF(sync_schedule,''),
   lower(provider) || '-default',
-  'preflight_ready'::puls_integration.connector_setup_status,
+  'mapping_ready'::puls_integration.connector_setup_status,
   'preflight'::puls_integration.connector_setup_step,
   true,
   now(),

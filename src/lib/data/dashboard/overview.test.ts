@@ -157,6 +157,23 @@ describe('buildDashboardErpStatus', () => {
     expect(status.descriptionKey).toBe('dashboardSetup.erpCard.descriptionPreflightReady')
   })
 
+  it('does not call credential-missing preflight clean on the dashboard card', () => {
+    const status = buildDashboardErpStatus({
+      hasConnection: true,
+      isActive: false,
+      setupStatus: 'preflight_ready',
+      isEnabled: true,
+      credentialRequired: true,
+      credentialState: 'missing',
+      mappedFields: 12,
+      totalFields: 12,
+      readiness: 88,
+    })
+
+    expect(status.statusLabelKey).toBe('dashboardSetup.erpCard.statusCredentialPending')
+    expect(status.descriptionKey).toBe('dashboardSetup.erpCard.descriptionCredentialPending')
+  })
+
   it('uses not configured copy when no ERP connection exists', () => {
     const status = buildDashboardErpStatus({
       hasConnection: false,
