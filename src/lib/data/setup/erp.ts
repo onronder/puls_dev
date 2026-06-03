@@ -32,6 +32,24 @@ export type ConnectorCredentialState =
   | 'verified'
   | 'failed'
   | 'revoked'
+export type ConnectorCredentialHandoffStatus =
+  | 'not_required'
+  | 'not_started'
+  | 'requested'
+  | 'reference_pending'
+  | 'ready_for_verification'
+  | 'verified'
+  | 'failed'
+  | 'revoked'
+export type ConnectorCredentialHandoffAction =
+  | 'none'
+  | 'complete_setup_first'
+  | 'request_secure_reference'
+  | 'handoff_requested'
+  | 'await_reference'
+  | 'verify_reference'
+  | 'review_failure'
+  | 'restore_access'
 export type ConnectorProviderStatus =
   | 'not_configured'
   | 'setup_draft'
@@ -69,10 +87,7 @@ export type ConnectorSourceCapabilityId =
   | 'transfer_method'
   | 'api_runtime'
   | 'writeback'
-export type ConnectorDomainOwnershipStatus =
-  | 'owned_by_current'
-  | 'owned_by_other'
-  | 'available'
+export type ConnectorDomainOwnershipStatus = 'owned_by_current' | 'owned_by_other' | 'available'
 export type ConnectorPreflightCheckId =
   | 'source_profile'
   | 'required_mapping'
@@ -208,6 +223,22 @@ export type ConnectorCredentialBoundary = {
   errorCode: string | null
 }
 
+export type ConnectorCredentialHandoff = {
+  status: ConnectorCredentialHandoffStatus
+  action: ConnectorCredentialHandoffAction
+  readiness: ConnectorReadinessStatus
+  requestable: boolean
+  blockedBy: 'none' | 'mapping' | 'namespace' | 'identity' | 'not_required' | 'verified'
+  statusLabelKey: string
+  descriptionKey: string
+  actionLabelKey: string
+  actionDescriptionKey: string
+  requestedAt: string | null
+  requestedByEmployeeId: string | null
+  updatedAt: string | null
+  captureBoundary: 'server_side_write_only'
+}
+
 export type ConnectorNamespaceSummary = {
   id: string
   code: string
@@ -241,7 +272,7 @@ export type ConnectorSyncLog = {
   message: string
   messageKey?: string
   detail?: string
-  kind: 'setup_preflight' | 'sync_batch'
+  kind: 'setup_preflight' | 'credential_handoff' | 'sync_batch'
 }
 
 export type ConnectorProviderOption = {
@@ -284,6 +315,7 @@ export type ErpOverview = {
   setupSteps: ConnectorSetupStep[]
   preflight: ConnectorPreflightResult
   credentialBoundary: ConnectorCredentialBoundary
+  credentialHandoff: ConnectorCredentialHandoff
   capabilities: ConnectorSourceCapability[]
   domainOwnership: ConnectorDomainOwnership[]
   canonicalClasses: ConnectorCanonicalDataClass[]
@@ -324,6 +356,10 @@ type ErpConnectionRow = {
   credential_last_verified_at?: string | null
   credential_last_failed_at?: string | null
   credential_error_code?: string | null
+  credential_handoff_status?: ConnectorCredentialHandoffStatus | null
+  credential_handoff_requested_at?: string | null
+  credential_handoff_requested_by_employee_id?: string | null
+  credential_handoff_updated_at?: string | null
   connection_key?: string | null
   created_at?: string | null
   updated_at?: string | null
@@ -387,12 +423,19 @@ export type RunConnectorPreflightResult = {
   blockedCount: number
 }
 
+export type RequestConnectorCredentialHandoffResult = {
+  connectionId: string
+  status: ConnectorCredentialHandoffStatus
+  requestedAt: string | null
+}
+
 export type ConnectorSetupErrorMapping = {
   code:
     | 'missing_tenant'
     | 'admin_required'
     | 'provider_unavailable'
     | 'source_missing'
+    | 'credential_handoff_blocked'
     | 'permission_denied'
     | 'domain_owned'
     | 'save_failed'
@@ -795,6 +838,12 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
     if (error.code === 'PULS_CONNECTOR_SOURCE_REQUIRED') {
       return { code: 'source_missing', toastKey: 'erp.errors.sourceMissing' }
     }
+    if (error.code === 'PULS_CONNECTOR_CREDENTIAL_HANDOFF_BLOCKED') {
+      return {
+        code: 'credential_handoff_blocked',
+        toastKey: 'erp.errors.credentialHandoffBlocked',
+      }
+    }
     if (error.code === 'PULS_CONNECTOR_DOMAIN_OWNED') {
       return { code: 'domain_owned', toastKey: 'erp.errors.domainOwned' }
     }
@@ -1134,11 +1183,13 @@ function buildConnectorCredentialBoundary({
   lastFailedAt?: string | null
   errorCode?: string | null
 }): ConnectorCredentialBoundary {
-  const resolvedAuthMode = hasConnection ? (authMode ?? defaultAuthModeForMethod(connectionMethod)) : 'none'
+  const resolvedAuthMode = hasConnection
+    ? (authMode ?? defaultAuthModeForMethod(connectionMethod))
+    : 'none'
   const required = hasConnection ? (credentialRequired ?? resolvedAuthMode !== 'none') : false
   const state: ConnectorCredentialState = !hasConnection
     ? 'missing'
-    : credentialState ?? (required ? 'missing' : 'not_required')
+    : (credentialState ?? (required ? 'missing' : 'not_required'))
   const status = deriveCredentialStatus({ hasConnection, required, state })
 
   return {
@@ -1152,6 +1203,87 @@ function buildConnectorCredentialBoundary({
     lastFailedAt: lastFailedAt ?? null,
     errorCode: errorCode ?? null,
   }
+}
+
+function deriveCredentialHandoffStatus({
+  credentialBoundary,
+  handoffStatus,
+}: {
+  credentialBoundary: ConnectorCredentialBoundary
+  handoffStatus?: ConnectorCredentialHandoffStatus | null
+}): ConnectorCredentialHandoffStatus {
+  if (!credentialBoundary.required || credentialBoundary.state === 'not_required') {
+    return 'not_required'
+  }
+  if (credentialBoundary.state === 'verified') return 'verified'
+  if (credentialBoundary.state === 'configured') return 'ready_for_verification'
+  if (credentialBoundary.state === 'failed') return 'failed'
+  if (credentialBoundary.state === 'revoked') return 'revoked'
+  return handoffStatus ?? 'not_started'
+}
+
+function buildConnectorCredentialHandoff({
+  connectorState,
+  credentialBoundary,
+  mappedFields,
+  totalFields,
+  namespaceCount,
+  identityCount,
+  handoffStatus,
+  requestedAt,
+  requestedByEmployeeId,
+  updatedAt,
+}: {
+  connectorState: ConnectorLifecycleState
+  credentialBoundary: ConnectorCredentialBoundary
+  mappedFields: number
+  totalFields: number
+  namespaceCount: number
+  identityCount: number
+  handoffStatus?: ConnectorCredentialHandoffStatus | null
+  requestedAt?: string | null
+  requestedByEmployeeId?: string | null
+  updatedAt?: string | null
+}): ConnectorCredentialHandoff {
+  const status = deriveCredentialHandoffStatus({ credentialBoundary, handoffStatus })
+  const hasConnection = connectorState === 'connector_selected'
+  const mappingReady = hasConnection && totalFields > 0 && mappedFields >= totalFields
+  const namespaceReady = namespaceCount > 0
+  const identityReady = identityCount > 0
+
+  const handoff = (
+    action: ConnectorCredentialHandoffAction,
+    readiness: ConnectorReadinessStatus,
+    blockedBy: ConnectorCredentialHandoff['blockedBy'],
+    requestable = false,
+  ): ConnectorCredentialHandoff => ({
+    status,
+    action,
+    readiness,
+    requestable,
+    blockedBy,
+    statusLabelKey: `erp.credentialHandoff.status.${status}`,
+    descriptionKey: `erp.credentialHandoff.descriptions.${status}`,
+    actionLabelKey: `erp.credentialHandoff.actions.${action}.label`,
+    actionDescriptionKey: `erp.credentialHandoff.actions.${action}.description`,
+    requestedAt: requestedAt ?? null,
+    requestedByEmployeeId: requestedByEmployeeId ?? null,
+    updatedAt: updatedAt ?? null,
+    captureBoundary: 'server_side_write_only',
+  })
+
+  if (!hasConnection) return handoff('complete_setup_first', 'blocked', 'mapping')
+  if (status === 'not_required') return handoff('none', 'ready', 'not_required')
+  if (status === 'verified') return handoff('none', 'ready', 'verified')
+  if (!mappingReady) return handoff('complete_setup_first', 'blocked', 'mapping')
+  if (!namespaceReady) return handoff('complete_setup_first', 'blocked', 'namespace')
+  if (!identityReady) return handoff('complete_setup_first', 'blocked', 'identity')
+  if (status === 'requested') return handoff('handoff_requested', 'partial', 'none')
+  if (status === 'reference_pending') return handoff('await_reference', 'partial', 'none')
+  if (status === 'ready_for_verification') return handoff('verify_reference', 'partial', 'none')
+  if (status === 'failed') return handoff('review_failure', 'blocked', 'none')
+  if (status === 'revoked') return handoff('restore_access', 'blocked', 'none')
+  return handoff('request_secure_reference', 'partial', 'none', true)
 }
 
 function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant'): ErpOverview {
@@ -1254,6 +1386,12 @@ function mapPreflightStatusToSyncStatus(status: ConnectorReadinessStatus) {
 }
 
 function mapSyncLogMessageKey(row: ErpSyncBatchRow): string | undefined {
+  if (row.sync_type === 'credential_handoff') {
+    if (row.status === 'success') return 'erp.syncLogMessages.credentialHandoff.success'
+    if (row.status === 'partial_success') return 'erp.syncLogMessages.credentialHandoff.partial'
+    if (row.status === 'failed') return 'erp.syncLogMessages.credentialHandoff.failed'
+    return 'erp.syncLogMessages.credentialHandoff.pending'
+  }
   if (row.sync_type !== 'setup_preflight') return undefined
   if (row.status === 'success') return 'erp.syncLogMessages.setupPreflight.success'
   if (row.status === 'partial_success') return 'erp.syncLogMessages.setupPreflight.partial'
@@ -1351,7 +1489,9 @@ function deriveReadinessScore(checks: ConnectorReadinessCheck[]): number {
   return Math.round((score / checks.length) * 100)
 }
 
-function mappingKey(mapping: Pick<ConnectorFieldMapping, 'targetSchema' | 'targetTable' | 'targetField'>) {
+function mappingKey(
+  mapping: Pick<ConnectorFieldMapping, 'targetSchema' | 'targetTable' | 'targetField'>,
+) {
   return `${mapping.targetSchema}.${mapping.targetTable}.${mapping.targetField}`
 }
 
@@ -1366,9 +1506,7 @@ function buildConnectorCanonicalClasses(
     const totalFields = definition.fields.length
     const requiredFields = definition.fields.filter((field) => field.required).length
     const mappedCount = definition.fields.filter((field) =>
-      mappedFields.has(
-        `${definition.targetSchema}.${definition.targetTable}.${field.targetField}`,
-      ),
+      mappedFields.has(`${definition.targetSchema}.${definition.targetTable}.${field.targetField}`),
     ).length
     const mappedRequiredFields = definition.fields.filter(
       (field) =>
@@ -1859,6 +1997,10 @@ function buildOverview({
   namespaces,
   syncLogs,
   credentialBoundary,
+  credentialHandoffStatus,
+  credentialHandoffRequestedAt,
+  credentialHandoffRequestedByEmployeeId,
+  credentialHandoffUpdatedAt,
   connections,
 }: {
   connectorState: ConnectorLifecycleState
@@ -1881,6 +2023,10 @@ function buildOverview({
   namespaces: ConnectorNamespaceSummary[]
   syncLogs: ConnectorSyncLog[]
   credentialBoundary: ConnectorCredentialBoundary
+  credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
+  credentialHandoffRequestedAt?: string | null
+  credentialHandoffRequestedByEmployeeId?: string | null
+  credentialHandoffUpdatedAt?: string | null
   connections?: ErpConnectionCandidate[]
 }): ErpOverview {
   const mappedFields = mappings.filter((row) => row.status === 'mapped').length
@@ -1925,6 +2071,18 @@ function buildOverview({
     currentConnectionId: connectionId,
     connections: connections ?? [],
     canonicalClasses,
+  })
+  const credentialHandoff = buildConnectorCredentialHandoff({
+    connectorState,
+    credentialBoundary,
+    mappedFields,
+    totalFields,
+    namespaceCount: namespaces.length,
+    identityCount,
+    handoffStatus: credentialHandoffStatus,
+    requestedAt: credentialHandoffRequestedAt,
+    requestedByEmployeeId: credentialHandoffRequestedByEmployeeId,
+    updatedAt: credentialHandoffUpdatedAt,
   })
 
   return {
@@ -1976,6 +2134,7 @@ function buildOverview({
     }),
     preflight,
     credentialBoundary,
+    credentialHandoff,
     capabilities,
     domainOwnership,
     canonicalClasses,
@@ -2081,54 +2240,58 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   if (!ctx.tenantId) return emptyErpOverview('no_tenant')
 
   const [connectionsRow, readinessRow, namespacesRow, identitiesRow] = await Promise.all([
-      pulsIntegration()
-        .from('erp_connections')
-        .select(
-          [
-            'id',
-            'provider',
-            'display_name',
-            'connection_method',
-            'connection_key',
-            'is_active',
-            'last_sync_at',
-            'last_status',
-            'setup_status',
-            'setup_step',
-            'is_enabled',
-            'owned_domains',
-            'selected_at',
-            'setup_started_at',
-            'auth_mode',
-            'credential_required',
-            'credential_state',
-            'credential_last_verified_at',
-            'credential_last_failed_at',
-            'credential_error_code',
-            'created_at',
-            'updated_at',
-          ].join(', '),
-        )
-        .eq('tenant_id', ctx.tenantId)
-        .order('created_at', { ascending: false })
-        .limit(10),
-      pulsCalc()
-        .from('setup_readiness_summary')
-        .select('integration_setup_pct')
-        .eq('tenant_id', ctx.tenantId)
-        .maybeSingle(),
-      pulsIntegration()
-        .from('source_namespaces')
-        .select('id, code, name, source_type')
-        .eq('tenant_id', ctx.tenantId)
-        .eq('is_active', true)
-        .order('priority_rank', { ascending: true }),
-      pulsIntegration()
-        .from('entity_identity_map')
-        .select('source_namespace_id, canonical_table')
-        .eq('tenant_id', ctx.tenantId)
-        .eq('is_active', true),
-    ])
+    pulsIntegration()
+      .from('erp_connections')
+      .select(
+        [
+          'id',
+          'provider',
+          'display_name',
+          'connection_method',
+          'connection_key',
+          'is_active',
+          'last_sync_at',
+          'last_status',
+          'setup_status',
+          'setup_step',
+          'is_enabled',
+          'owned_domains',
+          'selected_at',
+          'setup_started_at',
+          'auth_mode',
+          'credential_required',
+          'credential_state',
+          'credential_last_verified_at',
+          'credential_last_failed_at',
+          'credential_error_code',
+          'credential_handoff_status',
+          'credential_handoff_requested_at',
+          'credential_handoff_requested_by_employee_id',
+          'credential_handoff_updated_at',
+          'created_at',
+          'updated_at',
+        ].join(', '),
+      )
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    pulsCalc()
+      .from('setup_readiness_summary')
+      .select('integration_setup_pct')
+      .eq('tenant_id', ctx.tenantId)
+      .maybeSingle(),
+    pulsIntegration()
+      .from('source_namespaces')
+      .select('id, code, name, source_type')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('is_active', true)
+      .order('priority_rank', { ascending: true }),
+    pulsIntegration()
+      .from('entity_identity_map')
+      .select('source_namespace_id, canonical_table')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('is_active', true),
+  ])
 
   if (connectionsRow.error) {
     throw fromSupabaseError(
@@ -2139,7 +2302,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     )
   }
 
-  const connections = ((connectionsRow.data ?? []) as ErpConnectionRow[])
+  const connections = (connectionsRow.data ?? []) as ErpConnectionRow[]
   const connection = pickCurrentErpConnection(connections)
   const [mappingsRow, batchesRow] = connection?.id
     ? await Promise.all([
@@ -2187,11 +2350,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       const targetSchema = row.target_schema ?? 'puls'
       const targetTable = row.target_table ?? 'canonical'
       const targetField = row.target_field ?? 'field'
-      const canonicalField = [
-        targetSchema,
-        targetTable,
-        targetField,
-      ].join('.')
+      const canonicalField = [targetSchema, targetTable, targetField].join('.')
 
       return {
         canonicalField,
@@ -2251,11 +2410,11 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
           ? 'preflight_ready'
           : setupStatus === 'mapping_ready' || mappedFields > 0
             ? 'mapping_ready'
-          : setupStatus === 'setup_in_progress'
-            ? 'setup_in_progress'
-            : setupStatus === 'draft'
-              ? 'setup_draft'
-              : 'runtime_inactive'
+            : setupStatus === 'setup_in_progress'
+              ? 'setup_in_progress'
+              : setupStatus === 'draft'
+                ? 'setup_draft'
+                : 'runtime_inactive'
     : 'not_configured'
   const providerStatusLabelKey = `erp.providerStatus.${providerStatus}`
 
@@ -2288,9 +2447,19 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
         row.sync_type === 'setup_preflight'
           ? `${row.records_inserted ?? 0}/${row.records_updated ?? 0}/${row.records_failed ?? 0}`
           : undefined,
-      kind: row.sync_type === 'setup_preflight' ? 'setup_preflight' : 'sync_batch',
+      kind:
+        row.sync_type === 'setup_preflight'
+          ? 'setup_preflight'
+          : row.sync_type === 'credential_handoff'
+            ? 'credential_handoff'
+            : 'sync_batch',
     })),
     credentialBoundary,
+    credentialHandoffStatus: connection?.credential_handoff_status ?? null,
+    credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
+    credentialHandoffRequestedByEmployeeId:
+      connection?.credential_handoff_requested_by_employee_id ?? null,
+    credentialHandoffUpdatedAt: connection?.credential_handoff_updated_at ?? null,
     connections,
   })
 }
@@ -2353,7 +2522,8 @@ export async function startConnectorSetup(
   const existingConnection = pickCurrentErpConnection(
     existingConnections.filter(
       (connection) =>
-        connection.connection_key === config.connectionKey || connection.provider === config.provider,
+        connection.connection_key === config.connectionKey ||
+        connection.provider === config.provider,
     ),
   )
   const conflictingOwner = pickCurrentErpConnection(
@@ -2398,6 +2568,10 @@ export async function startConnectorSetup(
     credential_last_verified_at: null,
     credential_last_failed_at: null,
     credential_error_code: null,
+    credential_handoff_status: config.credentialRequired ? 'not_started' : 'not_required',
+    credential_handoff_requested_at: null,
+    credential_handoff_requested_by_employee_id: null,
+    credential_handoff_updated_at: now,
     is_active: false,
     sync_direction: 'erp_to_puls',
     connection_key: config.connectionKey,
@@ -2474,6 +2648,117 @@ export async function startConnectorSetup(
     providerId: input.providerId,
     setupStatus: hasMappingContract ? 'mapping_ready' : 'draft',
     currentStep: hasMappingContract ? 'namespace' : 'mapping',
+  }
+}
+
+export async function requestConnectorCredentialHandoff(
+  userId: string,
+): Promise<RequestConnectorCredentialHandoffResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector credential handoff requires tenant context',
+      source: 'adapter',
+      operation: 'requestConnectorCredentialHandoff',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector credential handoff requires admin permission',
+      source: 'adapter',
+      operation: 'requestConnectorCredentialHandoff',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector credential handoff requires a selected source',
+      source: 'adapter',
+      operation: 'requestConnectorCredentialHandoff',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+
+  if (overview.credentialHandoff.status === 'requested') {
+    return {
+      connectionId,
+      status: 'requested',
+      requestedAt: overview.credentialHandoff.requestedAt,
+    }
+  }
+
+  if (!overview.credentialHandoff.requestable) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_CREDENTIAL_HANDOFF_BLOCKED',
+      message: 'Connector credential handoff is not available for the current setup state',
+      source: 'adapter',
+      operation: 'requestConnectorCredentialHandoff',
+      i18nKey: 'erp.errors.credentialHandoffBlocked',
+    })
+  }
+
+  const now = new Date().toISOString()
+  const update = await pulsIntegration()
+    .from('erp_connections')
+    .update({
+      credential_handoff_status: 'requested',
+      credential_handoff_requested_at: now,
+      credential_handoff_requested_by_employee_id: ctx.employeeId,
+      credential_handoff_updated_at: now,
+      updated_by_employee_id: ctx.employeeId,
+    })
+    .eq('id', connectionId)
+    .eq('tenant_id', ctx.tenantId)
+    .select('id')
+    .single()
+
+  if (update.error) {
+    throw fromSupabaseError(
+      update.error,
+      'requestConnectorCredentialHandoff',
+      'puls_integration',
+      'erp_connections',
+    )
+  }
+
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'credential_handoff',
+      status: 'partial_success',
+      started_at: now,
+      finished_at: now,
+      records_seen: 1,
+      records_inserted: 0,
+      records_updated: 1,
+      records_failed: 0,
+      error_summary: null,
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'requestConnectorCredentialHandoff',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    status: 'requested',
+    requestedAt: now,
   }
 }
 

@@ -994,6 +994,9 @@
         "ready": "Setup check is clean. Live connection remains off.",
         "partial": "Setup check finished with warnings.",
         "blocked": "Setup check found missing steps."
+      },
+      "credentialHandoff": {
+        "requested": "Secure reference request was saved. No secret value was collected on this screen."
       }
     },
     "errors": {
@@ -1001,6 +1004,7 @@
       "adminRequired": "Admin permission is required to start a connection draft.",
       "providerUnavailable": "This source type is not open for setup yet. Continue with Canias or CSV / Excel.",
       "sourceMissing": "Select a data source and start a setup draft first.",
+      "credentialHandoffBlocked": "Complete field mapping, source identity, and record matching before requesting a secure reference.",
       "domainOwned": "This data domain is already managed by another source. Manage the existing setup or choose an empty domain.",
       "permissionDenied": "You do not have permission to save this connection. Try again with an admin role.",
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment."
@@ -1011,7 +1015,7 @@
       "preflight": "Setup check",
       "preflightDescription": "Validate source, field, identity, and safety boundaries without calling a live API.",
       "credentialBoundary": "Credential boundary",
-      "credentialBoundaryDescription": "This section shows credential posture needed for a live connection; secret values are not collected, read, or displayed here.",
+      "credentialBoundaryDescription": "This section shows credential posture needed for a live connection. Secret values are not collected, read, or displayed in the regular product UI.",
       "namespaces": "Source identities",
       "namespacesDescription": "Shows the scope used to match external records with PULS records.",
       "domainOwnership": "Domain ownership",
@@ -1072,7 +1076,7 @@
       "required": "Required?",
       "lastVerified": "Last verified",
       "notRecorded": "Not yet",
-      "noReadback": "At this stage PULS does not collect API keys, passwords, FTP secrets, OAuth tokens, or connection strings; future runtime will use a server-side secure reference only.",
+      "noReadback": "PULS does not collect API keys, passwords, FTP secrets, OAuth tokens, or connection strings in the regular setup screen; future secure capture is write-only and server-side.",
       "requiredValues": {
         "yes": "Required",
         "no": "Not required"
@@ -1092,6 +1096,94 @@
         "verified": "The secure reference appears verified on the server side.",
         "failed": "The last verification failed. The secret value is not shown; review the secure connection details.",
         "revoked": "The secure reference for this source is revoked. Admin action is required before live connection can reopen."
+      }
+    },
+    "credentialHandoff": {
+      "openSheet": "Prepare secure reference flow",
+      "adminRequired": "Admin permission required",
+      "requestedAt": "Requested at: {{value}}",
+      "status": {
+        "not_required": "Credentials not required",
+        "not_started": "Secure reference pending",
+        "requested": "Request saved",
+        "reference_pending": "Reference pending",
+        "ready_for_verification": "Verification pending",
+        "verified": "Reference verified",
+        "failed": "Verification failed",
+        "revoked": "Access revoked"
+      },
+      "descriptions": {
+        "not_required": "This source type does not require a secret reference before live connection.",
+        "not_started": "After field and identity matching are ready, an admin can start the secure reference flow.",
+        "requested": "An admin saved the request. The next step is producing a reference through the write-only secure capture boundary.",
+        "reference_pending": "Once the secure capture boundary produces a reference, the product only sees reference state.",
+        "ready_for_verification": "A server-side reference exists; verification is still pending before live use.",
+        "verified": "The secure reference is verified. Runtime still requires separate approval and connector development.",
+        "failed": "The last verification failed. The secret value is not shown; review the secure capture flow.",
+        "revoked": "This reference is revoked. A new secure reference process is required before live connection."
+      },
+      "actions": {
+        "none": {
+          "label": "No action needed",
+          "description": "Credential handoff is complete or not required for this source."
+        },
+        "complete_setup_first": {
+          "label": "Complete setup first",
+          "description": "Field mapping, source identity, and record matching must be clear before requesting a secure reference."
+        },
+        "request_secure_reference": {
+          "label": "Reference request can start",
+          "description": "An admin can start the secure reference process without entering a secret value."
+        },
+        "handoff_requested": {
+          "label": "Request saved",
+          "description": "Secret capture must happen outside the product screen in a write-only, server-side boundary."
+        },
+        "await_reference": {
+          "label": "Waiting for reference",
+          "description": "The product waits for reference state only; it does not read the secret value."
+        },
+        "verify_reference": {
+          "label": "Verification pending",
+          "description": "Live transfer stays closed until server-side verification completes."
+        },
+        "review_failure": {
+          "label": "Review failure",
+          "description": "Secure reference verification failed. The secret value is not shown in the product."
+        },
+        "restore_access": {
+          "label": "Prepare access again",
+          "description": "A revoked reference requires a new secure reference process."
+        }
+      },
+      "sheet": {
+        "title": "Secure reference for {{source}}",
+        "description": "This step does not collect a secret value; it records the product request for the secure capture boundary.",
+        "authMode": "Expected auth method",
+        "authModeDescription": "Real connection details will go through a future write-only server-side capture flow; the product screen does not read them.",
+        "close": "Cancel",
+        "request": "Save request",
+        "requesting": "Saving",
+        "guardrailTitle": "Live connection remains closed",
+        "guardrailBody": "This request does not start API calls, imports, exports, sync, or ERP writes. It only makes the secure reference process visible.",
+        "steps": {
+          "writeOnly": {
+            "label": "Write-only capture",
+            "description": "API keys, passwords, tokens, or connection strings are sent to the secure boundary without being read by the product UI."
+          },
+          "opaqueReference": {
+            "label": "Opaque reference",
+            "description": "The PULS database carries only reference state and a reference identifier, not the secret value."
+          },
+          "noReadback": {
+            "label": "Readback disabled",
+            "description": "Saved connection details cannot be read back by the UI, adapter, or client."
+          },
+          "runtimeVerification": {
+            "label": "Separate verification",
+            "description": "Server-side verification and runtime connector execution are separate approval and implementation steps."
+          }
+        }
       }
     },
     "authModes": {
@@ -1212,6 +1304,12 @@
         "partial": "Setup check was saved with warnings.",
         "failed": "Setup check was saved with missing steps.",
         "pending": "Setup check record was created."
+      },
+      "credentialHandoff": {
+        "success": "Secure reference request was completed.",
+        "partial": "Secure reference request was saved; reference is still pending.",
+        "failed": "Secure reference request could not be saved.",
+        "pending": "Secure reference request was created."
       }
     },
     "status": {

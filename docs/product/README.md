@@ -334,6 +334,18 @@ PR14.13 adds the source-independent connector lifecycle contract to `/erp`: life
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                      | Responsive lifecycle/capability/domain ownership workbench UI           |
 | [`scripts/verify-14-connector-lifecycle-capabilities.sh`](../../scripts/verify-14-connector-lifecycle-capabilities.sh) | PR14.13 verify gate                                                     |
 
+## PR14.14 Connector credential handoff
+
+PR14.14 turns source-independent credential readiness into a safe handoff process. Admins can request secure reference preparation after mapping and identity readiness are clear. The product still does not collect, read, or display secret values, and no runtime connector execution is enabled.
+
+| Document / artifact                                                                                                                                                                  | Purpose                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| [14_connector_credential_handoff.md](./14_connector_credential_handoff.md)                                                                                                           | Credential handoff state model, product boundary, and acceptance |
+| [`supabase/migrations/20260603120000_puls_integration_connector_credential_handoff.sql`](../../supabase/migrations/20260603120000_puls_integration_connector_credential_handoff.sql) | Adds safe credential handoff state and timestamps                |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                       | Source-independent handoff adapter and admin request action      |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                           | Secure reference handoff sheet without secret inputs             |
+| [`scripts/verify-14-connector-credential-handoff.sh`](../../scripts/verify-14-connector-credential-handoff.sh)                                                                       | PR14.14 verify gate                                              |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

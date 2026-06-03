@@ -7,6 +7,7 @@ import {
   isErpOverviewEmpty,
   mapConnectorSetupError,
   mapProviderLabel,
+  requestConnectorCredentialHandoff,
   runConnectorPreflight,
   startConnectorSetup,
 } from '#/lib/data/setup/erp'
@@ -57,7 +58,12 @@ type QueryResult = {
   singleError?: unknown
 }
 
-function query(result: QueryResult) {
+type ClientCapture = {
+  updates?: Array<{ table: string; payload: unknown }>
+  inserts?: Array<{ table: string; payload: unknown }>
+}
+
+function query(result: QueryResult, table = 'unknown', capture?: ClientCapture) {
   const builder = {
     select: vi.fn(() => builder),
     eq: vi.fn(() => builder),
@@ -71,8 +77,14 @@ function query(result: QueryResult) {
       data: 'singleData' in result ? result.singleData : result.data,
       error: 'singleError' in result ? result.singleError : result.error,
     })),
-    insert: vi.fn(() => builder),
-    update: vi.fn(() => builder),
+    insert: vi.fn((payload: unknown) => {
+      capture?.inserts?.push({ table, payload })
+      return builder
+    }),
+    update: vi.fn((payload: unknown) => {
+      capture?.updates?.push({ table, payload })
+      return builder
+    }),
     then(onFulfilled: (value: QueryResult) => unknown, onRejected?: (reason: unknown) => unknown) {
       return Promise.resolve(result).then(onFulfilled, onRejected)
     },
@@ -80,9 +92,11 @@ function query(result: QueryResult) {
   return builder
 }
 
-function client(results: Record<string, QueryResult>) {
+function client(results: Record<string, QueryResult>, capture?: ClientCapture) {
   return {
-    from: vi.fn((table: string) => query(results[table] ?? { data: [], error: null })),
+    from: vi.fn((table: string) =>
+      query(results[table] ?? { data: [], error: null }, table, capture),
+    ),
   }
 }
 
@@ -112,6 +126,10 @@ function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) 
               credential_last_verified_at: null,
               credential_last_failed_at: null,
               credential_error_code: null,
+              credential_handoff_status: 'not_started',
+              credential_handoff_requested_at: null,
+              credential_handoff_requested_by_employee_id: null,
+              credential_handoff_updated_at: null,
               created_at: '2026-06-01T00:00:00.000Z',
               updated_at: '2026-06-01T00:00:00.000Z',
             },
@@ -247,15 +265,26 @@ describe('fetchErpOverviewWithMeta', () => {
       state: 'missing',
       status: 'partial',
     })
+    expect(result.data.credentialHandoff).toMatchObject({
+      status: 'not_started',
+      action: 'request_secure_reference',
+      requestable: true,
+      blockedBy: 'none',
+      captureBoundary: 'server_side_write_only',
+    })
     expect(result.data.lifecycle).toMatchObject({
       stage: 'credential',
       status: 'partial',
       runtimeEligible: false,
     })
-    expect(result.data.capabilities.find((capability) => capability.id === 'domain_ownership')).toMatchObject({
+    expect(
+      result.data.capabilities.find((capability) => capability.id === 'domain_ownership'),
+    ).toMatchObject({
       status: 'ready',
     })
-    expect(result.data.capabilities.find((capability) => capability.id === 'api_runtime')).toMatchObject({
+    expect(
+      result.data.capabilities.find((capability) => capability.id === 'api_runtime'),
+    ).toMatchObject({
       status: 'blocked',
     })
     expect(result.data.domainOwnership.find((domain) => domain.id === 'employees')).toMatchObject({
@@ -439,6 +468,11 @@ describe('fetchErpOverviewWithMeta', () => {
       safeToRunRuntime: false,
       runtimeExecution: 'not_started',
     })
+    expect(result.data.credentialHandoff).toMatchObject({
+      action: 'complete_setup_first',
+      requestable: false,
+      blockedBy: 'namespace',
+    })
   })
 
   it('uses enriched demo fallback only when demo mode is enabled', async () => {
@@ -525,14 +559,24 @@ describe('fetchErpOverviewWithMeta', () => {
       state: 'not_required',
       status: 'ready',
     })
-    expect(result.data.capabilities.find((capability) => capability.id === 'transfer_method')).toMatchObject({
+    expect(result.data.credentialHandoff).toMatchObject({
+      status: 'not_required',
+      action: 'none',
+      requestable: false,
+      blockedBy: 'not_required',
+    })
+    expect(
+      result.data.capabilities.find((capability) => capability.id === 'transfer_method'),
+    ).toMatchObject({
       status: 'ready',
     })
     expect(result.data.domainOwnership.find((domain) => domain.id === 'employees')).toMatchObject({
       status: 'owned_by_current',
       ownerProviderLabel: 'CSV / Excel',
     })
-    expect(result.data.preflight.checks.find((check) => check.id === 'credential_boundary')).toMatchObject({
+    expect(
+      result.data.preflight.checks.find((check) => check.id === 'credential_boundary'),
+    ).toMatchObject({
       status: 'ready',
     })
     expect(JSON.stringify(result.data)).not.toContain('secret://must-not-leak')
@@ -666,10 +710,12 @@ describe('fetchErpOverviewWithMeta', () => {
     })
     vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
 
-    await expect(startConnectorSetup('user-1', { providerId: 'csv_import' })).rejects.toMatchObject({
-      code: 'PULS_CONNECTOR_DOMAIN_OWNED',
-      i18nKey: 'erp.errors.domainOwned',
-    })
+    await expect(startConnectorSetup('user-1', { providerId: 'csv_import' })).rejects.toMatchObject(
+      {
+        code: 'PULS_CONNECTOR_DOMAIN_OWNED',
+        i18nKey: 'erp.errors.domainOwned',
+      },
+    )
   })
 
   it('persists a dry-run preflight record without enabling runtime', async () => {
@@ -684,6 +730,102 @@ describe('fetchErpOverviewWithMeta', () => {
       passedCount: 6,
       warningCount: 1,
       blockedCount: 0,
+    })
+  })
+
+  it('persists credential handoff request without configuring credentials', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { updates: [], inserts: [] }
+    vi.mocked(pulsIntegration).mockImplementation(
+      () =>
+        client(
+          {
+            erp_connections: {
+              data: [
+                {
+                  provider: 'canias',
+                  id: 'connection-1',
+                  display_name: 'Canias ERP (Pasif)',
+                  connection_method: 'rest_api',
+                  connection_key: 'canias-default',
+                  is_active: false,
+                  last_sync_at: null,
+                  last_status: null,
+                  setup_status: 'mapping_ready',
+                  setup_step: 'preflight',
+                  is_enabled: true,
+                  owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
+                  auth_mode: 'custom_secret_ref',
+                  credential_required: true,
+                  credential_state: 'missing',
+                  credential_last_verified_at: null,
+                  credential_last_failed_at: null,
+                  credential_error_code: null,
+                  credential_handoff_status: 'not_started',
+                  credential_handoff_requested_at: null,
+                  credential_handoff_requested_by_employee_id: null,
+                  credential_handoff_updated_at: null,
+                  created_at: '2026-06-01T00:00:00.000Z',
+                  updated_at: '2026-06-01T00:00:00.000Z',
+                },
+              ],
+              singleData: { id: 'connection-1' },
+            },
+            erp_field_mappings: {
+              data: buildDefaultConnectorFieldMappings('canias').map((mapping) => ({
+                source_entity: mapping.sourceEntity,
+                source_field: mapping.sourceField,
+                target_schema: mapping.targetSchema,
+                target_table: mapping.targetTable,
+                target_field: mapping.targetField,
+                is_required: mapping.required,
+                is_sensitive: false,
+                is_active: true,
+              })),
+            },
+            erp_sync_batches: { data: [], singleData: { id: 'handoff-log-1' } },
+            source_namespaces: {
+              data: [
+                {
+                  id: 'namespace-1',
+                  code: 'CANIAS',
+                  name: 'Canias ERP Kaynagi',
+                  source_type: 'erp',
+                },
+              ],
+            },
+            entity_identity_map: {
+              data: [{ source_namespace_id: 'namespace-1', canonical_table: 'departments' }],
+            },
+          },
+          capture,
+        ) as never,
+    )
+    vi.mocked(pulsCalc).mockImplementation(
+      () =>
+        client({
+          setup_readiness_summary: { data: { integration_setup_pct: 80 }, error: null },
+        }) as never,
+    )
+
+    const result = await requestConnectorCredentialHandoff('user-1')
+
+    expect(result.status).toBe('requested')
+    expect(capture.updates).toContainEqual({
+      table: 'erp_connections',
+      payload: expect.objectContaining({
+        credential_handoff_status: 'requested',
+        credential_handoff_requested_by_employee_id: 'a0000006-0006-4006-8006-000000000001',
+      }),
+    })
+    expect(JSON.stringify(capture.updates)).not.toContain('credential_state')
+    expect(JSON.stringify(capture.updates)).not.toContain('configured')
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'credential_handoff',
+        status: 'partial_success',
+      }),
     })
   })
 
