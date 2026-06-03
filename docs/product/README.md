@@ -346,6 +346,18 @@ PR14.14 turns source-independent credential readiness into a safe handoff proces
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                           | Secure reference handoff sheet without secret inputs             |
 | [`scripts/verify-14-connector-credential-handoff.sh`](../../scripts/verify-14-connector-credential-handoff.sh)                                                                       | PR14.14 verify gate                                              |
 
+## PR14.15 Connector activity timeline
+
+PR14.15 turns connector setup history into a safe activity timeline. `/erp` now shows setup start, field contract, dry-run preflight, and credential handoff events with sanitized details and next actions. Runtime sync, credential capture, imports, exports, and ERP writeback remain closed.
+
+| Document / artifact                                                                                                                                                                    | Purpose                                                               |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [14_connector_activity_timeline.md](./14_connector_activity_timeline.md)                                                                                                               | Activity timeline state model, safe error detail rules, and acceptance |
+| [`supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql`](../../supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql)     | Adds metadata-only activity fields to connector setup history          |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                         | Builds `activityTimeline` and writes safe setup history records        |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                             | Renders connector activity timeline with safe details and next actions |
+| [`scripts/verify-14-connector-activity-timeline.sh`](../../scripts/verify-14-connector-activity-timeline.sh)                                                                           | PR14.15 verify gate                                                   |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

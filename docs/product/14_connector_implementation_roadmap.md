@@ -317,18 +317,52 @@ PR14.14 gives the connector setup backbone a truthful next step when a source re
 - Handoff cannot be requested before mapping and identity readiness are clear.
 - The admin handoff action never sets `credential_state` to `configured` or `verified`.
 
+## PR14.15 - Connector Activity Timeline
+
+### Business Value
+
+PR14.15 gives the connector setup backbone a durable, human-readable activity timeline before runtime connectors exist. A product admin can understand which setup action happened, whether it produced a safe warning/error, and what should happen next without reading raw database rows or provider errors.
+
+### Scope
+
+| Area | PR14.15 behavior |
+|------|------------------|
+| Setup history | Extends existing `erp_sync_batches` records with event keys, actor, safe error code, safe context, and next-action key. |
+| UI | `/erp` shows activity timeline rows for setup start, mapping contract, preflight, and credential handoff. |
+| Safe details | Error context is sanitized into counters, product status codes, and check ids. |
+| Source independence | Canias is treated as one source profile; activity timeline is connector-agnostic. |
+| Runtime boundary | No live API calls, import/export execution, credential capture, sync execution, or ERP writeback is enabled. |
+
+### Out Of Scope
+
+- Runtime connector execution
+- Provider-specific API error parsing
+- Credential capture or secret storage
+- Notification Center delivery
+- Import/export execution
+- ERP writes
+
+### Acceptance Criteria
+
+- `ErpOverview` includes `activityTimeline`.
+- Setup start writes a `setup_lifecycle` history row.
+- Preflight writes safe warning/blocker detail without raw provider payloads.
+- Credential handoff writes safe history without configuring credentials.
+- `/erp` renders safe detail and next action for each activity row.
+
 ## Roadmap Stop Condition
 
-After PR14.11, PULS should be able to say:
+After PR14.15, PULS should be able to say:
 
 - A tenant can start connector setup from an empty product state.
 - Connector setup state is persisted and role-scoped.
 - Errors are observable and user-friendly.
 - External fields can be mapped to canonical PULS fields.
 - Preflight can validate readiness without running sync.
+- Connector setup activities leave safe, durable history records.
 - Runtime connector execution remains a separate future phase.
 
-## Handoff After PR14.11
+## Handoff After PR14.15
 
 Future work can then move into runtime connector design with safer foundations:
 
@@ -337,5 +371,4 @@ Future work can then move into runtime connector design with safer foundations:
 - Canias API connector runtime
 - Background job orchestration
 - Notification Center
-- Connector activity timeline
 - Controlled import apply / rollback strategy

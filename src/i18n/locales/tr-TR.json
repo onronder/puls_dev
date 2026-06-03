@@ -1029,7 +1029,9 @@
       "guardrails": "Güvenlik sınırları",
       "guardrailsDescription": "Bağlantı hazırlığı yapılırken hangi işlemlerin kapalı kaldığını açıkça gösterir.",
       "syncLogs": "Kontrol geçmişi",
-      "syncLogsDescription": "Kurulum ve kontrol adımlarında oluşan son kayıtlar."
+      "syncLogsDescription": "Kurulum ve kontrol adımlarında oluşan son kayıtlar.",
+      "activityTimeline": "Aktivite geçmişi",
+      "activityTimelineDescription": "Kurulum, güvenli referans ve kontrol adımlarında oluşan güvenli kayıtlar."
     },
     "domainOwnership": {
       "owner": "{{source}} tarafından yönetiliyor",
@@ -1296,9 +1298,92 @@
     "empty": {
       "namespaces": "Henüz aktif kaynak kimliği yok. Alan eşleştirmeden sonra bu kapsam oluşacak.",
       "mappings": "Henüz alan eşleştirme yok. Kaynak alanları PULS alanlarına bağlandığında burada görünecek.",
-      "syncLogs": "Henüz kontrol kaydı yok. Kurulum adımları ilerledikçe geçmiş burada birikecek."
+      "syncLogs": "Henüz kontrol kaydı yok. Kurulum adımları ilerledikçe geçmiş burada birikecek.",
+      "activityTimeline": "Henüz aktivite kaydı yok. Kaynak seçimi, güvenli referans talebi ve kurulum kontrolleri ilerledikçe burada görünecek."
+    },
+    "activityTimeline": {
+      "actors": {
+        "admin": "Admin",
+        "system": "Sistem"
+      },
+      "labels": {
+        "safeDetails": "Güvenli detay:",
+        "nextAction": "Sıradaki adım"
+      },
+      "values": {
+        "yes": "Evet",
+        "no": "Hayır"
+      },
+      "events": {
+        "setup_started": {
+          "title": "Kaynak kurulumu başlatıldı"
+        },
+        "setup_mapping_contract_ready": {
+          "title": "Alan sözleşmesi hazırlandı"
+        },
+        "setup_preflight_completed": {
+          "title": "Kurulum kontrolü çalıştırıldı"
+        },
+        "credential_handoff_requested": {
+          "title": "Güvenli referans talebi kaydedildi"
+        },
+        "sync_batch_recorded": {
+          "title": "Bağlantı kaydı oluştu"
+        }
+      },
+      "summaries": {
+        "setupLifecycle": {
+          "started": "Kaynak profili tenant için seçildi; canlı bağlantı hâlâ kapalı.",
+          "mappingReady": "Varsayılan alan sözleşmesi oluşturuldu ve kaynak kimliği adımına geçildi."
+        },
+        "setupPreflight": {
+          "success": "Kurulum kontrolü temiz tamamlandı; bu hâlâ dry-run hazırlık kaydıdır.",
+          "partial": "Kurulum kontrolü uyarılarla tamamlandı; canlı bağlantı öncesi detaylar gözden geçirilmeli.",
+          "failed": "Kurulum kontrolünde eksikler var; canlı bağlantı veya aktarım açılmamalı."
+        },
+        "credentialHandoff": {
+          "success": "Güvenli referans adımı kayda geçti.",
+          "partial": "Talep kaydedildi; secret değeri değil, yalnızca referans sürecinin durumu takip ediliyor.",
+          "failed": "Güvenli referans talebi kaydedilemedi; admin yeniden denemeli."
+        },
+        "syncBatch": {
+          "success": "Kaynak geçmişi başarıyla kaydedildi.",
+          "pending": "Kaynak geçmişi bekleyen durumda kaydedildi.",
+          "failed": "Kaynak geçmişinde güvenli hata detayı var."
+        }
+      },
+      "details": {
+        "ownedDomains": "Sahiplenilen alan",
+        "mappingRows": "Alan satırı",
+        "updatedRecords": "Güncellenen kayıt",
+        "referenceAvailable": "Referans var mı?",
+        "totalChecks": "Toplam kontrol",
+        "passedChecks": "Geçen",
+        "warningChecks": "Uyarı",
+        "blockedChecks": "Eksik",
+        "recordsSeen": "Okunan kayıt",
+        "recordsFailed": "Hatalı kayıt"
+      },
+      "safeErrors": {
+        "setup_preflight_blocked": "Kurulum kontrolü eksik maddeler buldu. Detaylar check adları ve sayaçlarla sınırlı tutulur.",
+        "setup_preflight_has_warnings": "Kurulum kontrolü uyarı üretti. Canlı bağlantı öncesi uyarılı maddeler kapatılmalı.",
+        "connector_activity_failed": "Aktivite başarısız kaydedildi. Ham provider cevabı veya credential değeri gösterilmez.",
+        "connector_activity_has_blockers": "Aktivite bloklayıcı maddeler içeriyor. Güvenli detay yalnızca ürün durum kodlarıyla gösterilir."
+      },
+      "nextActions": {
+        "review_identity_scope": "Kaynak kimliği ve kayıt eşleştirme kapsamını gözden geçir.",
+        "complete_field_mapping": "Zorunlu PULS alanlarını kaynak alanlarıyla tamamla.",
+        "review_setup_findings": "Kurulum kontrolündeki uyarı ve eksikleri kapat.",
+        "runtime_still_closed": "Canlı bağlantı hâlâ kapalı; runtime onayı ve connector geliştirmesi ayrı ilerler.",
+        "wait_for_secure_reference": "Güvenli referansın sunucu tarafında oluşturulmasını bekle.",
+        "review_activity": "Kaydı incele ve bir sonraki güvenli kurulum adımına geç."
+      }
     },
     "syncLogMessages": {
+      "setupLifecycle": {
+        "started": "Kaynak kurulumu başlatıldı.",
+        "mappingReady": "Alan sözleşmesi hazırlandı."
+      },
       "setupPreflight": {
         "success": "Kurulum kontrolü temiz kaydedildi.",
         "partial": "Kurulum kontrolü uyarılarla kaydedildi.",

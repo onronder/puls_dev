@@ -60,7 +60,8 @@ function ErpRoute() {
 }
 
 type ConnectorStatus = ErpOverview['readiness']['status']
-type ConnectorSyncLevel = ErpOverview['syncLogs'][number]['level']
+type ConnectorActivityEvent = ErpOverview['activityTimeline'][number]
+type ConnectorSyncLevel = ConnectorActivityEvent['level']
 type ConnectorProviderOption = ErpOverview['providerOptions'][number]
 type ConnectorDomainOwnership = ErpOverview['domainOwnership'][number]
 
@@ -76,6 +77,8 @@ function syncLogTone(level: ConnectorSyncLevel): string {
       return 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
     case 'warning':
       return 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]'
+    case 'error':
+      return 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
     default:
       return 'bg-[var(--color-primary-soft)] text-[var(--color-info)]'
   }
@@ -91,7 +94,18 @@ function SyncLogIcon({ level }: { level: ConnectorSyncLevel }) {
   const className = 'h-4 w-4'
   if (level === 'success') return <CheckCircle2 className={className} aria-hidden />
   if (level === 'warning') return <AlertTriangle className={className} aria-hidden />
+  if (level === 'error') return <AlertTriangle className={className} aria-hidden />
   return <Info className={className} aria-hidden />
+}
+
+function formatActivityDetailValue(
+  value: ConnectorActivityEvent['detailItems'][number]['value'],
+  translate: (key: string) => string,
+) {
+  if (typeof value === 'boolean') {
+    return translate(value ? 'erp.activityTimeline.values.yes' : 'erp.activityTimeline.values.no')
+  }
+  return String(value)
 }
 
 function formatDateTime(value: string | null, locale: string, fallback: string): string {
@@ -1168,37 +1182,73 @@ function ErpPage() {
       {data && hasSelectedConnector ? (
         <section className="mt-8">
           <SectionHeader
-            title={t('erp.sections.syncLogs')}
-            description={t('erp.sections.syncLogsDescription')}
+            title={t('erp.sections.activityTimeline')}
+            description={t('erp.sections.activityTimelineDescription')}
           />
           <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-            {data.syncLogs.length > 0 ? (
-              data.syncLogs.map((log) => (
-                <li key={log.id} className="flex items-start gap-3 p-4">
+            {data.activityTimeline.length > 0 ? (
+              data.activityTimeline.map((event) => (
+                <li key={event.id} className="grid gap-3 p-4 sm:grid-cols-[auto_1fr_auto]">
                   <span
                     className={cn(
                       'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
-                      syncLogTone(log.level),
+                      syncLogTone(event.level),
                     )}
                   >
-                    <SyncLogIcon level={log.level} />
+                    <SyncLogIcon level={event.level} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-[var(--color-text-primary)]">
-                      {log.messageKey ? t(log.messageKey) : log.message}
-                    </p>
-                    {log.detail ? (
-                      <p className="mt-1 font-mono text-xs text-[var(--color-text-secondary)]">
-                        {log.detail}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(event.titleKey)}
                       </p>
+                      <span className="rounded-full bg-[var(--color-bg-muted)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t(event.actorLabelKey)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                      {t(event.summaryKey)}
+                    </p>
+                    {event.detailItems.length > 0 ? (
+                      <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {event.detailItems.map((item) => (
+                          <div
+                            key={item.labelKey}
+                            className="rounded-lg bg-[var(--color-bg-muted)] px-3 py-2"
+                          >
+                            <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                              {t(item.labelKey)}
+                            </dt>
+                            <dd className="mt-1 font-mono text-sm text-[var(--color-text-primary)]">
+                              {formatActivityDetailValue(item.value, t)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     ) : null}
-                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{log.at}</p>
+                    {event.safeErrorSummaryKey ? (
+                      <div className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[var(--color-warning-soft)] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                        <span className="font-semibold text-[var(--color-warning)]">
+                          {t('erp.activityTimeline.labels.safeDetails')}
+                        </span>{' '}
+                        {t(event.safeErrorSummaryKey)}
+                      </div>
+                    ) : null}
+                    <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+                      <span className="font-semibold">
+                        {t('erp.activityTimeline.labels.nextAction')}:
+                      </span>{' '}
+                      {t(event.nextActionKey)}
+                    </p>
                   </div>
+                  <time className="text-xs text-[var(--color-text-muted)] sm:text-right">
+                    {event.at}
+                  </time>
                 </li>
               ))
             ) : (
               <li className="p-4 text-sm text-[var(--color-text-muted)]">
-                {t('erp.empty.syncLogs')}
+                {t('erp.empty.activityTimeline')}
               </li>
             )}
           </ul>

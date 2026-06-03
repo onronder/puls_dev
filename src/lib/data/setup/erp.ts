@@ -60,7 +60,7 @@ export type ConnectorProviderStatus =
   | 'metadata_only'
   | 'runtime_inactive'
   | 'runtime_active'
-export type ConnectorSyncLogLevel = 'success' | 'warning' | 'info'
+export type ConnectorSyncLogLevel = 'success' | 'warning' | 'error' | 'info'
 export type ConnectorSetupStepId = 'source' | 'mapping' | 'namespace' | 'preflight' | 'runtime'
 export type ConnectorLifecycleStage =
   | 'source_selection'
@@ -272,7 +272,33 @@ export type ConnectorSyncLog = {
   message: string
   messageKey?: string
   detail?: string
-  kind: 'setup_preflight' | 'credential_handoff' | 'sync_batch'
+  kind: 'setup_lifecycle' | 'setup_preflight' | 'credential_handoff' | 'sync_batch'
+}
+
+export type ConnectorActivityEventKind =
+  | 'setup_lifecycle'
+  | 'setup_preflight'
+  | 'credential_handoff'
+  | 'sync_batch'
+
+export type ConnectorActivityDetail = {
+  labelKey: string
+  value: string | number | boolean
+}
+
+export type ConnectorActivityEvent = {
+  id: string
+  at: string
+  level: ConnectorSyncLogLevel
+  kind: ConnectorActivityEventKind
+  titleKey: string
+  summaryKey: string
+  detailItems: ConnectorActivityDetail[]
+  safeErrorCode: string | null
+  safeErrorSummaryKey: string | null
+  nextActionKey: string
+  actorLabelKey: string
+  rawStatus: string
 }
 
 export type ConnectorProviderOption = {
@@ -325,6 +351,7 @@ export type ErpOverview = {
   guardrails: ConnectorGuardrail[]
   providerOptions: ConnectorProviderOption[]
   syncLogs: ConnectorSyncLog[]
+  activityTimeline: ConnectorActivityEvent[]
   status: {
     system: string
     status: 'beklemede'
@@ -382,6 +409,11 @@ type ErpSyncBatchRow = {
   status?: string | null
   error_summary?: string | null
   sync_type?: string | null
+  event_key?: string | null
+  actor_employee_id?: string | null
+  safe_error_code?: string | null
+  safe_error_context?: Record<string, unknown> | null
+  next_action_key?: string | null
   records_seen?: number | null
   records_inserted?: number | null
   records_updated?: number | null
@@ -1321,6 +1353,7 @@ function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant')
     mappings: [],
     namespaces: [],
     syncLogs: [],
+    activityTimeline: [],
     credentialBoundary,
   })
 }
@@ -1371,11 +1404,156 @@ function mapSyncLevel(status: string | null | undefined): ConnectorSyncLogLevel 
     case 'success':
       return 'success'
     case 'failed':
+      return 'error'
     case 'partial':
     case 'partial_success':
       return 'warning'
     default:
       return 'info'
+  }
+}
+
+function mapActivityKind(syncType: string | null | undefined): ConnectorActivityEventKind {
+  if (syncType === 'setup_lifecycle') return 'setup_lifecycle'
+  if (syncType === 'setup_preflight') return 'setup_preflight'
+  if (syncType === 'credential_handoff') return 'credential_handoff'
+  return 'sync_batch'
+}
+
+function mapActivityTitleKey(row: ErpSyncBatchRow): string {
+  if (row.event_key) return `erp.activityTimeline.events.${row.event_key}.title`
+  if (row.sync_type === 'setup_preflight') return 'erp.activityTimeline.events.setup_preflight_completed.title'
+  if (row.sync_type === 'credential_handoff') {
+    return 'erp.activityTimeline.events.credential_handoff_requested.title'
+  }
+  return 'erp.activityTimeline.events.sync_batch_recorded.title'
+}
+
+function mapActivitySummaryKey(row: ErpSyncBatchRow): string {
+  if (row.sync_type === 'setup_lifecycle') {
+    if (row.event_key === 'setup_mapping_contract_ready') {
+      return 'erp.activityTimeline.summaries.setupLifecycle.mappingReady'
+    }
+    return 'erp.activityTimeline.summaries.setupLifecycle.started'
+  }
+
+  if (row.sync_type === 'credential_handoff') {
+    if (row.status === 'failed') return 'erp.activityTimeline.summaries.credentialHandoff.failed'
+    if (row.status === 'success') return 'erp.activityTimeline.summaries.credentialHandoff.success'
+    return 'erp.activityTimeline.summaries.credentialHandoff.partial'
+  }
+
+  if (row.sync_type === 'setup_preflight') {
+    if (row.status === 'success') return 'erp.activityTimeline.summaries.setupPreflight.success'
+    if (row.status === 'failed') return 'erp.activityTimeline.summaries.setupPreflight.failed'
+    return 'erp.activityTimeline.summaries.setupPreflight.partial'
+  }
+
+  if (row.status === 'failed') return 'erp.activityTimeline.summaries.syncBatch.failed'
+  if (row.status === 'success') return 'erp.activityTimeline.summaries.syncBatch.success'
+  return 'erp.activityTimeline.summaries.syncBatch.pending'
+}
+
+function mapActivityNextActionKey(row: ErpSyncBatchRow): string {
+  const key = row.next_action_key?.trim()
+  if (key) return `erp.activityTimeline.nextActions.${key}`
+
+  if (row.sync_type === 'setup_lifecycle') {
+    return row.event_key === 'setup_mapping_contract_ready'
+      ? 'erp.activityTimeline.nextActions.review_identity_scope'
+      : 'erp.activityTimeline.nextActions.complete_field_mapping'
+  }
+  if (row.sync_type === 'credential_handoff') {
+    return 'erp.activityTimeline.nextActions.wait_for_secure_reference'
+  }
+  if (row.sync_type === 'setup_preflight') {
+    return row.status === 'success'
+      ? 'erp.activityTimeline.nextActions.runtime_still_closed'
+      : 'erp.activityTimeline.nextActions.review_setup_findings'
+  }
+  return 'erp.activityTimeline.nextActions.review_activity'
+}
+
+function buildActivityDetails(row: ErpSyncBatchRow): ConnectorActivityDetail[] {
+  if (row.sync_type === 'setup_lifecycle') {
+    return [
+      {
+        labelKey: 'erp.activityTimeline.details.ownedDomains',
+        value: row.records_seen ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.mappingRows',
+        value: row.records_inserted ?? 0,
+      },
+    ]
+  }
+
+  if (row.sync_type === 'credential_handoff') {
+    return [
+      {
+        labelKey: 'erp.activityTimeline.details.updatedRecords',
+        value: row.records_updated ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.referenceAvailable',
+        value: false,
+      },
+    ]
+  }
+
+  if (row.sync_type === 'setup_preflight') {
+    return [
+      {
+        labelKey: 'erp.activityTimeline.details.totalChecks',
+        value: row.records_seen ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.passedChecks',
+        value: row.records_inserted ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.warningChecks',
+        value: row.records_updated ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.blockedChecks',
+        value: row.records_failed ?? 0,
+      },
+    ]
+  }
+
+  return [
+    {
+      labelKey: 'erp.activityTimeline.details.recordsSeen',
+      value: row.records_seen ?? 0,
+    },
+    {
+      labelKey: 'erp.activityTimeline.details.recordsFailed',
+      value: row.records_failed ?? 0,
+    },
+  ]
+}
+
+function buildConnectorActivityEvent(row: ErpSyncBatchRow, index: number): ConnectorActivityEvent {
+  const safeErrorCode = row.safe_error_code?.trim() || null
+
+  return {
+    id: row.id ?? `activity-${index}`,
+    at: formatSyncTimestamp(row.created_at),
+    level: mapSyncLevel(row.status),
+    kind: mapActivityKind(row.sync_type),
+    titleKey: mapActivityTitleKey(row),
+    summaryKey: mapActivitySummaryKey(row),
+    detailItems: buildActivityDetails(row),
+    safeErrorCode,
+    safeErrorSummaryKey: safeErrorCode
+      ? `erp.activityTimeline.safeErrors.${safeErrorCode}`
+      : null,
+    nextActionKey: mapActivityNextActionKey(row),
+    actorLabelKey: row.actor_employee_id
+      ? 'erp.activityTimeline.actors.admin'
+      : 'erp.activityTimeline.actors.system',
+    rawStatus: row.status ?? 'pending',
   }
 }
 
@@ -1386,6 +1564,13 @@ function mapPreflightStatusToSyncStatus(status: ConnectorReadinessStatus) {
 }
 
 function mapSyncLogMessageKey(row: ErpSyncBatchRow): string | undefined {
+  if (row.sync_type === 'setup_lifecycle') {
+    if (row.event_key === 'setup_mapping_contract_ready') {
+      return 'erp.syncLogMessages.setupLifecycle.mappingReady'
+    }
+    return 'erp.syncLogMessages.setupLifecycle.started'
+  }
+
   if (row.sync_type === 'credential_handoff') {
     if (row.status === 'success') return 'erp.syncLogMessages.credentialHandoff.success'
     if (row.status === 'partial_success') return 'erp.syncLogMessages.credentialHandoff.partial'
@@ -1996,6 +2181,7 @@ function buildOverview({
   mappings,
   namespaces,
   syncLogs,
+  activityTimeline,
   credentialBoundary,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
@@ -2022,6 +2208,7 @@ function buildOverview({
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
   syncLogs: ConnectorSyncLog[]
+  activityTimeline: ConnectorActivityEvent[]
   credentialBoundary: ConnectorCredentialBoundary
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
@@ -2144,6 +2331,7 @@ function buildOverview({
     guardrails: CONNECTOR_GUARDRAILS,
     providerOptions: CONNECTOR_PROVIDER_OPTIONS,
     syncLogs,
+    activityTimeline,
     status: {
       system: providerLabel,
       status: 'beklemede',
@@ -2215,6 +2403,20 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
     syncLogs: demo.syncLogs.map((log) => ({
       ...log,
       kind: 'sync_batch' as const,
+    })),
+    activityTimeline: demo.syncLogs.map((log, index) => ({
+      id: log.id ?? `demo-activity-${index}`,
+      at: log.at,
+      level: log.level,
+      kind: 'sync_batch' as const,
+      titleKey: 'erp.activityTimeline.events.sync_batch_recorded.title',
+      summaryKey: 'erp.activityTimeline.summaries.syncBatch.pending',
+      detailItems: [],
+      safeErrorCode: null,
+      safeErrorSummaryKey: null,
+      nextActionKey: 'erp.activityTimeline.nextActions.review_activity',
+      actorLabelKey: 'erp.activityTimeline.actors.system',
+      rawStatus: log.level,
     })),
     credentialBoundary,
     connections: [
@@ -2318,7 +2520,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
         pulsIntegration()
           .from('erp_sync_batches')
           .select(
-            'id, created_at, status, error_summary, sync_type, records_seen, records_inserted, records_updated, records_failed',
+            'id, created_at, status, error_summary, sync_type, event_key, actor_employee_id, safe_error_code, safe_error_context, next_action_key, records_seen, records_inserted, records_updated, records_failed',
           )
           .eq('tenant_id', ctx.tenantId)
           .eq('connection_id', connection.id)
@@ -2441,19 +2643,22 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       id: row.id ?? `sync-${index}`,
       at: formatSyncTimestamp(row.created_at),
       level: mapSyncLevel(row.status),
-      message: row.error_summary ?? `${row.sync_type ?? 'check'} · ${row.status ?? 'pending'}`,
+      message: `${row.sync_type ?? 'check'} · ${row.status ?? 'pending'}`,
       messageKey: mapSyncLogMessageKey(row),
       detail:
         row.sync_type === 'setup_preflight'
           ? `${row.records_inserted ?? 0}/${row.records_updated ?? 0}/${row.records_failed ?? 0}`
           : undefined,
       kind:
-        row.sync_type === 'setup_preflight'
+        row.sync_type === 'setup_lifecycle'
+          ? 'setup_lifecycle'
+          : row.sync_type === 'setup_preflight'
           ? 'setup_preflight'
           : row.sync_type === 'credential_handoff'
             ? 'credential_handoff'
             : 'sync_batch',
     })),
+    activityTimeline: batches.map((row, index) => buildConnectorActivityEvent(row, index)),
     credentialBoundary,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
@@ -2643,6 +2848,45 @@ export async function startConnectorSetup(
     }
   }
 
+  const history = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'setup_lifecycle',
+      event_key: hasMappingContract ? 'setup_mapping_contract_ready' : 'setup_started',
+      actor_employee_id: ctx.employeeId,
+      status: 'success',
+      started_at: now,
+      finished_at: now,
+      records_seen: config.ownedDomains.length,
+      records_inserted: hasMappingContract
+        ? buildDefaultConnectorFieldMappings(input.providerId).length
+        : 0,
+      records_updated: 1,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        source_profile: config.provider,
+        connection_key: config.connectionKey,
+        owned_domain_count: config.ownedDomains.length,
+        mapping_contract_ready: hasMappingContract,
+      },
+      next_action_key: hasMappingContract ? 'review_identity_scope' : 'complete_field_mapping',
+    })
+    .select('id')
+    .single()
+
+  if (history.error) {
+    throw fromSupabaseError(
+      history.error,
+      'startConnectorSetup',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
   return {
     connectionId,
     providerId: input.providerId,
@@ -2734,6 +2978,8 @@ export async function requestConnectorCredentialHandoff(
       tenant_id: ctx.tenantId,
       connection_id: connectionId,
       sync_type: 'credential_handoff',
+      event_key: 'credential_handoff_requested',
+      actor_employee_id: ctx.employeeId,
       status: 'partial_success',
       started_at: now,
       finished_at: now,
@@ -2742,6 +2988,12 @@ export async function requestConnectorCredentialHandoff(
       records_updated: 1,
       records_failed: 0,
       error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        handoff_request_recorded: true,
+        reference_available: false,
+      },
+      next_action_key: 'wait_for_secure_reference',
     })
     .select('id')
     .single()
@@ -2830,20 +3082,43 @@ export async function runConnectorPreflight(userId: string): Promise<RunConnecto
     }
   }
 
+  const now = new Date().toISOString()
+  const safeErrorCode =
+    overview.preflight.blockedCount > 0
+      ? 'setup_preflight_blocked'
+      : overview.preflight.warningCount > 0
+        ? 'setup_preflight_has_warnings'
+        : null
   const write = await pulsIntegration()
     .from('erp_sync_batches')
     .insert({
       tenant_id: ctx.tenantId,
       connection_id: connectionId,
       sync_type: 'setup_preflight',
+      event_key: 'setup_preflight_completed',
+      actor_employee_id: ctx.employeeId,
       status: mapPreflightStatusToSyncStatus(status),
-      started_at: new Date().toISOString(),
-      finished_at: new Date().toISOString(),
+      started_at: now,
+      finished_at: now,
       records_seen: overview.preflight.checks.length,
       records_inserted: overview.preflight.passedCount,
       records_updated: overview.preflight.warningCount,
       records_failed: overview.preflight.blockedCount,
       error_summary: null,
+      safe_error_code: safeErrorCode,
+      safe_error_context: {
+        checks_total: overview.preflight.checks.length,
+        passed_count: overview.preflight.passedCount,
+        warning_count: overview.preflight.warningCount,
+        blocked_count: overview.preflight.blockedCount,
+        blocked_checks: overview.preflight.checks
+          .filter((check) => check.status === 'blocked')
+          .map((check) => check.id),
+        warning_checks: overview.preflight.checks
+          .filter((check) => check.status === 'partial')
+          .map((check) => check.id),
+      },
+      next_action_key: safeErrorCode ? 'review_setup_findings' : 'runtime_still_closed',
     })
     .select('id')
     .single()
