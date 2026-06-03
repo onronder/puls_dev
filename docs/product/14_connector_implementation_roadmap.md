@@ -203,6 +203,38 @@ PULS cannot become a source-independent connectivity product if credential readi
 - Tests prove `credentials_ref` does not leak into adapter output.
 - Verify script blocks `select('*')`, credential inputs, and runtime enablement patterns.
 
+## PR14.12B - Connector State Consistency Findings
+
+### Business Value
+
+PR14.12B makes the connector setup backbone truthful across dashboard, `/erp`, and stored setup history. A setup with missing credentials must not be shown as clean. A duplicate source must not silently own the same canonical domains. A setup check must leave a durable, non-runtime record.
+
+### Scope
+
+| Area | PR14.12B behavior |
+|------|-------------------|
+| Dashboard | ERP card uses credential-aware connector truth and no longer says clean when secure credential reference is missing. |
+| Current connector | Adapter picks the strongest non-archived connector row instead of whichever row was updated last. |
+| Domain ownership | Starting setup resumes the existing provider/domain setup or blocks a conflicting source from owning the same canonical domain. |
+| Setup history | Admin-run dry-run preflight writes a safe `setup_preflight` metadata row. |
+| Seed posture | Seeded inactive REST/API connectors with missing credentials start at `mapping_ready`, not `preflight_ready`. |
+
+### Out Of Scope
+
+- Live connector runtime
+- Credential capture or secret storage
+- Credential verification
+- Import/export execution
+- ERP writes or destructive source-system actions
+
+### Acceptance Criteria
+
+- `preflight_ready` means all dry-run setup checks are clean.
+- Missing credentials keep setup in warning/partial posture.
+- Dashboard and `/erp` show the same connector truth.
+- Duplicate provider/domain setup is resumed or blocked instead of duplicated.
+- Setup check history is persisted without moving data.
+
 ## Domain-Level Source Ownership
 
 The product must support distributed customer systems. A single tenant-level primary connector is too narrow. PR14.8 should prepare the model for domain-level source ownership:

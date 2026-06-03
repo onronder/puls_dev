@@ -35,6 +35,7 @@ import { useAuth } from '#/lib/auth'
 import {
   fetchErpOverviewWithMeta,
   mapConnectorSetupError,
+  runConnectorPreflight,
   startConnectorSetup,
   type ErpOverview,
 } from '#/lib/data'
@@ -122,7 +123,6 @@ function ErpPage() {
     ConnectorProviderOption['id'] | null
   >(null)
   const [draftSheetOpen, setDraftSheetOpen] = useState(false)
-  const [preflightHasRun, setPreflightHasRun] = useState(false)
   const canManageConnectors = canShowSetupHub(personaRole, activePersona)
   const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],
@@ -151,18 +151,26 @@ function ErpPage() {
     },
   })
   const runPreflightMutation = useMutation({
-    mutationFn: async () => {
-      await queryClient.refetchQueries({ queryKey: ['erp-overview', user?.id] })
-      return data?.preflight.status ?? 'blocked'
-    },
-    onSuccess: (status) => {
-      setPreflightHasRun(true)
-      toast.success(t(`erp.toast.preflight.${status}`))
+    mutationFn: () => runConnectorPreflight(user!.id),
+    onSuccess: (result) => {
+      toast.success(t(`erp.toast.preflight.${result.status}`))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
       window.setTimeout(() => {
         document
           .getElementById('erp-preflight-result')
           ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 80)
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'runConnectorPreflight',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
     },
   })
 
@@ -619,8 +627,8 @@ function ErpPage() {
                     {t(data.preflight.nextStepKey)}
                   </p>
                   <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                    {preflightHasRun
-                      ? t('erp.preflightResult.sessionRun')
+                    {data.syncLogs.some((log) => log.kind === 'setup_preflight')
+                      ? t('erp.preflightResult.persistedRun')
                       : t('erp.preflightResult.computedFromSetup')}
                   </p>
                 </div>
@@ -927,7 +935,14 @@ function ErpPage() {
                     <SyncLogIcon level={log.level} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-[var(--color-text-primary)]">{log.message}</p>
+                    <p className="text-sm text-[var(--color-text-primary)]">
+                      {log.messageKey ? t(log.messageKey) : log.message}
+                    </p>
+                    {log.detail ? (
+                      <p className="mt-1 font-mono text-xs text-[var(--color-text-secondary)]">
+                        {log.detail}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">{log.at}</p>
                   </div>
                 </li>

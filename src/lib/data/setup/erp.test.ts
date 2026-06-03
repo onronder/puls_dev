@@ -7,6 +7,7 @@ import {
   isErpOverviewEmpty,
   mapConnectorSetupError,
   mapProviderLabel,
+  runConnectorPreflight,
   startConnectorSetup,
 } from '#/lib/data/setup/erp'
 import { DataAdapterError } from '#/lib/data/errors'
@@ -91,25 +92,30 @@ function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) 
     () =>
       client({
         erp_connections: {
-          data: {
-            provider: 'canias',
-            id: 'connection-1',
-            display_name: 'Canias ERP (Pasif)',
-            connection_method: 'rest_api',
-            is_active: false,
-            last_sync_at: null,
-            last_status: null,
-            setup_status: 'preflight_ready',
-            setup_step: 'preflight',
-            is_enabled: true,
-            owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
-            auth_mode: 'custom_secret_ref',
-            credential_required: true,
-            credential_state: 'missing',
-            credential_last_verified_at: null,
-            credential_last_failed_at: null,
-            credential_error_code: null,
-          },
+          data: [
+            {
+              provider: 'canias',
+              id: 'connection-1',
+              display_name: 'Canias ERP (Pasif)',
+              connection_method: 'rest_api',
+              connection_key: 'canias-default',
+              is_active: false,
+              last_sync_at: null,
+              last_status: null,
+              setup_status: 'mapping_ready',
+              setup_step: 'preflight',
+              is_enabled: true,
+              owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
+              auth_mode: 'custom_secret_ref',
+              credential_required: true,
+              credential_state: 'missing',
+              credential_last_verified_at: null,
+              credential_last_failed_at: null,
+              credential_error_code: null,
+              created_at: '2026-06-01T00:00:00.000Z',
+              updated_at: '2026-06-01T00:00:00.000Z',
+            },
+          ],
         },
         erp_field_mappings: {
           data: [
@@ -220,8 +226,8 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
     expect(result.data.provider.label).toBe('Canias ERP (Pasif)')
-    expect(result.data.provider.status).toBe('preflight_ready')
-    expect(result.data.setup.status).toBe('preflight_ready')
+    expect(result.data.provider.status).toBe('mapping_ready')
+    expect(result.data.setup.status).toBe('mapping_ready')
     expect(result.data.setupSummary).toEqual({
       labelKey: 'erp.metrics.setup',
       valueKey: 'erp.setupSummary.values.credentialPending',
@@ -325,22 +331,26 @@ describe('fetchErpOverviewWithMeta', () => {
     demoEnabled.mockReturnValue(false)
     setupSeededMocks({
       erp_connections: {
-        data: {
-          provider: 'canias',
-          id: 'connection-draft',
-          display_name: 'Canias',
-          connection_method: 'rest_api',
-          is_active: false,
-          last_sync_at: null,
-          last_status: null,
-          setup_status: 'draft',
-          setup_step: 'mapping',
-          is_enabled: true,
-          owned_domains: [],
-          auth_mode: 'custom_secret_ref',
-          credential_required: true,
-          credential_state: 'missing',
-        },
+        data: [
+          {
+            provider: 'canias',
+            id: 'connection-draft',
+            display_name: 'Canias',
+            connection_method: 'rest_api',
+            is_active: false,
+            last_sync_at: null,
+            last_status: null,
+            setup_status: 'draft',
+            setup_step: 'mapping',
+            is_enabled: true,
+            owned_domains: [],
+            auth_mode: 'custom_secret_ref',
+            credential_required: true,
+            credential_state: 'missing',
+            created_at: '2026-06-01T00:00:00.000Z',
+            updated_at: '2026-06-01T00:00:00.000Z',
+          },
+        ],
       },
       erp_field_mappings: {
         data: [
@@ -424,22 +434,26 @@ describe('fetchErpOverviewWithMeta', () => {
     demoEnabled.mockReturnValue(false)
     setupSeededMocks({
       erp_connections: {
-        data: {
-          provider: 'logo',
-          id: 'connection-2',
-          display_name: null,
-          connection_method: 'rest_api',
-          is_active: false,
-          last_sync_at: null,
-          last_status: null,
-          setup_status: 'draft',
-          setup_step: 'mapping',
-          is_enabled: true,
-          owned_domains: [],
-          auth_mode: 'custom_secret_ref',
-          credential_required: true,
-          credential_state: 'missing',
-        },
+        data: [
+          {
+            provider: 'logo',
+            id: 'connection-2',
+            display_name: null,
+            connection_method: 'rest_api',
+            is_active: false,
+            last_sync_at: null,
+            last_status: null,
+            setup_status: 'draft',
+            setup_step: 'mapping',
+            is_enabled: true,
+            owned_domains: [],
+            auth_mode: 'custom_secret_ref',
+            credential_required: true,
+            credential_state: 'missing',
+            created_at: '2026-06-01T00:00:00.000Z',
+            updated_at: '2026-06-01T00:00:00.000Z',
+          },
+        ],
       },
     })
 
@@ -454,23 +468,27 @@ describe('fetchErpOverviewWithMeta', () => {
     demoEnabled.mockReturnValue(false)
     setupSeededMocks({
       erp_connections: {
-        data: {
-          provider: 'csv',
-          id: 'connection-csv',
-          display_name: 'CSV / Excel',
-          connection_method: 'manual_import',
-          is_active: false,
-          last_sync_at: null,
-          last_status: null,
-          setup_status: 'mapping_ready',
-          setup_step: 'namespace',
-          is_enabled: true,
-          owned_domains: ['employees'],
-          auth_mode: 'none',
-          credential_required: false,
-          credential_state: 'not_required',
-          credentials_ref: 'secret://must-not-leak',
-        },
+        data: [
+          {
+            provider: 'csv',
+            id: 'connection-csv',
+            display_name: 'CSV / Excel',
+            connection_method: 'manual_import',
+            is_active: false,
+            last_sync_at: null,
+            last_status: null,
+            setup_status: 'mapping_ready',
+            setup_step: 'namespace',
+            is_enabled: true,
+            owned_domains: ['employees'],
+            auth_mode: 'none',
+            credential_required: false,
+            credential_state: 'not_required',
+            credentials_ref: 'secret://must-not-leak',
+            created_at: '2026-06-01T00:00:00.000Z',
+            updated_at: '2026-06-01T00:00:00.000Z',
+          },
+        ],
       },
     })
 
@@ -517,11 +535,19 @@ describe('fetchErpOverviewWithMeta', () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
     const integrationClient = client({
       erp_connections: {
-        data: {
-          id: 'connection-existing',
-          setup_status: 'preflight_ready',
-          setup_step: 'preflight',
-        },
+        data: [
+          {
+            id: 'connection-existing',
+            provider: 'canias',
+            connection_key: 'canias-default',
+            setup_status: 'preflight_ready',
+            setup_step: 'preflight',
+            is_enabled: true,
+            owned_domains: ['employees'],
+            created_at: '2026-06-01T00:00:00.000Z',
+            updated_at: '2026-06-01T00:00:00.000Z',
+          },
+        ],
         error: null,
       },
     })
@@ -536,6 +562,98 @@ describe('fetchErpOverviewWithMeta', () => {
       currentStep: 'preflight',
     })
     expect(integrationClient.from).toHaveBeenCalledTimes(1)
+  })
+
+  it('picks the strongest existing connector instead of a newer duplicate draft', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      erp_connections: {
+        data: [
+          {
+            provider: 'canias',
+            id: 'connection-draft',
+            display_name: 'Canias',
+            connection_method: 'rest_api',
+            connection_key: 'canias-default',
+            is_active: false,
+            setup_status: 'draft',
+            setup_step: 'mapping',
+            is_enabled: true,
+            owned_domains: ['employees', 'departments'],
+            auth_mode: 'custom_secret_ref',
+            credential_required: true,
+            credential_state: 'missing',
+            created_at: '2026-06-03T00:00:00.000Z',
+            updated_at: '2026-06-03T00:00:00.000Z',
+          },
+          {
+            provider: 'canias',
+            id: 'connection-current',
+            display_name: 'Canias ERP (Pasif)',
+            connection_method: 'rest_api',
+            connection_key: 'canias-default',
+            is_active: false,
+            setup_status: 'mapping_ready',
+            setup_step: 'preflight',
+            is_enabled: true,
+            owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
+            auth_mode: 'custom_secret_ref',
+            credential_required: true,
+            credential_state: 'missing',
+            created_at: '2026-06-01T00:00:00.000Z',
+            updated_at: '2026-06-01T00:00:00.000Z',
+          },
+        ],
+      },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.provider.id).toBe('connection-current')
+    expect(result.data.setup.status).toBe('mapping_ready')
+  })
+
+  it('blocks a second source from owning an already mapped canonical domain', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const integrationClient = client({
+      erp_connections: {
+        data: [
+          {
+            id: 'connection-canias',
+            provider: 'canias',
+            connection_key: 'canias-default',
+            setup_status: 'mapping_ready',
+            setup_step: 'preflight',
+            is_enabled: true,
+            owned_domains: ['employees', 'departments'],
+            created_at: '2026-06-01T00:00:00.000Z',
+            updated_at: '2026-06-01T00:00:00.000Z',
+          },
+        ],
+        error: null,
+      },
+    })
+    vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
+
+    await expect(startConnectorSetup('user-1', { providerId: 'csv_import' })).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_DOMAIN_OWNED',
+      i18nKey: 'erp.errors.domainOwned',
+    })
+  })
+
+  it('persists a dry-run preflight record without enabling runtime', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    setupSeededMocks()
+
+    const result = await runConnectorPreflight('user-1')
+
+    expect(result).toEqual({
+      connectionId: 'connection-1',
+      status: 'partial',
+      passedCount: 6,
+      warningCount: 1,
+      blockedCount: 0,
+    })
   })
 
   it('rejects setup when tenant context is missing', async () => {
@@ -582,6 +700,17 @@ describe('fetchErpOverviewWithMeta', () => {
         }),
       ),
     ).toEqual({ code: 'admin_required', toastKey: 'erp.errors.adminRequired' })
+
+    expect(
+      mapConnectorSetupError(
+        new DataAdapterError({
+          code: 'PULS_CONNECTOR_DOMAIN_OWNED',
+          message: 'Connector domain ownership already belongs to another source',
+          source: 'adapter',
+          operation: 'startConnectorSetup',
+        }),
+      ),
+    ).toEqual({ code: 'domain_owned', toastKey: 'erp.errors.domainOwned' })
 
     expect(
       mapConnectorSetupError(

@@ -11,6 +11,7 @@ import type {
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsIntegration, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
+import { pickCurrentErpConnection } from '#/lib/data/setup/erp'
 
 export type DashboardStats = {
   tenantName: string | null
@@ -44,6 +45,8 @@ export type BuildDashboardErpStatusInput = {
   isActive: boolean | null | undefined
   setupStatus?: string | null
   isEnabled?: boolean | null
+  credentialRequired?: boolean | null
+  credentialState?: string | null
   mappedFields: number
   totalFields: number
   readiness: number
@@ -190,6 +193,21 @@ export function buildDashboardErpStatus(
     }
   }
 
+  if (
+    input.credentialRequired === true &&
+    input.credentialState !== 'verified' &&
+    input.credentialState !== 'not_required'
+  ) {
+    return {
+      statusLabelKey: 'dashboardSetup.erpCard.statusCredentialPending',
+      mappedFields: input.mappedFields,
+      totalFields: input.totalFields,
+      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
+      readiness: input.readiness,
+      descriptionKey: 'dashboardSetup.erpCard.descriptionCredentialPending',
+    }
+  }
+
   if (input.setupStatus === 'mapping_ready') {
     return {
       statusLabelKey: 'dashboardSetup.erpCard.statusMappingReady',
@@ -284,7 +302,7 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) return emptyDashboardPageData()
 
-  const [dashboardRow, erpRow, leaveRow, leaveBalancesRow, expenseRow, mappingCount, mappingTotal] =
+  const [dashboardRow, erpConnectionsRow, leaveRow, leaveBalancesRow, expenseRow] =
     await Promise.all([
       pulsCalc()
         .from('dashboard_overview')
@@ -295,12 +313,26 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
         .maybeSingle(),
       pulsIntegration()
         .from('erp_connections')
-        .select('*')
+        .select(
+          [
+            'id',
+            'provider',
+            'display_name',
+            'is_active',
+            'setup_status',
+            'setup_step',
+            'is_enabled',
+            'connection_key',
+            'owned_domains',
+            'credential_required',
+            'credential_state',
+            'created_at',
+            'updated_at',
+          ].join(', '),
+        )
         .eq('tenant_id', ctx.tenantId)
-        .order('is_active', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(10),
       ctx.employeeId
         ? pulsCalc()
             .from('leave_overview')
@@ -325,22 +357,18 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
             .eq('employee_id', ctx.employeeId)
             .maybeSingle()
         : Promise.resolve({ data: null, error: null }),
-      pulsIntegration()
-        .from('erp_field_mappings')
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', ctx.tenantId)
-        .eq('is_active', true),
-      pulsIntegration()
-        .from('erp_field_mappings')
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', ctx.tenantId),
     ])
 
   if (dashboardRow.error) {
     throw fromSupabaseError(dashboardRow.error, 'fetchDashboardOverview', 'puls_calc', 'dashboard_overview')
   }
-  if (erpRow.error) {
-    throw fromSupabaseError(erpRow.error, 'fetchDashboardOverview', 'puls_integration', 'erp_connections')
+  if (erpConnectionsRow.error) {
+    throw fromSupabaseError(
+      erpConnectionsRow.error,
+      'fetchDashboardOverview',
+      'puls_integration',
+      'erp_connections',
+    )
   }
   if (leaveRow.error) {
     throw fromSupabaseError(leaveRow.error, 'fetchDashboardOverview', 'puls_calc', 'leave_overview')
@@ -357,6 +385,44 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
     throw fromSupabaseError(expenseRow.error, 'fetchDashboardOverview', 'puls_calc', 'expense_overview')
   }
 
+  const erpConnection = pickCurrentErpConnection(
+    ((erpConnectionsRow.data ?? []) as Array<{
+      id?: string | null
+      provider?: string | null
+      is_active?: boolean | null
+      connection_key?: string | null
+      setup_status?: string | null
+      setup_step?: string | null
+      is_enabled?: boolean | null
+      owned_domains?: string[] | null
+      credential_required?: boolean | null
+      credential_state?: string | null
+      created_at?: string | null
+      updated_at?: string | null
+    }>).map((connection) => ({
+      ...connection,
+      setup_status: connection.setup_status as never,
+      setup_step: connection.setup_step as never,
+    })),
+  )
+  const [mappingCount, mappingTotal] = erpConnection?.id
+    ? await Promise.all([
+        pulsIntegration()
+          .from('erp_field_mappings')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', ctx.tenantId)
+          .eq('connection_id', erpConnection.id)
+          .eq('is_active', true),
+        pulsIntegration()
+          .from('erp_field_mappings')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', ctx.tenantId)
+          .eq('connection_id', erpConnection.id),
+      ])
+    : [
+        { count: 0, error: null },
+        { count: 0, error: null },
+      ]
   const mappedFields = mappingCount.count ?? 0
   const totalFields = mappingTotal.count ?? 0
   const readiness = Number(dashboardRow.data?.data_readiness_pct ?? 0)
@@ -379,10 +445,12 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
     }),
     recentActivities: [],
     erpStatus: buildDashboardErpStatus({
-      hasConnection: Boolean(erpRow.data),
-      isActive: erpRow.data?.is_active,
-      setupStatus: erpRow.data?.setup_status as string | null | undefined,
-      isEnabled: erpRow.data?.is_enabled as boolean | null | undefined,
+      hasConnection: Boolean(erpConnection),
+      isActive: erpConnection?.is_active,
+      setupStatus: erpConnection?.setup_status as string | null | undefined,
+      isEnabled: erpConnection?.is_enabled as boolean | null | undefined,
+      credentialRequired: erpConnection?.credential_required as boolean | null | undefined,
+      credentialState: erpConnection?.credential_state as string | null | undefined,
       mappedFields,
       totalFields,
       readiness,
@@ -397,8 +465,8 @@ async function fetchRealDashboardOverview(userId: string): Promise<DashboardPage
       departmentCount: Number(dashboardRow.data?.department_count ?? 0),
       competencyCount: Number(dashboardRow.data?.competency_template_count ?? 0),
       positionCount: Number(dashboardRow.data?.position_count ?? 0),
-      erpConnected: Boolean(erpRow.data?.is_active),
-      erpProvider: mapDashboardErpProvider(erpRow.data?.provider as string | null),
+      erpConnected: Boolean(erpConnection?.is_active),
+      erpProvider: mapDashboardErpProvider(erpConnection?.provider as string | null),
       dataReadinessPct: readiness,
     },
     overview,

@@ -311,6 +311,18 @@ PR14.12 makes credential readiness source-independent. It adds generic auth mode
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                               | Credential boundary status panel without secret inputs                   |
 | [`scripts/verify-14-source-credential-boundary.sh`](../../scripts/verify-14-source-credential-boundary.sh)               | PR14.12 verify gate                                                      |
 
+## PR14.12B Connector state consistency findings
+
+PR14.12B closes the dashboard/ERP state mismatch, duplicate provider/domain setup risk, and non-persisted setup check history found after PR14.12 remote validation. It keeps PULS source-independent: Canias is one connector profile, not the connectivity architecture.
+
+| Document / artifact                                                                                                      | Purpose                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| [14_connector_state_consistency_findings.md](./14_connector_state_consistency_findings.md)                               | Findings, state truth rules, and PR14.13 handoff                         |
+| [`supabase/migrations/20260603110000_puls_integration_connector_state_consistency.sql`](../../supabase/migrations/20260603110000_puls_integration_connector_state_consistency.sql) | Aligns credential-missing setup status and archives duplicate drafts     |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                           | Current connector selection, domain ownership guard, persisted preflight  |
+| [`src/lib/data/dashboard/overview.ts`](../../src/lib/data/dashboard/overview.ts)                                         | Dashboard ERP card uses credential-aware connector truth                  |
+| [`scripts/verify-14-connector-state-consistency.sh`](../../scripts/verify-14-connector-state-consistency.sh)             | PR14.12B verify gate                                                     |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
