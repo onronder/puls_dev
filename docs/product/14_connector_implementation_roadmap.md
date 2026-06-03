@@ -1,6 +1,6 @@
-# PR14.8-PR14.17 Connector Implementation Roadmap
+# PR14.8-PR14.18 Connector Implementation Roadmap
 
-PR14.8 through PR14.17 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow with safe preview and human review boundaries. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, credential-boundary, preview, and review-readiness contracts.
+PR14.8 through PR14.18 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow with safe preview, human review, and controlled apply design boundaries. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, credential-boundary, preview, review-readiness, and apply-gate contracts.
 
 ## Product Claim
 
@@ -40,6 +40,7 @@ Runtime sync, credential capture, ERP writes, and destructive operations remain 
 | PR14.15  | Connector activity timeline          | Setup actions leave safe, durable activity history.                                                                                      |
 | PR14.16  | Connector import preview dry-run     | Prepared dry-run batches can be validated and classified without apply/import execution.                                                 |
 | PR14.17  | Connector apply readiness boundary   | Preview results can be marked ready for human review while canonical apply remains closed.                                               |
+| PR14.18  | Controlled apply design              | Future apply execution gates are visible before any canonical write path is exposed.                                                     |
 
 ## PR14.8 - Connector Setup Persistence
 
@@ -426,9 +427,43 @@ PR14.17 gives the product a truthful bridge between dry-run preview and future c
 - Non-admin users cannot record review intent.
 - No payload readback, credential readback, runtime sync, or apply execution is opened.
 
+## PR14.18 - Controlled Apply Design
+
+### Business Value
+
+PR14.18 makes the future apply path understandable before it becomes executable. Admins can see which production gates are required after preview and human review: source checksum, approval policy, batch lock, rollback strategy, audit trail, notification plan, runtime credential boundary, and the hard execution boundary.
+
+### Scope
+
+| Area                    | PR14.18 behavior                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Controlled apply plan   | Adapter derives gate-level readiness from source setup, preview, human review, and credential posture.                   |
+| UI                      | `/erp` shows the controlled apply plan as a read-only decision model with no apply CTA.                                  |
+| Source independence     | Gates describe PULS connectivity behavior, not Canias-specific runtime behavior.                                         |
+| Execution boundary      | `executionOpen` and `applyRpcExposed` remain false.                                                                      |
+| Safety documentation    | Product docs define approval, idempotency, locking, rollback, audit, notification, and credential-runtime requirements. |
+
+### Out Of Scope
+
+- Canonical import apply
+- Runtime connector execution
+- Credential capture, credential readback, or secret storage
+- ERP or external source writeback
+- Rollback execution
+- Background job orchestration
+
+### Acceptance Criteria
+
+- PR14.18 defines controlled apply execution design, not canonical import apply.
+- `controlledApplyPlan.executionOpen` remains false.
+- `controlledApplyPlan.applyRpcExposed` remains false.
+- No product UI action calls `apply_import_batch`.
+- Controlled apply gates are source-independent and visible in `/erp`.
+- Tests prove clean preview and review-requested states still keep execution closed.
+
 ## Roadmap Stop Condition
 
-After PR14.17, PULS should be able to say:
+After PR14.18, PULS should be able to say:
 
 - A tenant can start connector setup from an empty product state.
 - Connector setup state is persisted and role-scoped.
@@ -438,9 +473,10 @@ After PR14.17, PULS should be able to say:
 - Connector setup activities leave safe, durable history records.
 - Prepared dry-run import batches can be previewed safely before any apply/runtime work.
 - Preview results can be marked ready for human review while canonical apply remains closed.
+- Controlled apply gates are visible before any canonical write path is exposed.
 - Runtime connector execution remains a separate future phase.
 
-## Handoff After PR14.17
+## Handoff After PR14.18
 
 Future work can then move into runtime connector design with safer foundations:
 

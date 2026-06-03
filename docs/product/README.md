@@ -382,6 +382,17 @@ PR14.17 adds the human review boundary after dry-run preview. `/erp` can show wh
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Renders apply readiness, blockers, checks, and human review request action  |
 | [`scripts/verify-14-connector-apply-readiness.sh`](../../scripts/verify-14-connector-apply-readiness.sh) | PR14.17 verify gate                                                         |
 
+## PR14.18 Controlled apply design
+
+PR14.18 makes the future apply path visible without making it executable. `/erp` now shows source-independent apply gates for approval, idempotency, batch locking, rollback, audit, notification, runtime credentials, and execution boundary while canonical apply remains closed.
+
+| Document / artifact                                                                                      | Purpose                                                                           |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [14_connector_controlled_apply_design.md](./14_connector_controlled_apply_design.md)                     | Controlled apply gate model, UX contract, and acceptance criteria                 |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Builds `controlledApplyPlan` from preview, review, and credential posture         |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Renders controlled apply gates with execution closed                              |
+| [`scripts/verify-14-controlled-apply-design.sh`](../../scripts/verify-14-controlled-apply-design.sh)     | PR14.18 verify gate                                                               |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
