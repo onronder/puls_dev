@@ -16,6 +16,22 @@ export type ConnectorSetupStatus =
   | 'archived'
   | 'error'
 export type ConnectorSetupCurrentStep = 'source' | 'mapping' | 'namespace' | 'preflight' | 'runtime'
+export type ConnectorAuthMode =
+  | 'none'
+  | 'api_key'
+  | 'basic_auth'
+  | 'bearer_token'
+  | 'oauth2_client_credentials'
+  | 'sftp_password'
+  | 'connection_string'
+  | 'custom_secret_ref'
+export type ConnectorCredentialState =
+  | 'not_required'
+  | 'missing'
+  | 'configured'
+  | 'verified'
+  | 'failed'
+  | 'revoked'
 export type ConnectorProviderStatus =
   | 'not_configured'
   | 'setup_draft'
@@ -63,6 +79,7 @@ export type ConnectorProviderRequirement = {
     | 'canonical_mapping'
     | 'source_namespace'
     | 'identity_strategy'
+    | 'credential_boundary'
     | 'transfer_mode'
     | 'runtime_boundary'
   labelKey: string
@@ -77,6 +94,7 @@ export type ConnectorReadinessCheck = {
     | 'field_mapping'
     | 'source_namespace'
     | 'identity_reconciliation'
+    | 'credential_boundary'
     | 'setup_readiness'
     | 'write_guardrail'
   labelKey: string
@@ -125,6 +143,18 @@ export type ConnectorPreflightResult = {
   safeToRunRuntime: false
   runtimeExecution: 'not_started'
   checks: ConnectorPreflightCheck[]
+}
+
+export type ConnectorCredentialBoundary = {
+  authMode: ConnectorAuthMode
+  required: boolean
+  state: ConnectorCredentialState
+  status: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  lastVerifiedAt: string | null
+  lastFailedAt: string | null
+  errorCode: string | null
 }
 
 export type ConnectorNamespaceSummary = {
@@ -198,6 +228,7 @@ export type ErpOverview = {
   setupSummary: ConnectorSetupSummary
   setupSteps: ConnectorSetupStep[]
   preflight: ConnectorPreflightResult
+  credentialBoundary: ConnectorCredentialBoundary
   canonicalClasses: ConnectorCanonicalDataClass[]
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
@@ -220,6 +251,7 @@ type ErpConnectionRow = {
   id?: string | null
   provider?: string | null
   display_name?: string | null
+  connection_method?: string | null
   is_active?: boolean | null
   last_sync_at?: string | null
   last_status?: string | null
@@ -229,6 +261,12 @@ type ErpConnectionRow = {
   owned_domains?: string[] | null
   selected_at?: string | null
   setup_started_at?: string | null
+  auth_mode?: ConnectorAuthMode | null
+  credential_required?: boolean | null
+  credential_state?: ConnectorCredentialState | null
+  credential_last_verified_at?: string | null
+  credential_last_failed_at?: string | null
+  credential_error_code?: string | null
 }
 
 type ErpFieldMappingRow = {
@@ -303,9 +341,11 @@ const SETUP_PROVIDER_CONFIG: Partial<
       provider: 'canias' | 'csv'
       displayName: string
       connectionMethod: 'rest_api' | 'manual_import'
+      authMode: ConnectorAuthMode
+      credentialRequired: boolean
       connectionKey: string
       ownedDomains: string[]
-  sourceType: 'erp' | 'file'
+      sourceType: 'erp' | 'file'
     }
   >
 > = {
@@ -313,6 +353,8 @@ const SETUP_PROVIDER_CONFIG: Partial<
     provider: 'canias',
     displayName: 'Canias',
     connectionMethod: 'rest_api',
+    authMode: 'custom_secret_ref',
+    credentialRequired: true,
     connectionKey: 'canias-default',
     ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
     sourceType: 'erp',
@@ -321,6 +363,8 @@ const SETUP_PROVIDER_CONFIG: Partial<
     provider: 'csv',
     displayName: 'CSV / Excel',
     connectionMethod: 'manual_import',
+    authMode: 'none',
+    credentialRequired: false,
     connectionKey: 'csv-excel-default',
     ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
     sourceType: 'file',
@@ -710,6 +754,12 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
         status: 'ready',
       },
       {
+        id: 'credential_boundary',
+        labelKey: 'erp.providerRequirements.credentialBoundary.label',
+        descriptionKey: 'erp.providerRequirements.credentialBoundary.description',
+        status: 'partial',
+      },
+      {
         id: 'runtime_boundary',
         labelKey: 'erp.providerRequirements.runtimeBoundary.label',
         descriptionKey: 'erp.providerRequirements.runtimeBoundary.description',
@@ -741,6 +791,12 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
         id: 'source_namespace',
         labelKey: 'erp.providerRequirements.sourceNamespace.label',
         descriptionKey: 'erp.providerRequirements.sourceNamespace.description',
+        status: 'partial',
+      },
+      {
+        id: 'credential_boundary',
+        labelKey: 'erp.providerRequirements.credentialBoundary.label',
+        descriptionKey: 'erp.providerRequirements.credentialBoundary.description',
         status: 'partial',
       },
       {
@@ -778,6 +834,12 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
         status: 'partial',
       },
       {
+        id: 'credential_boundary',
+        labelKey: 'erp.providerRequirements.credentialBoundary.label',
+        descriptionKey: 'erp.providerRequirements.credentialBoundary.description',
+        status: 'ready',
+      },
+      {
         id: 'runtime_boundary',
         labelKey: 'erp.providerRequirements.runtimeBoundary.label',
         descriptionKey: 'erp.providerRequirements.runtimeBoundary.description',
@@ -809,6 +871,12 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
         id: 'identity_strategy',
         labelKey: 'erp.providerRequirements.identityStrategy.label',
         descriptionKey: 'erp.providerRequirements.identityStrategy.description',
+        status: 'partial',
+      },
+      {
+        id: 'credential_boundary',
+        labelKey: 'erp.providerRequirements.credentialBoundary.label',
+        descriptionKey: 'erp.providerRequirements.credentialBoundary.description',
         status: 'partial',
       },
       {
@@ -882,10 +950,74 @@ const CONNECTOR_GUARDRAILS: ConnectorGuardrail[] = [
   },
 ]
 
+function defaultAuthModeForMethod(method: string | null | undefined): ConnectorAuthMode {
+  if (method === 'manual_import') return 'none'
+  if (method === 'file_drop') return 'sftp_password'
+  return 'custom_secret_ref'
+}
+
+function deriveCredentialStatus({
+  hasConnection,
+  required,
+  state,
+}: {
+  hasConnection: boolean
+  required: boolean
+  state: ConnectorCredentialState
+}): ConnectorReadinessStatus {
+  if (!hasConnection) return 'blocked'
+  if (!required || state === 'not_required' || state === 'verified') return 'ready'
+  if (state === 'missing' || state === 'configured') return 'partial'
+  return 'blocked'
+}
+
+function buildConnectorCredentialBoundary({
+  hasConnection,
+  connectionMethod,
+  authMode,
+  credentialRequired,
+  credentialState,
+  lastVerifiedAt,
+  lastFailedAt,
+  errorCode,
+}: {
+  hasConnection: boolean
+  connectionMethod?: string | null
+  authMode?: ConnectorAuthMode | null
+  credentialRequired?: boolean | null
+  credentialState?: ConnectorCredentialState | null
+  lastVerifiedAt?: string | null
+  lastFailedAt?: string | null
+  errorCode?: string | null
+}): ConnectorCredentialBoundary {
+  const resolvedAuthMode = hasConnection ? (authMode ?? defaultAuthModeForMethod(connectionMethod)) : 'none'
+  const required = hasConnection ? (credentialRequired ?? resolvedAuthMode !== 'none') : false
+  const state: ConnectorCredentialState = !hasConnection
+    ? 'missing'
+    : credentialState ?? (required ? 'missing' : 'not_required')
+  const status = deriveCredentialStatus({ hasConnection, required, state })
+
+  return {
+    authMode: resolvedAuthMode,
+    required,
+    state,
+    status,
+    statusLabelKey: `erp.credentialBoundary.states.${state}`,
+    descriptionKey: `erp.credentialBoundary.descriptions.${state}`,
+    lastVerifiedAt: lastVerifiedAt ?? null,
+    lastFailedAt: lastFailedAt ?? null,
+    errorCode: errorCode ?? null,
+  }
+}
+
 function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant'): ErpOverview {
+  const credentialBoundary = buildConnectorCredentialBoundary({
+    hasConnection: false,
+  })
   const checks = buildReadinessChecks({
     hasConnection: false,
     isActive: false,
+    credentialBoundary,
     mappedFields: 0,
     totalFields: 0,
     namespaceCount: 0,
@@ -913,6 +1045,7 @@ function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant')
     mappings: [],
     namespaces: [],
     syncLogs: [],
+    credentialBoundary,
   })
 }
 
@@ -972,6 +1105,7 @@ function mapSyncLevel(status: string | null | undefined): ConnectorSyncLogLevel 
 function buildReadinessChecks({
   hasConnection,
   isActive,
+  credentialBoundary,
   mappedFields,
   totalFields,
   namespaceCount,
@@ -980,6 +1114,7 @@ function buildReadinessChecks({
 }: {
   hasConnection: boolean
   isActive: boolean
+  credentialBoundary: ConnectorCredentialBoundary
   mappedFields: number
   totalFields: number
   namespaceCount: number
@@ -1016,6 +1151,12 @@ function buildReadinessChecks({
       labelKey: 'erp.readinessChecks.identityReconciliation',
       status: identityCount > 0 ? 'ready' : namespaceCount > 0 ? 'partial' : 'blocked',
       value: identityCount,
+    },
+    {
+      id: 'credential_boundary',
+      labelKey: 'erp.readinessChecks.credentialBoundary',
+      status: credentialBoundary.status,
+      value: credentialBoundary.state,
     },
     {
       id: 'setup_readiness',
@@ -1112,6 +1253,7 @@ function buildConnectorPreflightResult({
   connectorState,
   isActive,
   isEnabled,
+  credentialBoundary,
   canonicalClasses,
   namespaceCount,
   identityCount,
@@ -1119,6 +1261,7 @@ function buildConnectorPreflightResult({
   connectorState: ConnectorLifecycleState
   isActive: boolean
   isEnabled: boolean
+  credentialBoundary: ConnectorCredentialBoundary
   canonicalClasses: ConnectorCanonicalDataClass[]
   namespaceCount: number
   identityCount: number
@@ -1153,7 +1296,7 @@ function buildConnectorPreflightResult({
       id: 'credential_boundary',
       labelKey: 'erp.preflightChecks.credentialBoundary.label',
       descriptionKey: 'erp.preflightChecks.credentialBoundary.description',
-      status: hasConnection ? 'ready' : 'blocked',
+      status: hasConnection ? credentialBoundary.status : 'blocked',
     },
     {
       id: 'runtime_boundary',
@@ -1193,6 +1336,7 @@ function buildConnectorSetupSummary({
   setupStatus,
   isActive,
   isEnabled,
+  credentialBoundary,
   mappedFields,
   totalFields,
   namespaceCount,
@@ -1204,6 +1348,7 @@ function buildConnectorSetupSummary({
   setupStatus: ConnectorSetupStatus | null
   isActive: boolean
   isEnabled: boolean
+  credentialBoundary: ConnectorCredentialBoundary
   mappedFields: number
   totalFields: number
   namespaceCount: number
@@ -1257,6 +1402,13 @@ function buildConnectorSetupSummary({
     return summary(
       'erp.setupSummary.values.namespaceReady',
       'erp.setupSummary.hints.identityPending',
+    )
+  }
+
+  if (credentialBoundary.status !== 'ready') {
+    return summary(
+      'erp.setupSummary.values.credentialPending',
+      'erp.setupSummary.hints.credentialPending',
     )
   }
 
@@ -1363,6 +1515,7 @@ function buildOverview({
   mappings,
   namespaces,
   syncLogs,
+  credentialBoundary,
 }: {
   connectorState: ConnectorLifecycleState
   connectionId: string | null
@@ -1383,6 +1536,7 @@ function buildOverview({
   mappings: ConnectorFieldMapping[]
   namespaces: ConnectorNamespaceSummary[]
   syncLogs: ConnectorSyncLog[]
+  credentialBoundary: ConnectorCredentialBoundary
 }): ErpOverview {
   const mappedFields = mappings.filter((row) => row.status === 'mapped').length
   const totalFields = mappings.length
@@ -1394,6 +1548,7 @@ function buildOverview({
     connectorState,
     isActive,
     isEnabled,
+    credentialBoundary,
     canonicalClasses,
     namespaceCount: namespaces.length,
     identityCount,
@@ -1429,6 +1584,7 @@ function buildOverview({
       setupStatus,
       isActive,
       isEnabled,
+      credentialBoundary,
       mappedFields,
       totalFields,
       namespaceCount: namespaces.length,
@@ -1445,6 +1601,7 @@ function buildOverview({
       isActive,
     }),
     preflight,
+    credentialBoundary,
     canonicalClasses,
     mappings,
     namespaces,
@@ -1466,9 +1623,17 @@ function buildOverview({
 
 export async function buildDemoErpOverview(): Promise<ErpOverview> {
   const demo = await fetchDemoErpOverview()
+  const credentialBoundary = buildConnectorCredentialBoundary({
+    hasConnection: true,
+    connectionMethod: 'rest_api',
+    authMode: 'custom_secret_ref',
+    credentialRequired: true,
+    credentialState: 'missing',
+  })
   const checks = buildReadinessChecks({
     hasConnection: true,
     isActive: false,
+    credentialBoundary,
     mappedFields: demo.status.mappedFields,
     totalFields: demo.status.totalFields,
     namespaceCount: 1,
@@ -1513,6 +1678,7 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
       },
     ],
     syncLogs: demo.syncLogs,
+    credentialBoundary,
   })
 }
 
@@ -1524,7 +1690,29 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     await Promise.all([
       pulsIntegration()
         .from('erp_connections')
-        .select('*')
+        .select(
+          [
+            'id',
+            'provider',
+            'display_name',
+            'connection_method',
+            'is_active',
+            'last_sync_at',
+            'last_status',
+            'setup_status',
+            'setup_step',
+            'is_enabled',
+            'owned_domains',
+            'selected_at',
+            'setup_started_at',
+            'auth_mode',
+            'credential_required',
+            'credential_state',
+            'credential_last_verified_at',
+            'credential_last_failed_at',
+            'credential_error_code',
+          ].join(', '),
+        )
         .eq('tenant_id', ctx.tenantId)
         .order('updated_at', { ascending: false })
         .limit(1)
@@ -1616,9 +1804,20 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   const setupStep = connection?.setup_step ?? null
   const isEnabled = connection?.is_enabled !== false
   const ownedDomains = Array.isArray(connection?.owned_domains) ? connection.owned_domains : []
+  const credentialBoundary = buildConnectorCredentialBoundary({
+    hasConnection: Boolean(connection),
+    connectionMethod: connection?.connection_method ?? null,
+    authMode: connection?.auth_mode ?? null,
+    credentialRequired: connection?.credential_required ?? null,
+    credentialState: connection?.credential_state ?? null,
+    lastVerifiedAt: connection?.credential_last_verified_at ?? null,
+    lastFailedAt: connection?.credential_last_failed_at ?? null,
+    errorCode: connection?.credential_error_code ?? null,
+  })
   const checks = buildReadinessChecks({
     hasConnection: Boolean(connection),
     isActive: connection?.is_active === true,
+    credentialBoundary,
     mappedFields,
     totalFields: mappings.length,
     namespaceCount: namespaces.length,
@@ -1670,6 +1869,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       level: mapSyncLevel(row.status),
       message: row.error_summary ?? `${row.sync_type ?? 'check'} · ${row.status ?? 'pending'}`,
     })),
+    credentialBoundary,
   })
 }
 
@@ -1746,6 +1946,12 @@ export async function startConnectorSetup(
     provider: config.provider,
     display_name: config.displayName,
     connection_method: config.connectionMethod,
+    auth_mode: config.authMode,
+    credential_required: config.credentialRequired,
+    credential_state: config.credentialRequired ? 'missing' : 'not_required',
+    credential_last_verified_at: null,
+    credential_last_failed_at: null,
+    credential_error_code: null,
     is_active: false,
     sync_direction: 'erp_to_puls',
     connection_key: config.connectionKey,
@@ -1758,7 +1964,9 @@ export async function startConnectorSetup(
     setup_metadata: {
       source_type: config.sourceType,
       runtime_boundary: 'closed',
-      credential_boundary: 'reference_only_future',
+      credential_boundary: 'reference_only',
+      secret_readback: 'disabled',
+      runtime_secret_resolution: 'server_side_future',
       source_ownership: 'domain_level',
     },
     updated_by_employee_id: ctx.employeeId,

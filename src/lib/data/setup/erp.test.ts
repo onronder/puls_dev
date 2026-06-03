@@ -95,6 +95,7 @@ function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) 
             provider: 'canias',
             id: 'connection-1',
             display_name: 'Canias ERP (Pasif)',
+            connection_method: 'rest_api',
             is_active: false,
             last_sync_at: null,
             last_status: null,
@@ -102,6 +103,12 @@ function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) 
             setup_step: 'preflight',
             is_enabled: true,
             owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
+            auth_mode: 'custom_secret_ref',
+            credential_required: true,
+            credential_state: 'missing',
+            credential_last_verified_at: null,
+            credential_last_failed_at: null,
+            credential_error_code: null,
           },
         },
         erp_field_mappings: {
@@ -217,11 +224,23 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.setup.status).toBe('preflight_ready')
     expect(result.data.setupSummary).toEqual({
       labelKey: 'erp.metrics.setup',
-      valueKey: 'erp.setupSummary.values.preflightReady',
-      hintKey: 'erp.setupSummary.hints.preflightReady',
-      progress: 100,
+      valueKey: 'erp.setupSummary.values.credentialPending',
+      hintKey: 'erp.setupSummary.hints.credentialPending',
+      progress: null,
     })
-    expect(result.data.setupSteps.every((step) => step.status === 'ready')).toBe(true)
+    expect(result.data.setupSteps.map((step) => step.status)).toEqual([
+      'ready',
+      'ready',
+      'ready',
+      'partial',
+      'ready',
+    ])
+    expect(result.data.credentialBoundary).toMatchObject({
+      authMode: 'custom_secret_ref',
+      required: true,
+      state: 'missing',
+      status: 'partial',
+    })
     expect(result.data.namespaces).toHaveLength(1)
     expect(result.data.canonicalClasses.find((row) => row.id === 'employees')).toMatchObject({
       mappedFields: 4,
@@ -230,9 +249,9 @@ describe('fetchErpOverviewWithMeta', () => {
       status: 'ready',
     })
     expect(result.data.preflight).toMatchObject({
-      status: 'ready',
-      passedCount: 7,
-      warningCount: 0,
+      status: 'partial',
+      passedCount: 6,
+      warningCount: 1,
       blockedCount: 0,
       safeToRunRuntime: false,
       runtimeExecution: 'not_started',
@@ -251,6 +270,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.mappings.some((mapping) => mapping.sourceField === 'REDACTED_FIELD')).toBe(
       false,
     )
+    expect(JSON.stringify(result.data)).not.toContain('credentials_ref')
   })
 
   it('returns real empty when tenant is missing and demo mode is off', async () => {
@@ -309,6 +329,7 @@ describe('fetchErpOverviewWithMeta', () => {
           provider: 'canias',
           id: 'connection-draft',
           display_name: 'Canias',
+          connection_method: 'rest_api',
           is_active: false,
           last_sync_at: null,
           last_status: null,
@@ -316,6 +337,9 @@ describe('fetchErpOverviewWithMeta', () => {
           setup_step: 'mapping',
           is_enabled: true,
           owned_domains: [],
+          auth_mode: 'custom_secret_ref',
+          credential_required: true,
+          credential_state: 'missing',
         },
       },
       erp_field_mappings: {
@@ -404,6 +428,7 @@ describe('fetchErpOverviewWithMeta', () => {
           provider: 'logo',
           id: 'connection-2',
           display_name: null,
+          connection_method: 'rest_api',
           is_active: false,
           last_sync_at: null,
           last_status: null,
@@ -411,6 +436,9 @@ describe('fetchErpOverviewWithMeta', () => {
           setup_step: 'mapping',
           is_enabled: true,
           owned_domains: [],
+          auth_mode: 'custom_secret_ref',
+          credential_required: true,
+          credential_state: 'missing',
         },
       },
     })
@@ -420,6 +448,45 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.source).toBe('real')
     expect(result.data.provider.label).toBe('Logo')
     expect(result.data.status.system).toBe('Logo')
+  })
+
+  it('treats CSV / Excel setup as credential-not-required without leaking secret refs', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      erp_connections: {
+        data: {
+          provider: 'csv',
+          id: 'connection-csv',
+          display_name: 'CSV / Excel',
+          connection_method: 'manual_import',
+          is_active: false,
+          last_sync_at: null,
+          last_status: null,
+          setup_status: 'mapping_ready',
+          setup_step: 'namespace',
+          is_enabled: true,
+          owned_domains: ['employees'],
+          auth_mode: 'none',
+          credential_required: false,
+          credential_state: 'not_required',
+          credentials_ref: 'secret://must-not-leak',
+        },
+      },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('real')
+    expect(result.data.credentialBoundary).toMatchObject({
+      authMode: 'none',
+      required: false,
+      state: 'not_required',
+      status: 'ready',
+    })
+    expect(result.data.preflight.checks.find((check) => check.id === 'credential_boundary')).toMatchObject({
+      status: 'ready',
+    })
+    expect(JSON.stringify(result.data)).not.toContain('secret://must-not-leak')
   })
 
   it('creates an admin-scoped Canias setup draft', async () => {

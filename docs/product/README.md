@@ -299,6 +299,18 @@ PR14.11 adds the dry-run setup check before runtime connectors exist. `/erp` can
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                               | Admin-run setup check and read-only result panel                         |
 | [`scripts/verify-14-connector-preflight-execution.sh`](../../scripts/verify-14-connector-preflight-execution.sh)         | PR14.11 verify gate                                                      |
 
+## PR14.12 Source credential boundary
+
+PR14.12 makes credential readiness source-independent. It adds generic auth mode and credential state metadata, keeps `credentials_ref` opaque and server-side, and shows `/erp` credential posture without collecting secrets or enabling runtime connectors.
+
+| Document / artifact                                                                                                      | Purpose                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| [14_source_credential_boundary.md](./14_source_credential_boundary.md)                                                   | Source-independent credential state model, product rules, and handoff    |
+| [`supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql`](../../supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql) | Adds generic auth mode and credential state fields                       |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                           | Safe credential posture adapter; does not select `credentials_ref`       |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                               | Credential boundary status panel without secret inputs                   |
+| [`scripts/verify-14-source-credential-boundary.sh`](../../scripts/verify-14-source-credential-boundary.sh)               | PR14.12 verify gate                                                      |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

@@ -1,6 +1,6 @@
-# PR14.8-PR14.11 Connector Implementation Roadmap
+# PR14.8-PR14.12 Connector Implementation Roadmap
 
-PR14.8 through PR14.11 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, and preflight contracts.
+PR14.8 through PR14.12 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, and credential-boundary contracts.
 
 ## Product Claim
 
@@ -33,6 +33,7 @@ Runtime sync, credential capture, ERP writes, and destructive operations remain 
 | PR14.9 | Error observability and Sentry | Frontend and backend-visible setup failures are captured, scrubbed, and shown with user-friendly recovery paths. |
 | PR14.10 | Mapping discovery | Source fields can be discovered or declared, then mapped to PULS canonical data classes without running a connector import. |
 | PR14.11 | Connector preflight execution | Setup, mapping, namespace, identity, and credential-boundary readiness can be validated as a dry run with no runtime sync or ERP writes. |
+| PR14.12 | Source credential boundary | Credential readiness is represented with source-independent auth mode and state metadata without capturing secrets or enabling runtime. |
 
 ## PR14.8 - Connector Setup Persistence
 
@@ -157,7 +158,7 @@ Before runtime sync exists, PULS needs a trustworthy dry-run gate. PR14.11 valid
 
 ## Credential Boundary
 
-Credentials are required for real connectors eventually, but they are not product metadata. Future credential capture must follow this boundary:
+PR14.12 makes this boundary concrete. Credentials are required for real connectors eventually, but they are not product metadata. Future credential capture must follow this boundary:
 
 | Rule | Meaning |
 |------|---------|
@@ -166,6 +167,41 @@ Credentials are required for real connectors eventually, but they are not produc
 | No readback | UI must never display the secret value after it is saved. |
 | Scrub telemetry | Observability must remove credential-like fields before capture. |
 | Runtime-owned access | Connector runtime should resolve secrets through a controlled server-side boundary, not client-side code. |
+
+## PR14.12 - Source Credential Boundary
+
+### Business Value
+
+PULS cannot become a source-independent connectivity product if credential readiness is hidden behind a Canias-specific assumption. PR14.12 introduces generic credential posture so Canias, CSV / Excel, Logo, Custom API, SFTP, and future sources can all report whether live connection is safe to consider without exposing secrets.
+
+### Scope
+
+| Area | PR14.12 behavior |
+|------|------------------|
+| Data model | Add `auth_mode`, `credential_required`, `credential_state`, verification timestamps, and safe error code metadata to `puls_integration.erp_connections`. |
+| Source independence | Backfill by `connection_method`, not by provider-specific logic. |
+| Adapter | Read safe credential posture fields and never select `credentials_ref`. |
+| UI | Show credential boundary state on `/erp` without a password, API key, token, FTP, OAuth, or connection string input. |
+| Preflight | Treat missing/configured-but-unverified credentials as warning/partial, not ready. |
+| CSV / Excel | Support a no-credential path with `not_required`. |
+
+### Out Of Scope
+
+- Secret capture form
+- Secret manager integration
+- Credential readback
+- Live API credential verification
+- Runtime sync/import/export
+- ERP or source-system writes
+
+### Acceptance Criteria
+
+- Canias remains a source profile, not the credential architecture.
+- `credentials_ref` remains an opaque server-side reference.
+- REST/API-like setup with missing credentials shows partial/warning posture.
+- Manual import setup can show credentials not required.
+- Tests prove `credentials_ref` does not leak into adapter output.
+- Verify script blocks `select('*')`, credential inputs, and runtime enablement patterns.
 
 ## Domain-Level Source Ownership
 

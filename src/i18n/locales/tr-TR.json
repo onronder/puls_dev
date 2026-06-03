@@ -785,6 +785,7 @@
         "mapping": "Alanlar",
         "mappingReady": "Alanlar hazır",
         "namespaceReady": "Kimlikler hazır",
+        "credentialPending": "Kimlik bilgisi",
         "setupInProgress": "Kurulum",
         "preflightReady": "Kontrole hazır",
         "connected": "Canlı",
@@ -797,6 +798,7 @@
         "mappingInProgress": "Alan eşleştirme tamamlanmalı",
         "namespacePending": "Kaynak kimliği bekliyor",
         "identityPending": "Kayıt eşleştirme bekliyor",
+        "credentialPending": "Canlı bağlantı için güvenli referans bekliyor",
         "preflightPending": "Kontrol adımı bekliyor",
         "preflightReady": "Alan ve kimlik eşleşmeleri hazır",
         "connected": "Canlı bağlantı aktif",
@@ -883,6 +885,10 @@
         "label": "Kayıt eşleştirme",
         "description": "Kaynak kayıtları PULS kayıtlarına açık bir eşleştirme kuralıyla bağlanır."
       },
+      "credentialBoundary": {
+        "label": "Kimlik bilgisi sınırı",
+        "description": "Kaynak API, dosya veya özel bağlantı kimlik bilgisi istiyorsa yalnızca güvenli referans durumu izlenir."
+      },
       "transferMode": {
         "label": "Transfer modu",
         "description": "CSV, Excel, dosya veya API akışı insan onaylı ilerleyecek şekilde seçilir."
@@ -915,6 +921,8 @@
     "sections": {
       "preflight": "Kurulum kontrolü",
       "preflightDescription": "Canlı API çağrısı yapmadan kaynak, alan, kimlik ve güvenlik sınırlarını birlikte doğrula.",
+      "credentialBoundary": "Kimlik bilgisi sınırı",
+      "credentialBoundaryDescription": "Bu bölüm canlı bağlantı için gereken kimlik bilgisi durumunu gösterir; secret değeri bu ekranda toplanmaz, okunmaz veya gösterilmez.",
       "namespaces": "Kaynak kimlikleri",
       "namespacesDescription": "Dış kaynaktan gelen kayıtların PULS kayıtlarıyla hangi kapsamda eşleştiğini gösterir.",
       "canonicalClasses": "Kanonik veri sınıfları",
@@ -955,8 +963,46 @@
       "fieldMapping": "Alan eşleştirme",
       "sourceNamespace": "Kaynak kimliği",
       "identityReconciliation": "Kayıt eşleştirme",
+      "credentialBoundary": "Kimlik bilgisi sınırı",
       "setupReadiness": "Kurulum durumu",
       "writeGuardrail": "ERP yazma koruması"
+    },
+    "credentialBoundary": {
+      "authMode": "Yetki modu",
+      "required": "Gerekli mi?",
+      "lastVerified": "Son doğrulama",
+      "notRecorded": "Henüz yok",
+      "noReadback": "PULS bu aşamada API anahtarı, parola, FTP bilgisi, OAuth token veya bağlantı dizgesi toplamaz; gelecekte yalnızca sunucu tarafı güvenli referans kullanılır.",
+      "requiredValues": {
+        "yes": "Gerekli",
+        "no": "Gerekli değil"
+      },
+      "states": {
+        "not_required": "Kimlik bilgisi gerekmiyor",
+        "missing": "Kimlik bilgisi bekliyor",
+        "configured": "Referans tanımlı",
+        "verified": "Doğrulandı",
+        "failed": "Doğrulama hatası",
+        "revoked": "Erişim kapatıldı"
+      },
+      "descriptions": {
+        "not_required": "Bu kaynak için canlı bağlantı öncesinde secret referansı gerekmiyor.",
+        "missing": "Bu kaynak canlı bağlantı öncesinde güvenli bir kimlik bilgisi referansı bekliyor.",
+        "configured": "Güvenli referans tanımlı; canlı kullanım öncesinde server tarafı doğrulama bekleniyor.",
+        "verified": "Güvenli referans server tarafında doğrulanmış görünüyor.",
+        "failed": "Son doğrulama başarısız. Secret değeri gösterilmez; güvenli bağlantı bilgisi yeniden gözden geçirilmeli.",
+        "revoked": "Bu kaynağın güvenli referansı kapatılmış. Canlı bağlantı yeniden açılmadan önce admin aksiyonu gerekir."
+      }
+    },
+    "authModes": {
+      "none": "Yok",
+      "api_key": "API anahtarı",
+      "basic_auth": "Kullanıcı adı / parola",
+      "bearer_token": "Bearer token",
+      "oauth2_client_credentials": "OAuth2 client credentials",
+      "sftp_password": "SFTP parola",
+      "connection_string": "Bağlantı dizgesi",
+      "custom_secret_ref": "Güvenli referans"
     },
     "preflightResult": {
       "status": {
