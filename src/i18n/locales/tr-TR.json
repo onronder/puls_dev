@@ -1001,6 +1001,9 @@
       "importPreview": {
         "preview_ready": "İçe aktarma önizlemesi hazır. Henüz canlı veri yazılmadı.",
         "blocked": "Önizleme doğrulama hataları nedeniyle durdu."
+      },
+      "applyReadiness": {
+        "reviewRequested": "İnsan incelemesi talebi kaydedildi. Apply akışı kapalı kalır."
       }
     },
     "errors": {
@@ -1013,7 +1016,8 @@
       "importPreviewBlocked": "İçe aktarma önizlemesi yalnızca doğrulanmış dry-run batch üzerinde çalışır.",
       "domainOwned": "Bu veri alanı zaten başka bir kaynak tarafından yönetiliyor. Mevcut kurulumu yönet veya boş bir veri alanı seç.",
       "permissionDenied": "Bu bağlantıyı kaydetme yetkin yok. Admin rolüyle tekrar dene.",
-      "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin."
+      "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin.",
+      "applyReviewBlocked": "İnsan incelemesi yalnızca temiz bir import önizlemesi hazırlandıktan sonra talep edilebilir."
     },
     "sections": {
       "lifecycle": "Yaşam döngüsü",
@@ -1039,7 +1043,9 @@
       "syncLogs": "Kontrol geçmişi",
       "syncLogsDescription": "Kurulum ve kontrol adımlarında oluşan son kayıtlar.",
       "activityTimeline": "Aktivite geçmişi",
-      "activityTimelineDescription": "Kurulum, güvenli referans ve kontrol adımlarında oluşan güvenli kayıtlar."
+      "activityTimelineDescription": "Kurulum, güvenli referans ve kontrol adımlarında oluşan güvenli kayıtlar.",
+      "applyReadiness": "Uygulama hazırlığı",
+      "applyReadinessDescription": "Hazırlanan önizlemenin insan kararı için hazır olup olmadığını gösterir. Bu adım yalnızca denetim niyeti kaydeder; kayıt uygulamaz veya kanonik veri yazmaz."
     },
     "domainOwnership": {
       "owner": "{{source}} tarafından yönetiliyor",
@@ -1425,6 +1431,9 @@
         },
         "sync_batch_recorded": {
           "title": "Bağlantı kaydı oluştu"
+        },
+        "import_apply_review_requested": {
+          "title": "İnsan incelemesi talebi kaydedildi"
         }
       },
       "summaries": {
@@ -1451,6 +1460,11 @@
           "success": "Kaynak geçmişi başarıyla kaydedildi.",
           "pending": "Kaynak geçmişi bekleyen durumda kaydedildi.",
           "failed": "Kaynak geçmişinde güvenli hata detayı var."
+        },
+        "importApplyReview": {
+          "success": "Admin bir önizleme batch için insan incelemesi niyetini kaydetti; kanonik veri yazılmadı.",
+          "partial": "İnceleme niyeti açık hazırlık engelleriyle kaydedildi; apply kapalı kalır.",
+          "failed": "İnsan incelemesi talebi kaydedilemedi; apply aksiyonu açılmadı."
         }
       },
       "details": {
@@ -1482,7 +1496,8 @@
         "wait_for_secure_reference": "Güvenli referansın sunucu tarafında oluşturulmasını bekle.",
         "review_import_preview": "Dry-run önizleme sonuçlarını incele; canlı uygulama ayrı onay gerektirir.",
         "review_import_errors": "Önizleme öncesi import doğrulama hatalarını kapat.",
-        "review_activity": "Kaydı incele ve bir sonraki güvenli kurulum adımına geç."
+        "review_activity": "Kaydı incele ve bir sonraki güvenli kurulum adımına geç.",
+        "hold_for_apply_design": "Gelecekteki apply tasarımı, onay ve rollback kapıları için bekle."
       }
     },
     "syncLogMessages": {
@@ -1507,11 +1522,134 @@
         "partial": "Dry-run import önizlemesi doğrulama hatalarıyla durdu.",
         "failed": "Dry-run import önizlemesi kaydedilemedi.",
         "pending": "Dry-run import önizleme kaydı oluşturuldu."
+      },
+      "importApplyReview": {
+        "success": "İnsan incelemesi talebi kaydedildi.",
+        "pending": "İnsan incelemesi talebi oluşturuldu.",
+        "failed": "İnsan incelemesi talebi kaydedilemedi."
       }
     },
     "status": {
       "mapped": "Eşleşti",
       "pending": "Bekliyor"
+    },
+    "applyReadiness": {
+      "requesting": "Talep kaydediliyor",
+      "adminRequired": "Admin yetkisi gerekir",
+      "safeToApplyFalse": "Apply kapalı",
+      "reviewRequestedAt": "İnceleme talebi zamanı: {{value}}",
+      "blockersTitle": "Apply neden kapalı kalıyor",
+      "noBlockers": "Önizleme bulgularında engel yok; yine de bu sürümde uygulama akışı bilinçli olarak kapalıdır.",
+      "status": {
+        "not_available": "İnceleme hazır değil",
+        "needs_preview": "Önizleme gerekli",
+        "review_ready": "İnsan incelemesine hazır",
+        "review_requested": "İnceleme talebi kaydedildi",
+        "blocked": "İnceleme blokeli"
+      },
+      "descriptions": {
+        "not_available": "İnceleme talebi öncesinde kaynak seçilmeli ve dry-run batch hazırlanmalı.",
+        "needs_preview": "İnceleme kaydı öncesinde batch kanonik modele göre önizlenmeli.",
+        "review_ready": "Önizleme sonuçları admin tarafından insan incelemesi niyeti kaydedilecek durumda. Bu aksiyon apply yolu açmaz.",
+        "review_requested": "İnsan incelemesi talebi kaydedildi. Gelecekteki apply tasarımı yine ayrı onay, runtime ve rollback kapılarından geçmeli.",
+        "blocked": "İnceleme talebi kaydedilmeden önce önizleme bulguları kapatılmalı."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada güvenli bir inceleme aksiyonu yok."
+        },
+        "run_preview_first": {
+          "label": "Önce önizleme çalıştır",
+          "description": "İnceleme niyeti kaydı için temiz önizleme gerekir."
+        },
+        "request_human_review": {
+          "label": "İnsan incelemesi talebini kaydet",
+          "description": "Önizleme sonuçlarının insan tarafından inceleneceğini belirten denetim sinyalini kaydet. Bu apply onayı değildir."
+        },
+        "review_requested": {
+          "label": "Talep kaydedildi",
+          "description": "Denetim sinyali kaydedildi. Apply akışı kapalı kalır."
+        },
+        "resolve_blockers": {
+          "label": "Engelleri kapat",
+          "description": "Önizleme hatalarını veya eksik kurulum kanıtını kapatıp önizlemeyi yeniden çalıştır."
+        }
+      },
+      "metrics": {
+        "preview": "Önizleme sonucu",
+        "findings": "Bulgu",
+        "blockers": "İnceleme engeli",
+        "execution": "Çalıştırma"
+      },
+      "values": {
+        "createUpdateSkip": "Yarat / güncelle / atla",
+        "errorWarning": "Hata / uyarı",
+        "blockers": "Aktif engel",
+        "closed": "Kapalı",
+        "noApply": "Apply aksiyonu açık değil",
+        "previewReady": "Önizleme hazır",
+        "pending": "Bekliyor",
+        "hasErrors": "Hata var",
+        "clean": "Hata yok",
+        "credentialReady": "Referans hazır veya gerekli değil",
+        "credentialPending": "Referans doğrulanmadı",
+        "reviewRecorded": "İnceleme talebi kaydedildi",
+        "reviewPending": "İnceleme kaydı yok",
+        "executionClosed": "Apply çalıştırma kapalı"
+      },
+      "checks": {
+        "preview_classification": {
+          "label": "Önizleme sınıflandırması",
+          "description": "İnceleme öncesinde satırlar yarat, güncelle veya atla olarak sınıflandırılmalı."
+        },
+        "row_findings": {
+          "label": "Satır bulguları",
+          "description": "Doğrulama hataları incelemeyi blokeler; uyarılar insan incelemesi için görünür kalır."
+        },
+        "credential_reference": {
+          "label": "Kimlik bilgisi referansı",
+          "description": "Kimlik bilgisi durumu kanıt olarak gösterilir; secret değeri asla gösterilmez."
+        },
+        "human_review": {
+          "label": "İnsan incelemesi",
+          "description": "Adminler gelecekteki apply tasarımı öncesinde inceleme niyetini kaydedebilir."
+        },
+        "execution_boundary": {
+          "label": "Çalıştırma sınırı",
+          "description": "Kanonik apply, runtime sync ve ERP yazma bu sürümün dışında kalır."
+        }
+      },
+      "blockers": {
+        "no_connector": {
+          "label": "Kaynak seçilmedi",
+          "description": "İnceleme düşünülmeden önce connector kurulumu başlatılmalı."
+        },
+        "no_batch": {
+          "label": "Önizleme batch yok",
+          "description": "İnceleme öncesinde dry-run import batch hazırlanmalı."
+        },
+        "preview_required": {
+          "label": "Önizleme gerekli",
+          "description": "Satırlar inceleme öncesinde dry-run önizleme ile sınıflandırılmalı."
+        },
+        "row_errors": {
+          "label": "Satır hataları var",
+          "description": "Doğrulama hatası olan satırlar inceleme öncesinde düzeltilmeli."
+        },
+        "credential_not_verified": {
+          "label": "Kimlik bilgisi referansı doğrulanmadı",
+          "description": "Canlı kullanım gelecekteki runtime boundary içinde doğrulanmış güvenli referans gerektirir."
+        },
+        "dry_run_only": {
+          "label": "Sadece dry-run batch",
+          "description": "Mevcut batch bilinçli olarak dry-run durumunda ve kanonik kayıt yazamaz."
+        },
+        "apply_execution_closed": {
+          "label": "Apply çalıştırma kapalı",
+          "description": "Bu sürüm yalnızca inceleme niyeti kaydeder; kanonik apply uygulanmadı."
+        }
+      }
     }
   },
   "orgSetupReadiness": {
@@ -3046,13 +3184,27 @@
       }
     },
     "guardrails": {
-      "dbBacked": { "label": "DB destekli bağlam" },
-      "tenantScoped": { "label": "Tenant kapsamlı" },
-      "humanInLoop": { "label": "İnsan onayı gerekli (human-in-the-loop)" },
-      "noAutonomousMutations": { "label": "Otonom mutasyon yok" },
-      "noAutoApprovals": { "label": "Otomatik onay yok" },
-      "noErpWrites": { "label": "ERP yazma işlemi yok" },
-      "noVaultSeed": { "label": "Kalıcı konuşma kaydı yok" },
+      "dbBacked": {
+        "label": "DB destekli bağlam"
+      },
+      "tenantScoped": {
+        "label": "Tenant kapsamlı"
+      },
+      "humanInLoop": {
+        "label": "İnsan onayı gerekli (human-in-the-loop)"
+      },
+      "noAutonomousMutations": {
+        "label": "Otonom mutasyon yok"
+      },
+      "noAutoApprovals": {
+        "label": "Otomatik onay yok"
+      },
+      "noErpWrites": {
+        "label": "ERP yazma işlemi yok"
+      },
+      "noVaultSeed": {
+        "label": "Kalıcı konuşma kaydı yok"
+      },
       "enforced": "Uygulanıyor",
       "pending": "Bekliyor"
     },

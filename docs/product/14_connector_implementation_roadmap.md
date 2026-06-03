@@ -1,6 +1,6 @@
-# PR14.8-PR14.16 Connector Implementation Roadmap
+# PR14.8-PR14.17 Connector Implementation Roadmap
 
-PR14.8 through PR14.12 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, and credential-boundary contracts.
+PR14.8 through PR14.17 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow with safe preview and human review boundaries. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, credential-boundary, preview, and review-readiness contracts.
 
 ## Product Claim
 
@@ -14,31 +14,32 @@ Runtime sync, credential capture, ERP writes, and destructive operations remain 
 
 ## Decisions Locked Before PR14.8
 
-| Decision | Product direction |
-|----------|-------------------|
-| Connector scope | A tenant may use more than one data source when different domains live in different systems. |
-| Provider posture | Canias and CSV / Excel are MVP setup candidates; Logo and Custom API can remain future-ready provider cards. |
-| Data ownership | Source priority must be domain-based, not a single global tenant switch. |
-| Persistence target | Use `puls_integration.erp_connections` lifecycle state instead of a separate setup-draft table. |
-| Write access | Admin can create and edit connector setup. Manager can inspect read-only. Employee cannot access setup routes. |
-| Credentials | PR14.8 does not collect or store API keys, passwords, FTP secrets, OAuth tokens, or connector credentials. Future credential capture must use a secret boundary and store only a reference in product metadata. |
-| Runtime boundary | No live connector calls, no import execution, no sync button, no ERP writes. |
-| Testing posture | Live authenticated e2e must prove seeded Puls Teknik and empty PULS Connector Lab behavior by role. |
+| Decision           | Product direction                                                                                                                                                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connector scope    | A tenant may use more than one data source when different domains live in different systems.                                                                                                                    |
+| Provider posture   | Canias and CSV / Excel are MVP setup candidates; Logo and Custom API can remain future-ready provider cards.                                                                                                    |
+| Data ownership     | Source priority must be domain-based, not a single global tenant switch.                                                                                                                                        |
+| Persistence target | Use `puls_integration.erp_connections` lifecycle state instead of a separate setup-draft table.                                                                                                                 |
+| Write access       | Admin can create and edit connector setup. Manager can inspect read-only. Employee cannot access setup routes.                                                                                                  |
+| Credentials        | PR14.8 does not collect or store API keys, passwords, FTP secrets, OAuth tokens, or connector credentials. Future credential capture must use a secret boundary and store only a reference in product metadata. |
+| Runtime boundary   | No live connector calls, no import execution, no sync button, no ERP writes.                                                                                                                                    |
+| Testing posture    | Live authenticated e2e must prove seeded Puls Teknik and empty PULS Connector Lab behavior by role.                                                                                                             |
 
 ## Implementation Sequence
 
-| PR | Name | Outcome |
-|----|------|---------|
-| PR14.8 | Connector setup persistence | Provider selection creates a tenant-scoped setup record, survives refresh, and changes dashboard / ERP posture. |
-| PR14.9 | Error observability and Sentry | Frontend and backend-visible setup failures are captured, scrubbed, and shown with user-friendly recovery paths. |
-| PR14.10 | Mapping discovery | Source fields can be discovered or declared, then mapped to PULS canonical data classes without running a connector import. |
-| PR14.11 | Connector preflight execution | Setup, mapping, namespace, identity, and credential-boundary readiness can be validated as a dry run with no runtime sync or ERP writes. |
-| PR14.12 | Source credential boundary | Credential readiness is represented with source-independent auth mode and state metadata without capturing secrets or enabling runtime. |
-| PR14.12B | Connector state consistency findings | Dashboard, `/erp`, duplicate setup, and persisted preflight truth are aligned. |
-| PR14.13 | Connector lifecycle capabilities | Source lifecycle, capability, and domain ownership posture are visible without runtime execution. |
-| PR14.14 | Connector credential handoff | Admins can request secure reference preparation without collecting or configuring secrets. |
-| PR14.15 | Connector activity timeline | Setup actions leave safe, durable activity history. |
-| PR14.16 | Connector import preview dry-run | Prepared dry-run batches can be validated and classified without apply/import execution. |
+| PR       | Name                                 | Outcome                                                                                                                                  |
+| -------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| PR14.8   | Connector setup persistence          | Provider selection creates a tenant-scoped setup record, survives refresh, and changes dashboard / ERP posture.                          |
+| PR14.9   | Error observability and Sentry       | Frontend and backend-visible setup failures are captured, scrubbed, and shown with user-friendly recovery paths.                         |
+| PR14.10  | Mapping discovery                    | Source fields can be discovered or declared, then mapped to PULS canonical data classes without running a connector import.              |
+| PR14.11  | Connector preflight execution        | Setup, mapping, namespace, identity, and credential-boundary readiness can be validated as a dry run with no runtime sync or ERP writes. |
+| PR14.12  | Source credential boundary           | Credential readiness is represented with source-independent auth mode and state metadata without capturing secrets or enabling runtime.  |
+| PR14.12B | Connector state consistency findings | Dashboard, `/erp`, duplicate setup, and persisted preflight truth are aligned.                                                           |
+| PR14.13  | Connector lifecycle capabilities     | Source lifecycle, capability, and domain ownership posture are visible without runtime execution.                                        |
+| PR14.14  | Connector credential handoff         | Admins can request secure reference preparation without collecting or configuring secrets.                                               |
+| PR14.15  | Connector activity timeline          | Setup actions leave safe, durable activity history.                                                                                      |
+| PR14.16  | Connector import preview dry-run     | Prepared dry-run batches can be validated and classified without apply/import execution.                                                 |
+| PR14.17  | Connector apply readiness boundary   | Preview results can be marked ready for human review while canonical apply remains closed.                                               |
 
 ## PR14.8 - Connector Setup Persistence
 
@@ -48,18 +49,18 @@ PR14.8 makes the first real setup action durable. A customer admin can start wit
 
 ### Scope
 
-| Area | PR14.8 behavior |
-|------|-----------------|
-| Data model | Extend `puls_integration.erp_connections` with lifecycle fields needed for draft/setup state. |
-| Provider choices | Canias and CSV / Excel can create setup records. Logo and Custom API remain visible future-ready choices unless implementation cost is low and safe. |
-| Lifecycle | Use production-grade status values such as `draft`, `setup_in_progress`, `mapping_ready`, `preflight_ready`, `connected`, `disabled`, `archived`, and `error`. |
-| Enabled state | A connection can be enabled or disabled without deleting setup history. |
-| Domain ownership | Prepare for domain-level source ownership so employees, departments, expenses, and other domains can come from different systems later. |
-| Admin UX | Admin starts setup from `/erp`, sees the wizard change state immediately, and the state survives refresh. |
-| Manager UX | Manager can view connector posture read-only and sees a friendly admin-required notice for mutation actions. |
-| Employee UX | Employee remains blocked from setup routes. |
-| Dashboard UX | Empty tenant dashboard changes from no source to setup draft / setup in progress when a connector setup exists. |
-| Tests | Connector-admin e2e starts a deterministic draft, refreshes, and proves persistence. Employee and manager role boundaries stay covered. |
+| Area             | PR14.8 behavior                                                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data model       | Extend `puls_integration.erp_connections` with lifecycle fields needed for draft/setup state.                                                                  |
+| Provider choices | Canias and CSV / Excel can create setup records. Logo and Custom API remain visible future-ready choices unless implementation cost is low and safe.           |
+| Lifecycle        | Use production-grade status values such as `draft`, `setup_in_progress`, `mapping_ready`, `preflight_ready`, `connected`, `disabled`, `archived`, and `error`. |
+| Enabled state    | A connection can be enabled or disabled without deleting setup history.                                                                                        |
+| Domain ownership | Prepare for domain-level source ownership so employees, departments, expenses, and other domains can come from different systems later.                        |
+| Admin UX         | Admin starts setup from `/erp`, sees the wizard change state immediately, and the state survives refresh.                                                      |
+| Manager UX       | Manager can view connector posture read-only and sees a friendly admin-required notice for mutation actions.                                                   |
+| Employee UX      | Employee remains blocked from setup routes.                                                                                                                    |
+| Dashboard UX     | Empty tenant dashboard changes from no source to setup draft / setup in progress when a connector setup exists.                                                |
+| Tests            | Connector-admin e2e starts a deterministic draft, refreshes, and proves persistence. Employee and manager role boundaries stay covered.                        |
 
 ### Out Of Scope
 
@@ -91,14 +92,14 @@ Connector setup introduces real user actions and future external system boundari
 
 ### Scope
 
-| Area | PR14.9 behavior |
-|------|-----------------|
-| Frontend errors | Route-level and action-level errors are captured with tenant, route, and safe context. |
-| Backend-visible failures | Server/action failures are captured when the runtime boundary supports it. |
-| User copy | Product UI shows clear recovery states instead of stack traces or raw provider errors. |
-| Scrubbing | Emails, tokens, passwords, API keys, and connector secrets are not sent in telemetry. |
-| Connector setup | `/erp` setup actions report failures with retry or contact-admin recovery language. |
-| Docs | Observability policy documents what can and cannot be logged. |
+| Area                     | PR14.9 behavior                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| Frontend errors          | Route-level and action-level errors are captured with tenant, route, and safe context. |
+| Backend-visible failures | Server/action failures are captured when the runtime boundary supports it.             |
+| User copy                | Product UI shows clear recovery states instead of stack traces or raw provider errors. |
+| Scrubbing                | Emails, tokens, passwords, API keys, and connector secrets are not sent in telemetry.  |
+| Connector setup          | `/erp` setup actions report failures with retry or contact-admin recovery language.    |
+| Docs                     | Observability policy documents what can and cannot be logged.                          |
 
 ### Acceptance Criteria
 
@@ -116,15 +117,15 @@ PULS becomes useful across many data sources only when external fields can be co
 
 ### Scope
 
-| Area | PR14.10 behavior |
-|------|------------------|
-| Canonical classes | Show supported canonical data classes such as employees, departments, positions, cost centers, locations, and future domain classes. |
-| Canias discovery | Use known metadata/manual field declaration first; do not require live API discovery in this PR. |
-| CSV / Excel discovery | Support header/sample discovery only if file handling is safe and scoped; otherwise document as next PR. |
-| Mapping draft | Persist source field to canonical field mappings as draft metadata. |
-| Required fields | Show completeness for required canonical fields. |
-| Domain ownership | Make clear which source owns which canonical domain. |
-| Validation | Validate mapping shape and required fields without executing import. |
+| Area                  | PR14.10 behavior                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Canonical classes     | Show supported canonical data classes such as employees, departments, positions, cost centers, locations, and future domain classes. |
+| Canias discovery      | Use known metadata/manual field declaration first; do not require live API discovery in this PR.                                     |
+| CSV / Excel discovery | Support header/sample discovery only if file handling is safe and scoped; otherwise document as next PR.                             |
+| Mapping draft         | Persist source field to canonical field mappings as draft metadata.                                                                  |
+| Required fields       | Show completeness for required canonical fields.                                                                                     |
+| Domain ownership      | Make clear which source owns which canonical domain.                                                                                 |
+| Validation            | Validate mapping shape and required fields without executing import.                                                                 |
 
 ### Acceptance Criteria
 
@@ -143,14 +144,14 @@ Before runtime sync exists, PULS needs a trustworthy dry-run gate. PR14.11 valid
 
 ### Scope
 
-| Area | PR14.11 behavior |
-|------|------------------|
+| Area              | PR14.11 behavior                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Dry-run preflight | Validate provider metadata, lifecycle state, mapping completeness, namespace readiness, identity strategy, and credential-boundary posture. |
-| No runtime sync | Preflight does not import, export, sync, or write to ERP. |
-| Result model | Display deterministic preflight result state with clear pass, warning, and blocked outcomes. |
-| Recovery | Show which setup step needs attention. |
-| Role boundary | Admin can run preflight. Manager can inspect results. Employee cannot access setup. |
-| Audit posture | Preflight result metadata is safe to display and does not include secrets. |
+| No runtime sync   | Preflight does not import, export, sync, or write to ERP.                                                                                   |
+| Result model      | Display deterministic preflight result state with clear pass, warning, and blocked outcomes.                                                |
+| Recovery          | Show which setup step needs attention.                                                                                                      |
+| Role boundary     | Admin can run preflight. Manager can inspect results. Employee cannot access setup.                                                         |
+| Audit posture     | Preflight result metadata is safe to display and does not include secrets.                                                                  |
 
 ### Acceptance Criteria
 
@@ -165,13 +166,13 @@ Before runtime sync exists, PULS needs a trustworthy dry-run gate. PR14.11 valid
 
 PR14.12 makes this boundary concrete. Credentials are required for real connectors eventually, but they are not product metadata. Future credential capture must follow this boundary:
 
-| Rule | Meaning |
-|------|---------|
-| No plaintext secrets in app tables | API keys, passwords, FTP credentials, OAuth secrets, and tokens must not live in ordinary product tables. |
-| Reference-only metadata | Product tables may store a safe reference such as a configured / missing state or future secret reference. |
-| No readback | UI must never display the secret value after it is saved. |
-| Scrub telemetry | Observability must remove credential-like fields before capture. |
-| Runtime-owned access | Connector runtime should resolve secrets through a controlled server-side boundary, not client-side code. |
+| Rule                               | Meaning                                                                                                    |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| No plaintext secrets in app tables | API keys, passwords, FTP credentials, OAuth secrets, and tokens must not live in ordinary product tables.  |
+| Reference-only metadata            | Product tables may store a safe reference such as a configured / missing state or future secret reference. |
+| No readback                        | UI must never display the secret value after it is saved.                                                  |
+| Scrub telemetry                    | Observability must remove credential-like fields before capture.                                           |
+| Runtime-owned access               | Connector runtime should resolve secrets through a controlled server-side boundary, not client-side code.  |
 
 ## PR14.12 - Source Credential Boundary
 
@@ -181,14 +182,14 @@ PULS cannot become a source-independent connectivity product if credential readi
 
 ### Scope
 
-| Area | PR14.12 behavior |
-|------|------------------|
-| Data model | Add `auth_mode`, `credential_required`, `credential_state`, verification timestamps, and safe error code metadata to `puls_integration.erp_connections`. |
-| Source independence | Backfill by `connection_method`, not by provider-specific logic. |
-| Adapter | Read safe credential posture fields and never select `credentials_ref`. |
-| UI | Show credential boundary state on `/erp` without a password, API key, token, FTP, OAuth, or connection string input. |
-| Preflight | Treat missing/configured-but-unverified credentials as warning/partial, not ready. |
-| CSV / Excel | Support a no-credential path with `not_required`. |
+| Area                | PR14.12 behavior                                                                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data model          | Add `auth_mode`, `credential_required`, `credential_state`, verification timestamps, and safe error code metadata to `puls_integration.erp_connections`. |
+| Source independence | Backfill by `connection_method`, not by provider-specific logic.                                                                                         |
+| Adapter             | Read safe credential posture fields and never select `credentials_ref`.                                                                                  |
+| UI                  | Show credential boundary state on `/erp` without a password, API key, token, FTP, OAuth, or connection string input.                                     |
+| Preflight           | Treat missing/configured-but-unverified credentials as warning/partial, not ready.                                                                       |
+| CSV / Excel         | Support a no-credential path with `not_required`.                                                                                                        |
 
 ### Out Of Scope
 
@@ -216,13 +217,13 @@ PR14.12B makes the connector setup backbone truthful across dashboard, `/erp`, a
 
 ### Scope
 
-| Area | PR14.12B behavior |
-|------|-------------------|
-| Dashboard | ERP card uses credential-aware connector truth and no longer says clean when secure credential reference is missing. |
-| Current connector | Adapter picks the strongest non-archived connector row instead of whichever row was updated last. |
-| Domain ownership | Starting setup resumes the existing provider/domain setup or blocks a conflicting source from owning the same canonical domain. |
-| Setup history | Admin-run dry-run preflight writes a safe `setup_preflight` metadata row. |
-| Seed posture | Seeded inactive REST/API connectors with missing credentials start at `mapping_ready`, not `preflight_ready`. |
+| Area              | PR14.12B behavior                                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard         | ERP card uses credential-aware connector truth and no longer says clean when secure credential reference is missing.            |
+| Current connector | Adapter picks the strongest non-archived connector row instead of whichever row was updated last.                               |
+| Domain ownership  | Starting setup resumes the existing provider/domain setup or blocks a conflicting source from owning the same canonical domain. |
+| Setup history     | Admin-run dry-run preflight writes a safe `setup_preflight` metadata row.                                                       |
+| Seed posture      | Seeded inactive REST/API connectors with missing credentials start at `mapping_ready`, not `preflight_ready`.                   |
 
 ### Out Of Scope
 
@@ -244,13 +245,13 @@ PR14.12B makes the connector setup backbone truthful across dashboard, `/erp`, a
 
 The product must support distributed customer systems. A single tenant-level primary connector is too narrow. PR14.8 should prepare the model for domain-level source ownership:
 
-| Domain example | Possible source |
-|----------------|-----------------|
-| Employees | Canias |
-| Departments | Canias |
-| Positions | Canias |
-| Cost centers | Canias or CSV |
-| Expense records | Future accounting connector |
+| Domain example   | Possible source                     |
+| ---------------- | ----------------------------------- |
+| Employees        | Canias                              |
+| Departments      | Canias                              |
+| Positions        | Canias                              |
+| Cost centers     | Canias or CSV                       |
+| Expense records  | Future accounting connector         |
 | Training records | CSV / Excel or future LMS connector |
 
 This keeps existing data flows from being overwritten when a new connector is added.
@@ -263,12 +264,12 @@ PR14.13 turns connector setup from a provider-specific readiness surface into a 
 
 ### Scope
 
-| Area | PR14.13 behavior |
-|------|------------------|
-| Lifecycle | Adapter derives the current lifecycle stage from setup status, mapping, namespace, credential, and preflight state. |
-| Capabilities | UI exposes source capabilities without enabling live API calls, import/export execution, credential capture, or ERP writeback. |
-| Domain ownership | Canonical classes show whether they are owned by the current source, another source, or still available. |
-| Responsive workbench | `/erp` setup steps and metric blocks wrap cleanly across narrow, tablet, and desktop viewports. |
+| Area                 | PR14.13 behavior                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Lifecycle            | Adapter derives the current lifecycle stage from setup status, mapping, namespace, credential, and preflight state.            |
+| Capabilities         | UI exposes source capabilities without enabling live API calls, import/export execution, credential capture, or ERP writeback. |
+| Domain ownership     | Canonical classes show whether they are owned by the current source, another source, or still available.                       |
+| Responsive workbench | `/erp` setup steps and metric blocks wrap cleanly across narrow, tablet, and desktop viewports.                                |
 
 ### Out Of Scope
 
@@ -295,13 +296,13 @@ PR14.14 gives the connector setup backbone a truthful next step when a source re
 
 ### Scope
 
-| Area | PR14.14 behavior |
-|------|------------------|
-| Safe state | Adds `credential_handoff_status` and safe timestamps to connector setup rows. |
-| Admin action | Admin can request secure reference handoff after mapping, namespace, and identity readiness are clear. |
-| UX | `/erp` explains the write-only secure capture boundary and shows the request state. |
-| History | A safe `credential_handoff` setup history record is written. |
-| Source independence | Canias remains one source profile; the model works for API, SFTP, file, and future providers. |
+| Area                | PR14.14 behavior                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------ |
+| Safe state          | Adds `credential_handoff_status` and safe timestamps to connector setup rows.                          |
+| Admin action        | Admin can request secure reference handoff after mapping, namespace, and identity readiness are clear. |
+| UX                  | `/erp` explains the write-only secure capture boundary and shows the request state.                    |
+| History             | A safe `credential_handoff` setup history record is written.                                           |
+| Source independence | Canias remains one source profile; the model works for API, SFTP, file, and future providers.          |
 
 ### Out Of Scope
 
@@ -330,13 +331,13 @@ PR14.15 gives the connector setup backbone a durable, human-readable activity ti
 
 ### Scope
 
-| Area | PR14.15 behavior |
-|------|------------------|
-| Setup history | Extends existing `erp_sync_batches` records with event keys, actor, safe error code, safe context, and next-action key. |
-| UI | `/erp` shows activity timeline rows for setup start, mapping contract, preflight, and credential handoff. |
-| Safe details | Error context is sanitized into counters, product status codes, and check ids. |
-| Source independence | Canias is treated as one source profile; activity timeline is connector-agnostic. |
-| Runtime boundary | No live API calls, import/export execution, credential capture, sync execution, or ERP writeback is enabled. |
+| Area                | PR14.15 behavior                                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Setup history       | Extends existing `erp_sync_batches` records with event keys, actor, safe error code, safe context, and next-action key. |
+| UI                  | `/erp` shows activity timeline rows for setup start, mapping contract, preflight, and credential handoff.               |
+| Safe details        | Error context is sanitized into counters, product status codes, and check ids.                                          |
+| Source independence | Canias is treated as one source profile; activity timeline is connector-agnostic.                                       |
+| Runtime boundary    | No live API calls, import/export execution, credential capture, sync execution, or ERP writeback is enabled.            |
 
 ### Out Of Scope
 
@@ -363,14 +364,14 @@ PR14.16 lets PULS show what a prepared connector batch would do before any impor
 
 ### Scope
 
-| Area | PR14.16 behavior |
-|------|------------------|
-| Import preview metadata | Adds safe row-level `preview_action`, `preview_skip_code`, and `previewed_at` metadata to import records. |
-| Dry-run RPC | `preview_import_diff` persists safe preview classification only for dry-run batches. |
-| Safe read boundary | `list_connector_import_preview_records` returns row number, entity type, external id, status, warning/error codes, canonical id, preview action, and skip code. |
-| Adapter | `ErpOverview.importPreview` exposes batch state, summary counters, and safe records. |
-| Admin action | `runConnectorImportPreview` runs validation and preview classification, then writes a safe `import_preview` activity record. |
-| Proof SQL | Creates a pending dry-run proof batch for connector preview testing without validating, previewing, or applying it automatically. |
+| Area                    | PR14.16 behavior                                                                                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Import preview metadata | Adds safe row-level `preview_action`, `preview_skip_code`, and `previewed_at` metadata to import records.                                                       |
+| Dry-run RPC             | `preview_import_diff` persists safe preview classification only for dry-run batches.                                                                            |
+| Safe read boundary      | `list_connector_import_preview_records` returns row number, entity type, external id, status, warning/error codes, canonical id, preview action, and skip code. |
+| Adapter                 | `ErpOverview.importPreview` exposes batch state, summary counters, and safe records.                                                                            |
+| Admin action            | `runConnectorImportPreview` runs validation and preview classification, then writes a safe `import_preview` activity record.                                    |
+| Proof SQL               | Creates a pending dry-run proof batch for connector preview testing without validating, previewing, or applying it automatically.                               |
 
 ### Out Of Scope
 
@@ -391,9 +392,43 @@ PR14.16 lets PULS show what a prepared connector batch would do before any impor
 - The product action never calls `apply_import_batch`.
 - Successful and blocked preview attempts leave safe activity records.
 
+## PR14.17 - Connector Apply Readiness Boundary
+
+### Business Value
+
+PR14.17 gives the product a truthful bridge between dry-run preview and future canonical apply. Admins can record that preview results need human review without implying import approval, connector runtime, or canonical writes are available.
+
+### Scope
+
+| Area                | PR14.17 behavior                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Apply readiness     | Adapter derives review posture from source setup, preview state, row findings, credential posture, and existing review events. |
+| Human review        | Admin can record a safe `import_apply_review` activity event for a clean preview.                                              |
+| UI                  | `/erp` shows review status, blockers, checks, and the hard execution boundary.                                                 |
+| Audit history       | Review intent is stored as metadata in `erp_sync_batches`; raw payloads and credentials remain hidden.                         |
+| Source independence | Canias is one source profile; review readiness works for CSV / Excel and future connectors once they produce preview batches.  |
+
+### Out Of Scope
+
+- Canonical import apply
+- `apply_import_batch` calls from app code
+- Runtime connector execution
+- Credential capture or verification
+- ERP or external source writeback
+- Rollback/retry orchestration
+
+### Acceptance Criteria
+
+- PR14.17 defines apply readiness and human review boundary, not canonical import apply.
+- `safeToApply` remains false in PR14.17.
+- Human review records are audit signals, not ERP or canonical write approvals.
+- Admin can record review intent only after preview is ready.
+- Non-admin users cannot record review intent.
+- No payload readback, credential readback, runtime sync, or apply execution is opened.
+
 ## Roadmap Stop Condition
 
-After PR14.16, PULS should be able to say:
+After PR14.17, PULS should be able to say:
 
 - A tenant can start connector setup from an empty product state.
 - Connector setup state is persisted and role-scoped.
@@ -402,9 +437,10 @@ After PR14.16, PULS should be able to say:
 - Preflight can validate readiness without running sync.
 - Connector setup activities leave safe, durable history records.
 - Prepared dry-run import batches can be previewed safely before any apply/runtime work.
+- Preview results can be marked ready for human review while canonical apply remains closed.
 - Runtime connector execution remains a separate future phase.
 
-## Handoff After PR14.16
+## Handoff After PR14.17
 
 Future work can then move into runtime connector design with safer foundations:
 

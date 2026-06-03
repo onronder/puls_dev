@@ -270,69 +270,69 @@ PR14.9 adds the first production-grade observability boundary for app errors and
 
 PR14.9A adds build-time source map upload and a guarded setup-check event. Source maps upload only when `SENTRY_SOURCE_MAPS=true` and Sentry build env is present; setup check requires `VITE_SENTRY_ALLOW_TEST_EVENT=true` plus `?sentry_setup_check=1`.
 
-| Document / artifact                                                                                      | Purpose                                                                 |
-| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [14_sentry_source_maps.md](./14_sentry_source_maps.md)                                                   | Source map upload policy, setup-check flow, and acceptance criteria     |
-| [`vite.config.ts`](../../vite.config.ts)                                                                 | Gated Sentry Vite plugin and public `.map` deletion after upload        |
-| [`src/lib/observability/sentry.ts`](../../src/lib/observability/sentry.ts)                               | Browser-only setup-check capture guarded by env and query param         |
-| [`scripts/verify-14-sentry-source-maps.sh`](../../scripts/verify-14-sentry-source-maps.sh)               | PR14.9A verify gate                                                     |
+| Document / artifact                                                                        | Purpose                                                             |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| [14_sentry_source_maps.md](./14_sentry_source_maps.md)                                     | Source map upload policy, setup-check flow, and acceptance criteria |
+| [`vite.config.ts`](../../vite.config.ts)                                                   | Gated Sentry Vite plugin and public `.map` deletion after upload    |
+| [`src/lib/observability/sentry.ts`](../../src/lib/observability/sentry.ts)                 | Browser-only setup-check capture guarded by env and query param     |
+| [`scripts/verify-14-sentry-source-maps.sh`](../../scripts/verify-14-sentry-source-maps.sh) | PR14.9A verify gate                                                 |
 
 ## PR14.10 Mapping discovery
 
 PR14.10 persists the first connector field contract. Canias and CSV / Excel setup drafts can create deterministic mapping rows in `puls_integration.erp_field_mappings`; `/erp` shows canonical data class completeness without import execution, credentials, runtime sync, or ERP writes.
 
-| Document / artifact                                                                                      | Purpose                                                                 |
-| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [14_mapping_discovery.md](./14_mapping_discovery.md)                                                     | Mapping discovery scope, canonical classes, defaults, and acceptance    |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Default mapping contract, canonical class completeness, setup promotion |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Mapping discovery workbench and source-to-PULS field contract           |
-| [`scripts/verify-14-mapping-discovery.sh`](../../scripts/verify-14-mapping-discovery.sh)                 | PR14.10 verify gate                                                     |
+| Document / artifact                                                                      | Purpose                                                                 |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [14_mapping_discovery.md](./14_mapping_discovery.md)                                     | Mapping discovery scope, canonical classes, defaults, and acceptance    |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                           | Default mapping contract, canonical class completeness, setup promotion |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                               | Mapping discovery workbench and source-to-PULS field contract           |
+| [`scripts/verify-14-mapping-discovery.sh`](../../scripts/verify-14-mapping-discovery.sh) | PR14.10 verify gate                                                     |
 
 ## PR14.11 Connector preflight execution
 
 PR14.11 adds the dry-run setup check before runtime connectors exist. `/erp` can evaluate source profile, required mapping, namespace, identity, credential boundary, runtime boundary, and ERP write guardrails without live API calls, imports, sync, credentials, or ERP writes.
 
-| Document / artifact                                                                                                      | Purpose                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| [14_connector_preflight_execution.md](./14_connector_preflight_execution.md)                                             | Dry-run preflight scope, checks, result model, and acceptance            |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                           | Preflight result evaluator and selected-connector overview contract      |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                               | Admin-run setup check and read-only result panel                         |
-| [`scripts/verify-14-connector-preflight-execution.sh`](../../scripts/verify-14-connector-preflight-execution.sh)         | PR14.11 verify gate                                                      |
+| Document / artifact                                                                                              | Purpose                                                             |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [14_connector_preflight_execution.md](./14_connector_preflight_execution.md)                                     | Dry-run preflight scope, checks, result model, and acceptance       |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                   | Preflight result evaluator and selected-connector overview contract |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                       | Admin-run setup check and read-only result panel                    |
+| [`scripts/verify-14-connector-preflight-execution.sh`](../../scripts/verify-14-connector-preflight-execution.sh) | PR14.11 verify gate                                                 |
 
 ## PR14.12 Source credential boundary
 
 PR14.12 makes credential readiness source-independent. It adds generic auth mode and credential state metadata, keeps `credentials_ref` opaque and server-side, and shows `/erp` credential posture without collecting secrets or enabling runtime connectors.
 
-| Document / artifact                                                                                                      | Purpose                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| [14_source_credential_boundary.md](./14_source_credential_boundary.md)                                                   | Source-independent credential state model, product rules, and handoff    |
-| [`supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql`](../../supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql) | Adds generic auth mode and credential state fields                       |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                           | Safe credential posture adapter; does not select `credentials_ref`       |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                               | Credential boundary status panel without secret inputs                   |
-| [`scripts/verify-14-source-credential-boundary.sh`](../../scripts/verify-14-source-credential-boundary.sh)               | PR14.12 verify gate                                                      |
+| Document / artifact                                                                                                                                                              | Purpose                                                               |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [14_source_credential_boundary.md](./14_source_credential_boundary.md)                                                                                                           | Source-independent credential state model, product rules, and handoff |
+| [`supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql`](../../supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql) | Adds generic auth mode and credential state fields                    |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                   | Safe credential posture adapter; does not select `credentials_ref`    |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                       | Credential boundary status panel without secret inputs                |
+| [`scripts/verify-14-source-credential-boundary.sh`](../../scripts/verify-14-source-credential-boundary.sh)                                                                       | PR14.12 verify gate                                                   |
 
 ## PR14.12B Connector state consistency findings
 
 PR14.12B closes the dashboard/ERP state mismatch, duplicate provider/domain setup risk, and non-persisted setup check history found after PR14.12 remote validation. It keeps PULS source-independent: Canias is one connector profile, not the connectivity architecture.
 
-| Document / artifact                                                                                                      | Purpose                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| [14_connector_state_consistency_findings.md](./14_connector_state_consistency_findings.md)                               | Findings, state truth rules, and PR14.13 handoff                         |
+| Document / artifact                                                                                                                                                                | Purpose                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [14_connector_state_consistency_findings.md](./14_connector_state_consistency_findings.md)                                                                                         | Findings, state truth rules, and PR14.13 handoff                         |
 | [`supabase/migrations/20260603110000_puls_integration_connector_state_consistency.sql`](../../supabase/migrations/20260603110000_puls_integration_connector_state_consistency.sql) | Aligns credential-missing setup status and archives duplicate drafts     |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                           | Current connector selection, domain ownership guard, persisted preflight  |
-| [`src/lib/data/dashboard/overview.ts`](../../src/lib/data/dashboard/overview.ts)                                         | Dashboard ERP card uses credential-aware connector truth                  |
-| [`scripts/verify-14-connector-state-consistency.sh`](../../scripts/verify-14-connector-state-consistency.sh)             | PR14.12B verify gate                                                     |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                     | Current connector selection, domain ownership guard, persisted preflight |
+| [`src/lib/data/dashboard/overview.ts`](../../src/lib/data/dashboard/overview.ts)                                                                                                   | Dashboard ERP card uses credential-aware connector truth                 |
+| [`scripts/verify-14-connector-state-consistency.sh`](../../scripts/verify-14-connector-state-consistency.sh)                                                                       | PR14.12B verify gate                                                     |
 
 ## PR14.13 Connector lifecycle capabilities
 
 PR14.13 adds the source-independent connector lifecycle contract to `/erp`: lifecycle stage, source capabilities, and canonical domain ownership are derived from real setup state. No migration, credential capture, runtime connector, sync execution, or ERP writeback is added.
 
-| Document / artifact                                                                             | Purpose                                                                 |
-|-------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| [14_connector_lifecycle_capabilities.md](./14_connector_lifecycle_capabilities.md)              | Lifecycle, capability, and domain ownership acceptance                  |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                  | `lifecycle`, `capabilities`, and `domainOwnership` adapter contract     |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                      | Responsive lifecycle/capability/domain ownership workbench UI           |
-| [`scripts/verify-14-connector-lifecycle-capabilities.sh`](../../scripts/verify-14-connector-lifecycle-capabilities.sh) | PR14.13 verify gate                                                     |
+| Document / artifact                                                                                                    | Purpose                                                             |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [14_connector_lifecycle_capabilities.md](./14_connector_lifecycle_capabilities.md)                                     | Lifecycle, capability, and domain ownership acceptance              |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                         | `lifecycle`, `capabilities`, and `domainOwnership` adapter contract |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                             | Responsive lifecycle/capability/domain ownership workbench UI       |
+| [`scripts/verify-14-connector-lifecycle-capabilities.sh`](../../scripts/verify-14-connector-lifecycle-capabilities.sh) | PR14.13 verify gate                                                 |
 
 ## PR14.14 Connector credential handoff
 
@@ -350,26 +350,37 @@ PR14.14 turns source-independent credential readiness into a safe handoff proces
 
 PR14.15 turns connector setup history into a safe activity timeline. `/erp` now shows setup start, field contract, dry-run preflight, and credential handoff events with sanitized details and next actions. Runtime sync, credential capture, imports, exports, and ERP writeback remain closed.
 
-| Document / artifact                                                                                                                                                                    | Purpose                                                               |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [14_connector_activity_timeline.md](./14_connector_activity_timeline.md)                                                                                                               | Activity timeline state model, safe error detail rules, and acceptance |
-| [`supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql`](../../supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql)     | Adds metadata-only activity fields to connector setup history          |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                         | Builds `activityTimeline` and writes safe setup history records        |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                             | Renders connector activity timeline with safe details and next actions |
-| [`scripts/verify-14-connector-activity-timeline.sh`](../../scripts/verify-14-connector-activity-timeline.sh)                                                                           | PR14.15 verify gate                                                   |
+| Document / artifact                                                                                                                                                                | Purpose                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [14_connector_activity_timeline.md](./14_connector_activity_timeline.md)                                                                                                           | Activity timeline state model, safe error detail rules, and acceptance |
+| [`supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql`](../../supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql) | Adds metadata-only activity fields to connector setup history          |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                     | Builds `activityTimeline` and writes safe setup history records        |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                         | Renders connector activity timeline with safe details and next actions |
+| [`scripts/verify-14-connector-activity-timeline.sh`](../../scripts/verify-14-connector-activity-timeline.sh)                                                                       | PR14.15 verify gate                                                    |
 
 ## PR14.16 Connector import preview dry-run
 
 PR14.16 adds a safe import preview boundary for prepared dry-run connector batches. `/erp` can validate and classify create/update/skip outcomes without live connector runtime, credential capture, import apply, sync execution, or ERP writeback.
 
-| Document / artifact                                                                                                                                                                      | Purpose                                                                 |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [14_connector_import_preview_dry_run.md](./14_connector_import_preview_dry_run.md)                                                                                                      | Import preview dry-run product boundary, proof SQL, and acceptance      |
-| [`supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql`](../../supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql)           | Adds safe preview metadata and product-safe preview record read RPC     |
-| [`supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql`](../../supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql)                   | Creates a pending dry-run proof batch without validating, previewing, or applying it automatically |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                           | Builds `importPreview` and runs validate + preview without apply        |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                               | Renders safe import preview state and row outcomes                      |
-| [`scripts/verify-14-connector-import-preview.sh`](../../scripts/verify-14-connector-import-preview.sh)                                                                                   | PR14.16 verify gate                                                     |
+| Document / artifact                                                                                                                                                          | Purpose                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [14_connector_import_preview_dry_run.md](./14_connector_import_preview_dry_run.md)                                                                                           | Import preview dry-run product boundary, proof SQL, and acceptance                                 |
+| [`supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql`](../../supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql) | Adds safe preview metadata and product-safe preview record read RPC                                |
+| [`supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql`](../../supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql)         | Creates a pending dry-run proof batch without validating, previewing, or applying it automatically |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                               | Builds `importPreview` and runs validate + preview without apply                                   |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                   | Renders safe import preview state and row outcomes                                                 |
+| [`scripts/verify-14-connector-import-preview.sh`](../../scripts/verify-14-connector-import-preview.sh)                                                                       | PR14.16 verify gate                                                                                |
+
+## PR14.17 Connector apply readiness boundary
+
+PR14.17 adds the human review boundary after dry-run preview. `/erp` can show whether preview results are ready for human review and record a safe audit signal, while canonical apply, runtime connector execution, credential capture, and ERP writeback remain closed.
+
+| Document / artifact                                                                                      | Purpose                                                                     |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [14_connector_apply_readiness_boundary.md](./14_connector_apply_readiness_boundary.md)                   | Apply readiness state model, human review boundary, and acceptance criteria |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Builds `applyReadiness` and records `import_apply_review` audit metadata    |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Renders apply readiness, blockers, checks, and human review request action  |
+| [`scripts/verify-14-connector-apply-readiness.sh`](../../scripts/verify-14-connector-apply-readiness.sh) | PR14.17 verify gate                                                         |
 
 ## Related packs
 
