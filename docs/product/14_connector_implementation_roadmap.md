@@ -250,6 +250,38 @@ The product must support distributed customer systems. A single tenant-level pri
 
 This keeps existing data flows from being overwritten when a new connector is added.
 
+## PR14.13 - Connector Lifecycle Capabilities
+
+### Business Value
+
+PR14.13 turns connector setup from a provider-specific readiness surface into a source-independent lifecycle workbench. A tenant can see where a source stands, which capabilities are open or closed, and which canonical data domains are owned before any runtime connector exists.
+
+### Scope
+
+| Area | PR14.13 behavior |
+|------|------------------|
+| Lifecycle | Adapter derives the current lifecycle stage from setup status, mapping, namespace, credential, and preflight state. |
+| Capabilities | UI exposes source capabilities without enabling live API calls, import/export execution, credential capture, or ERP writeback. |
+| Domain ownership | Canonical classes show whether they are owned by the current source, another source, or still available. |
+| Responsive workbench | `/erp` setup steps and metric blocks wrap cleanly across narrow, tablet, and desktop viewports. |
+
+### Out Of Scope
+
+- Database migration
+- Credential capture or secret storage
+- Runtime connector execution
+- Import/export execution
+- Domain ownership transfer
+- ERP writes
+
+### Acceptance Criteria
+
+- `ErpOverview` includes `lifecycle`, `capabilities`, and `domainOwnership`.
+- Canias is treated as one source profile, not the architecture.
+- CSV / Excel can express a different capability posture without secret requirements.
+- `/erp` does not render raw lifecycle enum values.
+- `/erp` avoids accidental page-level horizontal overflow while preserving dense connector context.
+
 ## Roadmap Stop Condition
 
 After PR14.11, PULS should be able to say:

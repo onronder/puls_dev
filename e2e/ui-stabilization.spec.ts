@@ -99,7 +99,7 @@ test.describe('@auth authenticated stabilization', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await login(page)
 
-    for (const path of ['/dashboard', '/izin', '/masraf', '/menu', '/ayarlar']) {
+    for (const path of ['/dashboard', '/izin', '/masraf', '/menu', '/ayarlar', '/erp']) {
       await page.goto(path)
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

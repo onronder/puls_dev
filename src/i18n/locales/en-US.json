@@ -808,6 +808,89 @@
         "error": "Setup error needs review"
       }
     },
+    "lifecycleStages": {
+      "source_selection": {
+        "label": "Source selection",
+        "description": "Setup is at the first step: choosing the data source.",
+        "nextAction": "Once a source is selected, field mapping and identity scope continue in the same flow."
+      },
+      "mapping": {
+        "label": "Field mapping",
+        "description": "Source fields are being connected to the canonical PULS data model.",
+        "nextAction": "When required fields are complete, setup moves to source identity and record matching."
+      },
+      "namespace": {
+        "label": "Source identity",
+        "description": "The source scope and record matching path are being clarified.",
+        "nextAction": "After identity scope is complete, secure credential posture is checked."
+      },
+      "credential": {
+        "label": "Credentials pending",
+        "description": "This source needs a secure reference before live connection.",
+        "nextAction": "Secret values are not collected here; future server-side secure reference verification is required."
+      },
+      "preflight": {
+        "label": "Setup check",
+        "description": "Source, field, identity, and safety boundaries are checked before live connection.",
+        "nextAction": "When no warnings or missing steps remain, runtime becomes a separate approval topic."
+      },
+      "runtime_closed": {
+        "label": "Runtime closed",
+        "description": "Even when readiness is clean, live transfer and write permissions remain closed in this phase.",
+        "nextAction": "Live connector work must open with separate credential, job, and rollback design."
+      },
+      "connected": {
+        "label": "Live connection",
+        "description": "The source connection appears live.",
+        "nextAction": "Transfer history, error handling, and rollback controls must be monitored."
+      },
+      "disabled": {
+        "label": "Disabled",
+        "description": "This source setup is not active.",
+        "nextAction": "Domain ownership and credential boundaries should be checked before it is reopened."
+      },
+      "error": {
+        "label": "Needs review",
+        "description": "Setup is in an error state and cannot move forward safely.",
+        "nextAction": "Review the error record and run setup check again."
+      }
+    },
+    "capabilities": {
+      "title": "Source capabilities",
+      "description": "Shows which capabilities this source type can safely carry inside PULS.",
+      "sourceProfile": {
+        "label": "Source profile",
+        "description": "The source type, scope, and setup owner are known."
+      },
+      "domainOwnership": {
+        "label": "Domain ownership",
+        "description": "The source feeds only the canonical data domains it owns."
+      },
+      "canonicalMapping": {
+        "label": "Canonical mapping",
+        "description": "Source fields are mapped into the shared PULS data model."
+      },
+      "identityNamespace": {
+        "label": "Identity scope",
+        "description": "External record identities are separated by source scope."
+      },
+      "credentialReference": {
+        "label": "Secure reference",
+        "description": "Connection credentials are tracked only as secure reference posture."
+      },
+      "transferMethod": {
+        "label": "Transfer method",
+        "description": "File, manual transfer, or API paths are separated by source type."
+      },
+      "apiRuntime": {
+        "label": "Live API runtime",
+        "description": "Live API calls open only through separate connector runtime work."
+      },
+      "writeback": {
+        "label": "External writeback",
+        "description": "Writing to ERP or external systems requires a separate approval and safety boundary."
+      }
+    },
     "actions": {
       "mapFields": "Map fields",
       "reviewMapping": "Review field contract",
@@ -923,12 +1006,16 @@
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment."
     },
     "sections": {
+      "lifecycle": "Lifecycle",
+      "capabilities": "Source capabilities",
       "preflight": "Setup check",
       "preflightDescription": "Validate source, field, identity, and safety boundaries without calling a live API.",
       "credentialBoundary": "Credential boundary",
       "credentialBoundaryDescription": "This section shows credential posture needed for a live connection; secret values are not collected, read, or displayed here.",
       "namespaces": "Source identities",
       "namespacesDescription": "Shows the scope used to match external records with PULS records.",
+      "domainOwnership": "Domain ownership",
+      "domainOwnershipDescription": "Shows which source feeds each canonical data class, and which classes are still available.",
       "canonicalClasses": "Canonical data classes",
       "canonicalClassesDescription": "Shows which PULS master-data classes are covered by source fields and whether required fields are complete.",
       "mapping": "Field mapping",
@@ -939,6 +1026,15 @@
       "guardrailsDescription": "Shows which actions remain closed while setup is being prepared.",
       "syncLogs": "Check history",
       "syncLogsDescription": "Recent records from setup and readiness checks."
+    },
+    "domainOwnership": {
+      "owner": "Managed by {{source}}",
+      "available": "Not owned by a source yet",
+      "status": {
+        "owned_by_current": "This source",
+        "owned_by_other": "Other source",
+        "available": "Available"
+      }
     },
     "columns": {
       "canonicalField": "PULS field",
