@@ -56,6 +56,11 @@ for needle in \
   fi
 done
 
+if grep -Fq "status IN ('partial'" <<< "$MIGRATION"; then
+  echo "FAIL: migration must not compare sync_status enum to non-enum literal partial" >&2
+  exit 1
+fi
+
 for needle in \
   "ConnectorActivityEvent" \
   "activityTimeline" \
