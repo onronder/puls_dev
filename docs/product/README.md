@@ -288,6 +288,17 @@ PR14.10 persists the first connector field contract. Canias and CSV / Excel setu
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Mapping discovery workbench and source-to-PULS field contract           |
 | [`scripts/verify-14-mapping-discovery.sh`](../../scripts/verify-14-mapping-discovery.sh)                 | PR14.10 verify gate                                                     |
 
+## PR14.11 Connector preflight execution
+
+PR14.11 adds the dry-run setup check before runtime connectors exist. `/erp` can evaluate source profile, required mapping, namespace, identity, credential boundary, runtime boundary, and ERP write guardrails without live API calls, imports, sync, credentials, or ERP writes.
+
+| Document / artifact                                                                                                      | Purpose                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| [14_connector_preflight_execution.md](./14_connector_preflight_execution.md)                                             | Dry-run preflight scope, checks, result model, and acceptance            |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                           | Preflight result evaluator and selected-connector overview contract      |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                               | Admin-run setup check and read-only result panel                         |
+| [`scripts/verify-14-connector-preflight-execution.sh`](../../scripts/verify-14-connector-preflight-execution.sh)         | PR14.11 verify gate                                                      |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

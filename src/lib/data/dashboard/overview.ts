@@ -201,6 +201,17 @@ export function buildDashboardErpStatus(
     }
   }
 
+  if (input.setupStatus === 'preflight_ready') {
+    return {
+      statusLabelKey: 'dashboardSetup.erpCard.statusPreflightReady',
+      mappedFields: input.mappedFields,
+      totalFields: input.totalFields,
+      lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
+      readiness: input.readiness,
+      descriptionKey: 'dashboardSetup.erpCard.descriptionPreflightReady',
+    }
+  }
+
   return {
     statusLabelKey: input.isActive
       ? 'dashboardSetup.erpCard.statusConnected'

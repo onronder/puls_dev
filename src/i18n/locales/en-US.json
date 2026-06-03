@@ -182,12 +182,14 @@
       "descriptionNotConfigured": "No data connection has been selected yet. Use the ERP screen to start source, field, and identity mapping.",
       "descriptionSetupDraft": "A data source has been selected. Live transfer stays off until field and identity mapping are complete.",
       "descriptionMappingReady": "The field contract is ready. Source identity, record matching, and safe checks are next.",
+      "descriptionPreflightReady": "Setup check is clean. Live connection, credential validation, and ERP writes still require separate approval.",
       "descriptionDisabled": "The data connection record remains in place, but it is disabled in the product.",
       "descriptionPending": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
       "descriptionConnected": "The data connection is active. Track mapping and transfer checks from the ERP screen.",
       "statusConnected": "Connected",
       "statusSetupDraft": "Setup draft",
       "statusMappingReady": "Fields ready",
+      "statusPreflightReady": "Check clean",
       "statusDisabled": "Disabled",
       "statusPending": "Connection preparation",
       "statusNotConfigured": "Source not selected",
@@ -805,7 +807,10 @@
     "actions": {
       "mapFields": "Map fields",
       "reviewMapping": "Review field contract",
-      "testConnection": "Check connection"
+      "testConnection": "Check connection",
+      "runPreflight": "Run setup check",
+      "runningPreflight": "Checking setup",
+      "adminPreflightRequired": "Admin required to run check"
     },
     "onboarding": {
       "title": "No data connection yet",
@@ -893,7 +898,12 @@
       "mapDescription": "Field mapping opens after a connection draft is ready.",
       "testDescription": "This check does not call a live API; it only shows preparation status.",
       "setupCreated": "Setup draft is ready. You can move to field mapping.",
-      "setupCreateFailed": "Setup draft could not be saved. Check permission and connection state."
+      "setupCreateFailed": "Setup draft could not be saved. Check permission and connection state.",
+      "preflight": {
+        "ready": "Setup check is clean. Live connection remains off.",
+        "partial": "Setup check finished with warnings.",
+        "blocked": "Setup check found missing steps."
+      }
     },
     "errors": {
       "tenantMissing": "Company setup must be completed before this action can run.",
@@ -903,8 +913,8 @@
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment."
     },
     "sections": {
-      "preflight": "Connection check",
-      "preflightDescription": "Review source, field, and identity readiness before any live connection.",
+      "preflight": "Setup check",
+      "preflightDescription": "Validate source, field, identity, and safety boundaries without calling a live API.",
       "namespaces": "Source identities",
       "namespacesDescription": "Shows the scope used to match external records with PULS records.",
       "canonicalClasses": "Canonical data classes",
@@ -947,6 +957,58 @@
       "identityReconciliation": "Record matching",
       "setupReadiness": "Setup status",
       "writeGuardrail": "ERP write guardrail"
+    },
+    "preflightResult": {
+      "status": {
+        "ready": "Check clean",
+        "partial": "Warnings",
+        "blocked": "Missing steps"
+      },
+      "summary": {
+        "ready": "Preparation is complete before live connection",
+        "partial": "Preparation is progressing, but a few steps need review",
+        "blocked": "Missing setup steps must be closed before moving forward"
+      },
+      "nextStep": {
+        "ready": "This is still a dry-run readiness check; live transfer, credential validation, and ERP writes require separate approval.",
+        "partial": "Resolve the warning items, then run the same setup check again.",
+        "blocked": "Runtime connector execution or data transfer should not open until missing items are resolved."
+      },
+      "computedFromSetup": "Result is computed from the current setup, mapping, and namespace records.",
+      "sessionRun": "Setup check was rerun in this session.",
+      "passed": "Passed",
+      "warning": "Warning",
+      "blocked": "Missing"
+    },
+    "preflightChecks": {
+      "sourceProfile": {
+        "label": "Source profile",
+        "description": "A selected data source and active setup record exist for this tenant."
+      },
+      "requiredMapping": {
+        "label": "Required field contract",
+        "description": "Required PULS canonical fields must be mapped before a data flow can be considered safe."
+      },
+      "sourceNamespace": {
+        "label": "Source namespace",
+        "description": "External identities are traceable to a clear source scope."
+      },
+      "identityReconciliation": {
+        "label": "Record matching",
+        "description": "Identity map evidence is required before external records can match PULS records without collisions."
+      },
+      "credentialBoundary": {
+        "label": "Credential boundary",
+        "description": "No API key, password, FTP secret, or OAuth token is stored at this stage."
+      },
+      "runtimeBoundary": {
+        "label": "Runtime boundary",
+        "description": "The check finishes without live API calls, imports, exports, or sync execution."
+      },
+      "writeGuardrail": {
+        "label": "ERP write guardrail",
+        "description": "PULS does not perform automatic or destructive ERP master-data writes from this flow."
+      }
     },
     "transferModes": {
       "manual_csv": "CSV / Excel import",

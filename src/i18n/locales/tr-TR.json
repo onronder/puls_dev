@@ -182,12 +182,14 @@
       "descriptionNotConfigured": "Veri bağlantısı henüz seçilmedi. Kaynak, alan ve kimlik eşleştirmesini başlatmak için ERP ekranını kullan.",
       "descriptionSetupDraft": "Veri kaynağı seçildi. Alan ve kimlik eşleştirmesi tamamlanmadan canlı aktarım başlamaz.",
       "descriptionMappingReady": "Alan sözleşmesi hazır. Sırada kaynak kimliği, kayıt eşleştirme ve güvenli kontrol adımları var.",
+      "descriptionPreflightReady": "Kurulum kontrolü temiz. Canlı bağlantı, credential doğrulama ve ERP yazma hâlâ ayrı onay gerektirir.",
       "descriptionDisabled": "Veri bağlantısı kaydı duruyor, ancak ürün içinde devre dışı.",
       "descriptionPending": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
       "descriptionConnected": "Veri bağlantısı aktif. Eşleştirme ve aktarım kontrollerini ERP ekranından izleyebilirsin.",
       "statusConnected": "Bağlı",
       "statusSetupDraft": "Kurulum taslağı",
       "statusMappingReady": "Alanlar hazır",
+      "statusPreflightReady": "Kontrol temiz",
       "statusDisabled": "Devre dışı",
       "statusPending": "Bağlantı hazırlığı",
       "statusNotConfigured": "Kaynak seçilecek",
@@ -805,7 +807,10 @@
     "actions": {
       "mapFields": "Alanları eşleştir",
       "reviewMapping": "Alan sözleşmesini incele",
-      "testConnection": "Bağlantıyı kontrol et"
+      "testConnection": "Bağlantıyı kontrol et",
+      "runPreflight": "Kurulum kontrolünü çalıştır",
+      "runningPreflight": "Kontrol ediliyor",
+      "adminPreflightRequired": "Kontrol için admin gerekir"
     },
     "onboarding": {
       "title": "Henüz veri bağlantısı yok",
@@ -893,7 +898,12 @@
       "mapDescription": "Alan eşleştirme adımı bağlantı taslağı hazırlandıktan sonra açılacak.",
       "testDescription": "Bu kontrol canlı API çağrısı yapmaz; yalnızca hazırlık durumunu gösterir.",
       "setupCreated": "Kurulum taslağı hazır. Alan eşleştirme adımına geçebilirsin.",
-      "setupCreateFailed": "Kurulum taslağı kaydedilemedi. Yetkiyi ve bağlantı durumunu kontrol et."
+      "setupCreateFailed": "Kurulum taslağı kaydedilemedi. Yetkiyi ve bağlantı durumunu kontrol et.",
+      "preflight": {
+        "ready": "Kurulum kontrolü temiz. Canlı bağlantı hâlâ kapalı.",
+        "partial": "Kurulum kontrolü uyarılarla tamamlandı.",
+        "blocked": "Kurulum kontrolü eksik adımlar buldu."
+      }
     },
     "errors": {
       "tenantMissing": "Bu işlem için önce şirket bağlantısının tamamlanması gerekiyor.",
@@ -903,8 +913,8 @@
       "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin."
     },
     "sections": {
-      "preflight": "Bağlantı kontrolü",
-      "preflightDescription": "Kaynak, alan ve kimlik hazırlığını canlı bağlantıdan önce birlikte kontrol et.",
+      "preflight": "Kurulum kontrolü",
+      "preflightDescription": "Canlı API çağrısı yapmadan kaynak, alan, kimlik ve güvenlik sınırlarını birlikte doğrula.",
       "namespaces": "Kaynak kimlikleri",
       "namespacesDescription": "Dış kaynaktan gelen kayıtların PULS kayıtlarıyla hangi kapsamda eşleştiğini gösterir.",
       "canonicalClasses": "Kanonik veri sınıfları",
@@ -947,6 +957,58 @@
       "identityReconciliation": "Kayıt eşleştirme",
       "setupReadiness": "Kurulum durumu",
       "writeGuardrail": "ERP yazma koruması"
+    },
+    "preflightResult": {
+      "status": {
+        "ready": "Kontrol temiz",
+        "partial": "Uyarı var",
+        "blocked": "Eksik var"
+      },
+      "summary": {
+        "ready": "Canlı bağlantı öncesi hazırlık tamam",
+        "partial": "Hazırlık ilerliyor, bazı adımlar netleşmeli",
+        "blocked": "Kurulum ilerlemeden önce eksikler kapatılmalı"
+      },
+      "nextStep": {
+        "ready": "Bu sonuç yalnızca dry-run hazırlık kontrolüdür; canlı aktarım, kimlik bilgisi doğrulama ve ERP yazma hâlâ ayrı onay gerektirir.",
+        "partial": "Uyarılı maddeleri tamamladığında aynı kontrolü tekrar çalıştırabilirsin.",
+        "blocked": "Eksik maddeler kapatılmadan canlı bağlantı veya veri aktarımı açılmamalı."
+      },
+      "computedFromSetup": "Sonuç mevcut kurulum, alan eşleştirme ve kaynak kimliği kayıtlarından hesaplandı.",
+      "sessionRun": "Bu oturumda kurulum kontrolü yeniden çalıştırıldı.",
+      "passed": "Geçti",
+      "warning": "Uyarı",
+      "blocked": "Eksik"
+    },
+    "preflightChecks": {
+      "sourceProfile": {
+        "label": "Kaynak profili",
+        "description": "Tenant için seçilmiş ve aktif kurulum kaydı olan bir veri kaynağı bulunur."
+      },
+      "requiredMapping": {
+        "label": "Zorunlu alan sözleşmesi",
+        "description": "Zorunlu PULS canonical alanları kaynak alanlarıyla eşleşmeden veri akışı güvenli sayılmaz."
+      },
+      "sourceNamespace": {
+        "label": "Kaynak namespace",
+        "description": "Dış kaynaktan gelen kimliklerin hangi kaynak kapsamına ait olduğu açıkça izlenir."
+      },
+      "identityReconciliation": {
+        "label": "Kayıt eşleştirme",
+        "description": "Dış kayıtların PULS kayıtlarıyla çakışmadan eşleşebilmesi için identity map kanıtı gerekir."
+      },
+      "credentialBoundary": {
+        "label": "Kimlik bilgisi sınırı",
+        "description": "Bu aşamada API anahtarı, parola, FTP bilgisi veya OAuth token saklanmaz."
+      },
+      "runtimeBoundary": {
+        "label": "Runtime sınırı",
+        "description": "Kontrol canlı API çağrısı, import, export veya sync başlatmadan tamamlanır."
+      },
+      "writeGuardrail": {
+        "label": "ERP yazma koruması",
+        "description": "PULS bu akıştan ERP ana verisine otomatik veya yıkıcı yazma yapmaz."
+      }
     },
     "transferModes": {
       "manual_csv": "CSV / Excel içe aktarma",
