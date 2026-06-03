@@ -7,6 +7,7 @@ import {
   isErpOverviewEmpty,
   mapConnectorSetupError,
   mapProviderLabel,
+  requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
   runConnectorImportPreview,
   runConnectorPreflight,
@@ -114,79 +115,82 @@ function setupSeededMocks(
   resolveTenant.mockResolvedValue(mockTenantContext())
   vi.mocked(pulsIntegration).mockImplementation(
     () =>
-      client({
-        erp_connections: {
-          data: [
-            {
-              provider: 'canias',
-              id: 'connection-1',
-              display_name: 'Canias ERP (Pasif)',
-              connection_method: 'rest_api',
-              connection_key: 'canias-default',
-              is_active: false,
-              last_sync_at: null,
-              last_status: null,
-              setup_status: 'mapping_ready',
-              setup_step: 'preflight',
-              is_enabled: true,
-              owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
-              auth_mode: 'custom_secret_ref',
-              credential_required: true,
-              credential_state: 'missing',
-              credential_last_verified_at: null,
-              credential_last_failed_at: null,
-              credential_error_code: null,
-              credential_handoff_status: 'not_started',
-              credential_handoff_requested_at: null,
-              credential_handoff_requested_by_employee_id: null,
-              credential_handoff_updated_at: null,
-              created_at: '2026-06-01T00:00:00.000Z',
-              updated_at: '2026-06-01T00:00:00.000Z',
-            },
-          ],
+      client(
+        {
+          erp_connections: {
+            data: [
+              {
+                provider: 'canias',
+                id: 'connection-1',
+                display_name: 'Canias ERP (Pasif)',
+                connection_method: 'rest_api',
+                connection_key: 'canias-default',
+                is_active: false,
+                last_sync_at: null,
+                last_status: null,
+                setup_status: 'mapping_ready',
+                setup_step: 'preflight',
+                is_enabled: true,
+                owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
+                auth_mode: 'custom_secret_ref',
+                credential_required: true,
+                credential_state: 'missing',
+                credential_last_verified_at: null,
+                credential_last_failed_at: null,
+                credential_error_code: null,
+                credential_handoff_status: 'not_started',
+                credential_handoff_requested_at: null,
+                credential_handoff_requested_by_employee_id: null,
+                credential_handoff_updated_at: null,
+                created_at: '2026-06-01T00:00:00.000Z',
+                updated_at: '2026-06-01T00:00:00.000Z',
+              },
+            ],
+          },
+          erp_field_mappings: {
+            data: [
+              ...buildDefaultConnectorFieldMappings('canias').map((mapping) => ({
+                source_entity: mapping.sourceEntity,
+                source_field: mapping.sourceField,
+                target_schema: mapping.targetSchema,
+                target_table: mapping.targetTable,
+                target_field: mapping.targetField,
+                is_required: mapping.required,
+                is_sensitive: false,
+                is_active: true,
+              })),
+              {
+                source_entity: 'employee',
+                source_field: 'REDACTED_FIELD',
+                target_schema: 'puls_core',
+                target_table: 'employees',
+                target_field: 'private_marker',
+                is_required: false,
+                is_sensitive: true,
+                is_active: true,
+              },
+            ],
+          },
+          erp_sync_batches: { data: [] },
+          source_namespaces: {
+            data: [
+              {
+                id: 'namespace-1',
+                code: 'CANIAS',
+                name: 'Canias ERP Kaynagi',
+                source_type: 'erp',
+                connection_id: 'connection-1',
+              },
+            ],
+          },
+          entity_identity_map: {
+            data: [{ source_namespace_id: 'namespace-1', canonical_table: 'departments' }],
+          },
+          import_batches: { data: [] },
+          ...overrides,
         },
-        erp_field_mappings: {
-          data: [
-            ...buildDefaultConnectorFieldMappings('canias').map((mapping) => ({
-              source_entity: mapping.sourceEntity,
-              source_field: mapping.sourceField,
-              target_schema: mapping.targetSchema,
-              target_table: mapping.targetTable,
-              target_field: mapping.targetField,
-              is_required: mapping.required,
-              is_sensitive: false,
-              is_active: true,
-            })),
-            {
-              source_entity: 'employee',
-              source_field: 'REDACTED_FIELD',
-              target_schema: 'puls_core',
-              target_table: 'employees',
-              target_field: 'private_marker',
-              is_required: false,
-              is_sensitive: true,
-              is_active: true,
-            },
-          ],
-        },
-        erp_sync_batches: { data: [] },
-        source_namespaces: {
-          data: [
-            {
-              id: 'namespace-1',
-              code: 'CANIAS',
-              name: 'Canias ERP Kaynagi',
-              source_type: 'erp',
-              connection_id: 'connection-1',
-            },
-          ],
-        },
-        entity_identity_map: {
-          data: [{ source_namespace_id: 'namespace-1', canonical_table: 'departments' }],
-        },
-        import_batches: { data: [] },
-        ...overrides,
-      }, capture) as never,
+        capture,
+      ) as never,
   )
   vi.mocked(pulsCalc).mockImplementation(
     () =>
@@ -503,6 +507,123 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(serialized).not.toContain('must-not-render')
   })
 
+  it('derives apply readiness from a previewed dry-run batch without opening apply', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      import_batches: {
+        data: [
+          {
+            id: 'batch-import-preview',
+            source_namespace_id: 'namespace-1',
+            status: 'previewed',
+            mode: 'dry_run',
+            source_checksum: 'pr14_16_connector_preview_proof_v1',
+            row_count: 5,
+            create_count: 5,
+            update_count: 0,
+            skip_count: 0,
+            error_count: 0,
+            violation_count: 0,
+            validated_at: '2026-06-03T14:00:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_import_preview_records': { data: [] },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.applyReadiness).toMatchObject({
+      status: 'review_ready',
+      action: 'request_human_review',
+      requestable: true,
+      safeToApply: false,
+      batchId: 'batch-import-preview',
+      summary: {
+        rowCount: 5,
+        createCount: 5,
+        updateCount: 0,
+        skipCount: 0,
+        errorCount: 0,
+      },
+    })
+    expect(result.data.applyReadiness.blockers.map((blocker) => blocker.id)).toEqual([
+      'credential_not_verified',
+      'dry_run_only',
+      'apply_execution_closed',
+    ])
+    expect(JSON.stringify(result.data.applyReadiness)).not.toContain('apply_import_batch')
+  })
+
+  it('shows review requested only when the audit event is newer than the preview', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      erp_sync_batches: {
+        data: [
+          {
+            id: 'review-event',
+            created_at: '2026-06-03T14:02:00.000Z',
+            status: 'success',
+            sync_type: 'import_apply_review',
+            event_key: 'import_apply_review_requested',
+            actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+            safe_error_code: null,
+            safe_error_context: {
+              safe_to_apply: false,
+              apply_execution_open: false,
+              human_review_recorded: true,
+            },
+            next_action_key: 'hold_for_apply_design',
+            records_seen: 5,
+            records_inserted: 5,
+            records_updated: 0,
+            records_failed: 0,
+          },
+        ],
+      },
+      import_batches: {
+        data: [
+          {
+            id: 'batch-import-preview',
+            source_namespace_id: 'namespace-1',
+            status: 'previewed',
+            mode: 'dry_run',
+            source_checksum: 'pr14_16_connector_preview_proof_v1',
+            row_count: 5,
+            create_count: 5,
+            update_count: 0,
+            skip_count: 0,
+            error_count: 0,
+            violation_count: 0,
+            validated_at: '2026-06-03T14:00:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_import_preview_records': { data: [] },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.applyReadiness).toMatchObject({
+      status: 'review_requested',
+      action: 'review_requested',
+      requestable: false,
+      safeToApply: false,
+      reviewRequestedAt: '2026-06-03T14:02:00.000Z',
+    })
+    expect(result.data.activityTimeline[0]).toMatchObject({
+      kind: 'import_apply_review',
+      titleKey: 'erp.activityTimeline.events.import_apply_review_requested.title',
+      nextActionKey: 'erp.activityTimeline.nextActions.hold_for_apply_design',
+    })
+  })
+
   it('returns real empty when tenant is missing and demo mode is off', async () => {
     demoEnabled.mockReturnValue(false)
     resolveTenant.mockResolvedValue(mockTenantContextWithoutTenant())
@@ -761,14 +882,17 @@ describe('fetchErpOverviewWithMeta', () => {
   it('creates an admin-scoped Canias setup draft', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
     const capture: ClientCapture = { inserts: [] }
-    const integrationClient = client({
-      erp_connections: {
-        maybeSingleData: null,
-        error: null,
-        singleData: { id: 'connection-new' },
+    const integrationClient = client(
+      {
+        erp_connections: {
+          maybeSingleData: null,
+          error: null,
+          singleData: { id: 'connection-new' },
+        },
+        erp_field_mappings: { data: [], error: null },
       },
-      erp_field_mappings: { data: [], error: null },
-    }, capture)
+      capture,
+    )
     vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
 
     const result = await startConnectorSetup('user-1', { providerId: 'canias' })
@@ -1209,6 +1333,85 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
   })
 
+  it('records connector apply review intent without calling apply import', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        import_batches: {
+          data: [
+            {
+              id: 'batch-import-preview',
+              source_namespace_id: 'namespace-1',
+              status: 'previewed',
+              mode: 'dry_run',
+              source_checksum: 'pr14_16_connector_preview_proof_v1',
+              row_count: 5,
+              create_count: 5,
+              update_count: 0,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-03T14:00:00.000Z',
+              previewed_at: '2026-06-03T14:01:00.000Z',
+              created_at: '2026-06-03T13:59:00.000Z',
+              updated_at: '2026-06-03T14:01:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+      },
+      capture,
+    )
+
+    const result = await requestConnectorApplyReview('user-1')
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-1',
+      batchId: 'batch-import-preview',
+      status: 'review_requested',
+      safeToApply: false,
+    })
+    expect(capture.rpcCalls?.some((call) => call.fn === 'apply_import_batch')).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_apply_review',
+        event_key: 'import_apply_review_requested',
+        status: 'success',
+        safe_error_code: null,
+        safe_error_context: expect.objectContaining({
+          mode: 'dry_run',
+          source_namespace_code: 'CANIAS',
+          row_count: 5,
+          create_count: 5,
+          update_count: 0,
+          skip_count: 0,
+          safe_to_apply: false,
+          apply_execution_open: false,
+          human_review_recorded: true,
+        }),
+        next_action_key: 'hold_for_apply_design',
+      }),
+    })
+    expect(JSON.stringify(capture.inserts)).not.toContain('raw_payload')
+    expect(JSON.stringify(capture.inserts)).not.toContain('credentials_ref')
+    expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
+  })
+
+  it('rejects connector apply review when persona is not admin scoped', async () => {
+    resolveTenant.mockResolvedValue({
+      ...mockTenantContext(),
+      personaRole: 'employee',
+    })
+
+    await expect(requestConnectorApplyReview('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  })
+
   it('rejects connector import preview when persona is not admin scoped', async () => {
     resolveTenant.mockResolvedValue({
       ...mockTenantContext(),
@@ -1289,6 +1492,17 @@ describe('fetchErpOverviewWithMeta', () => {
         }),
       ),
     ).toEqual({ code: 'permission_denied', toastKey: 'erp.errors.permissionDenied' })
+
+    expect(
+      mapConnectorSetupError(
+        new DataAdapterError({
+          code: 'PULS_CONNECTOR_APPLY_REVIEW_BLOCKED',
+          message: 'Connector apply review is blocked until preview is ready',
+          source: 'adapter',
+          operation: 'requestConnectorApplyReview',
+        }),
+      ),
+    ).toEqual({ code: 'apply_review_blocked', toastKey: 'erp.errors.applyReviewBlocked' })
 
     expect(mapConnectorSetupError(new Error('raw db failure'))).toEqual({
       code: 'save_failed',

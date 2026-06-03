@@ -1001,6 +1001,9 @@
       "importPreview": {
         "preview_ready": "Import preview is ready. No live data was written.",
         "blocked": "Preview stopped because validation errors were found."
+      },
+      "applyReadiness": {
+        "reviewRequested": "Human review request was recorded. Apply execution remains closed."
       }
     },
     "errors": {
@@ -1013,7 +1016,8 @@
       "importPreviewBlocked": "Import preview runs only on a validated dry-run batch.",
       "domainOwned": "This data domain is already managed by another source. Manage the existing setup or choose an empty domain.",
       "permissionDenied": "You do not have permission to save this connection. Try again with an admin role.",
-      "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment."
+      "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment.",
+      "applyReviewBlocked": "Human review can be requested only after a clean import preview is available."
     },
     "sections": {
       "lifecycle": "Lifecycle",
@@ -1039,7 +1043,9 @@
       "syncLogs": "Check history",
       "syncLogsDescription": "Recent records from setup and readiness checks.",
       "activityTimeline": "Activity history",
-      "activityTimelineDescription": "Safe records from setup, secure reference, and readiness-check steps."
+      "activityTimelineDescription": "Safe records from setup, secure reference, and readiness-check steps.",
+      "applyReadiness": "Apply readiness",
+      "applyReadinessDescription": "Review whether the prepared preview is ready for human decisioning. This records audit intent only; it does not apply records or write canonical data."
     },
     "domainOwnership": {
       "owner": "Managed by {{source}}",
@@ -1425,6 +1431,9 @@
         },
         "sync_batch_recorded": {
           "title": "Connection record created"
+        },
+        "import_apply_review_requested": {
+          "title": "Human review request recorded"
         }
       },
       "summaries": {
@@ -1451,6 +1460,11 @@
           "success": "Source history was recorded successfully.",
           "pending": "Source history was recorded as pending.",
           "failed": "Source history contains safe error detail."
+        },
+        "importApplyReview": {
+          "success": "An admin recorded human review intent for a preview batch; no canonical write happened.",
+          "partial": "Review intent was recorded with open readiness blockers; apply remains closed.",
+          "failed": "Human review request could not be recorded; no apply action was opened."
         }
       },
       "details": {
@@ -1482,7 +1496,8 @@
         "wait_for_secure_reference": "Wait for the secure reference to be produced server-side.",
         "review_import_preview": "Review dry-run preview results; live apply requires separate approval.",
         "review_import_errors": "Resolve import validation errors before preview.",
-        "review_activity": "Review the record and move to the next safe setup step."
+        "review_activity": "Review the record and move to the next safe setup step.",
+        "hold_for_apply_design": "Hold for future apply design, approval, and rollback gates."
       }
     },
     "syncLogMessages": {
@@ -1507,11 +1522,134 @@
         "partial": "Dry-run import preview stopped with validation errors.",
         "failed": "Dry-run import preview could not be saved.",
         "pending": "Dry-run import preview record was created."
+      },
+      "importApplyReview": {
+        "success": "Human review request was recorded.",
+        "pending": "Human review request was created.",
+        "failed": "Human review request could not be recorded."
       }
     },
     "status": {
       "mapped": "Matched",
       "pending": "Pending"
+    },
+    "applyReadiness": {
+      "requesting": "Recording request",
+      "adminRequired": "Admin permission required",
+      "safeToApplyFalse": "Apply closed",
+      "reviewRequestedAt": "Review requested at: {{value}}",
+      "blockersTitle": "Why apply stays closed",
+      "noBlockers": "No blocking preview findings were found, but execution is still intentionally closed in this release.",
+      "status": {
+        "not_available": "Review not available",
+        "needs_preview": "Preview required",
+        "review_ready": "Ready for human review",
+        "review_requested": "Review request recorded",
+        "blocked": "Review blocked"
+      },
+      "descriptions": {
+        "not_available": "Select a source and prepare a dry-run batch before requesting review.",
+        "needs_preview": "The batch must be previewed against the canonical model before review can be recorded.",
+        "review_ready": "Preview results are ready for an admin to record human review intent. No apply path opens from this action.",
+        "review_requested": "A human review request has been recorded. Future apply design must still pass separate approval, runtime, and rollback gates.",
+        "blocked": "Preview findings must be resolved before a human review request can be recorded."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no safe review action at this stage."
+        },
+        "run_preview_first": {
+          "label": "Run preview first",
+          "description": "A clean preview is required before review intent can be recorded."
+        },
+        "request_human_review": {
+          "label": "Record human review request",
+          "description": "Save an audit signal that preview results need human review. This is not apply approval."
+        },
+        "review_requested": {
+          "label": "Request recorded",
+          "description": "The audit signal is saved. Apply execution remains closed."
+        },
+        "resolve_blockers": {
+          "label": "Resolve blockers",
+          "description": "Fix preview errors or missing setup evidence, then run preview again."
+        }
+      },
+      "metrics": {
+        "preview": "Preview outcome",
+        "findings": "Findings",
+        "blockers": "Review blockers",
+        "execution": "Execution"
+      },
+      "values": {
+        "createUpdateSkip": "Create / update / skip",
+        "errorWarning": "Errors / warnings",
+        "blockers": "Active blockers",
+        "closed": "Closed",
+        "noApply": "No apply action is exposed",
+        "previewReady": "Preview ready",
+        "pending": "Pending",
+        "hasErrors": "Errors found",
+        "clean": "No errors",
+        "credentialReady": "Reference ready or not required",
+        "credentialPending": "Reference not verified",
+        "reviewRecorded": "Review request recorded",
+        "reviewPending": "Review not recorded",
+        "executionClosed": "Apply execution closed"
+      },
+      "checks": {
+        "preview_classification": {
+          "label": "Preview classification",
+          "description": "Rows must be classified as create, update, or skip before review."
+        },
+        "row_findings": {
+          "label": "Row findings",
+          "description": "Validation errors block review; warnings stay visible for humans."
+        },
+        "credential_reference": {
+          "label": "Credential reference",
+          "description": "Credential state is shown as readiness evidence, never as a secret value."
+        },
+        "human_review": {
+          "label": "Human review",
+          "description": "Admins can record review intent before future apply design starts."
+        },
+        "execution_boundary": {
+          "label": "Execution boundary",
+          "description": "Canonical apply, runtime sync, and ERP writes remain outside this release."
+        }
+      },
+      "blockers": {
+        "no_connector": {
+          "label": "No source selected",
+          "description": "Start a connector setup before review can be considered."
+        },
+        "no_batch": {
+          "label": "No preview batch",
+          "description": "Prepare a dry-run import batch before review."
+        },
+        "preview_required": {
+          "label": "Preview required",
+          "description": "Run dry-run preview to classify rows before review."
+        },
+        "row_errors": {
+          "label": "Row errors present",
+          "description": "Rows with validation errors must be corrected before review."
+        },
+        "credential_not_verified": {
+          "label": "Credential reference not verified",
+          "description": "Live use still requires a verified secure reference in a future runtime boundary."
+        },
+        "dry_run_only": {
+          "label": "Dry-run batch only",
+          "description": "The current batch is intentionally dry-run and cannot write canonical records."
+        },
+        "apply_execution_closed": {
+          "label": "Apply execution closed",
+          "description": "This release records review intent only; canonical apply is not implemented."
+        }
+      }
     }
   },
   "orgSetupReadiness": {
@@ -3046,13 +3184,27 @@
       }
     },
     "guardrails": {
-      "dbBacked": { "label": "DB-backed context" },
-      "tenantScoped": { "label": "Tenant scoped" },
-      "humanInLoop": { "label": "Human-in-the-loop confirmation required" },
-      "noAutonomousMutations": { "label": "No autonomous mutations" },
-      "noAutoApprovals": { "label": "No auto-approvals" },
-      "noErpWrites": { "label": "No ERP writes" },
-      "noVaultSeed": { "label": "No persistent conversation record" },
+      "dbBacked": {
+        "label": "DB-backed context"
+      },
+      "tenantScoped": {
+        "label": "Tenant scoped"
+      },
+      "humanInLoop": {
+        "label": "Human-in-the-loop confirmation required"
+      },
+      "noAutonomousMutations": {
+        "label": "No autonomous mutations"
+      },
+      "noAutoApprovals": {
+        "label": "No auto-approvals"
+      },
+      "noErpWrites": {
+        "label": "No ERP writes"
+      },
+      "noVaultSeed": {
+        "label": "No persistent conversation record"
+      },
       "enforced": "Enforced",
       "pending": "Pending"
     },

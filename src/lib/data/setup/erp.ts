@@ -332,6 +332,76 @@ export type ConnectorImportPreview = {
   safeToApply: false
 }
 
+export type ConnectorApplyReadinessStatus =
+  | 'not_available'
+  | 'needs_preview'
+  | 'review_ready'
+  | 'review_requested'
+  | 'blocked'
+
+export type ConnectorApplyReadinessAction =
+  | 'none'
+  | 'run_preview_first'
+  | 'request_human_review'
+  | 'review_requested'
+  | 'resolve_blockers'
+
+export type ConnectorApplyReadinessBlockerId =
+  | 'no_connector'
+  | 'no_batch'
+  | 'preview_required'
+  | 'row_errors'
+  | 'credential_not_verified'
+  | 'dry_run_only'
+  | 'apply_execution_closed'
+
+export type ConnectorApplyReadinessCheckId =
+  | 'preview_classification'
+  | 'row_findings'
+  | 'credential_reference'
+  | 'human_review'
+  | 'execution_boundary'
+
+export type ConnectorApplyReadinessCheck = {
+  id: ConnectorApplyReadinessCheckId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+  valueKey: string
+}
+
+export type ConnectorApplyReadinessBlocker = {
+  id: ConnectorApplyReadinessBlockerId
+  labelKey: string
+  descriptionKey: string
+}
+
+export type ConnectorApplyReadiness = {
+  status: ConnectorApplyReadinessStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  action: ConnectorApplyReadinessAction
+  actionLabelKey: string
+  actionDescriptionKey: string
+  requestable: boolean
+  safeToApply: false
+  reviewRequestedAt: string | null
+  reviewRequestedByEmployeeId: string | null
+  batchId: string | null
+  summary: {
+    rowCount: number
+    createCount: number
+    updateCount: number
+    skipCount: number
+    errorCount: number
+    warningCount: number
+    blockerCount: number
+  }
+  blockers: ConnectorApplyReadinessBlocker[]
+  checks: ConnectorApplyReadinessCheck[]
+}
+
 export type ConnectorNamespaceSummary = {
   id: string
   code: string
@@ -370,6 +440,7 @@ export type ConnectorSyncLog = {
     | 'setup_preflight'
     | 'credential_handoff'
     | 'import_preview'
+    | 'import_apply_review'
     | 'sync_batch'
 }
 
@@ -378,6 +449,7 @@ export type ConnectorActivityEventKind =
   | 'setup_preflight'
   | 'credential_handoff'
   | 'import_preview'
+  | 'import_apply_review'
   | 'sync_batch'
 
 export type ConnectorActivityDetail = {
@@ -442,6 +514,7 @@ export type ErpOverview = {
   credentialBoundary: ConnectorCredentialBoundary
   credentialHandoff: ConnectorCredentialHandoff
   importPreview: ConnectorImportPreview
+  applyReadiness: ConnectorApplyReadiness
   capabilities: ConnectorSourceCapability[]
   domainOwnership: ConnectorDomainOwnership[]
   canonicalClasses: ConnectorCanonicalDataClass[]
@@ -605,6 +678,14 @@ export type RunConnectorImportPreviewResult = {
   errorCount: number
 }
 
+export type RequestConnectorApplyReviewResult = {
+  connectionId: string
+  batchId: string
+  status: ConnectorApplyReadinessStatus
+  requestedAt: string | null
+  safeToApply: false
+}
+
 export type ConnectorSetupErrorMapping = {
   code:
     | 'missing_tenant'
@@ -614,6 +695,7 @@ export type ConnectorSetupErrorMapping = {
     | 'credential_handoff_blocked'
     | 'import_batch_missing'
     | 'import_preview_blocked'
+    | 'apply_review_blocked'
     | 'permission_denied'
     | 'domain_owned'
     | 'save_failed'
@@ -1031,6 +1113,9 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
     ) {
       return { code: 'import_preview_blocked', toastKey: 'erp.errors.importPreviewBlocked' }
     }
+    if (error.code === 'PULS_CONNECTOR_APPLY_REVIEW_BLOCKED') {
+      return { code: 'apply_review_blocked', toastKey: 'erp.errors.applyReviewBlocked' }
+    }
     if (error.code === 'PULS_CONNECTOR_DOMAIN_OWNED') {
       return { code: 'domain_owned', toastKey: 'erp.errors.domainOwned' }
     }
@@ -1042,7 +1127,10 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
   return { code: 'save_failed', toastKey: 'erp.errors.setupSaveFailed' }
 }
 
-function fromConnectorRpcError(error: { code?: string | null; message?: string }, operation: string) {
+function fromConnectorRpcError(
+  error: { code?: string | null; message?: string },
+  operation: string,
+) {
   const message = error.message ?? 'Connector RPC failed'
   const code = parseRpcErrorCode(message) ?? error.code ?? 'PULS_CONNECTOR_RPC_FAILED'
   return new DataAdapterError({
@@ -1615,6 +1703,153 @@ function buildConnectorImportPreview({
   }
 }
 
+function eventIsAtOrAfter(value: string | null | undefined, baseline: string | null | undefined) {
+  if (!value || !baseline) return false
+  const eventTime = Date.parse(value)
+  const baselineTime = Date.parse(baseline)
+  return Number.isFinite(eventTime) && Number.isFinite(baselineTime) && eventTime >= baselineTime
+}
+
+function buildConnectorApplyReadiness({
+  connectorState,
+  importPreview,
+  credentialBoundary,
+  reviewEvent,
+}: {
+  connectorState: ConnectorLifecycleState
+  importPreview: ConnectorImportPreview
+  credentialBoundary: ConnectorCredentialBoundary
+  reviewEvent: ErpSyncBatchRow | null
+}): ConnectorApplyReadiness {
+  const batch = importPreview.batch
+  const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
+  const freshReviewEvent =
+    previewReady && eventIsAtOrAfter(reviewEvent?.created_at, batch?.previewedAt)
+      ? reviewEvent
+      : null
+  const credentialReady =
+    !credentialBoundary.required ||
+    credentialBoundary.state === 'verified' ||
+    credentialBoundary.state === 'not_required'
+  const blockers: ConnectorApplyReadinessBlockerId[] = []
+
+  if (connectorState !== 'connector_selected') {
+    blockers.push('no_connector')
+  } else if (!batch?.id) {
+    blockers.push('no_batch')
+  } else if (!previewReady) {
+    blockers.push(importPreview.summary.errorCount > 0 ? 'row_errors' : 'preview_required')
+  }
+
+  if (importPreview.summary.errorCount > 0 && !blockers.includes('row_errors')) {
+    blockers.push('row_errors')
+  }
+  if (previewReady && !credentialReady) blockers.push('credential_not_verified')
+  if (batch?.mode === 'dry_run') blockers.push('dry_run_only')
+  if (previewReady) blockers.push('apply_execution_closed')
+
+  const status: ConnectorApplyReadinessStatus =
+    connectorState !== 'connector_selected'
+      ? 'not_available'
+      : !batch?.id
+        ? 'not_available'
+        : importPreview.summary.errorCount > 0
+          ? 'blocked'
+          : !previewReady
+            ? 'needs_preview'
+            : freshReviewEvent
+              ? 'review_requested'
+              : 'review_ready'
+  const readiness: ConnectorReadinessStatus =
+    status === 'blocked'
+      ? 'blocked'
+      : status === 'not_available' || status === 'needs_preview'
+        ? 'partial'
+        : 'partial'
+  const action: ConnectorApplyReadinessAction =
+    status === 'needs_preview'
+      ? 'run_preview_first'
+      : status === 'blocked'
+        ? 'resolve_blockers'
+        : status === 'review_ready'
+          ? 'request_human_review'
+          : status === 'review_requested'
+            ? 'review_requested'
+            : 'none'
+
+  const check = (
+    id: ConnectorApplyReadinessCheckId,
+    statusValue: ConnectorReadinessStatus,
+    valueKey: string,
+  ): ConnectorApplyReadinessCheck => ({
+    id,
+    labelKey: `erp.applyReadiness.checks.${id}.label`,
+    descriptionKey: `erp.applyReadiness.checks.${id}.description`,
+    status: statusValue,
+    valueKey,
+  })
+
+  return {
+    status,
+    readiness,
+    statusLabelKey: `erp.applyReadiness.status.${status}`,
+    descriptionKey: `erp.applyReadiness.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.applyReadiness.actions.${action}.label`,
+    actionDescriptionKey: `erp.applyReadiness.actions.${action}.description`,
+    requestable: status === 'review_ready',
+    safeToApply: false,
+    reviewRequestedAt: freshReviewEvent?.created_at ?? null,
+    reviewRequestedByEmployeeId: freshReviewEvent?.actor_employee_id ?? null,
+    batchId: batch?.id ?? null,
+    summary: {
+      rowCount: importPreview.summary.rowCount,
+      createCount: importPreview.summary.createCount,
+      updateCount: importPreview.summary.updateCount,
+      skipCount: importPreview.summary.skipCount,
+      errorCount: importPreview.summary.errorCount,
+      warningCount: importPreview.summary.warningCount,
+      blockerCount: blockers.length,
+    },
+    blockers: blockers.map((id) => ({
+      id,
+      labelKey: `erp.applyReadiness.blockers.${id}.label`,
+      descriptionKey: `erp.applyReadiness.blockers.${id}.description`,
+    })),
+    checks: [
+      check(
+        'preview_classification',
+        previewReady ? 'ready' : 'partial',
+        previewReady
+          ? 'erp.applyReadiness.values.previewReady'
+          : 'erp.applyReadiness.values.pending',
+      ),
+      check(
+        'row_findings',
+        importPreview.summary.errorCount > 0 ? 'blocked' : 'ready',
+        importPreview.summary.errorCount > 0
+          ? 'erp.applyReadiness.values.hasErrors'
+          : 'erp.applyReadiness.values.clean',
+      ),
+      check(
+        'credential_reference',
+        credentialReady ? 'ready' : 'partial',
+        credentialReady
+          ? 'erp.applyReadiness.values.credentialReady'
+          : 'erp.applyReadiness.values.credentialPending',
+      ),
+      check(
+        'human_review',
+        freshReviewEvent ? 'ready' : previewReady ? 'partial' : 'blocked',
+        freshReviewEvent
+          ? 'erp.applyReadiness.values.reviewRecorded'
+          : 'erp.applyReadiness.values.reviewPending',
+      ),
+      check('execution_boundary', 'blocked', 'erp.applyReadiness.values.executionClosed'),
+    ],
+  }
+}
+
 function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant'): ErpOverview {
   const credentialBoundary = buildConnectorCredentialBoundary({
     hasConnection: false,
@@ -1652,6 +1887,12 @@ function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant')
     syncLogs: [],
     activityTimeline: [],
     credentialBoundary,
+    applyReadiness: buildConnectorApplyReadiness({
+      connectorState,
+      importPreview: emptyConnectorImportPreview(connectorState),
+      credentialBoundary,
+      reviewEvent: null,
+    }),
   })
 }
 
@@ -1715,12 +1956,14 @@ function mapActivityKind(syncType: string | null | undefined): ConnectorActivity
   if (syncType === 'setup_preflight') return 'setup_preflight'
   if (syncType === 'credential_handoff') return 'credential_handoff'
   if (syncType === 'import_preview') return 'import_preview'
+  if (syncType === 'import_apply_review') return 'import_apply_review'
   return 'sync_batch'
 }
 
 function mapActivityTitleKey(row: ErpSyncBatchRow): string {
   if (row.event_key) return `erp.activityTimeline.events.${row.event_key}.title`
-  if (row.sync_type === 'setup_preflight') return 'erp.activityTimeline.events.setup_preflight_completed.title'
+  if (row.sync_type === 'setup_preflight')
+    return 'erp.activityTimeline.events.setup_preflight_completed.title'
   if (row.sync_type === 'credential_handoff') {
     return 'erp.activityTimeline.events.credential_handoff_requested.title'
   }
@@ -1747,6 +1990,12 @@ function mapActivitySummaryKey(row: ErpSyncBatchRow): string {
     return 'erp.activityTimeline.summaries.importPreview.partial'
   }
 
+  if (row.sync_type === 'import_apply_review') {
+    if (row.status === 'failed') return 'erp.activityTimeline.summaries.importApplyReview.failed'
+    if (row.status === 'success') return 'erp.activityTimeline.summaries.importApplyReview.success'
+    return 'erp.activityTimeline.summaries.importApplyReview.partial'
+  }
+
   if (row.sync_type === 'setup_preflight') {
     if (row.status === 'success') return 'erp.activityTimeline.summaries.setupPreflight.success'
     if (row.status === 'failed') return 'erp.activityTimeline.summaries.setupPreflight.failed'
@@ -1769,6 +2018,9 @@ function mapActivityNextActionKey(row: ErpSyncBatchRow): string {
   }
   if (row.sync_type === 'credential_handoff') {
     return 'erp.activityTimeline.nextActions.wait_for_secure_reference'
+  }
+  if (row.sync_type === 'import_apply_review') {
+    return 'erp.activityTimeline.nextActions.hold_for_apply_design'
   }
   if (row.sync_type === 'import_preview') {
     return row.status === 'success'
@@ -1856,6 +2108,27 @@ function buildActivityDetails(row: ErpSyncBatchRow): ConnectorActivityDetail[] {
     ]
   }
 
+  if (row.sync_type === 'import_apply_review') {
+    return [
+      {
+        labelKey: 'erp.activityTimeline.details.recordsSeen',
+        value: row.records_seen ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.createdRecords',
+        value: row.records_inserted ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.updatedRecords',
+        value: row.records_updated ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.skippedRecords',
+        value: Number(row.safe_error_context?.skip_count ?? 0),
+      },
+    ]
+  }
+
   return [
     {
       labelKey: 'erp.activityTimeline.details.recordsSeen',
@@ -1880,9 +2153,7 @@ function buildConnectorActivityEvent(row: ErpSyncBatchRow, index: number): Conne
     summaryKey: mapActivitySummaryKey(row),
     detailItems: buildActivityDetails(row),
     safeErrorCode,
-    safeErrorSummaryKey: safeErrorCode
-      ? `erp.activityTimeline.safeErrors.${safeErrorCode}`
-      : null,
+    safeErrorSummaryKey: safeErrorCode ? `erp.activityTimeline.safeErrors.${safeErrorCode}` : null,
     nextActionKey: mapActivityNextActionKey(row),
     actorLabelKey: row.actor_employee_id
       ? 'erp.activityTimeline.actors.admin'
@@ -1916,6 +2187,11 @@ function mapSyncLogMessageKey(row: ErpSyncBatchRow): string | undefined {
     if (row.status === 'partial_success') return 'erp.syncLogMessages.importPreview.partial'
     if (row.status === 'failed') return 'erp.syncLogMessages.importPreview.failed'
     return 'erp.syncLogMessages.importPreview.pending'
+  }
+  if (row.sync_type === 'import_apply_review') {
+    if (row.status === 'success') return 'erp.syncLogMessages.importApplyReview.success'
+    if (row.status === 'failed') return 'erp.syncLogMessages.importApplyReview.failed'
+    return 'erp.syncLogMessages.importApplyReview.pending'
   }
   if (row.sync_type !== 'setup_preflight') return undefined
   if (row.status === 'success') return 'erp.syncLogMessages.setupPreflight.success'
@@ -2524,6 +2800,7 @@ function buildOverview({
   activityTimeline,
   credentialBoundary,
   importPreview,
+  applyReadiness,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
   credentialHandoffRequestedByEmployeeId,
@@ -2552,6 +2829,7 @@ function buildOverview({
   activityTimeline: ConnectorActivityEvent[]
   credentialBoundary: ConnectorCredentialBoundary
   importPreview?: ConnectorImportPreview
+  applyReadiness?: ConnectorApplyReadiness
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
   credentialHandoffRequestedByEmployeeId?: string | null
@@ -2613,6 +2891,7 @@ function buildOverview({
     requestedByEmployeeId: credentialHandoffRequestedByEmployeeId,
     updatedAt: credentialHandoffUpdatedAt,
   })
+  const resolvedImportPreview = importPreview ?? emptyConnectorImportPreview(connectorState)
 
   return {
     connectorState,
@@ -2664,7 +2943,15 @@ function buildOverview({
     preflight,
     credentialBoundary,
     credentialHandoff,
-    importPreview: importPreview ?? emptyConnectorImportPreview(connectorState),
+    importPreview: resolvedImportPreview,
+    applyReadiness:
+      applyReadiness ??
+      buildConnectorApplyReadiness({
+        connectorState,
+        importPreview: resolvedImportPreview,
+        credentialBoundary,
+        reviewEvent: null,
+      }),
     capabilities,
     domainOwnership,
     canonicalClasses,
@@ -2869,7 +3156,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
           .eq('tenant_id', ctx.tenantId)
           .eq('connection_id', connection.id)
           .order('created_at', { ascending: false })
-          .limit(6),
+          .limit(10),
       ])
     : [
         { data: [], error: null },
@@ -3032,6 +3319,18 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     records: importPreviewRecords,
     namespaceCodeById,
   })
+  const latestApplyReviewEvent =
+    batches.find(
+      (row) =>
+        row.sync_type === 'import_apply_review' &&
+        row.event_key === 'import_apply_review_requested',
+    ) ?? null
+  const applyReadiness = buildConnectorApplyReadiness({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    importPreview,
+    credentialBoundary,
+    reviewEvent: latestApplyReviewEvent,
+  })
 
   return buildOverview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
@@ -3066,16 +3365,19 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
         row.sync_type === 'setup_lifecycle'
           ? 'setup_lifecycle'
           : row.sync_type === 'setup_preflight'
-          ? 'setup_preflight'
-          : row.sync_type === 'credential_handoff'
-            ? 'credential_handoff'
-            : row.sync_type === 'import_preview'
-              ? 'import_preview'
-            : 'sync_batch',
+            ? 'setup_preflight'
+            : row.sync_type === 'credential_handoff'
+              ? 'credential_handoff'
+              : row.sync_type === 'import_preview'
+                ? 'import_preview'
+                : row.sync_type === 'import_apply_review'
+                  ? 'import_apply_review'
+                  : 'sync_batch',
     })),
     activityTimeline: batches.map((row, index) => buildConnectorActivityEvent(row, index)),
     credentialBoundary,
     importPreview,
+    applyReadiness,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
     credentialHandoffRequestedByEmployeeId:
@@ -3631,6 +3933,122 @@ export async function runConnectorImportPreview(
     updateCount,
     skipCount,
     errorCount: 0,
+  }
+}
+
+export async function requestConnectorApplyReview(
+  userId: string,
+): Promise<RequestConnectorApplyReviewResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector apply review requires tenant context',
+      source: 'adapter',
+      operation: 'requestConnectorApplyReview',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector apply review requires admin permission',
+      source: 'adapter',
+      operation: 'requestConnectorApplyReview',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.importPreview.batch
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector apply review requires a selected source',
+      source: 'adapter',
+      operation: 'requestConnectorApplyReview',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector apply review requires a preview batch',
+      source: 'adapter',
+      operation: 'requestConnectorApplyReview',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (overview.applyReadiness.status === 'review_requested') {
+    return {
+      connectionId,
+      batchId: batch.id,
+      status: 'review_requested',
+      requestedAt: overview.applyReadiness.reviewRequestedAt,
+      safeToApply: false,
+    }
+  }
+  if (!overview.applyReadiness.requestable) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_APPLY_REVIEW_BLOCKED',
+      message: 'Connector apply review is blocked until preview is ready',
+      source: 'adapter',
+      operation: 'requestConnectorApplyReview',
+      i18nKey: 'erp.errors.applyReviewBlocked',
+    })
+  }
+
+  const now = new Date().toISOString()
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_apply_review',
+      event_key: 'import_apply_review_requested',
+      actor_employee_id: ctx.employeeId,
+      status: 'success',
+      started_at: now,
+      finished_at: now,
+      records_seen: overview.applyReadiness.summary.rowCount,
+      records_inserted: overview.applyReadiness.summary.createCount,
+      records_updated: overview.applyReadiness.summary.updateCount,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        mode: batch.mode,
+        source_namespace_code: batch.sourceNamespaceCode,
+        row_count: overview.applyReadiness.summary.rowCount,
+        create_count: overview.applyReadiness.summary.createCount,
+        update_count: overview.applyReadiness.summary.updateCount,
+        skip_count: overview.applyReadiness.summary.skipCount,
+        blocker_count: overview.applyReadiness.summary.blockerCount,
+        safe_to_apply: false,
+        apply_execution_open: false,
+        human_review_recorded: true,
+      },
+      next_action_key: 'hold_for_apply_design',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'requestConnectorApplyReview',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch.id,
+    status: 'review_requested',
+    requestedAt: now,
+    safeToApply: false,
   }
 }
 

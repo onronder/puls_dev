@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Circle,
+  ClipboardCheck,
   Database,
   FileSpreadsheet,
   Globe2,
@@ -36,6 +37,7 @@ import { useAuth } from '#/lib/auth'
 import {
   fetchErpOverviewWithMeta,
   mapConnectorSetupError,
+  requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
   runConnectorImportPreview,
   runConnectorPreflight,
@@ -240,6 +242,29 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestApplyReviewMutation = useMutation({
+    mutationFn: () => requestConnectorApplyReview(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.applyReadiness.reviewRequested'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      window.setTimeout(() => {
+        document
+          .getElementById('erp-apply-readiness')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 80)
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'requestConnectorApplyReview',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
 
   const data = erpResult?.data
   const hasSelectedConnector = data?.connectorState === 'connector_selected'
@@ -248,6 +273,7 @@ function ErpPage() {
     data?.credentialHandoff.requestable === true && canManageConnectors
   const canRunImportPreview =
     data?.importPreview.action === 'run_dry_run_preview' && canManageConnectors
+  const canRequestApplyReview = data?.applyReadiness.requestable === true && canManageConnectors
   const selectedProvider =
     selectedProviderId == null
       ? null
@@ -857,8 +883,7 @@ function ErpPage() {
                     ? runImportPreviewMutation.isPending
                       ? t('erp.importPreview.running')
                       : t(data.importPreview.actionLabelKey)
-                    : !canManageConnectors &&
-                        data.importPreview.action === 'run_dry_run_preview'
+                    : !canManageConnectors && data.importPreview.action === 'run_dry_run_preview'
                       ? t('erp.importPreview.adminRequired')
                       : t(data.importPreview.actionLabelKey)}
                 </Button>
@@ -875,7 +900,8 @@ function ErpPage() {
                       : t('erp.importPreview.values.none')}
                   </p>
                   <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
-                    {data.importPreview.batch?.sourceNamespaceCode ?? t('erp.importPreview.values.noNamespace')}
+                    {data.importPreview.batch?.sourceNamespaceCode ??
+                      t('erp.importPreview.values.noNamespace')}
                   </p>
                 </div>
                 <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
@@ -984,6 +1010,170 @@ function ErpPage() {
                   })}
                 </p>
               ) : null}
+            </div>
+          </section>
+
+          <section id="erp-apply-readiness" className="mt-8 scroll-mt-6">
+            <SectionHeader
+              title={t('erp.sections.applyReadiness')}
+              description={t('erp.sections.applyReadinessDescription')}
+            />
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      {t(data.applyReadiness.statusLabelKey)}
+                    </h2>
+                    <StatusPill tone={readinessTone(data.applyReadiness.readiness)}>
+                      {t(`erp.readinessStatus.${data.applyReadiness.readiness}`)}
+                    </StatusPill>
+                    <StatusPill tone="neutral">
+                      {t('erp.applyReadiness.safeToApplyFalse')}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {t(data.applyReadiness.descriptionKey)}
+                  </p>
+                  <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                    {t(data.applyReadiness.actionDescriptionKey)}
+                  </p>
+                  {data.applyReadiness.reviewRequestedAt ? (
+                    <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.applyReadiness.reviewRequestedAt', {
+                        value: formatDateTime(
+                          data.applyReadiness.reviewRequestedAt,
+                          i18n.language,
+                          t('erp.credentialBoundary.notRecorded'),
+                        ),
+                      })}
+                    </p>
+                  ) : null}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="touch-target w-full lg:w-auto"
+                  disabled={!canRequestApplyReview || requestApplyReviewMutation.isPending}
+                  onClick={() => void requestApplyReviewMutation.mutateAsync()}
+                >
+                  <ClipboardCheck
+                    className={cn(
+                      'h-4 w-4',
+                      requestApplyReviewMutation.isPending ? 'animate-pulse' : null,
+                    )}
+                  />
+                  {canRequestApplyReview
+                    ? requestApplyReviewMutation.isPending
+                      ? t('erp.applyReadiness.requesting')
+                      : t(data.applyReadiness.actionLabelKey)
+                    : !canManageConnectors && data.applyReadiness.action === 'request_human_review'
+                      ? t('erp.applyReadiness.adminRequired')
+                      : t(data.applyReadiness.actionLabelKey)}
+                </Button>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.metrics.preview')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.applyReadiness.summary.createCount} /{' '}
+                    {data.applyReadiness.summary.updateCount} /{' '}
+                    {data.applyReadiness.summary.skipCount}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.values.createUpdateSkip')}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.metrics.findings')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.applyReadiness.summary.errorCount} /{' '}
+                    {data.applyReadiness.summary.warningCount}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.values.errorWarning')}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.metrics.blockers')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.applyReadiness.summary.blockerCount}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.values.blockers')}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.metrics.execution')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {t('erp.applyReadiness.values.closed')}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.applyReadiness.values.noApply')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_0.9fr]">
+                <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-lg border border-[var(--color-border)]">
+                  {data.applyReadiness.checks.map((check) => (
+                    <li key={check.id} className="flex items-start justify-between gap-3 p-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {t(check.labelKey)}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                          {t(check.descriptionKey)}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <StatusPill tone={readinessTone(check.status)}>
+                          {t(`erp.readinessStatus.${check.status}`)}
+                        </StatusPill>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                          {t(check.valueKey)}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="rounded-lg border border-[var(--color-border)] p-3">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {t('erp.applyReadiness.blockersTitle')}
+                  </p>
+                  {data.applyReadiness.blockers.length > 0 ? (
+                    <ul className="mt-3 space-y-2">
+                      {data.applyReadiness.blockers.map((blocker) => (
+                        <li
+                          key={blocker.id}
+                          className="rounded-md bg-[var(--color-bg-surface)] px-3 py-2"
+                        >
+                          <p className="text-xs font-semibold text-[var(--color-text-primary)]">
+                            {t(blocker.labelKey)}
+                          </p>
+                          <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                            {t(blocker.descriptionKey)}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      {t('erp.applyReadiness.noBlockers')}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </section>
 
