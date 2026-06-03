@@ -1,6 +1,11 @@
 import { fetchDemoErpOverview } from '#/lib/demo/puls-demo-data'
 import { pulsCalc, pulsIntegration, resolveTenantContext } from '#/lib/data/client'
-import { DataAdapterError, fromSupabaseError, isDataAdapterError } from '#/lib/data/errors'
+import {
+  DataAdapterError,
+  fromSupabaseError,
+  isDataAdapterError,
+  parseRpcErrorCode,
+} from '#/lib/data/errors'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type ConnectorReadinessStatus = 'ready' | 'partial' | 'blocked'
@@ -239,6 +244,94 @@ export type ConnectorCredentialHandoff = {
   captureBoundary: 'server_side_write_only'
 }
 
+export type ConnectorImportPreviewStatus =
+  | 'not_available'
+  | 'no_batch'
+  | 'ready_to_preview'
+  | 'preview_ready'
+  | 'blocked'
+
+export type ConnectorImportPreviewAction =
+  | 'none'
+  | 'complete_setup_first'
+  | 'run_dry_run_preview'
+  | 'review_errors'
+  | 'review_preview'
+
+export type ConnectorImportPreviewBatchStatus =
+  | 'uploaded'
+  | 'normalized'
+  | 'validated'
+  | 'previewed'
+  | 'applied'
+  | 'failed'
+  | 'cancelled'
+
+export type ConnectorImportPreviewRecordStatus =
+  | 'pending'
+  | 'validated'
+  | 'error'
+  | 'applied'
+  | 'skipped'
+
+export type ConnectorImportPreviewRecordAction = 'create' | 'update' | 'skip' | null
+
+export type ConnectorImportPreviewBatch = {
+  id: string
+  sourceNamespaceId: string
+  sourceNamespaceCode: string
+  status: ConnectorImportPreviewBatchStatus
+  mode: 'dry_run' | 'apply'
+  rowCount: number
+  createCount: number
+  updateCount: number
+  skipCount: number
+  errorCount: number
+  violationCount: number
+  sourceChecksum: string | null
+  validatedAt: string | null
+  previewedAt: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export type ConnectorImportPreviewRecord = {
+  id: string
+  rowNumber: number
+  entityType: string
+  externalId: string
+  status: ConnectorImportPreviewRecordStatus
+  action: ConnectorImportPreviewRecordAction
+  skipCode: string | null
+  errorCodes: string[]
+  warningCodes: string[]
+  canonicalId: string | null
+  previewedAt: string | null
+}
+
+export type ConnectorImportPreviewSummary = {
+  rowCount: number
+  createCount: number
+  updateCount: number
+  skipCount: number
+  errorCount: number
+  warningCount: number
+}
+
+export type ConnectorImportPreview = {
+  status: ConnectorImportPreviewStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  action: ConnectorImportPreviewAction
+  actionLabelKey: string
+  actionDescriptionKey: string
+  batch: ConnectorImportPreviewBatch | null
+  records: ConnectorImportPreviewRecord[]
+  summary: ConnectorImportPreviewSummary
+  safeToApply: false
+}
+
 export type ConnectorNamespaceSummary = {
   id: string
   code: string
@@ -272,13 +365,19 @@ export type ConnectorSyncLog = {
   message: string
   messageKey?: string
   detail?: string
-  kind: 'setup_lifecycle' | 'setup_preflight' | 'credential_handoff' | 'sync_batch'
+  kind:
+    | 'setup_lifecycle'
+    | 'setup_preflight'
+    | 'credential_handoff'
+    | 'import_preview'
+    | 'sync_batch'
 }
 
 export type ConnectorActivityEventKind =
   | 'setup_lifecycle'
   | 'setup_preflight'
   | 'credential_handoff'
+  | 'import_preview'
   | 'sync_batch'
 
 export type ConnectorActivityDetail = {
@@ -342,6 +441,7 @@ export type ErpOverview = {
   preflight: ConnectorPreflightResult
   credentialBoundary: ConnectorCredentialBoundary
   credentialHandoff: ConnectorCredentialHandoff
+  importPreview: ConnectorImportPreview
   capabilities: ConnectorSourceCapability[]
   domainOwnership: ConnectorDomainOwnership[]
   canonicalClasses: ConnectorCanonicalDataClass[]
@@ -425,11 +525,44 @@ type SourceNamespaceRow = {
   code?: string | null
   name?: string | null
   source_type?: string | null
+  connection_id?: string | null
 }
 
 type EntityIdentityRow = {
   source_namespace_id?: string | null
   canonical_table?: string | null
+}
+
+type ImportBatchRow = {
+  id?: string | null
+  source_namespace_id?: string | null
+  status?: ConnectorImportPreviewBatchStatus | null
+  mode?: 'dry_run' | 'apply' | null
+  source_checksum?: string | null
+  row_count?: number | null
+  create_count?: number | null
+  update_count?: number | null
+  skip_count?: number | null
+  error_count?: number | null
+  violation_count?: number | null
+  validated_at?: string | null
+  previewed_at?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+type ImportPreviewRecordRow = {
+  id?: string | null
+  row_number?: number | null
+  entity_type?: string | null
+  external_id?: string | null
+  status?: ConnectorImportPreviewRecordStatus | null
+  error_codes?: string[] | null
+  warning_codes?: string[] | null
+  canonical_id?: string | null
+  preview_action?: ConnectorImportPreviewRecordAction | null
+  preview_skip_code?: string | null
+  previewed_at?: string | null
 }
 
 type SetupReadinessRow = {
@@ -461,6 +594,17 @@ export type RequestConnectorCredentialHandoffResult = {
   requestedAt: string | null
 }
 
+export type RunConnectorImportPreviewResult = {
+  connectionId: string
+  batchId: string
+  status: ConnectorImportPreviewStatus
+  rowCount: number
+  createCount: number
+  updateCount: number
+  skipCount: number
+  errorCount: number
+}
+
 export type ConnectorSetupErrorMapping = {
   code:
     | 'missing_tenant'
@@ -468,6 +612,8 @@ export type ConnectorSetupErrorMapping = {
     | 'provider_unavailable'
     | 'source_missing'
     | 'credential_handoff_blocked'
+    | 'import_batch_missing'
+    | 'import_preview_blocked'
     | 'permission_denied'
     | 'domain_owned'
     | 'save_failed'
@@ -876,6 +1022,15 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
         toastKey: 'erp.errors.credentialHandoffBlocked',
       }
     }
+    if (error.code === 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED') {
+      return { code: 'import_batch_missing', toastKey: 'erp.errors.importBatchMissing' }
+    }
+    if (
+      error.code === 'PULS_CONNECTOR_IMPORT_PREVIEW_BLOCKED' ||
+      error.code === 'PULS_IMPORT_BATCH_STATE_INVALID'
+    ) {
+      return { code: 'import_preview_blocked', toastKey: 'erp.errors.importPreviewBlocked' }
+    }
     if (error.code === 'PULS_CONNECTOR_DOMAIN_OWNED') {
       return { code: 'domain_owned', toastKey: 'erp.errors.domainOwned' }
     }
@@ -885,6 +1040,22 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
   }
 
   return { code: 'save_failed', toastKey: 'erp.errors.setupSaveFailed' }
+}
+
+function fromConnectorRpcError(error: { code?: string | null; message?: string }, operation: string) {
+  const message = error.message ?? 'Connector RPC failed'
+  const code = parseRpcErrorCode(message) ?? error.code ?? 'PULS_CONNECTOR_RPC_FAILED'
+  return new DataAdapterError({
+    code,
+    message,
+    source: 'rpc',
+    operation,
+    schema: 'puls_integration',
+    i18nKey:
+      code === 'PULS_IMPORT_BATCH_STATE_INVALID'
+        ? 'erp.errors.importPreviewBlocked'
+        : 'erp.errors.setupSaveFailed',
+  })
 }
 
 const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
@@ -1318,6 +1489,132 @@ function buildConnectorCredentialHandoff({
   return handoff('request_secure_reference', 'partial', 'none', true)
 }
 
+function emptyConnectorImportPreview(
+  connectorState: ConnectorLifecycleState,
+): ConnectorImportPreview {
+  const status: ConnectorImportPreviewStatus =
+    connectorState === 'connector_selected' ? 'no_batch' : 'not_available'
+  const action: ConnectorImportPreviewAction =
+    connectorState === 'connector_selected' ? 'none' : 'complete_setup_first'
+  const readiness: ConnectorReadinessStatus =
+    connectorState === 'connector_selected' ? 'partial' : 'blocked'
+
+  return {
+    status,
+    readiness,
+    statusLabelKey: `erp.importPreview.status.${status}`,
+    descriptionKey: `erp.importPreview.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.importPreview.actions.${action}.label`,
+    actionDescriptionKey: `erp.importPreview.actions.${action}.description`,
+    batch: null,
+    records: [],
+    summary: {
+      rowCount: 0,
+      createCount: 0,
+      updateCount: 0,
+      skipCount: 0,
+      errorCount: 0,
+      warningCount: 0,
+    },
+    safeToApply: false,
+  }
+}
+
+function buildConnectorImportPreview({
+  connectorState,
+  batch,
+  records,
+  namespaceCodeById,
+}: {
+  connectorState: ConnectorLifecycleState
+  batch: ImportBatchRow | null
+  records: ImportPreviewRecordRow[]
+  namespaceCodeById: Record<string, string>
+}): ConnectorImportPreview {
+  if (!batch?.id || !batch.source_namespace_id) {
+    return emptyConnectorImportPreview(connectorState)
+  }
+
+  const normalizedRecords: ConnectorImportPreviewRecord[] = records.map((row, index) => ({
+    id: row.id ?? `preview-record-${index}`,
+    rowNumber: Number(row.row_number ?? index + 1),
+    entityType: row.entity_type ?? 'unknown',
+    externalId: row.external_id ?? '—',
+    status: row.status ?? 'pending',
+    action: row.preview_action ?? null,
+    skipCode: row.preview_skip_code ?? null,
+    errorCodes: Array.isArray(row.error_codes) ? row.error_codes : [],
+    warningCodes: Array.isArray(row.warning_codes) ? row.warning_codes : [],
+    canonicalId: row.canonical_id ?? null,
+    previewedAt: row.previewed_at ?? null,
+  }))
+
+  const errorCount = Math.max(
+    Number(batch.error_count ?? 0),
+    normalizedRecords.filter((record) => record.status === 'error').length,
+  )
+  const warningCount = normalizedRecords.filter((record) => record.warningCodes.length > 0).length
+  const status: ConnectorImportPreviewStatus =
+    errorCount > 0
+      ? 'blocked'
+      : batch.status === 'previewed'
+        ? 'preview_ready'
+        : batch.status === 'uploaded' ||
+            batch.status === 'normalized' ||
+            batch.status === 'validated'
+          ? 'ready_to_preview'
+          : 'blocked'
+  const action: ConnectorImportPreviewAction =
+    status === 'ready_to_preview'
+      ? 'run_dry_run_preview'
+      : status === 'blocked'
+        ? 'review_errors'
+        : status === 'preview_ready'
+          ? 'review_preview'
+          : 'none'
+  const readiness: ConnectorReadinessStatus =
+    status === 'preview_ready' ? 'ready' : status === 'blocked' ? 'blocked' : 'partial'
+
+  return {
+    status,
+    readiness,
+    statusLabelKey: `erp.importPreview.status.${status}`,
+    descriptionKey: `erp.importPreview.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.importPreview.actions.${action}.label`,
+    actionDescriptionKey: `erp.importPreview.actions.${action}.description`,
+    batch: {
+      id: batch.id,
+      sourceNamespaceId: batch.source_namespace_id,
+      sourceNamespaceCode: namespaceCodeById[batch.source_namespace_id] ?? '—',
+      status: batch.status ?? 'uploaded',
+      mode: batch.mode ?? 'dry_run',
+      rowCount: Number(batch.row_count ?? normalizedRecords.length),
+      createCount: Number(batch.create_count ?? 0),
+      updateCount: Number(batch.update_count ?? 0),
+      skipCount: Number(batch.skip_count ?? 0),
+      errorCount: Number(batch.error_count ?? 0),
+      violationCount: Number(batch.violation_count ?? 0),
+      sourceChecksum: batch.source_checksum ?? null,
+      validatedAt: batch.validated_at ?? null,
+      previewedAt: batch.previewed_at ?? null,
+      createdAt: batch.created_at ?? null,
+      updatedAt: batch.updated_at ?? null,
+    },
+    records: normalizedRecords,
+    summary: {
+      rowCount: Number(batch.row_count ?? normalizedRecords.length),
+      createCount: Number(batch.create_count ?? 0),
+      updateCount: Number(batch.update_count ?? 0),
+      skipCount: Number(batch.skip_count ?? 0),
+      errorCount,
+      warningCount,
+    },
+    safeToApply: false,
+  }
+}
+
 function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant'): ErpOverview {
   const credentialBoundary = buildConnectorCredentialBoundary({
     hasConnection: false,
@@ -1417,6 +1714,7 @@ function mapActivityKind(syncType: string | null | undefined): ConnectorActivity
   if (syncType === 'setup_lifecycle') return 'setup_lifecycle'
   if (syncType === 'setup_preflight') return 'setup_preflight'
   if (syncType === 'credential_handoff') return 'credential_handoff'
+  if (syncType === 'import_preview') return 'import_preview'
   return 'sync_batch'
 }
 
@@ -1443,6 +1741,12 @@ function mapActivitySummaryKey(row: ErpSyncBatchRow): string {
     return 'erp.activityTimeline.summaries.credentialHandoff.partial'
   }
 
+  if (row.sync_type === 'import_preview') {
+    if (row.status === 'failed') return 'erp.activityTimeline.summaries.importPreview.failed'
+    if (row.status === 'success') return 'erp.activityTimeline.summaries.importPreview.success'
+    return 'erp.activityTimeline.summaries.importPreview.partial'
+  }
+
   if (row.sync_type === 'setup_preflight') {
     if (row.status === 'success') return 'erp.activityTimeline.summaries.setupPreflight.success'
     if (row.status === 'failed') return 'erp.activityTimeline.summaries.setupPreflight.failed'
@@ -1465,6 +1769,11 @@ function mapActivityNextActionKey(row: ErpSyncBatchRow): string {
   }
   if (row.sync_type === 'credential_handoff') {
     return 'erp.activityTimeline.nextActions.wait_for_secure_reference'
+  }
+  if (row.sync_type === 'import_preview') {
+    return row.status === 'success'
+      ? 'erp.activityTimeline.nextActions.review_import_preview'
+      : 'erp.activityTimeline.nextActions.review_import_errors'
   }
   if (row.sync_type === 'setup_preflight') {
     return row.status === 'success'
@@ -1517,6 +1826,31 @@ function buildActivityDetails(row: ErpSyncBatchRow): ConnectorActivityDetail[] {
       },
       {
         labelKey: 'erp.activityTimeline.details.blockedChecks',
+        value: row.records_failed ?? 0,
+      },
+    ]
+  }
+
+  if (row.sync_type === 'import_preview') {
+    return [
+      {
+        labelKey: 'erp.activityTimeline.details.recordsSeen',
+        value: row.records_seen ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.createdRecords',
+        value: row.records_inserted ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.updatedRecords',
+        value: row.records_updated ?? 0,
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.skippedRecords',
+        value: Number(row.safe_error_context?.skip_count ?? 0),
+      },
+      {
+        labelKey: 'erp.activityTimeline.details.recordsFailed',
         value: row.records_failed ?? 0,
       },
     ]
@@ -1576,6 +1910,12 @@ function mapSyncLogMessageKey(row: ErpSyncBatchRow): string | undefined {
     if (row.status === 'partial_success') return 'erp.syncLogMessages.credentialHandoff.partial'
     if (row.status === 'failed') return 'erp.syncLogMessages.credentialHandoff.failed'
     return 'erp.syncLogMessages.credentialHandoff.pending'
+  }
+  if (row.sync_type === 'import_preview') {
+    if (row.status === 'success') return 'erp.syncLogMessages.importPreview.success'
+    if (row.status === 'partial_success') return 'erp.syncLogMessages.importPreview.partial'
+    if (row.status === 'failed') return 'erp.syncLogMessages.importPreview.failed'
+    return 'erp.syncLogMessages.importPreview.pending'
   }
   if (row.sync_type !== 'setup_preflight') return undefined
   if (row.status === 'success') return 'erp.syncLogMessages.setupPreflight.success'
@@ -2183,6 +2523,7 @@ function buildOverview({
   syncLogs,
   activityTimeline,
   credentialBoundary,
+  importPreview,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
   credentialHandoffRequestedByEmployeeId,
@@ -2210,6 +2551,7 @@ function buildOverview({
   syncLogs: ConnectorSyncLog[]
   activityTimeline: ConnectorActivityEvent[]
   credentialBoundary: ConnectorCredentialBoundary
+  importPreview?: ConnectorImportPreview
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
   credentialHandoffRequestedByEmployeeId?: string | null
@@ -2322,6 +2664,7 @@ function buildOverview({
     preflight,
     credentialBoundary,
     credentialHandoff,
+    importPreview: importPreview ?? emptyConnectorImportPreview(connectorState),
     capabilities,
     domainOwnership,
     canonicalClasses,
@@ -2419,6 +2762,7 @@ export async function buildDemoErpOverview(): Promise<ErpOverview> {
       rawStatus: log.level,
     })),
     credentialBoundary,
+    importPreview: emptyConnectorImportPreview('connector_selected'),
     connections: [
       {
         id: 'demo-canias',
@@ -2484,7 +2828,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       .maybeSingle(),
     pulsIntegration()
       .from('source_namespaces')
-      .select('id, code, name, source_type')
+      .select('id, code, name, source_type, connection_id')
       .eq('tenant_id', ctx.tenantId)
       .eq('is_active', true)
       .order('priority_rank', { ascending: true }),
@@ -2619,6 +2963,75 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
                 : 'runtime_inactive'
     : 'not_configured'
   const providerStatusLabelKey = `erp.providerStatus.${providerStatus}`
+  const connectorNamespaceRows =
+    connection?.id == null
+      ? []
+      : rawNamespaces.filter(
+          (row) =>
+            row.connection_id === connection.id ||
+            (row.connection_id == null && rawNamespaces.length === 1),
+        )
+  const connectorNamespaceIds = connectorNamespaceRows
+    .map((row) => row.id)
+    .filter((id): id is string => Boolean(id))
+  const namespaceCodeById = rawNamespaces.reduce<Record<string, string>>((codes, row) => {
+    if (row.id) codes[row.id] = row.code ?? '—'
+    return codes
+  }, {})
+  let importBatch: ImportBatchRow | null = null
+  let importPreviewRecords: ImportPreviewRecordRow[] = []
+
+  if (connectorNamespaceIds.length > 0) {
+    const importBatchRow = await pulsIntegration()
+      .from('import_batches')
+      .select(
+        [
+          'id',
+          'source_namespace_id',
+          'status',
+          'mode',
+          'source_checksum',
+          'row_count',
+          'create_count',
+          'update_count',
+          'skip_count',
+          'error_count',
+          'violation_count',
+          'validated_at',
+          'previewed_at',
+          'created_at',
+          'updated_at',
+        ].join(', '),
+      )
+      .eq('tenant_id', ctx.tenantId)
+      .eq('mode', 'dry_run')
+      .in('source_namespace_id', connectorNamespaceIds)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+
+    if (!importBatchRow.error) {
+      importBatch = ((importBatchRow.data ?? []) as ImportBatchRow[])[0] ?? null
+    }
+
+    if (importBatch?.id) {
+      const previewRecordsRow = await pulsIntegration().rpc(
+        'list_connector_import_preview_records',
+        {
+          p_batch_id: importBatch.id,
+        },
+      )
+
+      if (!previewRecordsRow.error) {
+        importPreviewRecords = (previewRecordsRow.data ?? []) as ImportPreviewRecordRow[]
+      }
+    }
+  }
+  const importPreview = buildConnectorImportPreview({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    batch: importBatch,
+    records: importPreviewRecords,
+    namespaceCodeById,
+  })
 
   return buildOverview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
@@ -2656,10 +3069,13 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
           ? 'setup_preflight'
           : row.sync_type === 'credential_handoff'
             ? 'credential_handoff'
+            : row.sync_type === 'import_preview'
+              ? 'import_preview'
             : 'sync_batch',
     })),
     activityTimeline: batches.map((row, index) => buildConnectorActivityEvent(row, index)),
     credentialBoundary,
+    importPreview,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
     credentialHandoffRequestedByEmployeeId:
@@ -3011,6 +3427,210 @@ export async function requestConnectorCredentialHandoff(
     connectionId,
     status: 'requested',
     requestedAt: now,
+  }
+}
+
+export async function runConnectorImportPreview(
+  userId: string,
+): Promise<RunConnectorImportPreviewResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector import preview requires tenant context',
+      source: 'adapter',
+      operation: 'runConnectorImportPreview',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector import preview requires admin permission',
+      source: 'adapter',
+      operation: 'runConnectorImportPreview',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.importPreview.batch
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector import preview requires a selected source',
+      source: 'adapter',
+      operation: 'runConnectorImportPreview',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector import preview requires a dry-run import batch',
+      source: 'adapter',
+      operation: 'runConnectorImportPreview',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (batch.mode !== 'dry_run') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_PREVIEW_BLOCKED',
+      message: 'Connector import preview only supports dry-run batches',
+      source: 'adapter',
+      operation: 'runConnectorImportPreview',
+      i18nKey: 'erp.errors.importPreviewBlocked',
+    })
+  }
+
+  if (batch.status === 'previewed') {
+    return {
+      connectionId,
+      batchId: batch.id,
+      status: 'preview_ready',
+      rowCount: batch.rowCount,
+      createCount: batch.createCount,
+      updateCount: batch.updateCount,
+      skipCount: batch.skipCount,
+      errorCount: batch.errorCount,
+    }
+  }
+
+  let rowCount = batch.rowCount
+  let errorCount = batch.errorCount
+  const now = new Date().toISOString()
+
+  if (batch.status !== 'validated') {
+    const validation = await pulsIntegration().rpc('validate_import_batch', {
+      p_batch_id: batch.id,
+    })
+    if (validation.error) {
+      throw fromConnectorRpcError(validation.error, 'runConnectorImportPreview')
+    }
+
+    const validationData = (validation.data ?? {}) as {
+      row_count?: number
+      error_count?: number
+    }
+    rowCount = Number(validationData.row_count ?? rowCount)
+    errorCount = Number(validationData.error_count ?? errorCount)
+  }
+
+  if (errorCount > 0) {
+    const writeBlocked = await pulsIntegration()
+      .from('erp_sync_batches')
+      .insert({
+        tenant_id: ctx.tenantId,
+        connection_id: connectionId,
+        sync_type: 'import_preview',
+        event_key: 'import_preview_blocked',
+        actor_employee_id: ctx.employeeId,
+        status: 'partial_success',
+        started_at: now,
+        finished_at: now,
+        records_seen: rowCount,
+        records_inserted: 0,
+        records_updated: 0,
+        records_failed: errorCount,
+        error_summary: null,
+        safe_error_code: 'import_preview_has_errors',
+        safe_error_context: {
+          mode: 'dry_run',
+          source_namespace_code: batch.sourceNamespaceCode,
+          row_count: rowCount,
+          error_count: errorCount,
+        },
+        next_action_key: 'review_import_errors',
+      })
+      .select('id')
+      .single()
+
+    if (writeBlocked.error) {
+      throw fromSupabaseError(
+        writeBlocked.error,
+        'runConnectorImportPreview',
+        'puls_integration',
+        'erp_sync_batches',
+      )
+    }
+
+    return {
+      connectionId,
+      batchId: batch.id,
+      status: 'blocked',
+      rowCount,
+      createCount: 0,
+      updateCount: 0,
+      skipCount: 0,
+      errorCount,
+    }
+  }
+
+  const preview = await pulsIntegration().rpc('preview_import_diff', {
+    p_batch_id: batch.id,
+  })
+  if (preview.error) {
+    throw fromConnectorRpcError(preview.error, 'runConnectorImportPreview')
+  }
+
+  const previewData = (preview.data ?? {}) as {
+    create_count?: number
+    update_count?: number
+    skip_count?: number
+  }
+  const createCount = Number(previewData.create_count ?? 0)
+  const updateCount = Number(previewData.update_count ?? 0)
+  const skipCount = Number(previewData.skip_count ?? 0)
+
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_preview',
+      event_key: 'import_preview_generated',
+      actor_employee_id: ctx.employeeId,
+      status: 'success',
+      started_at: now,
+      finished_at: now,
+      records_seen: rowCount,
+      records_inserted: createCount,
+      records_updated: updateCount,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        mode: 'dry_run',
+        source_namespace_code: batch.sourceNamespaceCode,
+        row_count: rowCount,
+        create_count: createCount,
+        update_count: updateCount,
+        skip_count: skipCount,
+      },
+      next_action_key: 'review_import_preview',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'runConnectorImportPreview',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch.id,
+    status: 'preview_ready',
+    rowCount,
+    createCount,
+    updateCount,
+    skipCount,
+    errorCount: 0,
   }
 }
 

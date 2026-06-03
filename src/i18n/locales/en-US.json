@@ -997,6 +997,10 @@
       },
       "credentialHandoff": {
         "requested": "Secure reference request was saved. No secret value was collected on this screen."
+      },
+      "importPreview": {
+        "preview_ready": "Import preview is ready. No live data was written.",
+        "blocked": "Preview stopped because validation errors were found."
       }
     },
     "errors": {
@@ -1005,6 +1009,8 @@
       "providerUnavailable": "This source type is not open for setup yet. Continue with Canias or CSV / Excel.",
       "sourceMissing": "Select a data source and start a setup draft first.",
       "credentialHandoffBlocked": "Complete field mapping, source identity, and record matching before requesting a secure reference.",
+      "importBatchMissing": "There is no dry-run import batch ready for this source.",
+      "importPreviewBlocked": "Import preview runs only on a validated dry-run batch.",
       "domainOwned": "This data domain is already managed by another source. Manage the existing setup or choose an empty domain.",
       "permissionDenied": "You do not have permission to save this connection. Try again with an admin role.",
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment."
@@ -1014,6 +1020,8 @@
       "capabilities": "Source capabilities",
       "preflight": "Setup check",
       "preflightDescription": "Validate source, field, identity, and safety boundaries without calling a live API.",
+      "importPreview": "Import preview",
+      "importPreviewDescription": "Classify prepared dry-run batch records against the canonical model; review create, update, and skip outcomes without starting live transfer or writes.",
       "credentialBoundary": "Credential boundary",
       "credentialBoundaryDescription": "This section shows credential posture needed for a live connection. Secret values are not collected, read, or displayed in the regular product UI.",
       "namespaces": "Source identities",
@@ -1188,6 +1196,87 @@
         }
       }
     },
+    "importPreview": {
+      "running": "Preparing preview",
+      "adminRequired": "Admin required to run preview",
+      "status": {
+        "not_available": "Not ready",
+        "no_batch": "No dry-run batch",
+        "ready_to_preview": "Ready to preview",
+        "preview_ready": "Preview ready",
+        "blocked": "Blocked"
+      },
+      "descriptions": {
+        "not_available": "Source, field, and identity scope must be prepared first.",
+        "no_batch": "No product-readable dry-run import batch exists for this source yet.",
+        "ready_to_preview": "The batch can be validated and classified against the canonical model; this does not write live data.",
+        "preview_ready": "Rows have been classified against the canonical model. Results are for review only.",
+        "blocked": "The batch has errors or an invalid state. Records must be fixed before preview can proceed."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no safe preview action to run at this stage."
+        },
+        "complete_setup_first": {
+          "label": "Complete setup first",
+          "description": "Source, field, and identity scope must be ready before preview."
+        },
+        "run_dry_run_preview": {
+          "label": "Run dry-run preview",
+          "description": "Produces create/update/skip classification for a validated batch; it does not apply records or run a live connector."
+        },
+        "review_errors": {
+          "label": "Review errors",
+          "description": "Validation errors must be resolved before preview can start."
+        },
+        "review_preview": {
+          "label": "Review preview",
+          "description": "Results are ready. Live apply does not open from this screen."
+        }
+      },
+      "metrics": {
+        "batch": "Batch",
+        "rows": "Rows",
+        "preview": "Preview",
+        "findings": "Findings"
+      },
+      "batchStatus": {
+        "uploaded": "Uploaded",
+        "normalized": "Normalized",
+        "validated": "Validated",
+        "previewed": "Previewed",
+        "applied": "Applied",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "values": {
+        "none": "None",
+        "noNamespace": "No namespace",
+        "dryRunOnly": "Dry-run only",
+        "createUpdateSkip": "Create / update / skip",
+        "errorWarning": "Errors / warnings"
+      },
+      "columns": {
+        "row": "Row",
+        "entity": "Entity",
+        "externalId": "External ID",
+        "result": "Result"
+      },
+      "recordStatus": {
+        "pending": "Pending",
+        "validated": "Validated",
+        "error": "Error",
+        "applied": "Applied",
+        "skipped": "Skipped"
+      },
+      "recordActions": {
+        "create": "Create",
+        "update": "Update",
+        "skip": "Skip"
+      },
+      "moreRecords": "{{count}} more rows are kept in the safe list."
+    },
     "authModes": {
       "none": "None",
       "api_key": "API key",
@@ -1298,6 +1387,7 @@
     "empty": {
       "namespaces": "No active source identity yet. This scope appears after field mapping is prepared.",
       "mappings": "No field mappings yet. Mapped source fields will appear here.",
+      "importPreview": "No dry-run preview records to show yet. Safe row outcomes will appear here when a proof batch is ready.",
       "syncLogs": "No check records yet. Setup history will appear as the connection progresses.",
       "activityTimeline": "No activity records yet. Source selection, secure reference requests, and setup checks will appear here as setup progresses."
     },
@@ -1327,6 +1417,12 @@
         "credential_handoff_requested": {
           "title": "Secure reference request saved"
         },
+        "import_preview_generated": {
+          "title": "Import preview generated"
+        },
+        "import_preview_blocked": {
+          "title": "Import preview stopped"
+        },
         "sync_batch_recorded": {
           "title": "Connection record created"
         }
@@ -1346,6 +1442,11 @@
           "partial": "Request saved; the product tracks reference state, not the secret value.",
           "failed": "Secure reference request could not be saved; an admin should try again."
         },
+        "importPreview": {
+          "success": "The dry-run batch was classified against the canonical model; no live write happened.",
+          "partial": "Preview stopped because errors were found; only safe counters were recorded.",
+          "failed": "Preview record failed; raw payloads and provider responses are not shown."
+        },
         "syncBatch": {
           "success": "Source history was recorded successfully.",
           "pending": "Source history was recorded as pending.",
@@ -1355,7 +1456,9 @@
       "details": {
         "ownedDomains": "Owned domains",
         "mappingRows": "Mapping rows",
+        "createdRecords": "Records to create",
         "updatedRecords": "Updated records",
+        "skippedRecords": "Records to skip",
         "referenceAvailable": "Reference available?",
         "totalChecks": "Total checks",
         "passedChecks": "Passed",
@@ -1368,7 +1471,8 @@
         "setup_preflight_blocked": "Setup check found missing items. Detail is limited to check names and counters.",
         "setup_preflight_has_warnings": "Setup check produced warnings. Close warning items before live connection.",
         "connector_activity_failed": "Activity was recorded as failed. Raw provider responses and credential values are not shown.",
-        "connector_activity_has_blockers": "Activity contains blocking items. Safe detail is shown only through product status codes."
+        "connector_activity_has_blockers": "Activity contains blocking items. Safe detail is shown only through product status codes.",
+        "import_preview_has_errors": "The dry-run import batch contains validation errors. Only safe counters are retained; raw payload is not shown."
       },
       "nextActions": {
         "review_identity_scope": "Review source identity and record matching scope.",
@@ -1376,6 +1480,8 @@
         "review_setup_findings": "Resolve warning and missing items in the setup check.",
         "runtime_still_closed": "Live connection stays closed; runtime approval and connector implementation are separate.",
         "wait_for_secure_reference": "Wait for the secure reference to be produced server-side.",
+        "review_import_preview": "Review dry-run preview results; live apply requires separate approval.",
+        "review_import_errors": "Resolve import validation errors before preview.",
         "review_activity": "Review the record and move to the next safe setup step."
       }
     },
@@ -1395,6 +1501,12 @@
         "partial": "Secure reference request was saved; reference is still pending.",
         "failed": "Secure reference request could not be saved.",
         "pending": "Secure reference request was created."
+      },
+      "importPreview": {
+        "success": "Dry-run import preview was saved.",
+        "partial": "Dry-run import preview stopped with validation errors.",
+        "failed": "Dry-run import preview could not be saved.",
+        "pending": "Dry-run import preview record was created."
       }
     },
     "status": {

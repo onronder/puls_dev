@@ -15,6 +15,7 @@ import {
   Link2,
   Plug,
   RefreshCw,
+  SearchCheck,
   ShieldCheck,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -36,6 +37,7 @@ import {
   fetchErpOverviewWithMeta,
   mapConnectorSetupError,
   requestConnectorCredentialHandoff,
+  runConnectorImportPreview,
   runConnectorPreflight,
   startConnectorSetup,
   type ErpOverview,
@@ -215,12 +217,37 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const runImportPreviewMutation = useMutation({
+    mutationFn: () => runConnectorImportPreview(user!.id),
+    onSuccess: (result) => {
+      toast.success(t(`erp.toast.importPreview.${result.status}`))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      window.setTimeout(() => {
+        document
+          .getElementById('erp-import-preview')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 80)
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'runConnectorImportPreview',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
 
   const data = erpResult?.data
   const hasSelectedConnector = data?.connectorState === 'connector_selected'
   const hasNoConnector = data?.connectorState === 'no_connector'
   const canRequestCredentialHandoff =
     data?.credentialHandoff.requestable === true && canManageConnectors
+  const canRunImportPreview =
+    data?.importPreview.action === 'run_dry_run_preview' && canManageConnectors
   const selectedProvider =
     selectedProviderId == null
       ? null
@@ -788,6 +815,176 @@ function ErpPage() {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section id="erp-import-preview" className="mt-8 scroll-mt-6">
+            <SectionHeader
+              title={t('erp.sections.importPreview')}
+              description={t('erp.sections.importPreviewDescription')}
+            />
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      {t(data.importPreview.statusLabelKey)}
+                    </h2>
+                    <StatusPill tone={readinessTone(data.importPreview.readiness)}>
+                      {t(`erp.readinessStatus.${data.importPreview.readiness}`)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {t(data.importPreview.descriptionKey)}
+                  </p>
+                  <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                    {t(data.importPreview.actionDescriptionKey)}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="touch-target w-full lg:w-auto"
+                  disabled={!canRunImportPreview || runImportPreviewMutation.isPending}
+                  onClick={() => void runImportPreviewMutation.mutateAsync()}
+                >
+                  <SearchCheck
+                    className={cn(
+                      'h-4 w-4',
+                      runImportPreviewMutation.isPending ? 'animate-pulse' : null,
+                    )}
+                  />
+                  {canRunImportPreview
+                    ? runImportPreviewMutation.isPending
+                      ? t('erp.importPreview.running')
+                      : t(data.importPreview.actionLabelKey)
+                    : !canManageConnectors &&
+                        data.importPreview.action === 'run_dry_run_preview'
+                      ? t('erp.importPreview.adminRequired')
+                      : t(data.importPreview.actionLabelKey)}
+                </Button>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.importPreview.metrics.batch')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.importPreview.batch
+                      ? t(`erp.importPreview.batchStatus.${data.importPreview.batch.status}`)
+                      : t('erp.importPreview.values.none')}
+                  </p>
+                  <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                    {data.importPreview.batch?.sourceNamespaceCode ?? t('erp.importPreview.values.noNamespace')}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.importPreview.metrics.rows')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.importPreview.summary.rowCount}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.importPreview.values.dryRunOnly')}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.importPreview.metrics.preview')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.importPreview.summary.createCount} /{' '}
+                    {data.importPreview.summary.updateCount} /{' '}
+                    {data.importPreview.summary.skipCount}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.importPreview.values.createUpdateSkip')}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {t('erp.importPreview.metrics.findings')}
+                  </p>
+                  <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.importPreview.summary.errorCount} /{' '}
+                    {data.importPreview.summary.warningCount}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.importPreview.values.errorWarning')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                <div className="hidden border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)] md:grid md:grid-cols-[80px_1fr_1fr_130px] md:gap-3">
+                  <div>{t('erp.importPreview.columns.row')}</div>
+                  <div>{t('erp.importPreview.columns.entity')}</div>
+                  <div>{t('erp.importPreview.columns.externalId')}</div>
+                  <div className="text-right">{t('erp.importPreview.columns.result')}</div>
+                </div>
+                <ul className="divide-y divide-[var(--color-border)]">
+                  {data.importPreview.records.length > 0 ? (
+                    data.importPreview.records.slice(0, 8).map((record) => (
+                      <li
+                        key={record.id}
+                        className="grid gap-2 px-4 py-3 md:grid-cols-[80px_1fr_1fr_130px] md:items-center md:gap-3"
+                      >
+                        <div className="font-mono text-sm text-[var(--color-text-muted)]">
+                          #{record.rowNumber}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-mono text-sm font-semibold text-[var(--color-text-primary)]">
+                            {record.entityType}
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                            {t(`erp.importPreview.recordStatus.${record.status}`)}
+                          </p>
+                        </div>
+                        <div className="min-w-0 truncate font-mono text-sm text-[var(--color-text-secondary)]">
+                          {record.externalId}
+                        </div>
+                        <div className="md:justify-self-end">
+                          <StatusPill
+                            tone={
+                              record.status === 'error'
+                                ? 'danger'
+                                : record.action === 'skip'
+                                  ? 'neutral'
+                                  : record.action
+                                    ? 'success'
+                                    : 'warning'
+                            }
+                          >
+                            {record.action
+                              ? t(`erp.importPreview.recordActions.${record.action}`)
+                              : t(`erp.importPreview.recordStatus.${record.status}`)}
+                          </StatusPill>
+                        </div>
+                        {record.errorCodes.length > 0 || record.warningCodes.length > 0 ? (
+                          <div className="md:col-span-4">
+                            <p className="rounded-md bg-[var(--color-bg-muted)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+                              {[...record.errorCodes, ...record.warningCodes].join(', ')}
+                            </p>
+                          </div>
+                        ) : null}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                      {t('erp.empty.importPreview')}
+                    </li>
+                  )}
+                </ul>
+              </div>
+              {data.importPreview.records.length > 8 ? (
+                <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+                  {t('erp.importPreview.moreRecords', {
+                    count: data.importPreview.records.length - 8,
+                  })}
+                </p>
+              ) : null}
+            </div>
           </section>
 
           <section className="mt-8">

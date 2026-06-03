@@ -1,4 +1,4 @@
-# PR14.8-PR14.12 Connector Implementation Roadmap
+# PR14.8-PR14.16 Connector Implementation Roadmap
 
 PR14.8 through PR14.12 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, and credential-boundary contracts.
 
@@ -34,6 +34,11 @@ Runtime sync, credential capture, ERP writes, and destructive operations remain 
 | PR14.10 | Mapping discovery | Source fields can be discovered or declared, then mapped to PULS canonical data classes without running a connector import. |
 | PR14.11 | Connector preflight execution | Setup, mapping, namespace, identity, and credential-boundary readiness can be validated as a dry run with no runtime sync or ERP writes. |
 | PR14.12 | Source credential boundary | Credential readiness is represented with source-independent auth mode and state metadata without capturing secrets or enabling runtime. |
+| PR14.12B | Connector state consistency findings | Dashboard, `/erp`, duplicate setup, and persisted preflight truth are aligned. |
+| PR14.13 | Connector lifecycle capabilities | Source lifecycle, capability, and domain ownership posture are visible without runtime execution. |
+| PR14.14 | Connector credential handoff | Admins can request secure reference preparation without collecting or configuring secrets. |
+| PR14.15 | Connector activity timeline | Setup actions leave safe, durable activity history. |
+| PR14.16 | Connector import preview dry-run | Prepared dry-run batches can be validated and classified without apply/import execution. |
 
 ## PR14.8 - Connector Setup Persistence
 
@@ -350,9 +355,45 @@ PR14.15 gives the connector setup backbone a durable, human-readable activity ti
 - Credential handoff writes safe history without configuring credentials.
 - `/erp` renders safe detail and next action for each activity row.
 
+## PR14.16 - Connector Import Preview Dry Run
+
+### Business Value
+
+PR14.16 lets PULS show what a prepared connector batch would do before any import execution exists. This is the bridge between setup readiness and future canonical apply: admins can review create, update, and skip outcomes while runtime, credentials, sync, and ERP writeback remain closed.
+
+### Scope
+
+| Area | PR14.16 behavior |
+|------|------------------|
+| Import preview metadata | Adds safe row-level `preview_action`, `preview_skip_code`, and `previewed_at` metadata to import records. |
+| Dry-run RPC | `preview_import_diff` persists safe preview classification only for dry-run batches. |
+| Safe read boundary | `list_connector_import_preview_records` returns row number, entity type, external id, status, warning/error codes, canonical id, preview action, and skip code. |
+| Adapter | `ErpOverview.importPreview` exposes batch state, summary counters, and safe records. |
+| Admin action | `runConnectorImportPreview` runs validation and preview classification, then writes a safe `import_preview` activity record. |
+| Proof SQL | Creates a pending dry-run proof batch for connector preview testing without validating, previewing, or applying it automatically. |
+
+### Out Of Scope
+
+- Live connector runtime
+- Credential capture or credential verification
+- Provider API calls
+- Import apply execution
+- Canonical data writes
+- ERP or source-system writeback
+- Rollback/retry orchestration
+
+### Acceptance Criteria
+
+- PR14.16 adds connector import preview dry-run, not import apply.
+- Canias is one source profile; import preview is connector-agnostic.
+- Preview classifies create, update, and skip outcomes without writing canonical records.
+- Payload readback is forbidden in product UI and adapter output.
+- The product action never calls `apply_import_batch`.
+- Successful and blocked preview attempts leave safe activity records.
+
 ## Roadmap Stop Condition
 
-After PR14.15, PULS should be able to say:
+After PR14.16, PULS should be able to say:
 
 - A tenant can start connector setup from an empty product state.
 - Connector setup state is persisted and role-scoped.
@@ -360,9 +401,10 @@ After PR14.15, PULS should be able to say:
 - External fields can be mapped to canonical PULS fields.
 - Preflight can validate readiness without running sync.
 - Connector setup activities leave safe, durable history records.
+- Prepared dry-run import batches can be previewed safely before any apply/runtime work.
 - Runtime connector execution remains a separate future phase.
 
-## Handoff After PR14.15
+## Handoff After PR14.16
 
 Future work can then move into runtime connector design with safer foundations:
 

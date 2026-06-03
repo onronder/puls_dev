@@ -997,6 +997,10 @@
       },
       "credentialHandoff": {
         "requested": "Güvenli referans talebi kaydedildi. Secret değeri bu ekranda toplanmadı."
+      },
+      "importPreview": {
+        "preview_ready": "İçe aktarma önizlemesi hazır. Henüz canlı veri yazılmadı.",
+        "blocked": "Önizleme doğrulama hataları nedeniyle durdu."
       }
     },
     "errors": {
@@ -1005,6 +1009,8 @@
       "providerUnavailable": "Bu kaynak tipi henüz kuruluma açılmadı. Canias veya CSV / Excel ile devam edebilirsin.",
       "sourceMissing": "Önce bir veri kaynağı seçip kurulum taslağını başlat.",
       "credentialHandoffBlocked": "Güvenli referans talebi için önce alan, kaynak kimliği ve eşleştirme adımlarını tamamla.",
+      "importBatchMissing": "Bu kaynak için hazır bir dry-run import batch kaydı yok.",
+      "importPreviewBlocked": "İçe aktarma önizlemesi yalnızca doğrulanmış dry-run batch üzerinde çalışır.",
       "domainOwned": "Bu veri alanı zaten başka bir kaynak tarafından yönetiliyor. Mevcut kurulumu yönet veya boş bir veri alanı seç.",
       "permissionDenied": "Bu bağlantıyı kaydetme yetkin yok. Admin rolüyle tekrar dene.",
       "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin."
@@ -1014,6 +1020,8 @@
       "capabilities": "Kaynak yetenekleri",
       "preflight": "Kurulum kontrolü",
       "preflightDescription": "Canlı API çağrısı yapmadan kaynak, alan, kimlik ve güvenlik sınırlarını birlikte doğrula.",
+      "importPreview": "İçe aktarma önizlemesi",
+      "importPreviewDescription": "Hazır dry-run batch kayıtlarını kanonik modele göre sınıflandır; canlı aktarım veya yazma başlatmadan yaratma, güncelleme ve atlama sonuçlarını gör.",
       "credentialBoundary": "Kimlik bilgisi sınırı",
       "credentialBoundaryDescription": "Bu bölüm canlı bağlantı için gereken kimlik bilgisi durumunu gösterir. Secret değeri normal ürün ekranında toplanmaz, okunmaz veya gösterilmez.",
       "namespaces": "Kaynak kimlikleri",
@@ -1188,6 +1196,87 @@
         }
       }
     },
+    "importPreview": {
+      "running": "Önizleme hazırlanıyor",
+      "adminRequired": "Önizleme için admin gerekir",
+      "status": {
+        "not_available": "Hazır değil",
+        "no_batch": "Dry-run batch yok",
+        "ready_to_preview": "Önizlemeye hazır",
+        "preview_ready": "Önizleme hazır",
+        "blocked": "Blokaj var"
+      },
+      "descriptions": {
+        "not_available": "Önce kaynak, alan ve kimlik kapsamı kurulmalı.",
+        "no_batch": "Bu kaynak için henüz ürün tarafından okunabilir bir dry-run import batch yok.",
+        "ready_to_preview": "Batch doğrulanıp kanonik fark önizlemesi üretilebilir; bu işlem canlı veri yazmaz.",
+        "preview_ready": "Satırlar kanonik modele göre sınıflandırıldı. Sonuçlar yalnızca inceleme içindir.",
+        "blocked": "Batch içinde hata veya geçersiz durum var. Önizleme ilerlemeden önce kayıtlar düzeltilmeli."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada çalıştırılacak güvenli önizleme aksiyonu yok."
+        },
+        "complete_setup_first": {
+          "label": "Önce kurulumu tamamla",
+          "description": "Önizleme için kaynak, alan ve kimlik kapsamı hazır olmalı."
+        },
+        "run_dry_run_preview": {
+          "label": "Dry-run önizleme çalıştır",
+          "description": "Doğrulanmış batch üzerinden create/update/skip sınıflandırması üretir; apply veya canlı connector çalıştırmaz."
+        },
+        "review_errors": {
+          "label": "Hataları incele",
+          "description": "Önizleme başlamadan önce validasyon hataları kapatılmalı."
+        },
+        "review_preview": {
+          "label": "Önizlemeyi incele",
+          "description": "Sonuçlar hazır. Canlı uygulama bu ekrandan açılmaz."
+        }
+      },
+      "metrics": {
+        "batch": "Batch",
+        "rows": "Satır",
+        "preview": "Önizleme",
+        "findings": "Bulgu"
+      },
+      "batchStatus": {
+        "uploaded": "Yüklendi",
+        "normalized": "Normalize edildi",
+        "validated": "Doğrulandı",
+        "previewed": "Önizlendi",
+        "applied": "Uygulandı",
+        "failed": "Hatalı",
+        "cancelled": "İptal"
+      },
+      "values": {
+        "none": "Yok",
+        "noNamespace": "Namespace yok",
+        "dryRunOnly": "Sadece dry-run",
+        "createUpdateSkip": "Yarat / güncelle / atla",
+        "errorWarning": "Hata / uyarı"
+      },
+      "columns": {
+        "row": "Satır",
+        "entity": "Varlık",
+        "externalId": "Dış ID",
+        "result": "Sonuç"
+      },
+      "recordStatus": {
+        "pending": "Bekliyor",
+        "validated": "Doğrulandı",
+        "error": "Hatalı",
+        "applied": "Uygulandı",
+        "skipped": "Atlandı"
+      },
+      "recordActions": {
+        "create": "Yarat",
+        "update": "Güncelle",
+        "skip": "Atla"
+      },
+      "moreRecords": "{{count}} satır daha güvenli listede saklı."
+    },
     "authModes": {
       "none": "Yok",
       "api_key": "API anahtarı",
@@ -1298,6 +1387,7 @@
     "empty": {
       "namespaces": "Henüz aktif kaynak kimliği yok. Alan eşleştirmeden sonra bu kapsam oluşacak.",
       "mappings": "Henüz alan eşleştirme yok. Kaynak alanları PULS alanlarına bağlandığında burada görünecek.",
+      "importPreview": "Henüz gösterilecek dry-run önizleme kaydı yok. Proof batch hazırlandığında burada güvenli satır sonuçları görünür.",
       "syncLogs": "Henüz kontrol kaydı yok. Kurulum adımları ilerledikçe geçmiş burada birikecek.",
       "activityTimeline": "Henüz aktivite kaydı yok. Kaynak seçimi, güvenli referans talebi ve kurulum kontrolleri ilerledikçe burada görünecek."
     },
@@ -1327,6 +1417,12 @@
         "credential_handoff_requested": {
           "title": "Güvenli referans talebi kaydedildi"
         },
+        "import_preview_generated": {
+          "title": "İçe aktarma önizlemesi üretildi"
+        },
+        "import_preview_blocked": {
+          "title": "İçe aktarma önizlemesi durdu"
+        },
         "sync_batch_recorded": {
           "title": "Bağlantı kaydı oluştu"
         }
@@ -1346,6 +1442,11 @@
           "partial": "Talep kaydedildi; secret değeri değil, yalnızca referans sürecinin durumu takip ediliyor.",
           "failed": "Güvenli referans talebi kaydedilemedi; admin yeniden denemeli."
         },
+        "importPreview": {
+          "success": "Dry-run batch kanonik modele göre sınıflandırıldı; canlı yazma yapılmadı.",
+          "partial": "Önizleme hatalar nedeniyle durdu; yalnızca güvenli sayaçlar kaydedildi.",
+          "failed": "Önizleme kaydı başarısız oldu; ham payload veya provider cevabı gösterilmez."
+        },
         "syncBatch": {
           "success": "Kaynak geçmişi başarıyla kaydedildi.",
           "pending": "Kaynak geçmişi bekleyen durumda kaydedildi.",
@@ -1355,7 +1456,9 @@
       "details": {
         "ownedDomains": "Sahiplenilen alan",
         "mappingRows": "Alan satırı",
+        "createdRecords": "Yaratılacak kayıt",
         "updatedRecords": "Güncellenen kayıt",
+        "skippedRecords": "Atlanacak kayıt",
         "referenceAvailable": "Referans var mı?",
         "totalChecks": "Toplam kontrol",
         "passedChecks": "Geçen",
@@ -1368,7 +1471,8 @@
         "setup_preflight_blocked": "Kurulum kontrolü eksik maddeler buldu. Detaylar check adları ve sayaçlarla sınırlı tutulur.",
         "setup_preflight_has_warnings": "Kurulum kontrolü uyarı üretti. Canlı bağlantı öncesi uyarılı maddeler kapatılmalı.",
         "connector_activity_failed": "Aktivite başarısız kaydedildi. Ham provider cevabı veya credential değeri gösterilmez.",
-        "connector_activity_has_blockers": "Aktivite bloklayıcı maddeler içeriyor. Güvenli detay yalnızca ürün durum kodlarıyla gösterilir."
+        "connector_activity_has_blockers": "Aktivite bloklayıcı maddeler içeriyor. Güvenli detay yalnızca ürün durum kodlarıyla gösterilir.",
+        "import_preview_has_errors": "Dry-run import batch doğrulama hataları içeriyor. Ham payload gösterilmeden yalnızca güvenli sayaçlar tutulur."
       },
       "nextActions": {
         "review_identity_scope": "Kaynak kimliği ve kayıt eşleştirme kapsamını gözden geçir.",
@@ -1376,6 +1480,8 @@
         "review_setup_findings": "Kurulum kontrolündeki uyarı ve eksikleri kapat.",
         "runtime_still_closed": "Canlı bağlantı hâlâ kapalı; runtime onayı ve connector geliştirmesi ayrı ilerler.",
         "wait_for_secure_reference": "Güvenli referansın sunucu tarafında oluşturulmasını bekle.",
+        "review_import_preview": "Dry-run önizleme sonuçlarını incele; canlı uygulama ayrı onay gerektirir.",
+        "review_import_errors": "Önizleme öncesi import doğrulama hatalarını kapat.",
         "review_activity": "Kaydı incele ve bir sonraki güvenli kurulum adımına geç."
       }
     },
@@ -1395,6 +1501,12 @@
         "partial": "Güvenli referans talebi kaydedildi; referans hâlâ bekleniyor.",
         "failed": "Güvenli referans talebi kaydedilemedi.",
         "pending": "Güvenli referans talebi oluşturuldu."
+      },
+      "importPreview": {
+        "success": "Dry-run import önizlemesi kaydedildi.",
+        "partial": "Dry-run import önizlemesi doğrulama hatalarıyla durdu.",
+        "failed": "Dry-run import önizlemesi kaydedilemedi.",
+        "pending": "Dry-run import önizleme kaydı oluşturuldu."
       }
     },
     "status": {
