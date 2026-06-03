@@ -37,6 +37,7 @@ import { useAuth } from '#/lib/auth'
 import {
   fetchErpOverviewWithMeta,
   mapConnectorSetupError,
+  recordConnectorApplyApproval,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
   runConnectorImportPreview,
@@ -265,6 +266,29 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const recordApplyApprovalMutation = useMutation({
+    mutationFn: () => recordConnectorApplyApproval(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.applyApprovalPolicy.approvalRecorded'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      window.setTimeout(() => {
+        document
+          .getElementById('erp-controlled-apply')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 80)
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'recordConnectorApplyApproval',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
 
   const data = erpResult?.data
   const hasSelectedConnector = data?.connectorState === 'connector_selected'
@@ -274,6 +298,8 @@ function ErpPage() {
   const canRunImportPreview =
     data?.importPreview.action === 'run_dry_run_preview' && canManageConnectors
   const canRequestApplyReview = data?.applyReadiness.requestable === true && canManageConnectors
+  const canRecordApplyApproval =
+    data?.applyApprovalPolicy.requestable === true && canManageConnectors
   const selectedProvider =
     selectedProviderId == null
       ? null
@@ -1225,6 +1251,68 @@ function ErpPage() {
                       {t('erp.controlledApply.metrics.blocked')}
                     </p>
                   </div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                      <ShieldCheck className="h-5 w-5" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                          {t(data.applyApprovalPolicy.statusLabelKey)}
+                        </h3>
+                        <StatusPill tone={readinessTone(data.applyApprovalPolicy.readiness)}>
+                          {t(`erp.readinessStatus.${data.applyApprovalPolicy.readiness}`)}
+                        </StatusPill>
+                        <StatusPill tone="neutral">
+                          {t(data.applyApprovalPolicy.approverRoleKey)}
+                        </StatusPill>
+                      </div>
+                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                        {t(data.applyApprovalPolicy.descriptionKey)}
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                        {t(data.applyApprovalPolicy.actionDescriptionKey)}
+                      </p>
+                      {data.applyApprovalPolicy.approvalRecordedAt ? (
+                        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                          {t('erp.applyApprovalPolicy.approvalRecordedAt', {
+                            value: formatDateTime(
+                              data.applyApprovalPolicy.approvalRecordedAt,
+                              i18n.language,
+                              t('erp.credentialBoundary.notRecorded'),
+                            ),
+                          })}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full lg:w-auto"
+                    disabled={!canRecordApplyApproval || recordApplyApprovalMutation.isPending}
+                    onClick={() => void recordApplyApprovalMutation.mutateAsync()}
+                  >
+                    <ShieldCheck
+                      className={cn(
+                        'h-4 w-4',
+                        recordApplyApprovalMutation.isPending ? 'animate-pulse' : null,
+                      )}
+                    />
+                    {canRecordApplyApproval
+                      ? recordApplyApprovalMutation.isPending
+                        ? t('erp.applyApprovalPolicy.recording')
+                        : t(data.applyApprovalPolicy.actionLabelKey)
+                      : !canManageConnectors &&
+                          data.applyApprovalPolicy.action === 'record_admin_approval'
+                        ? t('erp.applyApprovalPolicy.adminRequired')
+                        : t(data.applyApprovalPolicy.actionLabelKey)}
+                  </Button>
                 </div>
               </div>
 

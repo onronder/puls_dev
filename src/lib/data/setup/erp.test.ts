@@ -7,6 +7,7 @@ import {
   isErpOverviewEmpty,
   mapConnectorSetupError,
   mapProviderLabel,
+  recordConnectorApplyApproval,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
   runConnectorImportPreview,
@@ -652,9 +653,22 @@ describe('fetchErpOverviewWithMeta', () => {
         blockedCount: expect.any(Number),
       },
     })
+    expect(result.data.applyApprovalPolicy).toMatchObject({
+      status: 'admin_only',
+      action: 'record_admin_approval',
+      requestable: true,
+      safeToApply: false,
+      batchId: 'batch-import-preview',
+    })
     expect(
       result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'human_review'),
     ).toMatchObject({ status: 'ready' })
+    expect(
+      result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'approval_policy'),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.controlledApply.values.policyAdminOnly',
+    })
     expect(
       result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'execution_boundary'),
     ).toMatchObject({ status: 'blocked' })
@@ -663,6 +677,105 @@ describe('fetchErpOverviewWithMeta', () => {
       titleKey: 'erp.activityTimeline.events.import_apply_review_requested.title',
       nextActionKey: 'erp.activityTimeline.nextActions.hold_for_apply_design',
     })
+  })
+
+  it('surfaces recorded admin apply approval as audit without opening execution', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      erp_sync_batches: {
+        data: [
+          {
+            id: 'approval-event',
+            created_at: '2026-06-03T14:03:00.000Z',
+            status: 'success',
+            sync_type: 'import_apply_review',
+            event_key: 'import_apply_approval_recorded',
+            actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+            safe_error_code: null,
+            safe_error_context: {
+              approval_policy: 'admin_only',
+              approval_recorded: true,
+              safe_to_apply: false,
+              apply_execution_open: false,
+            },
+            next_action_key: 'hold_for_apply_execution_design',
+            records_seen: 5,
+            records_inserted: 5,
+            records_updated: 0,
+            records_failed: 0,
+          },
+          {
+            id: 'review-event',
+            created_at: '2026-06-03T14:02:00.000Z',
+            status: 'success',
+            sync_type: 'import_apply_review',
+            event_key: 'import_apply_review_requested',
+            actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+            safe_error_code: null,
+            safe_error_context: {
+              safe_to_apply: false,
+              apply_execution_open: false,
+              human_review_recorded: true,
+            },
+            next_action_key: 'hold_for_apply_design',
+            records_seen: 5,
+            records_inserted: 5,
+            records_updated: 0,
+            records_failed: 0,
+          },
+        ],
+      },
+      import_batches: {
+        data: [
+          {
+            id: 'batch-import-preview',
+            source_namespace_id: 'namespace-1',
+            status: 'previewed',
+            mode: 'dry_run',
+            source_checksum: 'pr14_16_connector_preview_proof_v1',
+            row_count: 5,
+            create_count: 5,
+            update_count: 0,
+            skip_count: 0,
+            error_count: 0,
+            violation_count: 0,
+            validated_at: '2026-06-03T14:00:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_import_preview_records': { data: [] },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.applyApprovalPolicy).toMatchObject({
+      status: 'approval_recorded',
+      action: 'approval_recorded',
+      requestable: false,
+      safeToApply: false,
+      approvalRecordedAt: '2026-06-03T14:03:00.000Z',
+      approvalRecordedByEmployeeId: 'a0000006-0006-4006-8006-000000000001',
+    })
+    expect(result.data.controlledApplyPlan).toMatchObject({
+      status: 'approval_recorded',
+      executionOpen: false,
+      applyRpcExposed: false,
+    })
+    expect(
+      result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'approval_policy'),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.controlledApply.values.policyApproved',
+    })
+    expect(result.data.activityTimeline[0]).toMatchObject({
+      kind: 'import_apply_review',
+      titleKey: 'erp.activityTimeline.events.import_apply_approval_recorded.title',
+      nextActionKey: 'erp.activityTimeline.nextActions.hold_for_apply_execution_design',
+    })
+    expect(JSON.stringify(result.data)).not.toContain('apply_import_batch')
   })
 
   it('returns real empty when tenant is missing and demo mode is off', async () => {
@@ -1441,6 +1554,133 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
   })
 
+  it('records admin apply approval as audit without calling apply import', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        erp_sync_batches: {
+          data: [
+            {
+              id: 'review-event',
+              created_at: '2026-06-03T14:02:00.000Z',
+              status: 'success',
+              sync_type: 'import_apply_review',
+              event_key: 'import_apply_review_requested',
+              actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              safe_error_code: null,
+              safe_error_context: {
+                safe_to_apply: false,
+                apply_execution_open: false,
+                human_review_recorded: true,
+              },
+              next_action_key: 'hold_for_apply_design',
+              records_seen: 5,
+              records_inserted: 5,
+              records_updated: 0,
+              records_failed: 0,
+            },
+          ],
+        },
+        import_batches: {
+          data: [
+            {
+              id: 'batch-import-preview',
+              source_namespace_id: 'namespace-1',
+              status: 'previewed',
+              mode: 'dry_run',
+              source_checksum: 'pr14_16_connector_preview_proof_v1',
+              row_count: 5,
+              create_count: 5,
+              update_count: 0,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-03T14:00:00.000Z',
+              previewed_at: '2026-06-03T14:01:00.000Z',
+              created_at: '2026-06-03T13:59:00.000Z',
+              updated_at: '2026-06-03T14:01:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+      },
+      capture,
+    )
+
+    const result = await recordConnectorApplyApproval('user-1')
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-1',
+      batchId: 'batch-import-preview',
+      status: 'approval_recorded',
+      safeToApply: false,
+    })
+    expect(capture.rpcCalls?.some((call) => call.fn === 'apply_import_batch')).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_apply_review',
+        event_key: 'import_apply_approval_recorded',
+        status: 'success',
+        safe_error_code: null,
+        safe_error_context: expect.objectContaining({
+          mode: 'dry_run',
+          source_namespace_code: 'CANIAS',
+          row_count: 5,
+          create_count: 5,
+          update_count: 0,
+          skip_count: 0,
+          approval_policy: 'admin_only',
+          approval_recorded: true,
+          approver_role: 'superadmin',
+          safe_to_apply: false,
+          apply_execution_open: false,
+          canonical_write_open: false,
+        }),
+        next_action_key: 'hold_for_apply_execution_design',
+      }),
+    })
+    expect(JSON.stringify(capture.inserts)).not.toContain('raw_payload')
+    expect(JSON.stringify(capture.inserts)).not.toContain('credentials_ref')
+    expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
+  })
+
+  it('rejects connector apply approval before review is recorded', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      import_batches: {
+        data: [
+          {
+            id: 'batch-import-preview',
+            source_namespace_id: 'namespace-1',
+            status: 'previewed',
+            mode: 'dry_run',
+            source_checksum: 'pr14_16_connector_preview_proof_v1',
+            row_count: 5,
+            create_count: 5,
+            update_count: 0,
+            skip_count: 0,
+            error_count: 0,
+            violation_count: 0,
+            validated_at: '2026-06-03T14:00:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_import_preview_records': { data: [] },
+    })
+
+    await expect(recordConnectorApplyApproval('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_APPLY_APPROVAL_BLOCKED',
+      i18nKey: 'erp.errors.applyApprovalBlocked',
+    })
+  })
+
   it('rejects connector apply review when persona is not admin scoped', async () => {
     resolveTenant.mockResolvedValue({
       ...mockTenantContext(),
@@ -1448,6 +1688,18 @@ describe('fetchErpOverviewWithMeta', () => {
     })
 
     await expect(requestConnectorApplyReview('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  })
+
+  it('rejects connector apply approval when persona is not admin scoped', async () => {
+    resolveTenant.mockResolvedValue({
+      ...mockTenantContext(),
+      personaRole: 'employee',
+    })
+
+    await expect(recordConnectorApplyApproval('user-1')).rejects.toMatchObject({
       code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
       i18nKey: 'erp.errors.adminRequired',
     })
@@ -1544,6 +1796,20 @@ describe('fetchErpOverviewWithMeta', () => {
         }),
       ),
     ).toEqual({ code: 'apply_review_blocked', toastKey: 'erp.errors.applyReviewBlocked' })
+
+    expect(
+      mapConnectorSetupError(
+        new DataAdapterError({
+          code: 'PULS_CONNECTOR_APPLY_APPROVAL_BLOCKED',
+          message: 'Connector apply approval is blocked until review is recorded',
+          source: 'adapter',
+          operation: 'recordConnectorApplyApproval',
+        }),
+      ),
+    ).toEqual({
+      code: 'apply_approval_blocked',
+      toastKey: 'erp.errors.applyApprovalBlocked',
+    })
 
     expect(mapConnectorSetupError(new Error('raw db failure'))).toEqual({
       code: 'save_failed',

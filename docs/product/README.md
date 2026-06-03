@@ -393,6 +393,17 @@ PR14.18 makes the future apply path visible without making it executable. `/erp`
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Renders controlled apply gates with execution closed                              |
 | [`scripts/verify-14-controlled-apply-design.sh`](../../scripts/verify-14-controlled-apply-design.sh)     | PR14.18 verify gate                                                               |
 
+## PR14.19 Connector apply approval policy
+
+PR14.19 makes the MVP approval authority explicit before any canonical apply runtime exists. Admin approval is represented as source-independent product policy and recorded as safe audit metadata while apply execution, runtime connector calls, credential readback, and ERP/source writes remain closed.
+
+| Document / artifact                                                                                                  | Purpose                                                                       |
+| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [14_connector_apply_approval_policy.md](./14_connector_apply_approval_policy.md)                                     | Admin-only approval policy, audit contract, and acceptance criteria           |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                       | Builds `applyApprovalPolicy` and records safe admin approval audit metadata   |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                           | Renders approval policy inside controlled apply without opening execution     |
+| [`scripts/verify-14-connector-apply-approval-policy.sh`](../../scripts/verify-14-connector-apply-approval-policy.sh) | PR14.19 verify gate                                                           |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
