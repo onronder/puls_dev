@@ -100,7 +100,10 @@ function client(results: Record<string, QueryResult>, capture?: ClientCapture) {
   }
 }
 
-function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) {
+function setupSeededMocks(
+  overrides: Partial<Record<string, QueryResult>> = {},
+  capture?: ClientCapture,
+) {
   resolveTenant.mockResolvedValue(mockTenantContext())
   vi.mocked(pulsIntegration).mockImplementation(
     () =>
@@ -174,7 +177,7 @@ function setupSeededMocks(overrides: Partial<Record<string, QueryResult>> = {}) 
           data: [{ source_namespace_id: 'namespace-1', canonical_table: 'departments' }],
         },
         ...overrides,
-      }) as never,
+      }, capture) as never,
   )
   vi.mocked(pulsCalc).mockImplementation(
     () =>
@@ -237,7 +240,42 @@ describe('fetchErpOverviewWithMeta', () => {
 
   it('returns real connector preflight data and hides sensitive field mappings', async () => {
     demoEnabled.mockReturnValue(false)
-    setupSeededMocks()
+    setupSeededMocks({
+      erp_sync_batches: {
+        data: [
+          {
+            id: 'batch-preflight',
+            created_at: '2026-06-03T13:00:00.000Z',
+            status: 'partial_success',
+            sync_type: 'setup_preflight',
+            event_key: 'setup_preflight_completed',
+            actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+            safe_error_code: 'setup_preflight_has_warnings',
+            safe_error_context: { warning_count: 1 },
+            next_action_key: 'review_setup_findings',
+            records_seen: 7,
+            records_inserted: 6,
+            records_updated: 1,
+            records_failed: 0,
+          },
+          {
+            id: 'batch-setup',
+            created_at: '2026-06-03T12:00:00.000Z',
+            status: 'success',
+            sync_type: 'setup_lifecycle',
+            event_key: 'setup_mapping_contract_ready',
+            actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+            safe_error_code: null,
+            safe_error_context: { mapping_contract_ready: true },
+            next_action_key: 'review_identity_scope',
+            records_seen: 4,
+            records_inserted: 12,
+            records_updated: 1,
+            records_failed: 0,
+          },
+        ],
+      },
+    })
 
     const result = await fetchErpOverviewWithMeta('user-1')
 
@@ -324,6 +362,21 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.mappings.some((mapping) => mapping.sourceField === 'REDACTED_FIELD')).toBe(
       false,
     )
+    expect(result.data.activityTimeline).toHaveLength(2)
+    expect(result.data.activityTimeline[0]).toMatchObject({
+      kind: 'setup_preflight',
+      level: 'warning',
+      titleKey: 'erp.activityTimeline.events.setup_preflight_completed.title',
+      safeErrorCode: 'setup_preflight_has_warnings',
+      safeErrorSummaryKey: 'erp.activityTimeline.safeErrors.setup_preflight_has_warnings',
+      nextActionKey: 'erp.activityTimeline.nextActions.review_setup_findings',
+      actorLabelKey: 'erp.activityTimeline.actors.admin',
+    })
+    expect(result.data.activityTimeline[1]).toMatchObject({
+      kind: 'setup_lifecycle',
+      titleKey: 'erp.activityTimeline.events.setup_mapping_contract_ready.title',
+      nextActionKey: 'erp.activityTimeline.nextActions.review_identity_scope',
+    })
     expect(JSON.stringify(result.data)).not.toContain('credentials_ref')
   })
 
@@ -584,6 +637,7 @@ describe('fetchErpOverviewWithMeta', () => {
 
   it('creates an admin-scoped Canias setup draft', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { inserts: [] }
     const integrationClient = client({
       erp_connections: {
         maybeSingleData: null,
@@ -591,7 +645,7 @@ describe('fetchErpOverviewWithMeta', () => {
         singleData: { id: 'connection-new' },
       },
       erp_field_mappings: { data: [], error: null },
-    })
+    }, capture)
     vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
 
     const result = await startConnectorSetup('user-1', { providerId: 'canias' })
@@ -604,6 +658,21 @@ describe('fetchErpOverviewWithMeta', () => {
     })
     expect(integrationClient.from).toHaveBeenCalledWith('erp_connections')
     expect(integrationClient.from).toHaveBeenCalledWith('erp_field_mappings')
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'setup_lifecycle',
+        event_key: 'setup_mapping_contract_ready',
+        actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+        safe_error_code: null,
+        safe_error_context: expect.objectContaining({
+          source_profile: 'canias',
+          mapping_contract_ready: true,
+        }),
+        next_action_key: 'review_identity_scope',
+      }),
+    })
+    expect(JSON.stringify(capture.inserts)).not.toContain('secret://')
   })
 
   it('keeps existing connector setup posture instead of downgrading to draft', async () => {
@@ -720,7 +789,8 @@ describe('fetchErpOverviewWithMeta', () => {
 
   it('persists a dry-run preflight record without enabling runtime', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
-    setupSeededMocks()
+    const capture: ClientCapture = { updates: [], inserts: [] }
+    setupSeededMocks({}, capture)
 
     const result = await runConnectorPreflight('user-1')
 
@@ -730,6 +800,21 @@ describe('fetchErpOverviewWithMeta', () => {
       passedCount: 6,
       warningCount: 1,
       blockedCount: 0,
+    })
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'setup_preflight',
+        event_key: 'setup_preflight_completed',
+        status: 'partial_success',
+        safe_error_code: 'setup_preflight_has_warnings',
+        safe_error_context: expect.objectContaining({
+          checks_total: 7,
+          warning_count: 1,
+          blocked_count: 0,
+        }),
+        next_action_key: 'review_setup_findings',
+      }),
     })
   })
 
@@ -824,7 +909,15 @@ describe('fetchErpOverviewWithMeta', () => {
       table: 'erp_sync_batches',
       payload: expect.objectContaining({
         sync_type: 'credential_handoff',
+        event_key: 'credential_handoff_requested',
+        actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
         status: 'partial_success',
+        safe_error_code: null,
+        safe_error_context: expect.objectContaining({
+          handoff_request_recorded: true,
+          reference_available: false,
+        }),
+        next_action_key: 'wait_for_secure_reference',
       }),
     })
   })

@@ -1029,7 +1029,9 @@
       "guardrails": "Safety limits",
       "guardrailsDescription": "Shows which actions remain closed while setup is being prepared.",
       "syncLogs": "Check history",
-      "syncLogsDescription": "Recent records from setup and readiness checks."
+      "syncLogsDescription": "Recent records from setup and readiness checks.",
+      "activityTimeline": "Activity history",
+      "activityTimelineDescription": "Safe records from setup, secure reference, and readiness-check steps."
     },
     "domainOwnership": {
       "owner": "Managed by {{source}}",
@@ -1296,9 +1298,92 @@
     "empty": {
       "namespaces": "No active source identity yet. This scope appears after field mapping is prepared.",
       "mappings": "No field mappings yet. Mapped source fields will appear here.",
-      "syncLogs": "No check records yet. Setup history will appear as the connection progresses."
+      "syncLogs": "No check records yet. Setup history will appear as the connection progresses.",
+      "activityTimeline": "No activity records yet. Source selection, secure reference requests, and setup checks will appear here as setup progresses."
+    },
+    "activityTimeline": {
+      "actors": {
+        "admin": "Admin",
+        "system": "System"
+      },
+      "labels": {
+        "safeDetails": "Safe detail:",
+        "nextAction": "Next step"
+      },
+      "values": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "events": {
+        "setup_started": {
+          "title": "Source setup started"
+        },
+        "setup_mapping_contract_ready": {
+          "title": "Field contract prepared"
+        },
+        "setup_preflight_completed": {
+          "title": "Setup check ran"
+        },
+        "credential_handoff_requested": {
+          "title": "Secure reference request saved"
+        },
+        "sync_batch_recorded": {
+          "title": "Connection record created"
+        }
+      },
+      "summaries": {
+        "setupLifecycle": {
+          "started": "A source profile was selected for the tenant; live connection remains closed.",
+          "mappingReady": "The default field contract was created and setup moved to source identity."
+        },
+        "setupPreflight": {
+          "success": "Setup check completed cleanly; this is still a dry-run readiness record.",
+          "partial": "Setup check completed with warnings; review details before live connection.",
+          "failed": "Setup check found missing steps; live connection or transfer should not open."
+        },
+        "credentialHandoff": {
+          "success": "Secure reference step was recorded.",
+          "partial": "Request saved; the product tracks reference state, not the secret value.",
+          "failed": "Secure reference request could not be saved; an admin should try again."
+        },
+        "syncBatch": {
+          "success": "Source history was recorded successfully.",
+          "pending": "Source history was recorded as pending.",
+          "failed": "Source history contains safe error detail."
+        }
+      },
+      "details": {
+        "ownedDomains": "Owned domains",
+        "mappingRows": "Mapping rows",
+        "updatedRecords": "Updated records",
+        "referenceAvailable": "Reference available?",
+        "totalChecks": "Total checks",
+        "passedChecks": "Passed",
+        "warningChecks": "Warnings",
+        "blockedChecks": "Missing",
+        "recordsSeen": "Records seen",
+        "recordsFailed": "Failed records"
+      },
+      "safeErrors": {
+        "setup_preflight_blocked": "Setup check found missing items. Detail is limited to check names and counters.",
+        "setup_preflight_has_warnings": "Setup check produced warnings. Close warning items before live connection.",
+        "connector_activity_failed": "Activity was recorded as failed. Raw provider responses and credential values are not shown.",
+        "connector_activity_has_blockers": "Activity contains blocking items. Safe detail is shown only through product status codes."
+      },
+      "nextActions": {
+        "review_identity_scope": "Review source identity and record matching scope.",
+        "complete_field_mapping": "Complete required PULS fields with source fields.",
+        "review_setup_findings": "Resolve warning and missing items in the setup check.",
+        "runtime_still_closed": "Live connection stays closed; runtime approval and connector implementation are separate.",
+        "wait_for_secure_reference": "Wait for the secure reference to be produced server-side.",
+        "review_activity": "Review the record and move to the next safe setup step."
+      }
     },
     "syncLogMessages": {
+      "setupLifecycle": {
+        "started": "Source setup was started.",
+        "mappingReady": "Field contract was prepared."
+      },
       "setupPreflight": {
         "success": "Setup check was saved as clean.",
         "partial": "Setup check was saved with warnings.",
