@@ -358,6 +358,19 @@ PR14.15 turns connector setup history into a safe activity timeline. `/erp` now 
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                             | Renders connector activity timeline with safe details and next actions |
 | [`scripts/verify-14-connector-activity-timeline.sh`](../../scripts/verify-14-connector-activity-timeline.sh)                                                                           | PR14.15 verify gate                                                   |
 
+## PR14.16 Connector import preview dry-run
+
+PR14.16 adds a safe import preview boundary for prepared dry-run connector batches. `/erp` can validate and classify create/update/skip outcomes without live connector runtime, credential capture, import apply, sync execution, or ERP writeback.
+
+| Document / artifact                                                                                                                                                                      | Purpose                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [14_connector_import_preview_dry_run.md](./14_connector_import_preview_dry_run.md)                                                                                                      | Import preview dry-run product boundary, proof SQL, and acceptance      |
+| [`supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql`](../../supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql)           | Adds safe preview metadata and product-safe preview record read RPC     |
+| [`supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql`](../../supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql)                   | Creates a pending dry-run proof batch without validating, previewing, or applying it automatically |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                           | Builds `importPreview` and runs validate + preview without apply        |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                                                               | Renders safe import preview state and row outcomes                      |
+| [`scripts/verify-14-connector-import-preview.sh`](../../scripts/verify-14-connector-import-preview.sh)                                                                                   | PR14.16 verify gate                                                     |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

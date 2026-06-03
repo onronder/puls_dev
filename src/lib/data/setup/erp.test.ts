@@ -8,6 +8,7 @@ import {
   mapConnectorSetupError,
   mapProviderLabel,
   requestConnectorCredentialHandoff,
+  runConnectorImportPreview,
   runConnectorPreflight,
   startConnectorSetup,
 } from '#/lib/data/setup/erp'
@@ -61,12 +62,14 @@ type QueryResult = {
 type ClientCapture = {
   updates?: Array<{ table: string; payload: unknown }>
   inserts?: Array<{ table: string; payload: unknown }>
+  rpcCalls?: Array<{ fn: string; args: unknown }>
 }
 
 function query(result: QueryResult, table = 'unknown', capture?: ClientCapture) {
   const builder = {
     select: vi.fn(() => builder),
     eq: vi.fn(() => builder),
+    in: vi.fn(() => builder),
     order: vi.fn(() => builder),
     limit: vi.fn(() => builder),
     maybeSingle: vi.fn(async () => ({
@@ -97,6 +100,10 @@ function client(results: Record<string, QueryResult>, capture?: ClientCapture) {
     from: vi.fn((table: string) =>
       query(results[table] ?? { data: [], error: null }, table, capture),
     ),
+    rpc: vi.fn((fn: string, args: unknown) => {
+      capture?.rpcCalls?.push({ fn, args })
+      return Promise.resolve(results[`rpc:${fn}`] ?? { data: null, error: null })
+    }),
   }
 }
 
@@ -170,12 +177,14 @@ function setupSeededMocks(
               code: 'CANIAS',
               name: 'Canias ERP Kaynagi',
               source_type: 'erp',
+              connection_id: 'connection-1',
             },
           ],
         },
         entity_identity_map: {
           data: [{ source_namespace_id: 'namespace-1', canonical_table: 'departments' }],
         },
+        import_batches: { data: [] },
         ...overrides,
       }, capture) as never,
   )
@@ -378,6 +387,120 @@ describe('fetchErpOverviewWithMeta', () => {
       nextActionKey: 'erp.activityTimeline.nextActions.review_identity_scope',
     })
     expect(JSON.stringify(result.data)).not.toContain('credentials_ref')
+  })
+
+  it('surfaces safe dry-run import preview records without payload readback', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      import_batches: {
+        data: [
+          {
+            id: 'batch-import-preview',
+            source_namespace_id: 'namespace-1',
+            status: 'previewed',
+            mode: 'dry_run',
+            source_checksum: 'pr14_16_connector_preview_proof_v1',
+            row_count: 3,
+            create_count: 1,
+            update_count: 1,
+            skip_count: 1,
+            error_count: 0,
+            violation_count: 0,
+            validated_at: '2026-06-03T14:00:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_import_preview_records': {
+        data: [
+          {
+            id: 'record-1',
+            tenant_id: 'a0000001-0001-4001-8001-000000000001',
+            batch_id: 'batch-import-preview',
+            row_number: 1,
+            entity_type: 'employee',
+            external_id: 'EMP-1',
+            status: 'validated',
+            error_codes: [],
+            warning_codes: ['NORMALIZED_EMAIL'],
+            canonical_id: null,
+            preview_action: 'create',
+            preview_skip_code: null,
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+            sanitized_payload: { email: 'secret-person@example.com' },
+            normalized_payload: { employee_code: 'EMP-1' },
+          },
+          {
+            id: 'record-2',
+            tenant_id: 'a0000001-0001-4001-8001-000000000001',
+            batch_id: 'batch-import-preview',
+            row_number: 2,
+            entity_type: 'department',
+            external_id: 'DEPT-1',
+            status: 'validated',
+            error_codes: [],
+            warning_codes: [],
+            canonical_id: '11111111-1111-4111-8111-111111111111',
+            preview_action: 'update',
+            preview_skip_code: null,
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+            raw_payload: { password: 'must-not-render' },
+          },
+          {
+            id: 'record-3',
+            tenant_id: 'a0000001-0001-4001-8001-000000000001',
+            batch_id: 'batch-import-preview',
+            row_number: 3,
+            entity_type: 'cost_center',
+            external_id: 'CC-1',
+            status: 'validated',
+            error_codes: [],
+            warning_codes: [],
+            canonical_id: '22222222-2222-4222-8222-222222222222',
+            preview_action: 'skip',
+            preview_skip_code: 'hash_unchanged',
+            created_at: '2026-06-03T13:59:00.000Z',
+            updated_at: '2026-06-03T14:01:00.000Z',
+            previewed_at: '2026-06-03T14:01:00.000Z',
+          },
+        ],
+      },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.source).toBe('real')
+    expect(result.data.importPreview).toMatchObject({
+      status: 'preview_ready',
+      readiness: 'ready',
+      action: 'review_preview',
+      safeToApply: false,
+      summary: {
+        rowCount: 3,
+        createCount: 1,
+        updateCount: 1,
+        skipCount: 1,
+        errorCount: 0,
+        warningCount: 1,
+      },
+    })
+    expect(result.data.importPreview.records.map((record) => record.action)).toEqual([
+      'create',
+      'update',
+      'skip',
+    ])
+    const serialized = JSON.stringify(result.data.importPreview)
+    expect(serialized).not.toContain('raw_payload')
+    expect(serialized).not.toContain('sanitized_payload')
+    expect(serialized).not.toContain('normalized_payload')
+    expect(serialized).not.toContain('secret-person@example.com')
+    expect(serialized).not.toContain('must-not-render')
   })
 
   it('returns real empty when tenant is missing and demo mode is off', async () => {
@@ -876,6 +999,7 @@ describe('fetchErpOverviewWithMeta', () => {
                   code: 'CANIAS',
                   name: 'Canias ERP Kaynagi',
                   source_type: 'erp',
+                  connection_id: 'connection-1',
                 },
               ],
             },
@@ -919,6 +1043,181 @@ describe('fetchErpOverviewWithMeta', () => {
         }),
         next_action_key: 'wait_for_secure_reference',
       }),
+    })
+  })
+
+  it('runs connector import preview as validate plus diff without applying records', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        import_batches: {
+          data: [
+            {
+              id: 'batch-import-preview',
+              source_namespace_id: 'namespace-1',
+              status: 'uploaded',
+              mode: 'dry_run',
+              source_checksum: 'pr14_16_connector_preview_proof_v1',
+              row_count: 2,
+              create_count: 0,
+              update_count: 0,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: null,
+              previewed_at: null,
+              created_at: '2026-06-03T13:59:00.000Z',
+              updated_at: '2026-06-03T13:59:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:validate_import_batch': {
+          data: {
+            row_count: 2,
+            error_count: 0,
+          },
+          error: null,
+        },
+        'rpc:preview_import_diff': {
+          data: {
+            create_count: 1,
+            update_count: 1,
+            skip_count: 0,
+          },
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const result = await runConnectorImportPreview('user-1')
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-1',
+      batchId: 'batch-import-preview',
+      status: 'preview_ready',
+      rowCount: 2,
+      createCount: 1,
+      updateCount: 1,
+      skipCount: 0,
+      errorCount: 0,
+    })
+    expect(capture.rpcCalls?.map((call) => call.fn)).toEqual([
+      'list_connector_import_preview_records',
+      'validate_import_batch',
+      'preview_import_diff',
+    ])
+    expect(capture.rpcCalls?.some((call) => call.fn === 'apply_import_batch')).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_preview',
+        event_key: 'import_preview_generated',
+        status: 'success',
+        safe_error_code: null,
+        safe_error_context: expect.objectContaining({
+          mode: 'dry_run',
+          source_namespace_code: 'CANIAS',
+          row_count: 2,
+          create_count: 1,
+          update_count: 1,
+          skip_count: 0,
+        }),
+        next_action_key: 'review_import_preview',
+      }),
+    })
+    expect(JSON.stringify(capture.inserts)).not.toContain('raw_payload')
+    expect(JSON.stringify(capture.inserts)).not.toContain('credentials_ref')
+  })
+
+  it('blocks connector import preview on validation errors and records safe activity only', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        import_batches: {
+          data: [
+            {
+              id: 'batch-import-preview',
+              source_namespace_id: 'namespace-1',
+              status: 'uploaded',
+              mode: 'dry_run',
+              source_checksum: 'pr14_16_connector_preview_proof_v1',
+              row_count: 4,
+              create_count: 0,
+              update_count: 0,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: null,
+              previewed_at: null,
+              created_at: '2026-06-03T13:59:00.000Z',
+              updated_at: '2026-06-03T13:59:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:validate_import_batch': {
+          data: {
+            row_count: 4,
+            error_count: 2,
+          },
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const result = await runConnectorImportPreview('user-1')
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-1',
+      batchId: 'batch-import-preview',
+      status: 'blocked',
+      rowCount: 4,
+      createCount: 0,
+      updateCount: 0,
+      skipCount: 0,
+      errorCount: 2,
+    })
+    expect(capture.rpcCalls?.map((call) => call.fn)).toEqual([
+      'list_connector_import_preview_records',
+      'validate_import_batch',
+    ])
+    expect(capture.rpcCalls?.some((call) => call.fn === 'preview_import_diff')).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_preview',
+        event_key: 'import_preview_blocked',
+        status: 'partial_success',
+        safe_error_code: 'import_preview_has_errors',
+        safe_error_context: expect.objectContaining({
+          mode: 'dry_run',
+          source_namespace_code: 'CANIAS',
+          row_count: 4,
+          error_count: 2,
+        }),
+        next_action_key: 'review_import_errors',
+      }),
+    })
+    expect(JSON.stringify(capture.inserts)).not.toContain('sanitized_payload')
+    expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
+  })
+
+  it('rejects connector import preview when persona is not admin scoped', async () => {
+    resolveTenant.mockResolvedValue({
+      ...mockTenantContext(),
+      personaRole: 'employee',
+    })
+
+    await expect(runConnectorImportPreview('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      i18nKey: 'erp.errors.adminRequired',
     })
   })
 
