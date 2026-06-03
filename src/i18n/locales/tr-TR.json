@@ -994,6 +994,9 @@
         "ready": "Kurulum kontrolü temiz. Canlı bağlantı hâlâ kapalı.",
         "partial": "Kurulum kontrolü uyarılarla tamamlandı.",
         "blocked": "Kurulum kontrolü eksik adımlar buldu."
+      },
+      "credentialHandoff": {
+        "requested": "Güvenli referans talebi kaydedildi. Secret değeri bu ekranda toplanmadı."
       }
     },
     "errors": {
@@ -1001,6 +1004,7 @@
       "adminRequired": "Bağlantı taslağını başlatmak için admin yetkisi gerekir.",
       "providerUnavailable": "Bu kaynak tipi henüz kuruluma açılmadı. Canias veya CSV / Excel ile devam edebilirsin.",
       "sourceMissing": "Önce bir veri kaynağı seçip kurulum taslağını başlat.",
+      "credentialHandoffBlocked": "Güvenli referans talebi için önce alan, kaynak kimliği ve eşleştirme adımlarını tamamla.",
       "domainOwned": "Bu veri alanı zaten başka bir kaynak tarafından yönetiliyor. Mevcut kurulumu yönet veya boş bir veri alanı seç.",
       "permissionDenied": "Bu bağlantıyı kaydetme yetkin yok. Admin rolüyle tekrar dene.",
       "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin."
@@ -1011,7 +1015,7 @@
       "preflight": "Kurulum kontrolü",
       "preflightDescription": "Canlı API çağrısı yapmadan kaynak, alan, kimlik ve güvenlik sınırlarını birlikte doğrula.",
       "credentialBoundary": "Kimlik bilgisi sınırı",
-      "credentialBoundaryDescription": "Bu bölüm canlı bağlantı için gereken kimlik bilgisi durumunu gösterir; secret değeri bu ekranda toplanmaz, okunmaz veya gösterilmez.",
+      "credentialBoundaryDescription": "Bu bölüm canlı bağlantı için gereken kimlik bilgisi durumunu gösterir. Secret değeri normal ürün ekranında toplanmaz, okunmaz veya gösterilmez.",
       "namespaces": "Kaynak kimlikleri",
       "namespacesDescription": "Dış kaynaktan gelen kayıtların PULS kayıtlarıyla hangi kapsamda eşleştiğini gösterir.",
       "domainOwnership": "Alan sahipliği",
@@ -1072,7 +1076,7 @@
       "required": "Gerekli mi?",
       "lastVerified": "Son doğrulama",
       "notRecorded": "Henüz yok",
-      "noReadback": "PULS bu aşamada API anahtarı, parola, FTP bilgisi, OAuth token veya bağlantı dizgesi toplamaz; gelecekte yalnızca sunucu tarafı güvenli referans kullanılır.",
+      "noReadback": "PULS normal kurulum ekranında API anahtarı, parola, FTP bilgisi, OAuth token veya bağlantı dizgesi toplamaz; güvenli capture akışı ileride write-only ve sunucu tarafı çalışır.",
       "requiredValues": {
         "yes": "Gerekli",
         "no": "Gerekli değil"
@@ -1092,6 +1096,94 @@
         "verified": "Güvenli referans server tarafında doğrulanmış görünüyor.",
         "failed": "Son doğrulama başarısız. Secret değeri gösterilmez; güvenli bağlantı bilgisi yeniden gözden geçirilmeli.",
         "revoked": "Bu kaynağın güvenli referansı kapatılmış. Canlı bağlantı yeniden açılmadan önce admin aksiyonu gerekir."
+      }
+    },
+    "credentialHandoff": {
+      "openSheet": "Güvenli referans akışını hazırla",
+      "adminRequired": "Admin yetkisi gerekir",
+      "requestedAt": "Talep zamanı: {{value}}",
+      "status": {
+        "not_required": "Kimlik bilgisi gerekmiyor",
+        "not_started": "Güvenli referans bekliyor",
+        "requested": "Talep kaydedildi",
+        "reference_pending": "Referans bekleniyor",
+        "ready_for_verification": "Doğrulama bekliyor",
+        "verified": "Referans doğrulandı",
+        "failed": "Doğrulama başarısız",
+        "revoked": "Erişim kapalı"
+      },
+      "descriptions": {
+        "not_required": "Bu kaynak tipi canlı bağlantı öncesinde secret referansı gerektirmiyor.",
+        "not_started": "Alan ve kimlik eşleşmeleri hazır olduğunda admin güvenli referans akışını başlatabilir.",
+        "requested": "Admin talebi kaydetti. Bir sonraki adım write-only secure capture boundary üzerinden referans üretmek.",
+        "reference_pending": "Güvenli capture boundary referans üretimini tamamladığında ürün yalnızca referans durumunu görür.",
+        "ready_for_verification": "Server tarafında referans var; canlı kullanım öncesi doğrulama bekleniyor.",
+        "verified": "Güvenli referans doğrulanmış. Runtime hâlâ ayrı onay ve connector geliştirmesi gerektirir.",
+        "failed": "Son doğrulama başarısız. Secret değeri gösterilmez; güvenli capture akışı yeniden gözden geçirilmeli.",
+        "revoked": "Bu referans kapatılmış. Canlı bağlantı için yeni güvenli referans süreci gerekir."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon gerekmiyor",
+          "description": "Bu kaynak için credential handoff adımı şu anda tamam veya gerekli değil."
+        },
+        "complete_setup_first": {
+          "label": "Önce kurulumu tamamla",
+          "description": "Güvenli referans istemeden önce alan eşleştirme, kaynak kimliği ve kayıt eşleştirme adımları netleşmeli."
+        },
+        "request_secure_reference": {
+          "label": "Referans talebi başlatılabilir",
+          "description": "Admin, secret değeri girmeden güvenli referans sürecini başlatabilir."
+        },
+        "handoff_requested": {
+          "label": "Talep kaydedildi",
+          "description": "Secret capture üründen ayrı, write-only ve sunucu tarafı bir boundary içinde tamamlanmalı."
+        },
+        "await_reference": {
+          "label": "Referans bekleniyor",
+          "description": "Ürün yalnızca referans durumunu bekler; secret değeri okunmaz."
+        },
+        "verify_reference": {
+          "label": "Doğrulama bekleniyor",
+          "description": "Server tarafı doğrulama tamamlanmadan canlı aktarım açılmaz."
+        },
+        "review_failure": {
+          "label": "Hata gözden geçirilmeli",
+          "description": "Güvenli referans doğrulaması başarısız. Secret değeri üründe gösterilmez."
+        },
+        "restore_access": {
+          "label": "Erişim yeniden hazırlanmalı",
+          "description": "Kapatılmış referans yerine yeni güvenli referans süreci gerekir."
+        }
+      },
+      "sheet": {
+        "title": "{{source}} için güvenli referans",
+        "description": "Bu adım secret değeri toplamaz; yalnızca güvenli capture boundary için ürün talebini kaydeder.",
+        "authMode": "Beklenen yetki yöntemi",
+        "authModeDescription": "Gerçek bağlantı bilgisi ileride write-only server-side capture akışından geçer; ürün ekranı değeri okumaz.",
+        "close": "Vazgeç",
+        "request": "Talebi kaydet",
+        "requesting": "Kaydediliyor",
+        "guardrailTitle": "Canlı bağlantı hâlâ kapalı",
+        "guardrailBody": "Bu talep API çağrısı, import, export, sync veya ERP yazma başlatmaz. Sadece güvenli referans sürecini görünür hale getirir.",
+        "steps": {
+          "writeOnly": {
+            "label": "Write-only capture",
+            "description": "API anahtarı, parola, token veya bağlantı dizgesi product UI tarafından okunmadan güvenli boundary'ye gönderilir."
+          },
+          "opaqueReference": {
+            "label": "Opaque referans",
+            "description": "PULS DB yalnızca güvenli referans durumunu ve referans kimliğini taşır; secret değerini taşımaz."
+          },
+          "noReadback": {
+            "label": "Readback kapalı",
+            "description": "Kaydedilen bağlantı bilgisi UI, adapter veya client tarafından geri okunamaz."
+          },
+          "runtimeVerification": {
+            "label": "Ayrı doğrulama",
+            "description": "Server tarafı doğrulama ve runtime connector ayrı onay ve ayrı geliştirme adımıdır."
+          }
+        }
       }
     },
     "authModes": {
@@ -1212,6 +1304,12 @@
         "partial": "Kurulum kontrolü uyarılarla kaydedildi.",
         "failed": "Kurulum kontrolü eksik adımlarla kaydedildi.",
         "pending": "Kurulum kontrolü kaydı oluşturuldu."
+      },
+      "credentialHandoff": {
+        "success": "Güvenli referans talebi tamamlandı.",
+        "partial": "Güvenli referans talebi kaydedildi; referans hâlâ bekleniyor.",
+        "failed": "Güvenli referans talebi kaydedilemedi.",
+        "pending": "Güvenli referans talebi oluşturuldu."
       }
     },
     "status": {

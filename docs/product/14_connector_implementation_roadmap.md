@@ -282,6 +282,41 @@ PR14.13 turns connector setup from a provider-specific readiness surface into a 
 - `/erp` does not render raw lifecycle enum values.
 - `/erp` avoids accidental page-level horizontal overflow while preserving dense connector context.
 
+## PR14.14 - Connector Credential Handoff
+
+### Business Value
+
+PR14.14 gives the connector setup backbone a truthful next step when a source requires credentials. The product can say "a secure reference is needed" and let an admin request that handoff without pretending to collect API secrets or enabling runtime connector execution.
+
+### Scope
+
+| Area | PR14.14 behavior |
+|------|------------------|
+| Safe state | Adds `credential_handoff_status` and safe timestamps to connector setup rows. |
+| Admin action | Admin can request secure reference handoff after mapping, namespace, and identity readiness are clear. |
+| UX | `/erp` explains the write-only secure capture boundary and shows the request state. |
+| History | A safe `credential_handoff` setup history record is written. |
+| Source independence | Canias remains one source profile; the model works for API, SFTP, file, and future providers. |
+
+### Out Of Scope
+
+- Secret capture form
+- Secret manager integration
+- Credential readback
+- Live credential verification
+- Runtime connector execution
+- Import/export execution
+- ERP writes
+
+### Acceptance Criteria
+
+- PR14.14 models credential handoff, not credential capture.
+- Secure credential capture is write-only and server-side in future runtime.
+- `credentials_ref` remains an opaque server-side reference.
+- No API keys, passwords, tokens, connection strings, or FTP credentials are collected in the product UI.
+- Handoff cannot be requested before mapping and identity readiness are clear.
+- The admin handoff action never sets `credential_state` to `configured` or `verified`.
+
 ## Roadmap Stop Condition
 
 After PR14.11, PULS should be able to say:

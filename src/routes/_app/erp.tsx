@@ -35,6 +35,7 @@ import { useAuth } from '#/lib/auth'
 import {
   fetchErpOverviewWithMeta,
   mapConnectorSetupError,
+  requestConnectorCredentialHandoff,
   runConnectorPreflight,
   startConnectorSetup,
   type ErpOverview,
@@ -130,6 +131,7 @@ function ErpPage() {
     ConnectorProviderOption['id'] | null
   >(null)
   const [draftSheetOpen, setDraftSheetOpen] = useState(false)
+  const [credentialSheetOpen, setCredentialSheetOpen] = useState(false)
   const canManageConnectors = canShowSetupHub(personaRole, activePersona)
   const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],
@@ -180,10 +182,31 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestCredentialHandoffMutation = useMutation({
+    mutationFn: () => requestConnectorCredentialHandoff(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.credentialHandoff.requested'))
+      setCredentialSheetOpen(false)
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'requestConnectorCredentialHandoff',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
 
   const data = erpResult?.data
   const hasSelectedConnector = data?.connectorState === 'connector_selected'
   const hasNoConnector = data?.connectorState === 'no_connector'
+  const canRequestCredentialHandoff =
+    data?.credentialHandoff.requestable === true && canManageConnectors
   const selectedProvider =
     selectedProviderId == null
       ? null
@@ -817,7 +840,127 @@ function ErpPage() {
                   </div>
                 </div>
               </div>
+              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(data.credentialHandoff.statusLabelKey)}
+                      </p>
+                      <StatusPill tone={readinessTone(data.credentialHandoff.readiness)}>
+                        {t(`erp.readinessStatus.${data.credentialHandoff.readiness}`)}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      {t(data.credentialHandoff.descriptionKey)}
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                      {t(data.credentialHandoff.actionDescriptionKey)}
+                    </p>
+                    {data.credentialHandoff.requestedAt ? (
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                        {t('erp.credentialHandoff.requestedAt', {
+                          value: formatDateTime(
+                            data.credentialHandoff.requestedAt,
+                            i18n.language,
+                            t('erp.credentialBoundary.notRecorded'),
+                          ),
+                        })}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full sm:w-auto"
+                    disabled={
+                      !data.credentialHandoff.requestable ||
+                      !canManageConnectors ||
+                      requestCredentialHandoffMutation.isPending
+                    }
+                    onClick={() => setCredentialSheetOpen(true)}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    {canRequestCredentialHandoff
+                      ? t('erp.credentialHandoff.openSheet')
+                      : !canManageConnectors && data.credentialHandoff.requestable
+                        ? t('erp.credentialHandoff.adminRequired')
+                        : t(data.credentialHandoff.actionLabelKey)}
+                  </Button>
+                </div>
+              </div>
             </div>
+            <SheetShell
+              open={credentialSheetOpen}
+              onOpenChange={setCredentialSheetOpen}
+              title={t('erp.credentialHandoff.sheet.title', { source: data.provider.label })}
+              description={t('erp.credentialHandoff.sheet.description')}
+              footer={
+                <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full sm:w-auto"
+                    onClick={() => setCredentialSheetOpen(false)}
+                  >
+                    {t('erp.credentialHandoff.sheet.close')}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="touch-target w-full sm:w-auto"
+                    disabled={
+                      !canRequestCredentialHandoff || requestCredentialHandoffMutation.isPending
+                    }
+                    onClick={() => void requestCredentialHandoffMutation.mutateAsync()}
+                  >
+                    {requestCredentialHandoffMutation.isPending
+                      ? t('erp.credentialHandoff.sheet.requesting')
+                      : t('erp.credentialHandoff.sheet.request')}
+                  </Button>
+                </div>
+              }
+            >
+              <div className="space-y-4">
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.credentialHandoff.sheet.authMode')}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+                    {t(`erp.authModes.${data.credentialBoundary.authMode}`)}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                    {t('erp.credentialHandoff.sheet.authModeDescription')}
+                  </p>
+                </div>
+                <ul className="divide-y divide-[var(--color-border)] rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+                  {['writeOnly', 'opaqueReference', 'noReadback', 'runtimeVerification'].map(
+                    (item) => (
+                      <li key={item} className="flex items-start gap-3 p-3">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                          <Check className="h-3.5 w-3.5" aria-hidden />
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {t(`erp.credentialHandoff.sheet.steps.${item}.label`)}
+                          </p>
+                          <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                            {t(`erp.credentialHandoff.sheet.steps.${item}.description`)}
+                          </p>
+                        </div>
+                      </li>
+                    ),
+                  )}
+                </ul>
+                <div className="rounded-xl border border-[color-mix(in_srgb,var(--color-warning)_25%,transparent)] bg-[var(--color-warning-soft)] p-4">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {t('erp.credentialHandoff.sheet.guardrailTitle')}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                    {t('erp.credentialHandoff.sheet.guardrailBody')}
+                  </p>
+                </div>
+              </div>
+            </SheetShell>
           </section>
 
           <section className="mt-8">
