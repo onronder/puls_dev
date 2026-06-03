@@ -182,7 +182,7 @@
       "descriptionNotConfigured": "No data connection has been selected yet. Use the ERP screen to start source, field, and identity mapping.",
       "descriptionSetupDraft": "A data source has been selected. Live transfer stays off until field and identity mapping are complete.",
       "descriptionMappingReady": "The field contract is ready. Source identity, record matching, and safe checks are next.",
-      "descriptionPreflightReady": "Setup check is clean. Live connection, credential validation, and ERP writes still require separate approval.",
+      "descriptionPreflightReady": "Setup check is clean. Live connection, credential verification, and ERP writes still require separate approval.",
       "descriptionDisabled": "The data connection record remains in place, but it is disabled in the product.",
       "descriptionPending": "Access, field mapping, and safe transfer checks are completed before a data connection goes live.",
       "descriptionConnected": "The data connection is active. Track mapping and transfer checks from the ERP screen.",
@@ -195,11 +195,11 @@
       "statusNotConfigured": "Source not selected",
       "fieldMapping": "Field mapping",
       "dataReadiness": "Data readiness",
-      "lastAttempt": "Last attempt",
-      "lastAttemptValue": "Yesterday, 18:42",
-      "lastAttemptNone": "Not yet",
+      "lastAttempt": "Last live transfer",
+      "lastAttemptValue": "Live transfer recorded",
+      "lastAttemptNone": "No live transfer yet",
       "openMapping": "Open field mapping",
-      "viewSyncLogs": "View sync logs"
+      "viewSyncLogs": "View check history"
     },
     "recentActivityDescription": "Tenant-wide.",
     "quickActions": {

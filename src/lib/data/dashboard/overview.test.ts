@@ -195,7 +195,7 @@ describe('buildDashboardPageDataFromDemo', () => {
         statusLabelKey: 'dashboardSetup.erpCard.statusPending',
         mappedFields: 6,
         totalFields: 10,
-        lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptValue',
+        lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
         readiness: 60,
         descriptionKey: 'dashboardSetup.erpCard.descriptionPending',
       },

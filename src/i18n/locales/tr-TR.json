@@ -182,7 +182,7 @@
       "descriptionNotConfigured": "Veri bağlantısı henüz seçilmedi. Kaynak, alan ve kimlik eşleştirmesini başlatmak için ERP ekranını kullan.",
       "descriptionSetupDraft": "Veri kaynağı seçildi. Alan ve kimlik eşleştirmesi tamamlanmadan canlı aktarım başlamaz.",
       "descriptionMappingReady": "Alan sözleşmesi hazır. Sırada kaynak kimliği, kayıt eşleştirme ve güvenli kontrol adımları var.",
-      "descriptionPreflightReady": "Kurulum kontrolü temiz. Canlı bağlantı, credential doğrulama ve ERP yazma hâlâ ayrı onay gerektirir.",
+      "descriptionPreflightReady": "Kurulum kontrolü temiz. Canlı bağlantı, kimlik bilgisi doğrulama ve ERP yazma hâlâ ayrı onay gerektirir.",
       "descriptionDisabled": "Veri bağlantısı kaydı duruyor, ancak ürün içinde devre dışı.",
       "descriptionPending": "Veri bağlantısı canlıya alınmadan önce erişim, alan eşleştirme ve güvenli aktarım kontrolleri tamamlanır.",
       "descriptionConnected": "Veri bağlantısı aktif. Eşleştirme ve aktarım kontrollerini ERP ekranından izleyebilirsin.",
@@ -195,11 +195,11 @@
       "statusNotConfigured": "Kaynak seçilecek",
       "fieldMapping": "Alan eşleştirme",
       "dataReadiness": "Veri hazırlığı",
-      "lastAttempt": "Son deneme",
-      "lastAttemptValue": "Dün, 18:42",
-      "lastAttemptNone": "Henüz yok",
+      "lastAttempt": "Son canlı aktarım",
+      "lastAttemptValue": "Canlı aktarım kaydı var",
+      "lastAttemptNone": "Henüz canlı aktarım yok",
       "openMapping": "Alan eşleştirmeyi aç",
-      "viewSyncLogs": "Sync loglarını gör"
+      "viewSyncLogs": "Kontrol geçmişini gör"
     },
     "recentActivityDescription": "Tenant geneli.",
     "quickActions": {

@@ -218,9 +218,7 @@ export function buildDashboardErpStatus(
       : 'dashboardSetup.erpCard.statusPending',
     mappedFields: input.mappedFields,
     totalFields: input.totalFields,
-    lastAttemptKey: input.isActive
-      ? 'dashboardSetup.erpCard.lastAttemptValue'
-      : 'dashboardSetup.erpCard.lastAttemptNone',
+    lastAttemptKey: 'dashboardSetup.erpCard.lastAttemptNone',
     readiness: input.readiness,
     descriptionKey: input.isActive
       ? 'dashboardSetup.erpCard.descriptionConnected'
