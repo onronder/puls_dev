@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   Globe2,
   Info,
+  KeyRound,
   Link2,
   Plug,
   RefreshCw,
@@ -84,6 +85,21 @@ function SyncLogIcon({ level }: { level: ConnectorSyncLevel }) {
   return <Info className={className} aria-hidden />
 }
 
+function formatDateTime(value: string | null, locale: string, fallback: string): string {
+  if (!value) return fallback
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value))
+  } catch {
+    return fallback
+  }
+}
+
 function ProviderOptionIcon({ id }: { id: ConnectorProviderOption['id'] }) {
   const className = 'h-5 w-5'
   if (id === 'csv_import') return <FileSpreadsheet className={className} aria-hidden />
@@ -99,7 +115,7 @@ function SetupStepIcon({ status }: { status: ConnectorStatus }) {
 }
 
 function ErpPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user, personaRole, activePersona } = useAuth()
   const queryClient = useQueryClient()
   const [selectedProviderId, setSelectedProviderId] = useState<
@@ -656,6 +672,73 @@ function ErpPage() {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="mt-8">
+            <SectionHeader
+              title={t('erp.sections.credentialBoundary')}
+              description={t('erp.sections.credentialBoundaryDescription')}
+            />
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[var(--color-bg-elevated)] text-[var(--color-primary)]">
+                    <KeyRound className="h-5 w-5" aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                        {t(data.credentialBoundary.statusLabelKey)}
+                      </h2>
+                      <StatusPill tone={readinessTone(data.credentialBoundary.status)}>
+                        {t(`erp.readinessStatus.${data.credentialBoundary.status}`)}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                      {t(data.credentialBoundary.descriptionKey)}
+                    </p>
+                    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                      {t('erp.credentialBoundary.noReadback')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 text-sm md:min-w-[260px]">
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <span className="text-[var(--color-text-muted)]">
+                      {t('erp.credentialBoundary.authMode')}
+                    </span>
+                    <span className="text-right font-medium text-[var(--color-text-primary)]">
+                      {t(`erp.authModes.${data.credentialBoundary.authMode}`)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <span className="text-[var(--color-text-muted)]">
+                      {t('erp.credentialBoundary.required')}
+                    </span>
+                    <span className="text-right font-medium text-[var(--color-text-primary)]">
+                      {t(
+                        data.credentialBoundary.required
+                          ? 'erp.credentialBoundary.requiredValues.yes'
+                          : 'erp.credentialBoundary.requiredValues.no',
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <span className="text-[var(--color-text-muted)]">
+                      {t('erp.credentialBoundary.lastVerified')}
+                    </span>
+                    <span className="text-right font-medium text-[var(--color-text-primary)]">
+                      {formatDateTime(
+                        data.credentialBoundary.lastVerifiedAt,
+                        i18n.language,
+                        t('erp.credentialBoundary.notRecorded'),
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section className="mt-8">

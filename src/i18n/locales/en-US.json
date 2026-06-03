@@ -785,6 +785,7 @@
         "mapping": "Fields",
         "mappingReady": "Fields ready",
         "namespaceReady": "Identities ready",
+        "credentialPending": "Credentials",
         "setupInProgress": "Setup",
         "preflightReady": "Ready to check",
         "connected": "Live",
@@ -797,6 +798,7 @@
         "mappingInProgress": "Field mapping must be completed",
         "namespacePending": "Source identity pending",
         "identityPending": "Record matching pending",
+        "credentialPending": "Secure reference pending for live connection",
         "preflightPending": "Check step pending",
         "preflightReady": "Field and identity matches are ready",
         "connected": "Live connection active",
@@ -883,6 +885,10 @@
         "label": "Record matching",
         "description": "Link source records to PULS records through clear matching rules."
       },
+      "credentialBoundary": {
+        "label": "Credential boundary",
+        "description": "When a source requires API, file, or custom connection credentials, only safe reference posture is tracked."
+      },
       "transferMode": {
         "label": "Transfer mode",
         "description": "Choose CSV, Excel, file, or API transfer with a human-confirmed path."
@@ -915,6 +921,8 @@
     "sections": {
       "preflight": "Setup check",
       "preflightDescription": "Validate source, field, identity, and safety boundaries without calling a live API.",
+      "credentialBoundary": "Credential boundary",
+      "credentialBoundaryDescription": "This section shows credential posture needed for a live connection; secret values are not collected, read, or displayed here.",
       "namespaces": "Source identities",
       "namespacesDescription": "Shows the scope used to match external records with PULS records.",
       "canonicalClasses": "Canonical data classes",
@@ -955,8 +963,46 @@
       "fieldMapping": "Field mapping",
       "sourceNamespace": "Source identity",
       "identityReconciliation": "Record matching",
+      "credentialBoundary": "Credential boundary",
       "setupReadiness": "Setup status",
       "writeGuardrail": "ERP write guardrail"
+    },
+    "credentialBoundary": {
+      "authMode": "Auth mode",
+      "required": "Required?",
+      "lastVerified": "Last verified",
+      "notRecorded": "Not yet",
+      "noReadback": "At this stage PULS does not collect API keys, passwords, FTP secrets, OAuth tokens, or connection strings; future runtime will use a server-side secure reference only.",
+      "requiredValues": {
+        "yes": "Required",
+        "no": "Not required"
+      },
+      "states": {
+        "not_required": "Credentials not required",
+        "missing": "Credentials pending",
+        "configured": "Reference configured",
+        "verified": "Verified",
+        "failed": "Verification failed",
+        "revoked": "Access revoked"
+      },
+      "descriptions": {
+        "not_required": "This source does not require a secret reference before live connection.",
+        "missing": "This source needs a secure credential reference before live connection.",
+        "configured": "A secure reference is configured; server-side verification is still pending before live use.",
+        "verified": "The secure reference appears verified on the server side.",
+        "failed": "The last verification failed. The secret value is not shown; review the secure connection details.",
+        "revoked": "The secure reference for this source is revoked. Admin action is required before live connection can reopen."
+      }
+    },
+    "authModes": {
+      "none": "None",
+      "api_key": "API key",
+      "basic_auth": "Username / password",
+      "bearer_token": "Bearer token",
+      "oauth2_client_credentials": "OAuth2 client credentials",
+      "sftp_password": "SFTP password",
+      "connection_string": "Connection string",
+      "custom_secret_ref": "Secure reference"
     },
     "preflightResult": {
       "status": {
