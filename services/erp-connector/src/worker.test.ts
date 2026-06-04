@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildSafeWorkerFailureObservation,
   buildConnectorJobCompletion,
   buildHealthPayload,
   parseSupportedJobTypes,
@@ -121,7 +122,37 @@ describe('erp-connector worker job handling', () => {
     expect(buildConnectorJobCompletion(noopJob({ job_type: 'import_apply' }))).toMatchObject({
       p_status: 'failed',
       p_safe_error_code: 'connector_job_type_not_supported_by_worker_skeleton',
+      p_safe_error_context: expect.objectContaining({
+        failure_class: 'unsupported',
+        operator_severity: 'error',
+        operator_review_required: true,
+        retry_after_seconds: 0,
+      }),
       p_next_action_key: 'wait_for_provider_runtime_implementation',
     })
+  })
+
+  it('classifies safe worker failures without raw provider detail', () => {
+    expect(
+      buildSafeWorkerFailureObservation('connector_job_type_not_supported_by_worker_skeleton', ''),
+    ).toEqual({
+      failureClass: 'unsupported',
+      operatorSeverity: 'error',
+      operatorReviewRequired: true,
+      retryAfterSeconds: 0,
+    })
+    expect(buildSafeWorkerFailureObservation('connector_worker_loop_failed', '')).toEqual({
+      failureClass: 'worker',
+      operatorSeverity: 'warning',
+      operatorReviewRequired: false,
+      retryAfterSeconds: 120,
+    })
+
+    const serialized = JSON.stringify(
+      buildSafeWorkerFailureObservation('provider_timeout', 'wait_for_retry_window'),
+    )
+    expect(serialized).not.toContain('password')
+    expect(serialized).not.toContain('credentials_ref')
+    expect(serialized).not.toContain('raw_payload')
   })
 })

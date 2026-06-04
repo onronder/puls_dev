@@ -1438,12 +1438,18 @@
         "disabled": "Disabled",
         "workerFuture": "The worker is considered active only after heartbeat",
         "queueSummary": "{{queued}} queued · {{running}} running · {{retrying}} retrying",
-        "noTimestamp": "No time"
+        "operatorReviewSummary": "{{count}} job needs manual review",
+        "retryAfterSeconds": "{{seconds}}s later",
+        "noTimestamp": "No time",
+        "operatorReviewRequired": "This job will not advance automatically; an admin must review the safe failure class."
       },
       "labels": {
         "attempts": "Attempt {{attempt}} / {{max}}",
         "workerLastSeen": "Last heartbeat",
-        "lease": "Lease"
+        "lease": "Lease",
+        "failureClass": "Failure class",
+        "retryWindow": "Retry time",
+        "operatorReview": "Manual review"
       },
       "workerStatus": {
         "not_configured": "No worker",
@@ -1492,11 +1498,30 @@
         "cancelled": "The job was cancelled and will not restart automatically.",
         "dead_letter": "The job reached the maximum attempt boundary and needs manual review."
       },
+      "failureClasses": {
+        "none": "No failure",
+        "transient": "Transient",
+        "credential": "Credential",
+        "mapping": "Mapping",
+        "provider_limit": "Provider limit",
+        "provider_unavailable": "Provider unavailable",
+        "worker": "Worker",
+        "unsupported": "Unsupported job",
+        "unknown": "Unknown"
+      },
+      "operatorSeverity": {
+        "info": "Info",
+        "warning": "Warning",
+        "error": "Error",
+        "critical": "Critical"
+      },
       "safeErrors": {
         "connector_job_failed": "The job stopped with a safe error class.",
         "connector_job_has_blockers": "Missing or risky items must be closed before the job can continue.",
         "connector_job_lease_expired": "The worker lease expired and the job moved into safe recovery.",
-        "connector_job_type_not_supported_by_worker_skeleton": "This job type is not executed by the skeleton worker."
+        "connector_job_type_not_supported_by_worker_skeleton": "This job type is not executed by the skeleton worker.",
+        "connector_worker_loop_failed": "The worker loop recorded a safe error code.",
+        "connector_worker_not_configured": "Worker runtime is not configured, so no job was executed."
       },
       "nextActions": {
         "review_job_status": "Review the job status and next runtime step.",
@@ -1505,6 +1530,7 @@
         "retry_scheduled": "Wait for the scheduled retry time.",
         "worker_contract_ready": "Worker contract is ready; provider-specific runtime is implemented separately.",
         "wait_for_provider_runtime_implementation": "Wait for provider runtime implementation for this job type.",
+        "wait_for_retry_window": "Wait for the scheduled retry window.",
         "retry_after_worker_recovery": "Wait for the scheduled retry after lease recovery.",
         "review_dead_letter_job": "Manually review the job that reached the maximum attempt boundary."
       }
@@ -1512,7 +1538,8 @@
     "activityTimeline": {
       "actors": {
         "admin": "Admin",
-        "system": "System"
+        "system": "System",
+        "worker": "Worker"
       },
       "labels": {
         "safeDetails": "Safe detail:",
@@ -1549,6 +1576,24 @@
         },
         "import_apply_approval_recorded": {
           "title": "Admin approval recorded as audit"
+        },
+        "connector_job_succeeded": {
+          "title": "Connector job completed"
+        },
+        "connector_job_retry_scheduled": {
+          "title": "Connector job scheduled for retry"
+        },
+        "connector_job_failed": {
+          "title": "Connector job recorded a safe error"
+        },
+        "connector_job_dead_lettered": {
+          "title": "Connector job moved to manual review"
+        },
+        "connector_job_cancelled": {
+          "title": "Connector job cancelled"
+        },
+        "connector_job_recorded": {
+          "title": "Connector job recorded"
         }
       },
       "summaries": {
@@ -1580,6 +1625,15 @@
           "success": "An admin recorded human review intent for a preview batch; no canonical write happened.",
           "partial": "Review intent was recorded with open readiness blockers; apply remains closed.",
           "failed": "Human review request could not be recorded; no apply action was opened."
+        },
+        "connectorJob": {
+          "queued": "The job is queued and will be picked up when an eligible worker is available.",
+          "running": "The job is running under a safe worker lease.",
+          "succeeded": "The job completed and was recorded as a safe job event.",
+          "failed": "The job stopped with a safe failure class; raw provider responses are not shown.",
+          "retrying": "The job was scheduled for deterministic retry backoff.",
+          "cancelled": "The job was cancelled and will not restart automatically.",
+          "dead_letter": "The job reached its attempt boundary and requires admin review."
         }
       },
       "details": {
@@ -1594,14 +1648,22 @@
         "warningChecks": "Warnings",
         "blockedChecks": "Missing",
         "recordsSeen": "Records seen",
-        "recordsFailed": "Failed records"
+        "recordsFailed": "Failed records",
+        "jobType": "Job type",
+        "failureClass": "Failure class",
+        "retryAfterSeconds": "Retry delay",
+        "operatorReview": "Manual review"
       },
       "safeErrors": {
         "setup_preflight_blocked": "Setup check found missing items. Detail is limited to check names and counters.",
         "setup_preflight_has_warnings": "Setup check produced warnings. Close warning items before live connection.",
         "connector_activity_failed": "Activity was recorded as failed. Raw provider responses and credential values are not shown.",
         "connector_activity_has_blockers": "Activity contains blocking items. Safe detail is shown only through product status codes.",
-        "import_preview_has_errors": "The dry-run import batch contains validation errors. Only safe counters are retained; raw payload is not shown."
+        "import_preview_has_errors": "The dry-run import batch contains validation errors. Only safe counters are retained; raw payload is not shown.",
+        "connector_job_failed": "The connector job stopped with a safe failure class. Raw provider responses and secrets are not shown.",
+        "connector_job_lease_expired": "The worker lease expired and the job moved into the safe recovery model.",
+        "connector_job_type_not_supported_by_worker_skeleton": "This job type is not executed by the current skeleton worker.",
+        "connector_worker_loop_failed": "The worker loop recorded a safe error code; details are limited to scrubbed status signals."
       },
       "nextActions": {
         "review_identity_scope": "Review source identity and record matching scope.",
@@ -1613,7 +1675,14 @@
         "review_import_errors": "Resolve import validation errors before preview.",
         "review_activity": "Review the record and move to the next safe setup step.",
         "hold_for_apply_design": "Hold for future apply design, approval, and rollback gates.",
-        "hold_for_apply_execution_design": "Hold until apply execution design, batch lock, and rollback plan are complete."
+        "hold_for_apply_execution_design": "Hold until apply execution design, batch lock, and rollback plan are complete.",
+        "worker_contract_ready": "Worker contract is ready; provider-specific runtime is implemented separately.",
+        "wait_for_provider_runtime_implementation": "Wait for provider runtime implementation for this job type.",
+        "wait_for_retry_window": "Wait for the scheduled retry window.",
+        "retry_after_worker_recovery": "Wait for the scheduled retry after lease recovery.",
+        "review_dead_letter_job": "Manually review the job that reached the maximum attempt boundary.",
+        "review_safe_error": "Review the safe error class; secrets and provider payloads are not shown.",
+        "review_job_status": "Review the job status and next runtime step."
       }
     },
     "syncLogMessages": {

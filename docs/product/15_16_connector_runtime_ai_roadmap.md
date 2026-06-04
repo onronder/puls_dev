@@ -117,6 +117,8 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 
 **Ürün değeri:** Connector işi hata aldığında sistem sessiz kalmaz; admin ne olduğunu, sıradaki adımı ve risk seviyesini görebilir.
 
+**Implementation status:** PR15.3 implements safe failure classification, deterministic retry/backoff, dead-letter state, immutable connector job events, operator-visible `/erp` runtime history, and worker-side safe failure observations. Provider API runtime, credential resolution, import apply, canonical writes, and ERP/source writeback remain closed.
+
 **Kapsam:**
 
 - Retry/backoff politikası

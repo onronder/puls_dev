@@ -456,6 +456,16 @@ PR15.2 adds the safe worker ownership layer on top of the PR15.1 queue. It intro
 | [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Runtime worker skeleton service posture |
 | [`scripts/verify-15-connector-worker-skeleton.sh`](../../scripts/verify-15-connector-worker-skeleton.sh) | PR15.2 verify gate |
 
+## PR15.3 Connector runtime observability and failure model
+
+PR15.3 adds safe runtime observability on top of the PR15.1 queue and PR15.2 worker skeleton. Connector jobs now carry deterministic failure class, retry/backoff, dead-letter, operator severity, and safe job-event history. `/erp` shows these signals without provider payloads, credential readback, import apply, canonical writes, or ERP/source writeback.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_connector_runtime_observability_failure_model.md](./15_connector_runtime_observability_failure_model.md) | PR15.3 failure model, retry/dead-letter rules, AI-safe evidence, and PR15.4 handoff |
+| [`20260604120000_puls_integration_connector_runtime_observability.sql`](../../supabase/migrations/20260604120000_puls_integration_connector_runtime_observability.sql) | Runtime failure class, retry/backoff, connector job events, and safe read-model DB contract |
+| [`scripts/verify-15-connector-runtime-observability.sh`](../../scripts/verify-15-connector-runtime-observability.sh) | PR15.3 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

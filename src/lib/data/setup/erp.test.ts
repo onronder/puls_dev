@@ -458,6 +458,12 @@ describe('fetchErpOverviewWithMeta', () => {
             safe_error_code: null,
             safe_error_context: { records_seen: 5 },
             next_action_key: 'wait_for_worker_runtime',
+            failure_class: 'none',
+            operator_severity: 'info',
+            retry_after_seconds: 0,
+            last_failure_at: null,
+            dead_lettered_at: null,
+            operator_review_required: false,
             connection_id: 'connection-1',
             source_namespace_id: 'namespace-1',
             import_batch_id: 'batch-1',
@@ -483,12 +489,41 @@ describe('fetchErpOverviewWithMeta', () => {
             safe_error_code: 'connector_job_failed',
             safe_error_context: { reference_available: false },
             next_action_key: 'review_safe_error',
+            failure_class: 'credential',
+            operator_severity: 'error',
+            retry_after_seconds: 0,
+            last_failure_at: '2026-06-04T07:02:00.000Z',
+            dead_lettered_at: null,
+            operator_review_required: true,
             connection_id: 'connection-1',
             source_namespace_id: null,
             import_batch_id: null,
             created_at: '2026-06-04T07:00:00.000Z',
             updated_at: '2026-06-04T07:02:00.000Z',
             credentials_ref: 'secret://must-not-render',
+          },
+        ],
+      },
+      'rpc:list_connector_job_events': {
+        data: [
+          {
+            id: 'job-event-1',
+            tenant_id: 'a0000001-0001-4001-8001-000000000001',
+            connection_id: 'connection-1',
+            job_id: 'job-failed',
+            job_type: 'credential_verification',
+            status: 'failed',
+            event_key: 'connector_job_failed',
+            level: 'error',
+            failure_class: 'credential',
+            safe_error_code: 'connector_job_failed',
+            safe_error_context: { reference_available: false },
+            next_action_key: 'review_safe_error',
+            retry_after_seconds: 0,
+            operator_review_required: true,
+            worker_id: 'worker-a',
+            created_at: '2026-06-04T07:02:00.000Z',
+            raw_payload: { password: 'must-not-render' },
           },
         ],
       },
@@ -516,6 +551,7 @@ describe('fetchErpOverviewWithMeta', () => {
         succeeded: 0,
         failed: 1,
         deadLetter: 0,
+        operatorReviewRequired: 1,
       },
     })
     expect(result.data.runtimeQueue.jobs.map((job) => job.jobType)).toEqual([
@@ -527,6 +563,10 @@ describe('fetchErpOverviewWithMeta', () => {
       level: 'info',
       titleKey: 'erp.runtimeQueue.jobTypes.import_preview',
       nextActionKey: 'erp.runtimeQueue.nextActions.wait_for_worker_runtime',
+      failureClass: 'none',
+      operatorSeverity: 'info',
+      retryAfterSeconds: 0,
+      operatorReviewRequired: false,
       leaseStatus: 'active',
       leaseStatusLabelKey: 'erp.runtimeQueue.leaseStatus.active',
     })
@@ -535,8 +575,30 @@ describe('fetchErpOverviewWithMeta', () => {
       level: 'error',
       safeErrorSummaryKey: 'erp.runtimeQueue.safeErrors.connector_job_failed',
       nextActionKey: 'erp.runtimeQueue.nextActions.review_safe_error',
+      failureClass: 'credential',
+      failureClassLabelKey: 'erp.runtimeQueue.failureClasses.credential',
+      operatorSeverity: 'error',
+      operatorSeverityLabelKey: 'erp.runtimeQueue.operatorSeverity.error',
+      lastFailureAt: '2026-06-04T07:02:00.000Z',
+      operatorReviewRequired: true,
       leaseStatus: 'released',
     })
+    expect(result.data.activityTimeline[0]).toMatchObject({
+      kind: 'connector_job',
+      level: 'error',
+      titleKey: 'erp.activityTimeline.events.connector_job_failed.title',
+      summaryKey: 'erp.activityTimeline.summaries.connectorJob.failed',
+      safeErrorSummaryKey: 'erp.activityTimeline.safeErrors.connector_job_failed',
+      nextActionKey: 'erp.activityTimeline.nextActions.review_safe_error',
+      actorLabelKey: 'erp.activityTimeline.actors.worker',
+    })
+    expect(result.data.activityTimeline[0].detailItems).toEqual(
+      expect.arrayContaining([
+        { labelKey: 'erp.activityTimeline.details.jobType', value: 'credential_verification' },
+        { labelKey: 'erp.activityTimeline.details.failureClass', value: 'credential' },
+        { labelKey: 'erp.activityTimeline.details.operatorReview', value: true },
+      ]),
+    )
 
     const serialized = JSON.stringify(result.data.runtimeQueue)
     expect(serialized).not.toContain('raw_payload')
@@ -1602,6 +1664,7 @@ describe('fetchErpOverviewWithMeta', () => {
       errorCount: 0,
     })
     expect(capture.rpcCalls?.map((call) => call.fn)).toEqual([
+      'list_connector_job_events',
       'list_connector_import_preview_records',
       'validate_import_batch',
       'preview_import_diff',
@@ -1681,6 +1744,7 @@ describe('fetchErpOverviewWithMeta', () => {
       errorCount: 2,
     })
     expect(capture.rpcCalls?.map((call) => call.fn)).toEqual([
+      'list_connector_job_events',
       'list_connector_import_preview_records',
       'validate_import_batch',
     ])

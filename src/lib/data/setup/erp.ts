@@ -572,6 +572,7 @@ export type ConnectorActivityEventKind =
   | 'credential_handoff'
   | 'import_preview'
   | 'import_apply_review'
+  | 'connector_job'
   | 'sync_batch'
 
 export type ConnectorActivityDetail = {
@@ -627,6 +628,19 @@ export type ConnectorRuntimeWorkerStatus =
 
 export type ConnectorRuntimeLeaseStatus = 'not_started' | 'active' | 'expired' | 'released'
 
+export type ConnectorRuntimeFailureClass =
+  | 'none'
+  | 'transient'
+  | 'credential'
+  | 'mapping'
+  | 'provider_limit'
+  | 'provider_unavailable'
+  | 'worker'
+  | 'unsupported'
+  | 'unknown'
+
+export type ConnectorRuntimeOperatorSeverity = 'info' | 'warning' | 'error' | 'critical'
+
 export type ConnectorRuntimeWorker = {
   status: ConnectorRuntimeWorkerStatus
   readiness: ConnectorReadinessStatus
@@ -653,6 +667,15 @@ export type ConnectorRuntimeJobSummary = {
   safeErrorCode: string | null
   safeErrorSummaryKey: string | null
   nextActionKey: string
+  failureClass: ConnectorRuntimeFailureClass
+  failureClassLabelKey: string
+  operatorSeverity: ConnectorRuntimeOperatorSeverity
+  operatorSeverityLabelKey: string
+  retryAfterSeconds: number
+  nextRetryAt: string | null
+  lastFailureAt: string | null
+  deadLetteredAt: string | null
+  operatorReviewRequired: boolean
   attemptCount: number
   maxAttempts: number
   priority: number
@@ -689,6 +712,7 @@ export type ConnectorRuntimeQueue = {
     succeeded: number
     failed: number
     deadLetter: number
+    operatorReviewRequired: number
   }
 }
 
@@ -835,11 +859,36 @@ type ConnectorJobRow = {
   safe_error_code?: string | null
   safe_error_context?: Record<string, unknown> | null
   next_action_key?: string | null
+  failure_class?: ConnectorRuntimeFailureClass | null
+  operator_severity?: ConnectorRuntimeOperatorSeverity | null
+  retry_after_seconds?: number | null
+  last_failure_at?: string | null
+  dead_lettered_at?: string | null
+  operator_review_required?: boolean | null
   connection_id?: string | null
   source_namespace_id?: string | null
   import_batch_id?: string | null
   created_at?: string | null
   updated_at?: string | null
+}
+
+type ConnectorJobEventRow = {
+  id?: string | null
+  tenant_id?: string | null
+  connection_id?: string | null
+  job_id?: string | null
+  job_type?: ConnectorRuntimeJobType | null
+  status?: ConnectorRuntimeJobStatus | null
+  event_key?: string | null
+  level?: ConnectorRuntimeOperatorSeverity | null
+  failure_class?: ConnectorRuntimeFailureClass | null
+  safe_error_code?: string | null
+  safe_error_context?: Record<string, unknown> | null
+  next_action_key?: string | null
+  retry_after_seconds?: number | null
+  operator_review_required?: boolean | null
+  worker_id?: string | null
+  created_at?: string | null
 }
 
 type ConnectorWorkerHeartbeatRow = {
@@ -2720,10 +2769,98 @@ function buildConnectorActivityEvent(row: ErpSyncBatchRow, index: number): Conne
   }
 }
 
-function mapRuntimeJobLevel(status: ConnectorRuntimeJobStatus): ConnectorSyncLogLevel {
+function mapConnectorJobActivitySummaryKey(status: ConnectorRuntimeJobStatus): string {
+  return `erp.activityTimeline.summaries.connectorJob.${status}`
+}
+
+function buildConnectorJobActivityDetails(row: ConnectorJobEventRow): ConnectorActivityDetail[] {
+  const details: ConnectorActivityDetail[] = [
+    {
+      labelKey: 'erp.activityTimeline.details.jobType',
+      value: row.job_type ?? 'noop_health',
+    },
+  ]
+
+  if (row.failure_class && row.failure_class !== 'none') {
+    details.push({
+      labelKey: 'erp.activityTimeline.details.failureClass',
+      value: row.failure_class,
+    })
+  }
+
+  const retryAfterSeconds = Number(row.retry_after_seconds ?? 0)
+  if (retryAfterSeconds > 0) {
+    details.push({
+      labelKey: 'erp.activityTimeline.details.retryAfterSeconds',
+      value: retryAfterSeconds,
+    })
+  }
+
+  if (row.operator_review_required === true) {
+    details.push({
+      labelKey: 'erp.activityTimeline.details.operatorReview',
+      value: true,
+    })
+  }
+
+  return details
+}
+
+function buildConnectorJobActivityEvent(
+  row: ConnectorJobEventRow,
+  index: number,
+): ConnectorActivityEvent {
+  const status = row.status ?? 'queued'
+  const safeErrorCode = row.safe_error_code?.trim() || null
+  const eventKey = row.event_key?.trim() || 'connector_job_recorded'
+  const nextAction = row.next_action_key?.trim() || 'review_job_status'
+  const severity = row.level ?? mapOperatorSeverity(status, row.failure_class ?? 'none')
+
+  return {
+    id: row.id ?? `connector-job-event-${index}`,
+    at: formatSyncTimestamp(row.created_at),
+    level: mapOperatorSeverityLevel(severity, status),
+    kind: 'connector_job',
+    titleKey: `erp.activityTimeline.events.${eventKey}.title`,
+    summaryKey: mapConnectorJobActivitySummaryKey(status),
+    detailItems: buildConnectorJobActivityDetails(row),
+    safeErrorCode,
+    safeErrorSummaryKey: safeErrorCode ? `erp.activityTimeline.safeErrors.${safeErrorCode}` : null,
+    nextActionKey: `erp.activityTimeline.nextActions.${nextAction}`,
+    actorLabelKey: row.worker_id
+      ? 'erp.activityTimeline.actors.worker'
+      : 'erp.activityTimeline.actors.system',
+    rawStatus: status,
+  }
+}
+
+function mapOperatorSeverityLevel(
+  severity: ConnectorRuntimeOperatorSeverity | null | undefined,
+  status?: ConnectorRuntimeJobStatus | null,
+): ConnectorSyncLogLevel {
+  if (severity === 'critical' || severity === 'error') return 'error'
+  if (severity === 'warning') return 'warning'
   if (status === 'succeeded') return 'success'
-  if (status === 'failed' || status === 'dead_letter') return 'error'
-  if (status === 'retrying' || status === 'cancelled') return 'warning'
+  return 'info'
+}
+
+function mapFailureClass(
+  row: Pick<ConnectorJobRow, 'failure_class' | 'safe_error_code'>,
+): ConnectorRuntimeFailureClass {
+  if (row.failure_class) return row.failure_class
+  return row.safe_error_code ? 'unknown' : 'none'
+}
+
+function mapOperatorSeverity(
+  status: ConnectorRuntimeJobStatus,
+  failureClass: ConnectorRuntimeFailureClass,
+  rowSeverity?: ConnectorRuntimeOperatorSeverity | null,
+): ConnectorRuntimeOperatorSeverity {
+  if (rowSeverity) return rowSeverity
+  if (status === 'dead_letter') return 'critical'
+  if (status === 'failed') return 'error'
+  if (status === 'retrying') return 'warning'
+  if (failureClass !== 'none') return 'warning'
   return 'info'
 }
 
@@ -2818,12 +2955,16 @@ function mapConnectorRuntimeJob(row: ConnectorJobRow, index: number): ConnectorR
   const safeErrorCode = row.safe_error_code?.trim() || null
   const nextAction = row.next_action_key?.trim() || 'review_job_status'
   const leaseStatus = mapRuntimeLeaseStatus(row)
+  const failureClass = mapFailureClass(row)
+  const operatorSeverity = mapOperatorSeverity(status, failureClass, row.operator_severity)
+  const retryAfterSeconds = Number(row.retry_after_seconds ?? 0)
+  const nextRetryAt = status === 'retrying' ? (row.scheduled_at ?? null) : null
 
   return {
     id: row.id ?? `connector-job-${index}`,
     jobType,
     status,
-    level: mapRuntimeJobLevel(status),
+    level: mapOperatorSeverityLevel(operatorSeverity, status),
     domain: row.domain ?? null,
     statusLabelKey: `erp.runtimeQueue.jobStatus.${status}`,
     titleKey: `erp.runtimeQueue.jobTypes.${jobType}`,
@@ -2831,6 +2972,15 @@ function mapConnectorRuntimeJob(row: ConnectorJobRow, index: number): ConnectorR
     safeErrorCode,
     safeErrorSummaryKey: safeErrorCode ? `erp.runtimeQueue.safeErrors.${safeErrorCode}` : null,
     nextActionKey: `erp.runtimeQueue.nextActions.${nextAction}`,
+    failureClass,
+    failureClassLabelKey: `erp.runtimeQueue.failureClasses.${failureClass}`,
+    operatorSeverity,
+    operatorSeverityLabelKey: `erp.runtimeQueue.operatorSeverity.${operatorSeverity}`,
+    retryAfterSeconds,
+    nextRetryAt,
+    lastFailureAt: row.last_failure_at ?? null,
+    deadLetteredAt: row.dead_lettered_at ?? null,
+    operatorReviewRequired: row.operator_review_required === true,
     attemptCount: Number(row.attempt_count ?? 0),
     maxAttempts: Number(row.max_attempts ?? 0),
     priority: Number(row.priority ?? 100),
@@ -2879,6 +3029,7 @@ function buildConnectorRuntimeQueue({
       succeeded: jobs.filter((job) => job.status === 'succeeded').length,
       failed: jobs.filter((job) => job.status === 'failed').length,
       deadLetter: jobs.filter((job) => job.status === 'dead_letter').length,
+      operatorReviewRequired: jobs.filter((job) => job.operatorReviewRequired).length,
     },
   }
 }
@@ -3905,7 +4056,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
 
   const connections = (connectionsRow.data ?? []) as ErpConnectionRow[]
   const connection = pickCurrentErpConnection(connections)
-  const [mappingsRow, batchesRow, jobsRow] = connection?.id
+  const [mappingsRow, batchesRow, jobsRow, jobEventsRow] = connection?.id
     ? await Promise.all([
         pulsIntegration()
           .from('erp_field_mappings')
@@ -3946,6 +4097,12 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
               'safe_error_code',
               'safe_error_context',
               'next_action_key',
+              'failure_class',
+              'operator_severity',
+              'retry_after_seconds',
+              'last_failure_at',
+              'dead_lettered_at',
+              'operator_review_required',
               'connection_id',
               'source_namespace_id',
               'import_batch_id',
@@ -3957,8 +4114,13 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
           .eq('connection_id', connection.id)
           .order('updated_at', { ascending: false })
           .limit(10),
+        pulsIntegration().rpc('list_connector_job_events', {
+          p_connection_id: connection.id,
+          p_limit: 10,
+        }),
       ])
     : [
+        { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
@@ -3980,6 +4142,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       ? []
       : ((workerHeartbeatsRow.data ?? []) as ConnectorWorkerHeartbeatRow[]),
   )
+  const jobEvents = jobEventsRow.error ? [] : ((jobEventsRow.data ?? []) as ConnectorJobEventRow[])
 
   const identityCounts = identities.reduce<Record<string, number>>((counts, row) => {
     const namespaceId = row.source_namespace_id
@@ -4197,7 +4360,10 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
                   ? 'import_apply_review'
                   : 'sync_batch',
     })),
-    activityTimeline: batches.map((row, index) => buildConnectorActivityEvent(row, index)),
+    activityTimeline: [
+      ...jobEvents.map((row, index) => buildConnectorJobActivityEvent(row, index)),
+      ...batches.map((row, index) => buildConnectorActivityEvent(row, index)),
+    ].slice(0, 12),
     runtimeJobs,
     runtimeWorker,
     credentialBoundary,
