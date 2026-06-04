@@ -10,6 +10,7 @@ import {
   recordConnectorApplyApproval,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
+  requestConnectorRuntimePreflight,
   runConnectorImportPreview,
   runConnectorPreflight,
   startConnectorSetup,
@@ -1653,6 +1654,92 @@ describe('fetchErpOverviewWithMeta', () => {
     })
   })
 
+  it('queues runtime preflight through the safe RPC when credentials are verified', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { inserts: [], updates: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        erp_connections: {
+          data: [
+            {
+              provider: 'canias',
+              id: 'connection-1',
+              display_name: 'Canias ERP (Pasif)',
+              connection_method: 'rest_api',
+              connection_key: 'canias-default',
+              is_active: false,
+              last_sync_at: null,
+              last_status: null,
+              setup_status: 'mapping_ready',
+              setup_step: 'preflight',
+              is_enabled: true,
+              owned_domains: ['employees', 'departments', 'positions', 'cost_centers'],
+              auth_mode: 'custom_secret_ref',
+              credential_required: true,
+              credential_state: 'verified',
+              credential_last_verified_at: '2026-06-04T12:00:00.000Z',
+              credential_last_failed_at: null,
+              credential_error_code: null,
+              credential_handoff_status: 'verified',
+              credential_handoff_requested_at: null,
+              credential_handoff_requested_by_employee_id: null,
+              credential_handoff_updated_at: '2026-06-04T12:00:00.000Z',
+              created_at: '2026-06-01T00:00:00.000Z',
+              updated_at: '2026-06-04T12:00:00.000Z',
+            },
+          ],
+        },
+        'rpc:request_connector_runtime_preflight': {
+          data: [
+            {
+              job_id: 'runtime-job-1',
+              status: 'queued',
+              credential_state: 'verified',
+              next_action_key: 'wait_for_worker_runtime_preflight',
+            },
+          ],
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const result = await requestConnectorRuntimePreflight('user-1')
+
+    expect(result).toEqual({
+      connectionId: 'connection-1',
+      jobId: 'runtime-job-1',
+      status: 'queued',
+      credentialState: 'verified',
+      nextActionKey: 'wait_for_worker_runtime_preflight',
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'request_connector_runtime_preflight',
+      args: {
+        p_connection_id: 'connection-1',
+        p_actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+      },
+    })
+    expect(capture.inserts).toEqual([])
+    expect(capture.updates).toEqual([])
+    expect(JSON.stringify(capture.rpcCalls)).not.toContain('credentials_ref')
+    expect(JSON.stringify(capture.rpcCalls)).not.toContain('secret')
+  })
+
+  it('blocks runtime preflight before calling RPC when credentials are not verified', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { rpcCalls: [] }
+    setupSeededMocks({}, capture)
+
+    await expect(requestConnectorRuntimePreflight('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED',
+      i18nKey: 'erp.errors.runtimePreflightBlocked',
+    })
+    expect(capture.rpcCalls?.some((call) => call.fn === 'request_connector_runtime_preflight')).toBe(
+      false,
+    )
+  })
+
   it('runs connector import preview as validate plus diff without applying records', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
     demoEnabled.mockReturnValue(false)
@@ -2142,6 +2229,20 @@ describe('fetchErpOverviewWithMeta', () => {
     ).toEqual({
       code: 'apply_approval_blocked',
       toastKey: 'erp.errors.applyApprovalBlocked',
+    })
+
+    expect(
+      mapConnectorSetupError(
+        new DataAdapterError({
+          code: 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED',
+          message: 'Runtime preflight requires verified credential state',
+          source: 'adapter',
+          operation: 'requestConnectorRuntimePreflight',
+        }),
+      ),
+    ).toEqual({
+      code: 'runtime_preflight_blocked',
+      toastKey: 'erp.errors.runtimePreflightBlocked',
     })
 
     expect(mapConnectorSetupError(new Error('raw db failure'))).toEqual({

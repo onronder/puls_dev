@@ -1016,6 +1016,9 @@
       },
       "applyApprovalPolicy": {
         "approvalRecorded": "Admin approval was recorded as an audit event. Apply execution remains closed."
+      },
+      "runtimePreflight": {
+        "queued": "Runtime preflight job was safely queued. The worker result will appear in activity."
       }
     },
     "errors": {
@@ -1030,7 +1033,8 @@
       "permissionDenied": "You do not have permission to save this connection. Try again with an admin role.",
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment.",
       "applyReviewBlocked": "Human review can be requested only after a clean import preview is available.",
-      "applyApprovalBlocked": "Admin approval requires a clean preview and a recorded human review first."
+      "applyApprovalBlocked": "Admin approval requires a clean preview and a recorded human review first.",
+      "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
     "sections": {
       "lifecycle": "Lifecycle",
@@ -1521,18 +1525,44 @@
         "connector_job_lease_expired": "The worker lease expired and the job moved into safe recovery.",
         "connector_job_type_not_supported_by_worker_skeleton": "This job type is not executed by the skeleton worker.",
         "connector_worker_loop_failed": "The worker loop recorded a safe error code.",
-        "connector_worker_not_configured": "Worker runtime is not configured, so no job was executed."
+        "connector_worker_not_configured": "Worker runtime is not configured, so no job was executed.",
+        "runtime_preflight_context_missing": "The worker could not read safe connection context for runtime preflight.",
+        "runtime_preflight_credential_not_verified": "Runtime preflight requires a verified secure reference."
       },
       "nextActions": {
         "review_job_status": "Review the job status and next runtime step.",
+        "wait_for_worker_runtime_preflight": "Wait for the worker to pick up the runtime preflight job.",
         "wait_for_worker_runtime": "No work runs until worker runtime opens.",
         "review_safe_error": "Review the safe error class; secrets and provider payloads are not shown.",
         "retry_scheduled": "Wait for the scheduled retry time.",
         "worker_contract_ready": "Worker contract is ready; provider-specific runtime is implemented separately.",
+        "run_credential_verification": "Run secure reference verification first.",
+        "review_runtime_preflight_context": "Review the runtime preflight context and safe error code.",
+        "review_runtime_preflight_result": "Review the runtime preflight result.",
+        "provider_runtime_implementation_required": "No live API call runs until provider-specific runtime implementation starts.",
         "wait_for_provider_runtime_implementation": "Wait for provider runtime implementation for this job type.",
         "wait_for_retry_window": "Wait for the scheduled retry window.",
         "retry_after_worker_recovery": "Wait for the scheduled retry after lease recovery.",
         "review_dead_letter_job": "Manually review the job that reached the maximum attempt boundary."
+      }
+    },
+    "runtimePreflight": {
+      "title": "Runtime preflight",
+      "description": "Without starting a live provider call or data transfer, the worker validates the secure reference and setup context server-side.",
+      "status": {
+        "ready": "Can be queued",
+        "blocked": "Waiting"
+      },
+      "hints": {
+        "ready": "The credential reference is verified and the worker supports this job type.",
+        "credentialRequired": "Verify the secure reference first; secret values are not collected or shown on this screen.",
+        "workerRequired": "A job is not started until runtime preflight support is visible in the worker heartbeat."
+      },
+      "actions": {
+        "request": "Request runtime preflight",
+        "requesting": "Queueing",
+        "blocked": "Waiting for prerequisites",
+        "adminRequired": "Admin permission required"
       }
     },
     "activityTimeline": {

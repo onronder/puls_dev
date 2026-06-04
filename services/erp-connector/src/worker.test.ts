@@ -4,6 +4,7 @@ import {
   buildSafeWorkerFailureObservation,
   buildConnectorJobCompletion,
   buildHealthPayload,
+  buildRuntimePreflightCompletionFromContext,
   parseSupportedJobTypes,
   resolveWorkerConfig,
   runWorkerOnce,
@@ -129,6 +130,132 @@ describe('erp-connector worker job handling', () => {
         retry_after_seconds: 0,
       }),
       p_next_action_key: 'wait_for_provider_runtime_implementation',
+    })
+  })
+
+  it('completes runtime preflight with safe credential-reference context only', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_ID: 'worker-a',
+      PULS_CONNECTOR_WORKER_JOB_TYPES: 'connector_runtime_preflight',
+    })
+    const calls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
+      calls.push({ fn, args })
+      if (fn === 'claim_next_connector_job') {
+        return [
+          noopJob({
+            id: 'runtime-job-1',
+            connection_id: 'connection-1',
+            job_type: 'connector_runtime_preflight',
+          }),
+        ] as T
+      }
+      if (fn === 'get_connector_runtime_preflight_context') {
+        return [
+          {
+            connection_id: 'connection-1',
+            tenant_id: 'tenant-1',
+            provider: 'canias',
+            display_name: 'Canias',
+            connection_method: 'rest_api',
+            setup_status: 'mapping_ready',
+            setup_step: 'preflight',
+            auth_mode: 'custom_secret_ref',
+            credential_required: true,
+            credential_state: 'verified',
+            reference_available: true,
+            credential_last_verified_at: '2026-06-04T12:00:00.000Z',
+            mapped_field_count: 12,
+            active_namespace_count: 1,
+            identity_count: 13,
+            credential_ready: true,
+            provider_api_calls_enabled: false,
+            credential_readback_enabled: false,
+            canonical_writes_enabled: false,
+            source_writeback_enabled: false,
+            next_action_key: 'review_runtime_preflight_result',
+          },
+        ] as T
+      }
+      if (fn === 'complete_connector_job') return 'runtime-job-1' as T
+      if (fn === 'upsert_connector_worker_heartbeat') return 'worker-a' as T
+      if (fn === 'heartbeat_connector_job') return 'runtime-job-1' as T
+      return [] as T
+    }
+
+    const result = await runWorkerOnce(config, rpc)
+
+    expect(result).toEqual({ claimed: true, jobId: 'runtime-job-1', status: 'succeeded' })
+    expect(calls.find((call) => call.fn === 'claim_next_connector_job')?.args).toMatchObject({
+      p_worker_id: 'worker-a',
+      p_job_types: ['connector_runtime_preflight'],
+    })
+    expect(calls.find((call) => call.fn === 'get_connector_runtime_preflight_context')?.args)
+      .toMatchObject({
+        p_connection_id: 'connection-1',
+      })
+    expect(calls.find((call) => call.fn === 'complete_connector_job')?.args).toMatchObject({
+      p_job_id: 'runtime-job-1',
+      p_status: 'succeeded',
+      p_safe_error_code: null,
+      p_next_action_key: 'provider_runtime_implementation_required',
+      p_safe_error_context: expect.objectContaining({
+        preflight_scope: 'credential_reference_and_setup_state',
+        provider_api_calls: false,
+        credential_readback: false,
+        canonical_write: false,
+        source_writeback: false,
+      }),
+    })
+
+    const serialized = JSON.stringify(calls)
+    expect(serialized).not.toContain('service-role-secret-value')
+    expect(serialized).not.toContain('credentials_ref')
+    expect(serialized).not.toContain('raw_payload')
+    expect(serialized).not.toContain('response_body')
+  })
+
+  it('fails runtime preflight safely when credential context is not verified', () => {
+    expect(
+      buildRuntimePreflightCompletionFromContext(
+        noopJob({ job_type: 'connector_runtime_preflight' }),
+        {
+          connection_id: 'connection-1',
+          tenant_id: 'tenant-1',
+          provider: 'canias',
+          display_name: 'Canias',
+          connection_method: 'rest_api',
+          setup_status: 'mapping_ready',
+          setup_step: 'preflight',
+          auth_mode: 'custom_secret_ref',
+          credential_required: true,
+          credential_state: 'configured',
+          reference_available: true,
+          credential_last_verified_at: null,
+          mapped_field_count: 12,
+          active_namespace_count: 1,
+          identity_count: 13,
+          credential_ready: false,
+          provider_api_calls_enabled: false,
+          credential_readback_enabled: false,
+          canonical_writes_enabled: false,
+          source_writeback_enabled: false,
+          next_action_key: 'run_credential_verification',
+        },
+      ),
+    ).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'runtime_preflight_credential_not_verified',
+      p_next_action_key: 'run_credential_verification',
+      p_safe_error_context: expect.objectContaining({
+        credential_state: 'configured',
+        reference_available: true,
+        provider_api_calls: false,
+        credential_readback: false,
+      }),
     })
   })
 

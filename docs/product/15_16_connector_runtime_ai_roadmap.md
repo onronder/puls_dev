@@ -207,6 +207,8 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 - Verification sonucu safe error code ile döner.
 - Provider response raw şekilde saklanmaz.
 
+**PR15.5 implementation status:** PR15.5 implements a source-independent runtime preflight queue request and worker safe-context handler. Runtime preflight now requires `verified` credential state plus opaque reference availability when credentials are required. The worker records safe setup/credential evidence only; provider API calls, credential readback, import apply, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
+
 ### PR15.6 - AI Runtime Evidence Contract
 
 **Ürün değeri:** Connector runtime ve HR operasyon sinyalleri AI Coach için güvenli ve tutarlı bir veri zemini oluşturur.

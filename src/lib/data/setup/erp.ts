@@ -1026,6 +1026,14 @@ export type RecordConnectorApplyApprovalResult = {
   safeToApply: false
 }
 
+export type RequestConnectorRuntimePreflightResult = {
+  connectionId: string
+  jobId: string | null
+  status: ConnectorRuntimeJobStatus
+  credentialState: ConnectorCredentialState
+  nextActionKey: string
+}
+
 export type ConnectorSetupErrorMapping = {
   code:
     | 'missing_tenant'
@@ -1037,6 +1045,7 @@ export type ConnectorSetupErrorMapping = {
     | 'import_preview_blocked'
     | 'apply_review_blocked'
     | 'apply_approval_blocked'
+    | 'runtime_preflight_blocked'
     | 'permission_denied'
     | 'domain_owned'
     | 'save_failed'
@@ -1460,6 +1469,15 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
     if (error.code === 'PULS_CONNECTOR_APPLY_APPROVAL_BLOCKED') {
       return { code: 'apply_approval_blocked', toastKey: 'erp.errors.applyApprovalBlocked' }
     }
+    if (
+      error.code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
+      error.code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
+    ) {
+      return {
+        code: 'runtime_preflight_blocked',
+        toastKey: 'erp.errors.runtimePreflightBlocked',
+      }
+    }
     if (error.code === 'PULS_CONNECTOR_DOMAIN_OWNED') {
       return { code: 'domain_owned', toastKey: 'erp.errors.domainOwned' }
     }
@@ -1486,6 +1504,9 @@ function fromConnectorRpcError(
     i18nKey:
       code === 'PULS_IMPORT_BATCH_STATE_INVALID'
         ? 'erp.errors.importPreviewBlocked'
+        : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
+            code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
+          ? 'erp.errors.runtimePreflightBlocked'
         : 'erp.errors.setupSaveFailed',
   })
 }
@@ -4825,6 +4846,80 @@ export async function requestConnectorCredentialHandoff(
     connectionId,
     status: 'requested',
     requestedAt: now,
+  }
+}
+
+export async function requestConnectorRuntimePreflight(
+  userId: string,
+): Promise<RequestConnectorRuntimePreflightResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector runtime preflight requires tenant context',
+      source: 'adapter',
+      operation: 'requestConnectorRuntimePreflight',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector runtime preflight requires admin permission',
+      source: 'adapter',
+      operation: 'requestConnectorRuntimePreflight',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector runtime preflight requires a selected source',
+      source: 'adapter',
+      operation: 'requestConnectorRuntimePreflight',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+
+  if (
+    overview.credentialBoundary.required &&
+    overview.credentialBoundary.state !== 'verified'
+  ) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED',
+      message: 'Connector runtime preflight requires verified credential state',
+      source: 'adapter',
+      operation: 'requestConnectorRuntimePreflight',
+      i18nKey: 'erp.errors.runtimePreflightBlocked',
+    })
+  }
+
+  const request = await pulsIntegration().rpc('request_connector_runtime_preflight', {
+    p_connection_id: connectionId,
+    p_actor_employee_id: ctx.employeeId,
+  })
+
+  if (request.error) {
+    throw fromConnectorRpcError(request.error, 'requestConnectorRuntimePreflight')
+  }
+
+  const row = Array.isArray(request.data) ? request.data[0] : request.data
+  const result = (row ?? {}) as {
+    job_id?: string | null
+    status?: ConnectorRuntimeJobStatus | null
+    credential_state?: ConnectorCredentialState | null
+    next_action_key?: string | null
+  }
+
+  return {
+    connectionId,
+    jobId: result.job_id ?? null,
+    status: result.status ?? 'queued',
+    credentialState: result.credential_state ?? overview.credentialBoundary.state,
+    nextActionKey: result.next_action_key ?? 'wait_for_worker_runtime_preflight',
   }
 }
 
