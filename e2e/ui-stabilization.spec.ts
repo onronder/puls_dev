@@ -52,7 +52,10 @@ test('unauthenticated redirect preserves path in query', async ({ page }) => {
 })
 
 test.describe('@auth authenticated stabilization', () => {
-  test.skip(!hasCredentials && !requireAuth, 'Set E2E_EMAIL and E2E_PASSWORD for authenticated flows')
+  test.skip(
+    !hasCredentials && !requireAuth,
+    'Set E2E_EMAIL and E2E_PASSWORD for authenticated flows',
+  )
   test.describe.configure({ mode: 'serial' })
 
   test('login honors redirect query', async ({ page }) => {
@@ -81,6 +84,39 @@ test.describe('@auth authenticated stabilization', () => {
     await page.goto('/erp')
     await expect(page).not.toHaveURL(/\/login/)
     await expect(page).toHaveURL(/\/(erp|ayarlar)/)
+  })
+
+  test('erp workbench tabs keep connector details navigable', async ({ page }) => {
+    await login(page)
+
+    await page.goto('/erp')
+    await expect(
+      page.getByRole('heading', { name: /Veri bağlantıları|Data connections/i }),
+    ).toBeVisible()
+
+    const tabList = page.getByRole('tablist', {
+      name: /Veri bağlantısı çalışma alanı|Data connection workspace/i,
+    })
+    if ((await tabList.count()) === 0) {
+      await expect(
+        page.getByRole('heading', { name: /Bir kaynak seçerek başla|Start by choosing a source/i }),
+      ).toBeVisible()
+      return
+    }
+
+    await expect(tabList).toBeVisible()
+    await page.getByRole('tab', { name: /Alanlar|Fields/i }).click()
+    await expect(
+      page.getByRole('heading', { name: /Alan sahipliği|Domain ownership/i }),
+    ).toBeVisible()
+
+    await page.getByRole('tab', { name: /Kontrol|Check/i }).click()
+    await expect(page.getByRole('heading', { name: /Kurulum kontrolü|Setup check/i })).toBeVisible()
+
+    await page.getByRole('tab', { name: /Aktivite|Activity/i }).click()
+    await expect(
+      page.getByRole('heading', { name: /Aktivite geçmişi|Activity history/i }),
+    ).toBeVisible()
   })
 
   test('employee account blocks setup route', async ({ page }) => {

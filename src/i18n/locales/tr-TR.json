@@ -749,6 +749,15 @@
       "title": "Bağlantı kurulum adımları",
       "description": "Bu çalışma alanı kaynağın nerede olduğunu, hangi alanların bağlandığını ve hangi adımın sırada olduğunu gösterir."
     },
+    "tabs": {
+      "label": "Veri bağlantısı çalışma alanı",
+      "setup": "Kurulum",
+      "fields": "Alanlar",
+      "check": "Kontrol",
+      "credentials": "Kimlik",
+      "previewApply": "Önizleme & Uygulama",
+      "activity": "Aktivite"
+    },
     "setupSteps": {
       "source": {
         "label": "Kaynak",

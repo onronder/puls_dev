@@ -1,4 +1,4 @@
-# PR14.8-PR14.19 Connector Implementation Roadmap
+# PR14.8-PR14.21 Connector Implementation Roadmap
 
 PR14.8 through PR14.19 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow with safe preview, human review, controlled apply design, and explicit admin approval policy boundaries. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, credential-boundary, preview, review-readiness, approval-policy, and apply-gate contracts.
 
@@ -27,21 +27,23 @@ Runtime sync, credential capture, ERP writes, and destructive operations remain 
 
 ## Implementation Sequence
 
-| PR       | Name                                 | Outcome                                                                                                                                  |
-| -------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| PR14.8   | Connector setup persistence          | Provider selection creates a tenant-scoped setup record, survives refresh, and changes dashboard / ERP posture.                          |
-| PR14.9   | Error observability and Sentry       | Frontend and backend-visible setup failures are captured, scrubbed, and shown with user-friendly recovery paths.                         |
-| PR14.10  | Mapping discovery                    | Source fields can be discovered or declared, then mapped to PULS canonical data classes without running a connector import.              |
-| PR14.11  | Connector preflight execution        | Setup, mapping, namespace, identity, and credential-boundary readiness can be validated as a dry run with no runtime sync or ERP writes. |
-| PR14.12  | Source credential boundary           | Credential readiness is represented with source-independent auth mode and state metadata without capturing secrets or enabling runtime.  |
-| PR14.12B | Connector state consistency findings | Dashboard, `/erp`, duplicate setup, and persisted preflight truth are aligned.                                                           |
-| PR14.13  | Connector lifecycle capabilities     | Source lifecycle, capability, and domain ownership posture are visible without runtime execution.                                        |
-| PR14.14  | Connector credential handoff         | Admins can request secure reference preparation without collecting or configuring secrets.                                               |
-| PR14.15  | Connector activity timeline          | Setup actions leave safe, durable activity history.                                                                                      |
-| PR14.16  | Connector import preview dry-run     | Prepared dry-run batches can be validated and classified without apply/import execution.                                                 |
-| PR14.17  | Connector apply readiness boundary   | Preview results can be marked ready for human review while canonical apply remains closed.                                               |
-| PR14.18  | Controlled apply design              | Future apply execution gates are visible before any canonical write path is exposed.                                                     |
-| PR14.19  | Connector apply approval policy      | MVP admin-only approval is explicit and auditable while canonical apply remains closed.                                                  |
+| PR       | Name                                   | Outcome                                                                                                                                  |
+| -------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| PR14.8   | Connector setup persistence            | Provider selection creates a tenant-scoped setup record, survives refresh, and changes dashboard / ERP posture.                          |
+| PR14.9   | Error observability and Sentry         | Frontend and backend-visible setup failures are captured, scrubbed, and shown with user-friendly recovery paths.                         |
+| PR14.10  | Mapping discovery                      | Source fields can be discovered or declared, then mapped to PULS canonical data classes without running a connector import.              |
+| PR14.11  | Connector preflight execution          | Setup, mapping, namespace, identity, and credential-boundary readiness can be validated as a dry run with no runtime sync or ERP writes. |
+| PR14.12  | Source credential boundary             | Credential readiness is represented with source-independent auth mode and state metadata without capturing secrets or enabling runtime.  |
+| PR14.12B | Connector state consistency findings   | Dashboard, `/erp`, duplicate setup, and persisted preflight truth are aligned.                                                           |
+| PR14.13  | Connector lifecycle capabilities       | Source lifecycle, capability, and domain ownership posture are visible without runtime execution.                                        |
+| PR14.14  | Connector credential handoff           | Admins can request secure reference preparation without collecting or configuring secrets.                                               |
+| PR14.15  | Connector activity timeline            | Setup actions leave safe, durable activity history.                                                                                      |
+| PR14.16  | Connector import preview dry-run       | Prepared dry-run batches can be validated and classified without apply/import execution.                                                 |
+| PR14.17  | Connector apply readiness boundary     | Preview results can be marked ready for human review while canonical apply remains closed.                                               |
+| PR14.18  | Controlled apply design                | Future apply execution gates are visible before any canonical write path is exposed.                                                     |
+| PR14.19  | Connector apply approval policy        | MVP admin-only approval is explicit and auditable while canonical apply remains closed.                                                  |
+| PR14.20  | Connector apply execution contract     | Future apply execution has a visible closed contract while canonical apply remains closed.                                               |
+| PR14.21  | ERP workbench information architecture | `/erp` becomes a tabbed source-independent workbench without changing runtime, DB, credentials, or apply behavior.                       |
 
 ## PR14.8 - Connector Setup Persistence
 
@@ -436,13 +438,13 @@ PR14.18 makes the future apply path understandable before it becomes executable.
 
 ### Scope
 
-| Area                    | PR14.18 behavior                                                                                                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Controlled apply plan   | Adapter derives gate-level readiness from source setup, preview, human review, and credential posture.                   |
-| UI                      | `/erp` shows the controlled apply plan as a read-only decision model with no apply CTA.                                  |
-| Source independence     | Gates describe PULS connectivity behavior, not Canias-specific runtime behavior.                                         |
-| Execution boundary      | `executionOpen` and `applyRpcExposed` remain false.                                                                      |
-| Safety documentation    | Product docs define approval, idempotency, locking, rollback, audit, notification, and credential-runtime requirements. |
+| Area                  | PR14.18 behavior                                                                                                        |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Controlled apply plan | Adapter derives gate-level readiness from source setup, preview, human review, and credential posture.                  |
+| UI                    | `/erp` shows the controlled apply plan as a read-only decision model with no apply CTA.                                 |
+| Source independence   | Gates describe PULS connectivity behavior, not Canias-specific runtime behavior.                                        |
+| Execution boundary    | `executionOpen` and `applyRpcExposed` remain false.                                                                     |
+| Safety documentation  | Product docs define approval, idempotency, locking, rollback, audit, notification, and credential-runtime requirements. |
 
 ### Out Of Scope
 
@@ -470,13 +472,13 @@ PR14.19 makes the MVP approval authority explicit before any apply runtime exist
 
 ### Scope
 
-| Area                | PR14.19 behavior                                                                                                               |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Approval policy     | Adapter exposes `applyApprovalPolicy` with admin-only MVP policy, requestable state, recorded state, and `safeToApply: false`. |
-| Admin audit action  | Admin can record approval only after preview is clean and human review is recorded.                                            |
-| Controlled gates    | `approval_policy` gate becomes ready when the admin-only policy is defined or approval is recorded.                            |
-| Activity history    | Approval writes safe `import_apply_approval_recorded` history with counters and no payload or credential detail.               |
-| UI                  | `/erp` shows the approval policy card inside controlled apply without opening apply execution.                                 |
+| Area               | PR14.19 behavior                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Approval policy    | Adapter exposes `applyApprovalPolicy` with admin-only MVP policy, requestable state, recorded state, and `safeToApply: false`. |
+| Admin audit action | Admin can record approval only after preview is clean and human review is recorded.                                            |
+| Controlled gates   | `approval_policy` gate becomes ready when the admin-only policy is defined or approval is recorded.                            |
+| Activity history   | Approval writes safe `import_apply_approval_recorded` history with counters and no payload or credential detail.               |
+| UI                 | `/erp` shows the approval policy card inside controlled apply without opening apply execution.                                 |
 
 ### Out Of Scope
 
@@ -507,14 +509,14 @@ PR14.20 makes the future execution contract explicit before any apply runner exi
 
 ### Scope
 
-| Area                     | PR14.20 behavior                                                                                                             |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| Execution contract       | Adapter exposes `applyExecutionContract` from preview, approval, and controlled apply state.                                  |
-| Safety flags             | Execution, canonical writes, source writeback, credential readback, apply RPC exposure, and safe execution remain false.       |
-| Idempotency              | Source checksum is surfaced as a required execution control.                                                                  |
-| UI                       | `/erp` renders a compact closed execution contract without adding an apply CTA.                                                |
-| Source independence      | The contract applies to Canias, CSV / Excel, custom API, and future connector profiles that produce dry-run preview evidence. |
-| UX debt                  | `/erp` information architecture needs a future tabbed/sub-page refactor after the PR14 connector boundary closes.              |
+| Area                | PR14.20 behavior                                                                                                              |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Execution contract  | Adapter exposes `applyExecutionContract` from preview, approval, and controlled apply state.                                  |
+| Safety flags        | Execution, canonical writes, source writeback, credential readback, apply RPC exposure, and safe execution remain false.      |
+| Idempotency         | Source checksum is surfaced as a required execution control.                                                                  |
+| UI                  | `/erp` renders a compact closed execution contract without adding an apply CTA.                                               |
+| Source independence | The contract applies to Canias, CSV / Excel, custom API, and future connector profiles that produce dry-run preview evidence. |
+| UX debt             | `/erp` information architecture needs a future tabbed/sub-page refactor after the PR14 connector boundary closes.             |
 
 ### Out Of Scope
 
@@ -538,9 +540,33 @@ PR14.20 makes the future execution contract explicit before any apply runner exi
 - `applyExecutionContract.safeToExecute` remains false.
 - No product UI action calls `apply_import_batch`.
 
+## PR14.21 - ERP Workbench Information Architecture
+
+### Business Value
+
+PR14.21 turns `/erp` from a long connector evidence page into a usable workbench. The product keeps the same source-independent connector truth, but users now move through Setup, Fields, Check, Credentials, Preview & Apply, and Activity without losing the next action.
+
+### Scope
+
+| Area               | PR14.21 behavior                                                                             |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| IA                 | Adds source-independent tabs for the major connector work areas.                             |
+| Mobile             | Keeps tabs horizontally scrollable and preserves no-horizontal-overflow coverage.            |
+| Existing actions   | Reuses the same setup, preflight, credential handoff, preview, review, and approval actions. |
+| No-connector state | Keeps the first-run source selection flow focused.                                           |
+| Runtime            | Does not open connector runtime, import apply, credential capture, or source writeback.      |
+
+### Acceptance Criteria
+
+- `/erp` selected-connector view is organized into Setup, Fields, Check, Credentials, Preview & Apply, and Activity tabs.
+- Preflight, preview, and review actions land users in the relevant tab after success.
+- The page remains source-independent; Canias appears only as selected provider content.
+- Mobile e2e continues to prove `/erp` has no horizontal overflow.
+- No migration, seed CSV, manifest, package, env, runtime, or apply behavior changes are introduced.
+
 ## Roadmap Stop Condition
 
-After PR14.20, PULS should be able to say:
+After PR14.21, PULS should be able to say:
 
 - A tenant can start connector setup from an empty product state.
 - Connector setup state is persisted and role-scoped.
@@ -553,13 +579,13 @@ After PR14.20, PULS should be able to say:
 - Controlled apply gates are visible before any canonical write path is exposed.
 - MVP admin-only approval is explicit and auditable while canonical apply remains closed.
 - Future apply execution has a visible closed contract with safety flags and required controls.
+- `/erp` presents connector setup as a readable tabbed workbench instead of one uninterrupted evidence page.
 - Runtime connector execution remains a separate future phase.
 
-## Handoff After PR14.20
+## Handoff After PR14.21
 
 Future work can then move into runtime connector design with safer foundations:
 
-- `/erp` workbench information architecture refactor into tabbed or sub-page sections
 - Connector credential capture and secret storage
 - CSV / Excel import execution
 - Canias API connector runtime
