@@ -3523,6 +3523,7 @@
       "privacy": "Privacy",
       "readiness": "Readiness",
       "contextReadiness": "Context readiness",
+      "runtimeEvidence": "Runtime evidence contract",
       "guardrails": "Guardrails"
     },
     "capabilities": {
@@ -3583,12 +3584,21 @@
         "dashboardOverview": "Dashboard overview view",
         "pendingLeaveCount": "Pending leave count",
         "employeeLinked": "Employee link",
-        "employeeName": "Linked employee"
+        "employeeName": "Linked employee",
+        "connectorConnectionCount": "Connector connections",
+        "connectorRuntimeJobCount": "Runtime job count",
+        "connectorJobEventCount": "Runtime event records",
+        "connectorCredentialVerifiedCount": "Verified references"
       },
       "setup": {
         "title": "Setup coach",
         "description": "Explains setup and read-model readiness gaps.",
         "guardrail": "Human confirmation required; no autonomous setup."
+      },
+      "connector_runtime": {
+        "title": "Connector runtime evidence",
+        "description": "Reads job, worker, credential, and import preview signals as safe context.",
+        "guardrail": "AI does not start jobs, read credentials, apply imports, or write to sources."
       },
       "employee_quality": {
         "title": "Employee data quality",
@@ -3648,8 +3658,70 @@
       "noVaultSeed": {
         "label": "No persistent conversation record"
       },
+      "sourceDisclosure": {
+        "label": "Source disclosure required"
+      },
+      "noCredentialRead": {
+        "label": "Credential values never enter AI context"
+      },
       "enforced": "Enforced",
       "pending": "Pending"
+    },
+    "runtimeEvidence": {
+      "title": "Safe connector evidence",
+      "description": "AI Coach interprets runtime posture only from tenant-scoped, safe, source-disclosed signals.",
+      "sourceDisclosureRequired": "Source disclosure required",
+      "sourcePrefix": "Source:",
+      "taxonomyTitle": "Suggestion boundary",
+      "taxonomyDescription": "This contract defines what AI may explain; it does not open execution or write actions.",
+      "allowedTitle": "Allowed suggestions",
+      "forbiddenTitle": "Closed actions",
+      "signals": {
+        "connectorJobs": {
+          "label": "Connector job state"
+        },
+        "connectorJobEvents": {
+          "label": "Runtime event history"
+        },
+        "credentialState": {
+          "label": "Credential verification state"
+        },
+        "importPreview": {
+          "label": "Import preview evidence"
+        },
+        "runtimeBlockers": {
+          "label": "Runtime blocker count"
+        }
+      },
+      "sources": {
+        "connectorJobs": "puls_integration.connector_jobs",
+        "connectorJobEvents": "puls_integration.connector_job_events",
+        "credentialState": "puls_integration.erp_connections.credential_state",
+        "importPreview": "puls_integration.import_batches",
+        "runtimeBlockers": "connector_jobs + credential_state"
+      },
+      "disclosures": {
+        "connectorJobs": "Derived from job status, domain, retry, and safe error fields; contains no raw payload.",
+        "connectorJobEvents": "Worker and queue events are read from safe event records.",
+        "credentialState": "AI sees only verification state; credential values and reference values are not shown.",
+        "importPreview": "Preview batch results are summarized; no live apply or canonical write is performed.",
+        "runtimeBlockers": "Gaps are computed from safe error, dead-letter, and credential state signals."
+      },
+      "allowed": {
+        "explain": "Explain the state",
+        "summarize": "Summarize runtime and import evidence",
+        "detect_gap": "Detect missing or risky points",
+        "recommend_next_step": "Recommend the next human-approved step",
+        "prepare_review": "Prepare a review summary",
+        "source_disclosure": "Disclose the source it used"
+      },
+      "forbidden": {
+        "start_connector_job": "Cannot start connector jobs",
+        "read_credential": "Cannot read credential or secret values",
+        "apply_import": "Cannot run import apply",
+        "write_to_source": "Cannot write to ERP, files, or external sources",
+        "mutate_workflow": "Cannot mutate leave, expense, approval, or employee data"
+      }
     },
     "actions": {
       "notifyMe": "Notify me",

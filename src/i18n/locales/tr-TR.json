@@ -3523,6 +3523,7 @@
       "privacy": "Gizlilik",
       "readiness": "Hazırlık",
       "contextReadiness": "Bağlam hazırlığı",
+      "runtimeEvidence": "Runtime kanıt sözleşmesi",
       "guardrails": "Koruma kuralları"
     },
     "capabilities": {
@@ -3583,12 +3584,21 @@
         "dashboardOverview": "Dashboard özeti görünümü",
         "pendingLeaveCount": "Bekleyen izin sayısı",
         "employeeLinked": "Çalışan bağlantısı",
-        "employeeName": "Bağlı çalışan"
+        "employeeName": "Bağlı çalışan",
+        "connectorConnectionCount": "Connector bağlantısı",
+        "connectorRuntimeJobCount": "Runtime job sayısı",
+        "connectorJobEventCount": "Runtime olay kaydı",
+        "connectorCredentialVerifiedCount": "Doğrulanmış referans"
       },
       "setup": {
         "title": "Kurulum koçu",
         "description": "Kurulum ve okuma hazırlığı boşluklarını açıklar.",
         "guardrail": "İnsan onayı gerekir; otomatik kurulum yapmaz."
+      },
+      "connector_runtime": {
+        "title": "Connector runtime kanıtı",
+        "description": "Job, worker, credential ve import preview sinyallerini güvenli bağlam olarak okur.",
+        "guardrail": "AI job başlatmaz, credential okumaz, import apply veya kaynak yazımı yapmaz."
       },
       "employee_quality": {
         "title": "Çalışan veri kalitesi",
@@ -3648,8 +3658,70 @@
       "noVaultSeed": {
         "label": "Kalıcı konuşma kaydı yok"
       },
+      "sourceDisclosure": {
+        "label": "Kaynak açıklaması zorunlu"
+      },
+      "noCredentialRead": {
+        "label": "Credential değeri AI bağlamına girmez"
+      },
       "enforced": "Uygulanıyor",
       "pending": "Bekliyor"
+    },
+    "runtimeEvidence": {
+      "title": "Güvenli connector kanıtları",
+      "description": "AI Coach runtime durumunu yalnızca tenant kapsamlı, güvenli ve kaynak açıklamalı sinyallerden yorumlar.",
+      "sourceDisclosureRequired": "Kaynak açıklaması zorunlu",
+      "sourcePrefix": "Kaynak:",
+      "taxonomyTitle": "Öneri sınırı",
+      "taxonomyDescription": "Bu sözleşme AI'nın açıklayabileceği alanı tanımlar; hiçbir çalışma veya yazma aksiyonu açmaz.",
+      "allowedTitle": "İzinli öneriler",
+      "forbiddenTitle": "Kapalı aksiyonlar",
+      "signals": {
+        "connectorJobs": {
+          "label": "Connector job state"
+        },
+        "connectorJobEvents": {
+          "label": "Runtime olay geçmişi"
+        },
+        "credentialState": {
+          "label": "Credential doğrulama durumu"
+        },
+        "importPreview": {
+          "label": "Import preview kanıtı"
+        },
+        "runtimeBlockers": {
+          "label": "Runtime blocker sayısı"
+        }
+      },
+      "sources": {
+        "connectorJobs": "puls_integration.connector_jobs",
+        "connectorJobEvents": "puls_integration.connector_job_events",
+        "credentialState": "puls_integration.erp_connections.credential_state",
+        "importPreview": "puls_integration.import_batches",
+        "runtimeBlockers": "connector_jobs + credential_state"
+      },
+      "disclosures": {
+        "connectorJobs": "Job durumu, domain, retry ve safe error alanlarından türetilir; raw payload içermez.",
+        "connectorJobEvents": "Worker ve queue olayları güvenli event kayıtlarından okunur.",
+        "credentialState": "AI yalnızca doğrulama durumunu görür; credential değeri veya referans değeri görünmez.",
+        "importPreview": "Preview batch sonucu özetlenir; canlı apply veya canonical write yapılmaz.",
+        "runtimeBlockers": "Eksikler safe error, dead-letter ve credential state sinyallerinden hesaplanır."
+      },
+      "allowed": {
+        "explain": "Durumu açıklar",
+        "summarize": "Runtime ve import kanıtlarını özetler",
+        "detect_gap": "Eksik veya riskli noktaları bulur",
+        "recommend_next_step": "Bir sonraki insan onaylı adımı önerir",
+        "prepare_review": "İnceleme özeti hazırlar",
+        "source_disclosure": "Kullandığı kaynağı açıkça belirtir"
+      },
+      "forbidden": {
+        "start_connector_job": "Connector job başlatamaz",
+        "read_credential": "Credential veya secret değeri okuyamaz",
+        "apply_import": "Import apply çalıştıramaz",
+        "write_to_source": "ERP, dosya veya dış kaynağa yazamaz",
+        "mutate_workflow": "İzin, masraf, onay veya çalışan verisini değiştiremez"
+      }
     },
     "actions": {
       "notifyMe": "Beni bilgilendir",

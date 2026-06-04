@@ -486,6 +486,15 @@ PR15.5 adds the first safe runtime-preflight path on top of PR15.4. Admins can q
 | [`20260604140000_puls_integration_runtime_preflight_credential_reference.sql`](../../supabase/migrations/20260604140000_puls_integration_runtime_preflight_credential_reference.sql) | Runtime preflight request/context RPCs and stricter verified credential enqueue gate |
 | [`scripts/verify-15-runtime-preflight-credential-reference.sh`](../../scripts/verify-15-runtime-preflight-credential-reference.sh) | PR15.5 verify gate |
 
+## PR15.6 AI runtime evidence contract
+
+PR15.6 connects connector runtime signals to AI Coach as source-disclosed, safe evidence. `/ai-koc` can now show connector job, worker event, credential state, import preview, and safe activity posture without adding migration, job start, credential readback, import apply, canonical writes, ERP/source writeback, or autonomous AI actions.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_ai_runtime_evidence_contract.md](./15_ai_runtime_evidence_contract.md) | PR15.6 AI-safe runtime evidence contract, allowed/forbidden suggestion taxonomy, and source disclosure rules |
+| [`scripts/verify-15-ai-runtime-evidence-contract.sh`](../../scripts/verify-15-ai-runtime-evidence-contract.sh) | PR15.6 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

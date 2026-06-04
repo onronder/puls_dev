@@ -72,6 +72,15 @@ async function fetchRealAiCoachOverview(userId: string): Promise<AiCoachOverview
     competencyEvaluationCount,
     sourceNamespaceCount,
     inactiveErpConnectionCount,
+    connectorConnectionCount,
+    connectorRuntimeJobCount,
+    connectorRuntimeFailedJobCount,
+    connectorRuntimeDeadLetterJobCount,
+    connectorJobEventCount,
+    connectorCredentialVerifiedCount,
+    connectorCredentialMissingCount,
+    connectorImportPreviewBatchCount,
+    connectorSafeActivityCount,
   ] = await Promise.allSettled([
     pulsCalc()
       .from('setup_readiness_summary')
@@ -211,6 +220,65 @@ async function fetchRealAiCoachOverview(userId: string): Promise<AiCoachOverview
         .eq('tenant_id', tenantId)
         .eq('is_active', false),
     ),
+    countRows(
+      pulsIntegration()
+        .from('erp_connections')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('connector_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('connector_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('status', 'failed'),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('connector_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('status', 'dead_letter'),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('connector_job_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('erp_connections')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('credential_state', 'verified'),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('erp_connections')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('credential_state', 'missing'),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('import_batches')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('status', 'previewed'),
+    ),
+    countRows(
+      pulsIntegration()
+        .from('erp_sync_batches')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+    ),
   ])
 
   const setupData =
@@ -253,6 +321,15 @@ async function fetchRealAiCoachOverview(userId: string): Promise<AiCoachOverview
     inactiveErpConnectionPresent:
       settledCount(inactiveErpConnectionCount, 0) !== null &&
       (settledCount(inactiveErpConnectionCount, 0) ?? 0) >= 1,
+    connectorConnectionCount: settledCount(connectorConnectionCount),
+    connectorRuntimeJobCount: settledCount(connectorRuntimeJobCount),
+    connectorRuntimeFailedJobCount: settledCount(connectorRuntimeFailedJobCount),
+    connectorRuntimeDeadLetterJobCount: settledCount(connectorRuntimeDeadLetterJobCount),
+    connectorJobEventCount: settledCount(connectorJobEventCount),
+    connectorCredentialVerifiedCount: settledCount(connectorCredentialVerifiedCount),
+    connectorCredentialMissingCount: settledCount(connectorCredentialMissingCount),
+    connectorImportPreviewBatchCount: settledCount(connectorImportPreviewBatchCount),
+    connectorSafeActivityCount: settledCount(connectorSafeActivityCount),
     leaveOverviewPresent:
       leaveOverviewRow.status === 'fulfilled' &&
       !leaveOverviewRow.value.error &&

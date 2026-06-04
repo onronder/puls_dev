@@ -210,6 +210,99 @@ function AiKocPage() {
       </section>
 
       <section className="mb-6">
+        <SectionHeader title={t('aiCoachSetup.sections.runtimeEvidence')} />
+        {isLoading ? (
+          <div className="mt-3 grid gap-3 lg:grid-cols-[1.4fr_1fr]">
+            <Skeleton className="h-64 rounded-xl" />
+            <Skeleton className="h-64 rounded-xl" />
+          </div>
+        ) : (
+          <div className="mt-3 grid gap-3 lg:grid-cols-[1.4fr_1fr]">
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">
+                    {t('aiCoachSetup.runtimeEvidence.title')}
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                    {t('aiCoachSetup.runtimeEvidence.description')}
+                  </p>
+                </div>
+                <StatusPill tone="ai">
+                  {data?.runtimeEvidence.sourceDisclosureRequired
+                    ? t('aiCoachSetup.runtimeEvidence.sourceDisclosureRequired')
+                    : t('aiCoachSetup.guardrails.pending')}
+                </StatusPill>
+              </div>
+              <ul className="mt-4 divide-y divide-[var(--color-border)] overflow-hidden rounded-lg border border-[var(--color-border)]">
+                {(data?.runtimeEvidence.signals ?? []).map((signal) => (
+                  <li key={signal.id} className="grid gap-3 p-3 sm:grid-cols-[1fr_auto]">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold">{t(signal.labelKey)}</span>
+                        <ContextDomainStatusPill status={signal.status} />
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                        {t(signal.disclosureKey)}
+                      </p>
+                      <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+                        {t('aiCoachSetup.runtimeEvidence.sourcePrefix')}{' '}
+                        {t(signal.sourceKey)}
+                      </p>
+                    </div>
+                    <span className="text-right text-lg font-semibold tabular-nums">
+                      {formatEvidenceValue(signal.value)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <h2 className="text-sm font-semibold">
+                {t('aiCoachSetup.runtimeEvidence.taxonomyTitle')}
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                {t('aiCoachSetup.runtimeEvidence.taxonomyDescription')}
+              </p>
+              <div className="mt-4">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                  {t('aiCoachSetup.runtimeEvidence.allowedTitle')}
+                </div>
+                <ul className="mt-2 space-y-2">
+                  {(data?.runtimeEvidence.allowedSuggestionActions ?? []).map((action) => (
+                    <li key={action} className="flex items-start gap-2 text-xs">
+                      <Check
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-success)]"
+                        aria-hidden
+                      />
+                      <span>{t(`aiCoachSetup.runtimeEvidence.allowed.${action}`)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="mt-4">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                  {t('aiCoachSetup.runtimeEvidence.forbiddenTitle')}
+                </div>
+                <ul className="mt-2 space-y-2">
+                  {(data?.runtimeEvidence.forbiddenActions ?? []).map((action) => (
+                    <li key={action} className="flex items-start gap-2 text-xs">
+                      <Lock
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-warning)]"
+                        aria-hidden
+                      />
+                      <span>{t(`aiCoachSetup.runtimeEvidence.forbidden.${action}`)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mb-6">
         <SectionHeader title={t('aiCoachSetup.sections.guardrails')} />
         <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
           {isLoading
