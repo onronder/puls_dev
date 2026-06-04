@@ -495,6 +495,17 @@ PR15.6 connects connector runtime signals to AI Coach as source-disclosed, safe 
 | [15_ai_runtime_evidence_contract.md](./15_ai_runtime_evidence_contract.md) | PR15.6 AI-safe runtime evidence contract, allowed/forbidden suggestion taxonomy, and source disclosure rules |
 | [`scripts/verify-15-ai-runtime-evidence-contract.sh`](../../scripts/verify-15-ai-runtime-evidence-contract.sh) | PR15.6 verify gate |
 
+## PR15.7 Railway worker deployment readiness
+
+PR15.7 makes the connector worker operationally deployable on Railway before PR16 data movement begins. It adds config-as-code, a Railway start command, `/health` deployment check, required environment variables, one-replica guidance, and a remote heartbeat/noop smoke runbook. Provider API runtime, credential readback, import apply, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_railway_worker_deployment_readiness.md](./15_railway_worker_deployment_readiness.md) | PR15.7 Railway setup, env contract, remote smoke SQL, and PR16 handoff |
+| [`services/erp-connector/railway.toml`](../../services/erp-connector/railway.toml) | Railway config-as-code for the connector worker service |
+| [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Worker service posture, env contract, and Railway smoke checklist |
+| [`scripts/verify-15-railway-worker-deployment-readiness.sh`](../../scripts/verify-15-railway-worker-deployment-readiness.sh) | PR15.7 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

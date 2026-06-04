@@ -149,11 +149,13 @@ const DEFAULT_RUNTIME_VERSION = '0.2.0-worker-skeleton'
 const WORKER_CONTRACT_VERSION = 'pr15.2-worker-skeleton-v1'
 
 export class ConnectorWorkerRpcError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-  ) {
+  readonly status: number
+  readonly code: string
+
+  constructor(status: number, code: string) {
     super(`Connector worker RPC failed: ${code}`)
+    this.status = status
+    this.code = code
   }
 }
 
