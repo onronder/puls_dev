@@ -236,6 +236,36 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 - AI önerileri source disclosure ile gelir.
 - AI action boundary hâlâ human confirmation gerektirir.
 
+### PR15.7 - Railway Worker Deployment Readiness
+
+**Ürün değeri:** Queue ve worker kodu gerçek bir arka plan servisi olarak çalışabilir hale gelir; PR16 data movement browser'dan değil worker'dan yürür.
+
+**Implementation status:** PR15.7 makes `services/erp-connector` Railway-deployable with config-as-code, `pnpm start:railway`, `/health`, required environment variables, one-replica guidance, and remote smoke proof. Provider API runtime, credential readback, import apply, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
+
+**Kapsam:**
+
+- Railway service root/config path contract
+- `services/erp-connector/railway.toml`
+- Worker start command and healthcheck path
+- Required Railway secret/env list
+- Heartbeat and `noop_health` smoke procedure
+- One-worker guidance until batch lock/idempotency is live
+
+**Kapsam dışı:**
+
+- Canias API runtime
+- CSV / Excel import apply
+- Provider credentials beyond opaque service env boundary
+- Multi-worker horizontal scaling
+- ERP/source writeback
+
+**Doğrulama:**
+
+- Railway healthcheck returns 200 without exposing secrets.
+- `connector_worker_heartbeats` shows the Railway worker id.
+- `noop_health` job is claimed and completed by the Railway worker.
+- Worker safe context contains no credential, raw payload, request, or response body.
+
 ## PR16 - First Controlled Data Movement
 
 PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Öncelik CSV / Excel olmalıdır; çünkü external API belirsizliği olmadan canonical apply, audit, idempotency ve rollback disiplini kanıtlanabilir.
