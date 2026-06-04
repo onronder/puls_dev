@@ -1,17 +1,35 @@
 import { createServer } from 'node:http'
+import { pathToFileURL } from 'node:url'
 
-const port = Number(process.env.PORT ?? 8081)
+import {
+  buildHealthPayload,
+  resolveWorkerConfig,
+  startConnectorWorkerLoop,
+} from './worker.ts'
 
-createServer((_req, res) => {
+const config = resolveWorkerConfig()
+
+export const server = createServer((_req, res) => {
   res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(
-    JSON.stringify({
-      service: 'erp-connector-canias',
-      status: 'ok',
-      provider: 'canias',
-      version: '0.1.0-skeleton',
-    }),
-  )
-}).listen(port, () => {
-  console.log(`erp-connector skeleton listening on :${port}`)
+  res.end(JSON.stringify(buildHealthPayload(config)))
 })
+
+export function startService() {
+  const stopWorker =
+    config.enabled && config.configured ? startConnectorWorkerLoop(config) : () => undefined
+
+  server.listen(config.port, () => {
+    const workerMode =
+      config.enabled && config.configured ? 'worker loop enabled' : 'worker loop disabled'
+    console.log(`erp-connector ${workerMode} listening on :${config.port}`)
+  })
+
+  return () => {
+    stopWorker()
+    server.close()
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  startService()
+}
