@@ -1705,6 +1705,72 @@
         }
       }
     },
+    "applyExecutionContract": {
+      "executionDisabled": "Execution closed",
+      "status": {
+        "not_available": "Execution contract not ready",
+        "needs_approval": "Approval and evidence pending",
+        "contract_ready": "Contract ready, execution closed",
+        "blocked": "Execution contract blocked"
+      },
+      "descriptions": {
+        "not_available": "The apply execution contract cannot be evaluated until a source, dry-run batch, and preview evidence exist.",
+        "needs_approval": "Future apply execution is not contract-ready until preview evidence, human review, and admin approval are complete.",
+        "contract_ready": "Batch, checksum, and admin audit evidence are present. Live apply remains closed until execution job, batch lock, rollback, and notification boundaries open.",
+        "blocked": "Execution contract cannot move forward while preview errors, missing checksum, or closed safety boundaries remain."
+      },
+      "metrics": {
+        "executor": "Executor",
+        "applyRpc": "Apply RPC",
+        "canonicalWrites": "Canonical writes",
+        "sourceWriteback": "Source writeback"
+      },
+      "values": {
+        "futureJob": "Future background job",
+        "closed": "Closed",
+        "disabled": "Disabled",
+        "dryRunOnly": "Dry-run batch only",
+        "notDryRun": "Not dry-run",
+        "checksumReady": "Checksum present",
+        "checksumMissing": "Checksum missing",
+        "approvalRecorded": "Admin approval in audit trail",
+        "approvalMissing": "Admin approval pending",
+        "lockClosed": "Batch lock not open",
+        "rollbackClosed": "Rollback plan closed",
+        "notificationClosed": "Notification flow closed",
+        "executionClosed": "Product does not open apply execution"
+      },
+      "controls": {
+        "dry_run_only": {
+          "label": "Dry-run boundary",
+          "description": "Current batch results are for review and evidence only."
+        },
+        "idempotency_key": {
+          "label": "Idempotency key",
+          "description": "A checksum is required to prevent repeat apply or content drift."
+        },
+        "admin_approval": {
+          "label": "Admin approval",
+          "description": "Admin audit approval must be visible before future apply execution can open."
+        },
+        "batch_lock": {
+          "label": "Batch lock",
+          "description": "Concurrent or repeated execution for the same batch must be prevented."
+        },
+        "rollback_plan": {
+          "label": "Rollback plan",
+          "description": "A correction or rollback path must exist for write-time failure."
+        },
+        "notification_plan": {
+          "label": "Notification plan",
+          "description": "Relevant roles need notification before and after execution."
+        },
+        "execution_boundary": {
+          "label": "Execution boundary",
+          "description": "This product screen does not start apply jobs, connector runtime, or ERP writes."
+        }
+      }
+    },
     "controlledApply": {
       "executionClosed": "Execution closed",
       "boundaryNote": "This plan makes decision gates visible only. This screen does not apply a batch, run a connector, read credentials, or write ERP or canonical records.",

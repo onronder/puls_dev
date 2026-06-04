@@ -404,6 +404,17 @@ PR14.19 makes the MVP approval authority explicit before any canonical apply run
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                           | Renders approval policy inside controlled apply without opening execution     |
 | [`scripts/verify-14-connector-apply-approval-policy.sh`](../../scripts/verify-14-connector-apply-approval-policy.sh) | PR14.19 verify gate                                                           |
 
+## PR14.20 Connector apply execution contract
+
+PR14.20 makes the future apply execution contract explicit while keeping canonical apply, runtime connector calls, credential readback, and ERP/source writes closed. Admin approval can make the contract ready, but execution remains disabled until batch lock, rollback, notification, and runtime job boundaries are implemented.
+
+| Document / artifact                                                                                                | Purpose                                                                               |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| [14_connector_apply_execution_contract.md](./14_connector_apply_execution_contract.md)                             | Closed execution contract, control model, UX debt, and acceptance criteria            |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                     | Builds `applyExecutionContract` from preview, approval, and controlled apply posture  |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                         | Renders the closed execution contract without adding an apply action                  |
+| [`scripts/verify-14-connector-apply-execution-contract.sh`](../../scripts/verify-14-connector-apply-execution-contract.sh) | PR14.20 verify gate                                                           |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

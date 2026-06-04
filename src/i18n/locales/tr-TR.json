@@ -1705,6 +1705,72 @@
         }
       }
     },
+    "applyExecutionContract": {
+      "executionDisabled": "Execution kapalı",
+      "status": {
+        "not_available": "Execution sözleşmesi hazır değil",
+        "needs_approval": "Onay ve kanıt bekleniyor",
+        "contract_ready": "Sözleşme hazır, execution kapalı",
+        "blocked": "Execution sözleşmesi blokeli"
+      },
+      "descriptions": {
+        "not_available": "Kaynak, dry-run batch ve önizleme kanıtı olmadan apply execution sözleşmesi değerlendirilemez.",
+        "needs_approval": "Preview kanıtı, insan incelemesi ve admin onayı tamamlanmadan future apply execution tasarlanmış sayılamaz.",
+        "contract_ready": "Batch, checksum ve admin audit kanıtı mevcut. Yine de execution job, batch lock, rollback ve bildirim sınırları açılmadığı için canlı uygulama kapalıdır.",
+        "blocked": "Önizleme hatası, checksum eksiği veya kapalı güvenlik sınırları varken execution sözleşmesi ilerletilemez."
+      },
+      "metrics": {
+        "executor": "Executor",
+        "applyRpc": "Apply RPC",
+        "canonicalWrites": "Kanonik yazım",
+        "sourceWriteback": "Kaynak yazımı"
+      },
+      "values": {
+        "futureJob": "Gelecek background job",
+        "closed": "Kapalı",
+        "disabled": "Devre dışı",
+        "dryRunOnly": "Sadece dry-run batch",
+        "notDryRun": "Dry-run değil",
+        "checksumReady": "Checksum mevcut",
+        "checksumMissing": "Checksum eksik",
+        "approvalRecorded": "Admin onayı audit kaydında",
+        "approvalMissing": "Admin onayı bekleniyor",
+        "lockClosed": "Batch lock henüz açılmadı",
+        "rollbackClosed": "Rollback planı kapalı",
+        "notificationClosed": "Bildirim akışı kapalı",
+        "executionClosed": "Ürün apply execution açmıyor"
+      },
+      "controls": {
+        "dry_run_only": {
+          "label": "Dry-run sınırı",
+          "description": "Mevcut batch sonuçları yalnızca inceleme ve kanıt içindir."
+        },
+        "idempotency_key": {
+          "label": "Idempotency anahtarı",
+          "description": "Aynı batch'in tekrar veya farklı içerikle uygulanmasını önleyen checksum gerekir."
+        },
+        "admin_approval": {
+          "label": "Admin onayı",
+          "description": "Apply execution ileride açılmadan önce admin audit onayı görünür olmalı."
+        },
+        "batch_lock": {
+          "label": "Batch lock",
+          "description": "Aynı batch için eş zamanlı veya tekrar eden execution engellenmeli."
+        },
+        "rollback_plan": {
+          "label": "Rollback planı",
+          "description": "Yazım sonrası hata için düzeltme veya geri alma yolu tasarlanmalı."
+        },
+        "notification_plan": {
+          "label": "Bildirim planı",
+          "description": "Execution öncesi ve sonrası ilgili rollere bildirim akışı tanımlanmalı."
+        },
+        "execution_boundary": {
+          "label": "Execution boundary",
+          "description": "Bu ürün ekranı apply job, connector runtime veya ERP yazma başlatmaz."
+        }
+      }
+    },
     "controlledApply": {
       "executionClosed": "Çalıştırma kapalı",
       "boundaryNote": "Bu plan yalnızca karar kapılarını görünür kılar. Bu ekrandan batch uygulanmaz, connector çalıştırılmaz, kimlik bilgisi okunmaz ve ERP ya da kanonik kayda yazım yapılmaz.",

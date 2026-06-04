@@ -499,9 +499,48 @@ PR14.19 makes the MVP approval authority explicit before any apply runtime exist
 - No product UI action calls `apply_import_batch`.
 - `controlledApplyPlan.executionOpen` and `controlledApplyPlan.applyRpcExposed` remain false.
 
+## PR14.20 - Connector Apply Execution Contract
+
+### Business Value
+
+PR14.20 makes the future execution contract explicit before any apply runner exists. Admins can see that preview evidence and approval are necessary but not sufficient: execution still requires batch lock, rollback, notification, runtime job ownership, and credential runtime verification before any canonical write path can open.
+
+### Scope
+
+| Area                     | PR14.20 behavior                                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Execution contract       | Adapter exposes `applyExecutionContract` from preview, approval, and controlled apply state.                                  |
+| Safety flags             | Execution, canonical writes, source writeback, credential readback, apply RPC exposure, and safe execution remain false.       |
+| Idempotency              | Source checksum is surfaced as a required execution control.                                                                  |
+| UI                       | `/erp` renders a compact closed execution contract without adding an apply CTA.                                                |
+| Source independence      | The contract applies to Canias, CSV / Excel, custom API, and future connector profiles that produce dry-run preview evidence. |
+| UX debt                  | `/erp` information architecture needs a future tabbed/sub-page refactor after the PR14 connector boundary closes.              |
+
+### Out Of Scope
+
+- Canonical import apply
+- Runtime connector execution
+- Credential capture or readback
+- ERP or external source writeback
+- Batch lock implementation
+- Rollback execution
+- Notification delivery
+
+### Acceptance Criteria
+
+- PR14.20 defines closed apply execution contract, not canonical import apply.
+- `applyExecutionContract.contractVersion` is `pr14.20-closed-apply-contract-v1`.
+- `applyExecutionContract.executionEnabled` remains false.
+- `applyExecutionContract.canonicalWriteEnabled` remains false.
+- `applyExecutionContract.sourceWritebackEnabled` remains false.
+- `applyExecutionContract.credentialReadbackEnabled` remains false.
+- `applyExecutionContract.applyRpcExposed` remains false.
+- `applyExecutionContract.safeToExecute` remains false.
+- No product UI action calls `apply_import_batch`.
+
 ## Roadmap Stop Condition
 
-After PR14.19, PULS should be able to say:
+After PR14.20, PULS should be able to say:
 
 - A tenant can start connector setup from an empty product state.
 - Connector setup state is persisted and role-scoped.
@@ -513,12 +552,14 @@ After PR14.19, PULS should be able to say:
 - Preview results can be marked ready for human review while canonical apply remains closed.
 - Controlled apply gates are visible before any canonical write path is exposed.
 - MVP admin-only approval is explicit and auditable while canonical apply remains closed.
+- Future apply execution has a visible closed contract with safety flags and required controls.
 - Runtime connector execution remains a separate future phase.
 
-## Handoff After PR14.19
+## Handoff After PR14.20
 
 Future work can then move into runtime connector design with safer foundations:
 
+- `/erp` workbench information architecture refactor into tabbed or sub-page sections
 - Connector credential capture and secret storage
 - CSV / Excel import execution
 - Canias API connector runtime

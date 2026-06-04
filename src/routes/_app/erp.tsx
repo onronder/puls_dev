@@ -1316,6 +1316,89 @@ function ErpPage() {
                 </div>
               </div>
 
+              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                      <ClipboardCheck className="h-5 w-5" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                          {t(data.applyExecutionContract.statusLabelKey)}
+                        </h3>
+                        <StatusPill tone={readinessTone(data.applyExecutionContract.readiness)}>
+                          {t(`erp.readinessStatus.${data.applyExecutionContract.readiness}`)}
+                        </StatusPill>
+                        <StatusPill tone="neutral">
+                          {t('erp.applyExecutionContract.executionDisabled')}
+                        </StatusPill>
+                      </div>
+                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                        {t(data.applyExecutionContract.descriptionKey)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-left sm:min-w-80">
+                    <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.applyExecutionContract.metrics.executor')}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                        {t('erp.applyExecutionContract.values.futureJob')}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.applyExecutionContract.metrics.applyRpc')}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                        {t('erp.applyExecutionContract.values.closed')}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.applyExecutionContract.metrics.canonicalWrites')}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                        {t('erp.applyExecutionContract.values.disabled')}
+                      </p>
+                    </div>
+                    <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.applyExecutionContract.metrics.sourceWriteback')}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                        {t('erp.applyExecutionContract.values.disabled')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                  {data.applyExecutionContract.controls.map((control) => (
+                    <div
+                      key={control.id}
+                      className="flex items-start justify-between gap-3 rounded-md bg-[var(--color-bg-card)] px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-[var(--color-text-primary)]">
+                          {t(control.labelKey)}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                          {t(control.descriptionKey)}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-[var(--color-text-secondary)]">
+                          {t(control.valueKey)}
+                        </p>
+                      </div>
+                      <StatusPill tone={readinessTone(control.status)}>
+                        {t(`erp.readinessStatus.${control.status}`)}
+                      </StatusPill>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {data.controlledApplyPlan.gates.map((gate) => (
                   <div
