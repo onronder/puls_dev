@@ -1913,6 +1913,13 @@ function ErpPage() {
                       retrying: data.runtimeQueue.summary.retrying,
                     })}
                   </p>
+                  {data.runtimeQueue.summary.operatorReviewRequired > 0 ? (
+                    <p className="mt-2 text-xs font-semibold text-[var(--color-warning)]">
+                      {t('erp.runtimeQueue.values.operatorReviewSummary', {
+                        count: data.runtimeQueue.summary.operatorReviewRequired,
+                      })}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
@@ -1945,6 +1952,12 @@ function ErpPage() {
                             max: job.maxAttempts,
                           })}
                         </p>
+                        {job.failureClass !== 'none' ? (
+                          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                            {t('erp.runtimeQueue.labels.failureClass')}:{' '}
+                            <span className="font-semibold">{t(job.failureClassLabelKey)}</span>
+                          </p>
+                        ) : null}
                         <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                           {t('erp.runtimeQueue.labels.lease')}:{' '}
                           <span className="font-semibold">{t(job.leaseStatusLabelKey)}</span>
@@ -1952,6 +1965,30 @@ function ErpPage() {
                             ? ` · ${formatDateTime(job.leaseExpiresAt, i18n.language, t('erp.runtimeQueue.values.noTimestamp'))}`
                             : ''}
                         </p>
+                        {job.retryAfterSeconds > 0 || job.nextRetryAt ? (
+                          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                            {t('erp.runtimeQueue.labels.retryWindow')}:{' '}
+                            <span className="font-semibold">
+                              {job.nextRetryAt
+                                ? formatDateTime(
+                                    job.nextRetryAt,
+                                    i18n.language,
+                                    t('erp.runtimeQueue.values.noTimestamp'),
+                                  )
+                                : t('erp.runtimeQueue.values.retryAfterSeconds', {
+                                    seconds: job.retryAfterSeconds,
+                                  })}
+                            </span>
+                          </p>
+                        ) : null}
+                        {job.operatorReviewRequired ? (
+                          <div className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[var(--color-warning-soft)] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                            <span className="font-semibold text-[var(--color-warning)]">
+                              {t('erp.runtimeQueue.labels.operatorReview')}:
+                            </span>{' '}
+                            {t('erp.runtimeQueue.values.operatorReviewRequired')}
+                          </div>
+                        ) : null}
                         {job.safeErrorSummaryKey ? (
                           <div className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[var(--color-warning-soft)] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
                             <span className="font-semibold text-[var(--color-warning)]">

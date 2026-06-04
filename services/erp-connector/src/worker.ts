@@ -24,6 +24,26 @@ export type ConnectorWorkerStatus =
   | 'paused'
   | 'error'
 
+export type ConnectorWorkerFailureClass =
+  | 'none'
+  | 'transient'
+  | 'credential'
+  | 'mapping'
+  | 'provider_limit'
+  | 'provider_unavailable'
+  | 'worker'
+  | 'unsupported'
+  | 'unknown'
+
+export type ConnectorWorkerOperatorSeverity = 'info' | 'warning' | 'error' | 'critical'
+
+export type ConnectorWorkerFailureObservation = {
+  failureClass: ConnectorWorkerFailureClass
+  operatorSeverity: ConnectorWorkerOperatorSeverity
+  operatorReviewRequired: boolean
+  retryAfterSeconds: number
+}
+
 export type ConnectorWorkerConfig = {
   enabled: boolean
   configured: boolean
@@ -124,6 +144,70 @@ function parseBoolean(value: string | undefined, fallback = false) {
 
 function isConnectorJobType(value: string): value is ConnectorJobType {
   return CONNECTOR_JOB_TYPES.includes(value as ConnectorJobType)
+}
+
+export function buildSafeWorkerFailureObservation(
+  safeErrorCode: string | null,
+  nextActionKey: string,
+): ConnectorWorkerFailureObservation {
+  const code = (safeErrorCode ?? '').toLowerCase()
+  const action = nextActionKey.toLowerCase()
+
+  if (!code) {
+    return {
+      failureClass: 'none',
+      operatorSeverity: 'info',
+      operatorReviewRequired: false,
+      retryAfterSeconds: 0,
+    }
+  }
+
+  if (
+    code.includes('unsupported') ||
+    code.includes('not_supported') ||
+    action.includes('provider_runtime_implementation')
+  ) {
+    return {
+      failureClass: 'unsupported',
+      operatorSeverity: 'error',
+      operatorReviewRequired: true,
+      retryAfterSeconds: 0,
+    }
+  }
+
+  if (code.includes('worker') || code.includes('rpc') || code.includes('lease')) {
+    return {
+      failureClass: 'worker',
+      operatorSeverity: 'warning',
+      operatorReviewRequired: false,
+      retryAfterSeconds: 120,
+    }
+  }
+
+  if (code.includes('timeout') || code.includes('network') || code.includes('http_5')) {
+    return {
+      failureClass: 'provider_unavailable',
+      operatorSeverity: 'warning',
+      operatorReviewRequired: false,
+      retryAfterSeconds: 120,
+    }
+  }
+
+  if (code.includes('credential') || code.includes('secret') || code.includes('reference')) {
+    return {
+      failureClass: 'credential',
+      operatorSeverity: 'error',
+      operatorReviewRequired: true,
+      retryAfterSeconds: 0,
+    }
+  }
+
+  return {
+    failureClass: 'unknown',
+    operatorSeverity: 'error',
+    operatorReviewRequired: true,
+    retryAfterSeconds: 0,
+  }
 }
 
 export function parseSupportedJobTypes(value: string | undefined): ConnectorJobType[] {
@@ -234,12 +318,21 @@ export function buildConnectorJobCompletion(job: ClaimedConnectorJob): Connector
     }
   }
 
+  const observation = buildSafeWorkerFailureObservation(
+    'connector_job_type_not_supported_by_worker_skeleton',
+    'wait_for_provider_runtime_implementation',
+  )
+
   return {
     p_status: 'failed',
     p_safe_error_code: 'connector_job_type_not_supported_by_worker_skeleton',
     p_safe_error_context: {
       worker_contract: WORKER_CONTRACT_VERSION,
       job_type: job.job_type,
+      failure_class: observation.failureClass,
+      operator_severity: observation.operatorSeverity,
+      operator_review_required: observation.operatorReviewRequired,
+      retry_after_seconds: observation.retryAfterSeconds,
       external_call: false,
       credential_read: false,
       canonical_write: false,

@@ -1438,12 +1438,18 @@
         "disabled": "Kapalı",
         "workerFuture": "Worker yalnızca heartbeat verdiğinde aktif kabul edilir",
         "queueSummary": "{{queued}} sırada · {{running}} çalışıyor · {{retrying}} tekrar denenecek",
-        "noTimestamp": "Zaman yok"
+        "operatorReviewSummary": "{{count}} iş manuel inceleme bekliyor",
+        "retryAfterSeconds": "{{seconds}} sn sonra",
+        "noTimestamp": "Zaman yok",
+        "operatorReviewRequired": "Bu iş otomatik ilerletilmez; güvenli hata sınıfı bir admin tarafından incelenmeli."
       },
       "labels": {
         "attempts": "Deneme {{attempt}} / {{max}}",
         "workerLastSeen": "Son heartbeat",
-        "lease": "Lease"
+        "lease": "Lease",
+        "failureClass": "Hata sınıfı",
+        "retryWindow": "Retry zamanı",
+        "operatorReview": "Manuel inceleme"
       },
       "workerStatus": {
         "not_configured": "Worker yok",
@@ -1492,11 +1498,30 @@
         "cancelled": "İş iptal edildi; otomatik tekrar başlamaz.",
         "dead_letter": "İş maksimum deneme sınırına ulaştı ve manuel inceleme bekliyor."
       },
+      "failureClasses": {
+        "none": "Hata yok",
+        "transient": "Geçici",
+        "credential": "Kimlik bilgisi",
+        "mapping": "Alan eşleştirme",
+        "provider_limit": "Provider limit",
+        "provider_unavailable": "Provider erişimi",
+        "worker": "Worker",
+        "unsupported": "Desteklenmeyen iş",
+        "unknown": "Bilinmeyen"
+      },
+      "operatorSeverity": {
+        "info": "Bilgi",
+        "warning": "Uyarı",
+        "error": "Hata",
+        "critical": "Kritik"
+      },
       "safeErrors": {
         "connector_job_failed": "İş güvenli hata sınıfıyla durdu.",
         "connector_job_has_blockers": "İş ilerlemeden önce eksik veya riskli maddeler kapatılmalı.",
         "connector_job_lease_expired": "Worker lease süresi dolduğu için iş güvenli recovery akışına alındı.",
-        "connector_job_type_not_supported_by_worker_skeleton": "Bu job tipi skeleton worker tarafından çalıştırılmaz."
+        "connector_job_type_not_supported_by_worker_skeleton": "Bu job tipi skeleton worker tarafından çalıştırılmaz.",
+        "connector_worker_loop_failed": "Worker loop güvenli hata kodu kaydetti.",
+        "connector_worker_not_configured": "Worker runtime ayarı tamamlanmadığı için iş çalıştırılmadı."
       },
       "nextActions": {
         "review_job_status": "İş durumunu ve sıradaki runtime adımını incele.",
@@ -1505,6 +1530,7 @@
         "retry_scheduled": "Planlanan retry zamanını bekle.",
         "worker_contract_ready": "Worker sözleşmesi hazır; provider-specific runtime ayrı geliştirilir.",
         "wait_for_provider_runtime_implementation": "Bu job tipi için provider runtime implementasyonu beklenir.",
+        "wait_for_retry_window": "Planlanan retry zamanı beklenir.",
         "retry_after_worker_recovery": "Lease recovery sonrası planlanan retry zamanını bekle.",
         "review_dead_letter_job": "Maksimum deneme sınırına ulaşan job için manuel inceleme yap."
       }
@@ -1512,7 +1538,8 @@
     "activityTimeline": {
       "actors": {
         "admin": "Admin",
-        "system": "Sistem"
+        "system": "Sistem",
+        "worker": "Worker"
       },
       "labels": {
         "safeDetails": "Güvenli detay:",
@@ -1549,6 +1576,24 @@
         },
         "import_apply_approval_recorded": {
           "title": "Admin onayı audit kaydı olarak işlendi"
+        },
+        "connector_job_succeeded": {
+          "title": "Connector job tamamlandı"
+        },
+        "connector_job_retry_scheduled": {
+          "title": "Connector job retry zamanına alındı"
+        },
+        "connector_job_failed": {
+          "title": "Connector job güvenli hata verdi"
+        },
+        "connector_job_dead_lettered": {
+          "title": "Connector job manuel incelemeye alındı"
+        },
+        "connector_job_cancelled": {
+          "title": "Connector job iptal edildi"
+        },
+        "connector_job_recorded": {
+          "title": "Connector job kaydı oluştu"
         }
       },
       "summaries": {
@@ -1580,6 +1625,15 @@
           "success": "Admin bir önizleme batch için insan incelemesi niyetini kaydetti; kanonik veri yazılmadı.",
           "partial": "İnceleme niyeti açık hazırlık engelleriyle kaydedildi; apply kapalı kalır.",
           "failed": "İnsan incelemesi talebi kaydedilemedi; apply aksiyonu açılmadı."
+        },
+        "connectorJob": {
+          "queued": "İş kuyruğa alındı; worker uygun olduğunda ele alınır.",
+          "running": "İş worker tarafından güvenli lease altında çalışıyor.",
+          "succeeded": "İş tamamlandı ve güvenli job event olarak kaydedildi.",
+          "failed": "İş güvenli hata sınıfıyla durdu; ham provider cevabı gösterilmez.",
+          "retrying": "İş deterministic backoff ile tekrar deneme zamanına alındı.",
+          "cancelled": "İş iptal edildi ve otomatik yeniden başlamaz.",
+          "dead_letter": "İş deneme sınırına ulaştı; admin incelemesi gerektirir."
         }
       },
       "details": {
@@ -1594,14 +1648,22 @@
         "warningChecks": "Uyarı",
         "blockedChecks": "Eksik",
         "recordsSeen": "Okunan kayıt",
-        "recordsFailed": "Hatalı kayıt"
+        "recordsFailed": "Hatalı kayıt",
+        "jobType": "Job tipi",
+        "failureClass": "Hata sınıfı",
+        "retryAfterSeconds": "Retry gecikmesi",
+        "operatorReview": "Manuel inceleme"
       },
       "safeErrors": {
         "setup_preflight_blocked": "Kurulum kontrolü eksik maddeler buldu. Detaylar check adları ve sayaçlarla sınırlı tutulur.",
         "setup_preflight_has_warnings": "Kurulum kontrolü uyarı üretti. Canlı bağlantı öncesi uyarılı maddeler kapatılmalı.",
         "connector_activity_failed": "Aktivite başarısız kaydedildi. Ham provider cevabı veya credential değeri gösterilmez.",
         "connector_activity_has_blockers": "Aktivite bloklayıcı maddeler içeriyor. Güvenli detay yalnızca ürün durum kodlarıyla gösterilir.",
-        "import_preview_has_errors": "Dry-run import batch doğrulama hataları içeriyor. Ham payload gösterilmeden yalnızca güvenli sayaçlar tutulur."
+        "import_preview_has_errors": "Dry-run import batch doğrulama hataları içeriyor. Ham payload gösterilmeden yalnızca güvenli sayaçlar tutulur.",
+        "connector_job_failed": "Connector job güvenli hata sınıfıyla durdu. Ham provider cevabı veya secret gösterilmez.",
+        "connector_job_lease_expired": "Worker lease süresi doldu; iş güvenli recovery modeline taşındı.",
+        "connector_job_type_not_supported_by_worker_skeleton": "Bu job tipi mevcut skeleton worker tarafından çalıştırılmaz.",
+        "connector_worker_loop_failed": "Worker loop güvenli hata kodu kaydetti; detaylar scrub edilmiş durum sinyalleriyle sınırlıdır."
       },
       "nextActions": {
         "review_identity_scope": "Kaynak kimliği ve kayıt eşleştirme kapsamını gözden geçir.",
@@ -1613,7 +1675,14 @@
         "review_import_errors": "Önizleme öncesi import doğrulama hatalarını kapat.",
         "review_activity": "Kaydı incele ve bir sonraki güvenli kurulum adımına geç.",
         "hold_for_apply_design": "Gelecekteki apply tasarımı, onay ve rollback kapıları için bekle.",
-        "hold_for_apply_execution_design": "Apply çalıştırma tasarımı, batch kilidi ve rollback planı tamamlanana kadar bekle."
+        "hold_for_apply_execution_design": "Apply çalıştırma tasarımı, batch kilidi ve rollback planı tamamlanana kadar bekle.",
+        "worker_contract_ready": "Worker sözleşmesi hazır; provider-specific runtime ayrı geliştirilir.",
+        "wait_for_provider_runtime_implementation": "Bu job tipi için provider runtime implementasyonu beklenir.",
+        "wait_for_retry_window": "Planlanan retry zamanı beklenir.",
+        "retry_after_worker_recovery": "Lease recovery sonrası planlanan retry zamanını bekle.",
+        "review_dead_letter_job": "Maksimum deneme sınırına ulaşan job için manuel inceleme yap.",
+        "review_safe_error": "Güvenli hata sınıfını incele; secret veya provider payload gösterilmez.",
+        "review_job_status": "Job durumunu ve sıradaki runtime adımını incele."
       }
     },
     "syncLogMessages": {
