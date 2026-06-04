@@ -1424,7 +1424,7 @@
       },
       "descriptions": {
         "not_available": "A data source must be selected before the queue contract is used.",
-        "contract_ready": "The DB job queue contract is ready. Worker execution and live runtime open in a separate PR.",
+        "contract_ready": "The DB job queue and worker contract are ready. If there is no worker heartbeat, no background work is running.",
         "active": "Safe job records are queued or running. This screen does not execute work.",
         "blocked": "Recent job records include a safe error signal. Details are shown without raw provider data."
       },
@@ -1436,12 +1436,34 @@
       "values": {
         "enabled": "Enabled",
         "disabled": "Disabled",
-        "workerFuture": "Railway worker is the next runtime step",
+        "workerFuture": "The worker is considered active only after heartbeat",
         "queueSummary": "{{queued}} queued · {{running}} running · {{retrying}} retrying",
         "noTimestamp": "No time"
       },
       "labels": {
-        "attempts": "Attempt {{attempt}} / {{max}}"
+        "attempts": "Attempt {{attempt}} / {{max}}",
+        "workerLastSeen": "Last heartbeat",
+        "lease": "Lease"
+      },
+      "workerStatus": {
+        "not_configured": "No worker",
+        "idle": "Ready",
+        "running": "Running",
+        "stale": "Stale heartbeat",
+        "error": "Worker error"
+      },
+      "workerDescriptions": {
+        "not_configured": "No worker heartbeat has been recorded yet. The queue contract is ready, but runtime loop is not visible.",
+        "idle": "The worker checked in recently and is waiting for supported safe job types.",
+        "running": "The worker recently reported a job claim or recovery operation.",
+        "stale": "The worker heartbeat is old. Running jobs should rely on lease recovery.",
+        "error": "The worker reported a safe error code. Secrets and provider payloads are not shown."
+      },
+      "leaseStatus": {
+        "not_started": "Not started",
+        "active": "Active",
+        "expired": "Expired",
+        "released": "Released"
       },
       "jobStatus": {
         "queued": "Queued",
@@ -1472,13 +1494,19 @@
       },
       "safeErrors": {
         "connector_job_failed": "The job stopped with a safe error class.",
-        "connector_job_has_blockers": "Missing or risky items must be closed before the job can continue."
+        "connector_job_has_blockers": "Missing or risky items must be closed before the job can continue.",
+        "connector_job_lease_expired": "The worker lease expired and the job moved into safe recovery.",
+        "connector_job_type_not_supported_by_worker_skeleton": "This job type is not executed by the skeleton worker."
       },
       "nextActions": {
         "review_job_status": "Review the job status and next runtime step.",
         "wait_for_worker_runtime": "No work runs until worker runtime opens.",
         "review_safe_error": "Review the safe error class; secrets and provider payloads are not shown.",
-        "retry_scheduled": "Wait for the scheduled retry time."
+        "retry_scheduled": "Wait for the scheduled retry time.",
+        "worker_contract_ready": "Worker contract is ready; provider-specific runtime is implemented separately.",
+        "wait_for_provider_runtime_implementation": "Wait for provider runtime implementation for this job type.",
+        "retry_after_worker_recovery": "Wait for the scheduled retry after lease recovery.",
+        "review_dead_letter_job": "Manually review the job that reached the maximum attempt boundary."
       }
     },
     "activityTimeline": {

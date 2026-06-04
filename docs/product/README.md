@@ -445,6 +445,17 @@ PR15.1 opens the connector runtime phase by adding a tenant-scoped, idempotent, 
 | [`20260604100000_puls_integration_connector_job_queue.sql`](../../supabase/migrations/20260604100000_puls_integration_connector_job_queue.sql) | DB-backed connector job queue contract |
 | [`scripts/verify-15-connector-job-queue-contract.sh`](../../scripts/verify-15-connector-job-queue-contract.sh) | PR15.1 verify gate |
 
+## PR15.2 Connector worker skeleton
+
+PR15.2 adds the safe worker ownership layer on top of the PR15.1 queue. It introduces worker heartbeat, lease renewal, stale-job recovery, and a source-independent `noop_health` skeleton path. It does not call provider APIs, read credentials, apply imports, write canonical data, or write back to ERP/source systems.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_connector_worker_skeleton.md](./15_connector_worker_skeleton.md) | PR15.2 worker skeleton contract, security boundary, AI-safe evidence, and PR15.3 handoff |
+| [`20260604110000_puls_integration_connector_worker_skeleton.sql`](../../supabase/migrations/20260604110000_puls_integration_connector_worker_skeleton.sql) | Worker heartbeat, lease ownership, and stale-job recovery DB contract |
+| [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Runtime worker skeleton service posture |
+| [`scripts/verify-15-connector-worker-skeleton.sh`](../../scripts/verify-15-connector-worker-skeleton.sh) | PR15.2 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

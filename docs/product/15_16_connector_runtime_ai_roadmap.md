@@ -83,14 +83,18 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 
 **Ürün değeri:** PULS artık arka planda iş çalıştırabilen bir mimariye geçer; ancak gerçek veri yazma hâlâ kapalı kalır.
 
+**Implementation status:** PR15.2 implements the worker heartbeat, lease ownership, stale recovery contract, and source-independent `erp-connector` worker skeleton. Provider API runtime, credential resolution, import apply, and ERP/source writeback remain closed.
+
 **Kapsam:**
 
 - `services/erp-connector` health-only skeleton'dan worker skeleton'a evrilir.
-- Worker DB queue'dan job alır.
-- Güvenli lock mantığı kullanılır.
-- Başlangıçta yalnızca no-op, health, setup-preflight veya dry-run-safe job çalıştırır.
-- Job status ve activity timeline güncellenir.
-- Worker config env üzerinden alınır; secret loglanmaz.
+- Worker DB queue'dan service-role RPC ile job alır.
+- `worker_heartbeat_at` ve `lease_expires_at` ile güvenli lock sahipliği görünür olur.
+- `connector_worker_heartbeats` safe read-model'i worker durumunu gösterir.
+- Başlangıçta yalnızca `noop_health` safe skeleton job çalıştırılır.
+- Unsupported job type provider runtime varmış gibi gösterilmez; safe failure olarak kapanır.
+- Stale running job recovery `retrying` veya `dead_letter` state'e taşır.
+- Worker config env üzerinden alınır; secret loglanmaz ve health payload'a dönmez.
 
 **Kapsam dışı:**
 

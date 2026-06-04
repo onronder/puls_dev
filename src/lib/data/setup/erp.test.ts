@@ -393,11 +393,16 @@ describe('fetchErpOverviewWithMeta', () => {
       nextActionKey: 'erp.activityTimeline.nextActions.review_identity_scope',
     })
     expect(result.data.runtimeQueue).toMatchObject({
-      contractVersion: 'pr15.1-db-job-queue-v1',
+      contractVersion: 'pr15.2-worker-skeleton-v1',
       status: 'contract_ready',
       readiness: 'ready',
       workerEnabled: false,
       executionEnabled: false,
+      worker: {
+        status: 'not_configured',
+        readiness: 'blocked',
+        statusLabelKey: 'erp.runtimeQueue.workerStatus.not_configured',
+      },
       summary: {
         total: 0,
         queued: 0,
@@ -411,9 +416,28 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(result.data)).not.toContain('credentials_ref')
   })
 
-  it('surfaces safe connector job queue summaries without payload or secret readback', async () => {
+  it('surfaces safe connector job queue and worker summaries without payload or secret readback', async () => {
     demoEnabled.mockReturnValue(false)
     setupSeededMocks({
+      connector_worker_heartbeats: {
+        data: [
+          {
+            worker_id: 'worker-a',
+            status: 'idle',
+            runtime_version: '0.2.0-worker-skeleton',
+            supported_job_types: ['noop_health'],
+            last_seen_at: new Date().toISOString(),
+            last_claimed_job_id: 'job-running',
+            safe_error_code: null,
+            safe_context: {
+              provider_api_calls: false,
+              raw_payload: 'must-not-render',
+            },
+            created_at: '2026-06-04T08:00:00.000Z',
+            updated_at: '2026-06-04T08:03:00.000Z',
+          },
+        ],
+      },
       connector_jobs: {
         data: [
           {
@@ -429,6 +453,8 @@ describe('fetchErpOverviewWithMeta', () => {
             finished_at: null,
             locked_at: '2026-06-04T08:01:00.000Z',
             locked_by: 'worker-a',
+            worker_heartbeat_at: '2026-06-04T08:02:00.000Z',
+            lease_expires_at: '2999-06-04T08:06:00.000Z',
             safe_error_code: null,
             safe_error_context: { records_seen: 5 },
             next_action_key: 'wait_for_worker_runtime',
@@ -452,6 +478,8 @@ describe('fetchErpOverviewWithMeta', () => {
             finished_at: '2026-06-04T07:02:00.000Z',
             locked_at: null,
             locked_by: null,
+            worker_heartbeat_at: null,
+            lease_expires_at: null,
             safe_error_code: 'connector_job_failed',
             safe_error_context: { reference_available: false },
             next_action_key: 'review_safe_error',
@@ -471,8 +499,15 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.runtimeQueue).toMatchObject({
       status: 'blocked',
       readiness: 'partial',
-      workerEnabled: false,
+      workerEnabled: true,
       executionEnabled: false,
+      worker: {
+        status: 'idle',
+        readiness: 'ready',
+        workerId: 'worker-a',
+        runtimeVersion: '0.2.0-worker-skeleton',
+        supportedJobTypes: ['noop_health'],
+      },
       summary: {
         total: 2,
         queued: 0,
@@ -492,12 +527,15 @@ describe('fetchErpOverviewWithMeta', () => {
       level: 'info',
       titleKey: 'erp.runtimeQueue.jobTypes.import_preview',
       nextActionKey: 'erp.runtimeQueue.nextActions.wait_for_worker_runtime',
+      leaseStatus: 'active',
+      leaseStatusLabelKey: 'erp.runtimeQueue.leaseStatus.active',
     })
     expect(result.data.runtimeQueue.jobs[1]).toMatchObject({
       status: 'failed',
       level: 'error',
       safeErrorSummaryKey: 'erp.runtimeQueue.safeErrors.connector_job_failed',
       nextActionKey: 'erp.runtimeQueue.nextActions.review_safe_error',
+      leaseStatus: 'released',
     })
 
     const serialized = JSON.stringify(result.data.runtimeQueue)

@@ -1879,16 +1879,24 @@ function ErpPage() {
                   </p>
                 </div>
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                    {t('erp.runtimeQueue.cards.worker')}
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {t('erp.runtimeQueue.cards.worker')}
+                    </p>
+                    <StatusPill tone={readinessTone(data.runtimeQueue.worker.readiness)}>
+                      {t(data.runtimeQueue.worker.statusLabelKey)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                    {t(data.runtimeQueue.worker.descriptionKey)}
                   </p>
-                  <p className="mt-3 font-mono text-2xl font-semibold text-[var(--color-text-primary)]">
-                    {data.runtimeQueue.workerEnabled
-                      ? t('erp.runtimeQueue.values.enabled')
-                      : t('erp.runtimeQueue.values.disabled')}
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                    {t('erp.runtimeQueue.values.workerFuture')}
+                  <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                    {t('erp.runtimeQueue.labels.workerLastSeen')}:{' '}
+                    {formatDateTime(
+                      data.runtimeQueue.worker.lastSeenAt,
+                      i18n.language,
+                      t('erp.runtimeQueue.values.noTimestamp'),
+                    )}
                   </p>
                 </div>
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
@@ -1936,6 +1944,13 @@ function ErpPage() {
                             attempt: job.attemptCount,
                             max: job.maxAttempts,
                           })}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                          {t('erp.runtimeQueue.labels.lease')}:{' '}
+                          <span className="font-semibold">{t(job.leaseStatusLabelKey)}</span>
+                          {job.leaseExpiresAt
+                            ? ` · ${formatDateTime(job.leaseExpiresAt, i18n.language, t('erp.runtimeQueue.values.noTimestamp'))}`
+                            : ''}
                         </p>
                         {job.safeErrorSummaryKey ? (
                           <div className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[var(--color-warning-soft)] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">

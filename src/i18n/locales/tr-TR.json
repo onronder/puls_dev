@@ -1424,7 +1424,7 @@
       },
       "descriptions": {
         "not_available": "Kuyruk sözleşmesi kullanılmadan önce veri kaynağı seçilmeli.",
-        "contract_ready": "DB job queue sözleşmesi hazır. Worker ve gerçek runtime ayrı PR ile açılacak.",
+        "contract_ready": "DB job queue ve worker sözleşmesi hazır. Worker heartbeat yoksa hiçbir iş arka planda çalışmaz.",
         "active": "Kuyrukta veya çalışıyor görünen güvenli job kayıtları var. Bu ekran iş çalıştırmaz.",
         "blocked": "Son job kayıtlarında güvenli hata sinyali var. Detaylar raw provider verisi olmadan gösterilir."
       },
@@ -1436,12 +1436,34 @@
       "values": {
         "enabled": "Açık",
         "disabled": "Kapalı",
-        "workerFuture": "Railway worker sonraki runtime adımıdır",
+        "workerFuture": "Worker yalnızca heartbeat verdiğinde aktif kabul edilir",
         "queueSummary": "{{queued}} sırada · {{running}} çalışıyor · {{retrying}} tekrar denenecek",
         "noTimestamp": "Zaman yok"
       },
       "labels": {
-        "attempts": "Deneme {{attempt}} / {{max}}"
+        "attempts": "Deneme {{attempt}} / {{max}}",
+        "workerLastSeen": "Son heartbeat",
+        "lease": "Lease"
+      },
+      "workerStatus": {
+        "not_configured": "Worker yok",
+        "idle": "Hazır",
+        "running": "Çalışıyor",
+        "stale": "Heartbeat eski",
+        "error": "Worker hatası"
+      },
+      "workerDescriptions": {
+        "not_configured": "Henüz worker heartbeat kaydı yok. Kuyruk sözleşmesi hazırdır ama runtime loop görünür değil.",
+        "idle": "Worker yakın zamanda heartbeat verdi ve desteklediği güvenli job tiplerini bekliyor.",
+        "running": "Worker yakın zamanda job claim veya recovery işlemi bildirdi.",
+        "stale": "Worker heartbeat süresi eski. Çalışan job varsa lease recovery devreye girmeli.",
+        "error": "Worker güvenli hata kodu bildirdi. Secret veya provider payload gösterilmez."
+      },
+      "leaseStatus": {
+        "not_started": "Başlamadı",
+        "active": "Aktif",
+        "expired": "Süresi doldu",
+        "released": "Bırakıldı"
       },
       "jobStatus": {
         "queued": "Sırada",
@@ -1472,13 +1494,19 @@
       },
       "safeErrors": {
         "connector_job_failed": "İş güvenli hata sınıfıyla durdu.",
-        "connector_job_has_blockers": "İş ilerlemeden önce eksik veya riskli maddeler kapatılmalı."
+        "connector_job_has_blockers": "İş ilerlemeden önce eksik veya riskli maddeler kapatılmalı.",
+        "connector_job_lease_expired": "Worker lease süresi dolduğu için iş güvenli recovery akışına alındı.",
+        "connector_job_type_not_supported_by_worker_skeleton": "Bu job tipi skeleton worker tarafından çalıştırılmaz."
       },
       "nextActions": {
         "review_job_status": "İş durumunu ve sıradaki runtime adımını incele.",
         "wait_for_worker_runtime": "Worker runtime açılana kadar iş çalıştırılmaz.",
         "review_safe_error": "Güvenli hata sınıfını incele; secret veya provider payload gösterilmez.",
-        "retry_scheduled": "Planlanan retry zamanını bekle."
+        "retry_scheduled": "Planlanan retry zamanını bekle.",
+        "worker_contract_ready": "Worker sözleşmesi hazır; provider-specific runtime ayrı geliştirilir.",
+        "wait_for_provider_runtime_implementation": "Bu job tipi için provider runtime implementasyonu beklenir.",
+        "retry_after_worker_recovery": "Lease recovery sonrası planlanan retry zamanını bekle.",
+        "review_dead_letter_job": "Maksimum deneme sınırına ulaşan job için manuel inceleme yap."
       }
     },
     "activityTimeline": {

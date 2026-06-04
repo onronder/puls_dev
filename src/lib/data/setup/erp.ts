@@ -618,6 +618,29 @@ export type ConnectorRuntimeQueueStatus =
   | 'active'
   | 'blocked'
 
+export type ConnectorRuntimeWorkerStatus =
+  | 'not_configured'
+  | 'idle'
+  | 'running'
+  | 'stale'
+  | 'error'
+
+export type ConnectorRuntimeLeaseStatus = 'not_started' | 'active' | 'expired' | 'released'
+
+export type ConnectorRuntimeWorker = {
+  status: ConnectorRuntimeWorkerStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  workerId: string | null
+  runtimeVersion: string | null
+  supportedJobTypes: ConnectorRuntimeJobType[]
+  lastSeenAt: string | null
+  lastClaimedJobId: string | null
+  safeErrorCode: string | null
+  safeErrorSummaryKey: string | null
+}
+
 export type ConnectorRuntimeJobSummary = {
   id: string
   jobType: ConnectorRuntimeJobType
@@ -638,6 +661,10 @@ export type ConnectorRuntimeJobSummary = {
   finishedAt: string | null
   lockedAt: string | null
   lockedBy: string | null
+  workerHeartbeatAt: string | null
+  leaseExpiresAt: string | null
+  leaseStatus: ConnectorRuntimeLeaseStatus
+  leaseStatusLabelKey: string
   sourceNamespaceId: string | null
   importBatchId: string | null
   createdAt: string | null
@@ -645,13 +672,14 @@ export type ConnectorRuntimeJobSummary = {
 }
 
 export type ConnectorRuntimeQueue = {
-  contractVersion: 'pr15.1-db-job-queue-v1'
+  contractVersion: 'pr15.2-worker-skeleton-v1'
   status: ConnectorRuntimeQueueStatus
   readiness: ConnectorReadinessStatus
   statusLabelKey: string
   descriptionKey: string
-  workerEnabled: false
+  workerEnabled: boolean
   executionEnabled: false
+  worker: ConnectorRuntimeWorker
   jobs: ConnectorRuntimeJobSummary[]
   summary: {
     total: number
@@ -802,12 +830,27 @@ type ConnectorJobRow = {
   finished_at?: string | null
   locked_at?: string | null
   locked_by?: string | null
+  worker_heartbeat_at?: string | null
+  lease_expires_at?: string | null
   safe_error_code?: string | null
   safe_error_context?: Record<string, unknown> | null
   next_action_key?: string | null
   connection_id?: string | null
   source_namespace_id?: string | null
   import_batch_id?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+type ConnectorWorkerHeartbeatRow = {
+  worker_id?: string | null
+  status?: 'idle' | 'claiming' | 'running' | 'recovering' | 'paused' | 'error' | null
+  runtime_version?: string | null
+  supported_job_types?: ConnectorRuntimeJobType[] | null
+  last_seen_at?: string | null
+  last_claimed_job_id?: string | null
+  safe_error_code?: string | null
+  safe_context?: Record<string, unknown> | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -2684,12 +2727,78 @@ function mapRuntimeJobLevel(status: ConnectorRuntimeJobStatus): ConnectorSyncLog
   return 'info'
 }
 
+function parseTimestampMs(value: string | null | undefined) {
+  if (!value) return null
+  const parsed = Date.parse(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function isTimestampOlderThan(value: string | null | undefined, ageMs: number) {
+  const parsed = parseTimestampMs(value)
+  if (parsed === null) return false
+  return Date.now() - parsed > ageMs
+}
+
+function isTimestampPast(value: string | null | undefined) {
+  const parsed = parseTimestampMs(value)
+  if (parsed === null) return false
+  return parsed < Date.now()
+}
+
+function mapRuntimeLeaseStatus(row: ConnectorJobRow): ConnectorRuntimeLeaseStatus {
+  if (row.status !== 'running') return row.started_at ? 'released' : 'not_started'
+  if (isTimestampPast(row.lease_expires_at)) return 'expired'
+  return 'active'
+}
+
+function mapRuntimeWorkerStatus(
+  row: ConnectorWorkerHeartbeatRow | null,
+): ConnectorRuntimeWorkerStatus {
+  if (!row) return 'not_configured'
+  if (row.status === 'error' || row.safe_error_code) return 'error'
+  if (isTimestampOlderThan(row.last_seen_at, 10 * 60 * 1000)) return 'stale'
+  if (row.status === 'running' || row.status === 'claiming' || row.status === 'recovering') {
+    return 'running'
+  }
+  return 'idle'
+}
+
+function mapRuntimeWorkerReadiness(status: ConnectorRuntimeWorkerStatus): ConnectorReadinessStatus {
+  if (status === 'idle' || status === 'running') return 'ready'
+  if (status === 'stale' || status === 'error') return 'partial'
+  return 'blocked'
+}
+
+function mapConnectorRuntimeWorker(
+  rows: ConnectorWorkerHeartbeatRow[],
+): ConnectorRuntimeWorker {
+  const row = rows[0] ?? null
+  const status = mapRuntimeWorkerStatus(row)
+  const safeErrorCode = row?.safe_error_code?.trim() || null
+
+  return {
+    status,
+    readiness: mapRuntimeWorkerReadiness(status),
+    statusLabelKey: `erp.runtimeQueue.workerStatus.${status}`,
+    descriptionKey: `erp.runtimeQueue.workerDescriptions.${status}`,
+    workerId: row?.worker_id ?? null,
+    runtimeVersion: row?.runtime_version ?? null,
+    supportedJobTypes: row?.supported_job_types ?? [],
+    lastSeenAt: row?.last_seen_at ?? null,
+    lastClaimedJobId: row?.last_claimed_job_id ?? null,
+    safeErrorCode,
+    safeErrorSummaryKey: safeErrorCode ? `erp.runtimeQueue.safeErrors.${safeErrorCode}` : null,
+  }
+}
+
 function mapRuntimeQueueStatus(
   connectorState: ConnectorLifecycleState,
   jobs: ConnectorRuntimeJobSummary[],
+  worker: ConnectorRuntimeWorker,
 ): ConnectorRuntimeQueueStatus {
   if (connectorState !== 'connector_selected') return 'not_available'
   if (jobs.some((job) => job.status === 'failed' || job.status === 'dead_letter')) return 'blocked'
+  if (worker.status === 'stale' || worker.status === 'error') return 'blocked'
   if (jobs.some((job) => job.status === 'queued' || job.status === 'running' || job.status === 'retrying')) {
     return 'active'
   }
@@ -2708,6 +2817,7 @@ function mapConnectorRuntimeJob(row: ConnectorJobRow, index: number): ConnectorR
   const jobType = row.job_type ?? 'noop_health'
   const safeErrorCode = row.safe_error_code?.trim() || null
   const nextAction = row.next_action_key?.trim() || 'review_job_status'
+  const leaseStatus = mapRuntimeLeaseStatus(row)
 
   return {
     id: row.id ?? `connector-job-${index}`,
@@ -2729,6 +2839,10 @@ function mapConnectorRuntimeJob(row: ConnectorJobRow, index: number): ConnectorR
     finishedAt: row.finished_at ?? null,
     lockedAt: row.locked_at ?? null,
     lockedBy: row.locked_by ?? null,
+    workerHeartbeatAt: row.worker_heartbeat_at ?? null,
+    leaseExpiresAt: row.lease_expires_at ?? null,
+    leaseStatus,
+    leaseStatusLabelKey: `erp.runtimeQueue.leaseStatus.${leaseStatus}`,
     sourceNamespaceId: row.source_namespace_id ?? null,
     importBatchId: row.import_batch_id ?? null,
     createdAt: row.created_at ?? null,
@@ -2739,20 +2853,23 @@ function mapConnectorRuntimeJob(row: ConnectorJobRow, index: number): ConnectorR
 function buildConnectorRuntimeQueue({
   connectorState,
   jobs,
+  worker,
 }: {
   connectorState: ConnectorLifecycleState
   jobs: ConnectorRuntimeJobSummary[]
+  worker: ConnectorRuntimeWorker
 }): ConnectorRuntimeQueue {
-  const status = mapRuntimeQueueStatus(connectorState, jobs)
+  const status = mapRuntimeQueueStatus(connectorState, jobs, worker)
 
   return {
-    contractVersion: 'pr15.1-db-job-queue-v1',
+    contractVersion: 'pr15.2-worker-skeleton-v1',
     status,
     readiness: mapRuntimeQueueReadiness(status),
     statusLabelKey: `erp.runtimeQueue.status.${status}`,
     descriptionKey: `erp.runtimeQueue.descriptions.${status}`,
-    workerEnabled: false,
+    workerEnabled: worker.status === 'idle' || worker.status === 'running',
     executionEnabled: false,
+    worker,
     jobs,
     summary: {
       total: jobs.length,
@@ -3403,6 +3520,7 @@ function buildOverview({
   syncLogs,
   activityTimeline,
   runtimeJobs,
+  runtimeWorker,
   credentialBoundary,
   importPreview,
   applyReadiness,
@@ -3434,6 +3552,7 @@ function buildOverview({
   syncLogs: ConnectorSyncLog[]
   activityTimeline: ConnectorActivityEvent[]
   runtimeJobs?: ConnectorRuntimeJobSummary[]
+  runtimeWorker?: ConnectorRuntimeWorker
   credentialBoundary: ConnectorCredentialBoundary
   importPreview?: ConnectorImportPreview
   applyReadiness?: ConnectorApplyReadiness
@@ -3532,6 +3651,9 @@ function buildOverview({
   const runtimeQueue = buildConnectorRuntimeQueue({
     connectorState,
     jobs: runtimeJobs ?? [],
+    worker:
+      runtimeWorker ??
+      mapConnectorRuntimeWorker([]),
   })
 
   return {
@@ -3710,7 +3832,8 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) return emptyErpOverview('no_tenant')
 
-  const [connectionsRow, readinessRow, namespacesRow, identitiesRow] = await Promise.all([
+  const [connectionsRow, readinessRow, namespacesRow, identitiesRow, workerHeartbeatsRow] =
+    await Promise.all([
     pulsIntegration()
       .from('erp_connections')
       .select(
@@ -3762,6 +3885,13 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       .select('source_namespace_id, canonical_table')
       .eq('tenant_id', ctx.tenantId)
       .eq('is_active', true),
+    pulsIntegration()
+      .from('connector_worker_heartbeats')
+      .select(
+        'worker_id, status, runtime_version, supported_job_types, last_seen_at, last_claimed_job_id, safe_error_code, safe_context, created_at, updated_at',
+      )
+      .order('last_seen_at', { ascending: false })
+      .limit(5),
   ])
 
   if (connectionsRow.error) {
@@ -3811,6 +3941,8 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
               'finished_at',
               'locked_at',
               'locked_by',
+              'worker_heartbeat_at',
+              'lease_expires_at',
               'safe_error_code',
               'safe_error_context',
               'next_action_key',
@@ -3843,6 +3975,11 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     ? []
     : ((namespacesRow.data ?? []) as SourceNamespaceRow[])
   const identities = identitiesRow.error ? [] : ((identitiesRow.data ?? []) as EntityIdentityRow[])
+  const runtimeWorker = mapConnectorRuntimeWorker(
+    workerHeartbeatsRow.error
+      ? []
+      : ((workerHeartbeatsRow.data ?? []) as ConnectorWorkerHeartbeatRow[]),
+  )
 
   const identityCounts = identities.reduce<Record<string, number>>((counts, row) => {
     const namespaceId = row.source_namespace_id
@@ -4062,6 +4199,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     })),
     activityTimeline: batches.map((row, index) => buildConnectorActivityEvent(row, index)),
     runtimeJobs,
+    runtimeWorker,
     credentialBoundary,
     importPreview,
     applyReadiness,
