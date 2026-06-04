@@ -1004,6 +1004,9 @@
       },
       "applyReadiness": {
         "reviewRequested": "İnsan incelemesi talebi kaydedildi. Apply akışı kapalı kalır."
+      },
+      "applyApprovalPolicy": {
+        "approvalRecorded": "Admin onayı audit kaydı olarak işlendi. Apply çalıştırma hâlâ kapalı."
       }
     },
     "errors": {
@@ -1017,7 +1020,8 @@
       "domainOwned": "Bu veri alanı zaten başka bir kaynak tarafından yönetiliyor. Mevcut kurulumu yönet veya boş bir veri alanı seç.",
       "permissionDenied": "Bu bağlantıyı kaydetme yetkin yok. Admin rolüyle tekrar dene.",
       "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin.",
-      "applyReviewBlocked": "İnsan incelemesi yalnızca temiz bir import önizlemesi hazırlandıktan sonra talep edilebilir."
+      "applyReviewBlocked": "İnsan incelemesi yalnızca temiz bir import önizlemesi hazırlandıktan sonra talep edilebilir.",
+      "applyApprovalBlocked": "Admin onayı için önce temiz önizleme ve insan incelemesi kaydı gerekir."
     },
     "sections": {
       "lifecycle": "Yaşam döngüsü",
@@ -1436,6 +1440,9 @@
         },
         "import_apply_review_requested": {
           "title": "İnsan incelemesi talebi kaydedildi"
+        },
+        "import_apply_approval_recorded": {
+          "title": "Admin onayı audit kaydı olarak işlendi"
         }
       },
       "summaries": {
@@ -1499,7 +1506,8 @@
         "review_import_preview": "Dry-run önizleme sonuçlarını incele; canlı uygulama ayrı onay gerektirir.",
         "review_import_errors": "Önizleme öncesi import doğrulama hatalarını kapat.",
         "review_activity": "Kaydı incele ve bir sonraki güvenli kurulum adımına geç.",
-        "hold_for_apply_design": "Gelecekteki apply tasarımı, onay ve rollback kapıları için bekle."
+        "hold_for_apply_design": "Gelecekteki apply tasarımı, onay ve rollback kapıları için bekle.",
+        "hold_for_apply_execution_design": "Apply çalıştırma tasarımı, batch kilidi ve rollback planı tamamlanana kadar bekle."
       }
     },
     "syncLogMessages": {
@@ -1653,6 +1661,50 @@
         }
       }
     },
+    "applyApprovalPolicy": {
+      "recording": "Onay kaydediliyor",
+      "adminRequired": "Admin onayı gerekir",
+      "approvalRecordedAt": "Onay zamanı: {{value}}",
+      "approverRoles": {
+        "admin": "Admin onayı"
+      },
+      "status": {
+        "not_available": "Onay politikası hazır değil",
+        "needs_review": "İnceleme bekleniyor",
+        "admin_only": "Admin onayı gerekli",
+        "approval_recorded": "Admin onayı kaydedildi",
+        "blocked": "Onay blokeli"
+      },
+      "descriptions": {
+        "not_available": "Onay politikası için önce kaynak, dry-run batch ve önizleme kanıtı gerekir.",
+        "needs_review": "MVP onay politikası admin-only olarak tanımlıdır; admin onayı kaydı için önce insan incelemesi talebi oluşturulmalı.",
+        "admin_only": "Bu sürümde apply kararı yalnızca admin audit kaydıyla ilerleyebilir. Bu kayıt apply çalıştırmaz.",
+        "approval_recorded": "Admin onayı güvenli audit kaydı olarak işlendi. Apply çalıştırma, batch kilidi ve rollback kapıları hâlâ kapalıdır.",
+        "blocked": "Önizleme hataları veya eksik kanıtlar varken admin onayı kaydedilemez."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada güvenli onay aksiyonu yok."
+        },
+        "run_review_first": {
+          "label": "Önce inceleme kaydet",
+          "description": "Admin onayı öncesinde insan incelemesi audit sinyali gerekir."
+        },
+        "record_admin_approval": {
+          "label": "Admin onayını kaydet",
+          "description": "Önizleme sonucunun admin tarafından kabul edildiğini audit kaydı olarak işle. Bu canlı uygulama değildir."
+        },
+        "approval_recorded": {
+          "label": "Onay kaydedildi",
+          "description": "Admin onayı kaydedildi; apply çalıştırma kapalı kalır."
+        },
+        "resolve_blockers": {
+          "label": "Engelleri kapat",
+          "description": "Onay öncesinde önizleme veya kurulum engellerini kapat."
+        }
+      }
+    },
     "controlledApply": {
       "executionClosed": "Çalıştırma kapalı",
       "boundaryNote": "Bu plan yalnızca karar kapılarını görünür kılar. Bu ekrandan batch uygulanmaz, connector çalıştırılmaz, kimlik bilgisi okunmaz ve ERP ya da kanonik kayda yazım yapılmaz.",
@@ -1661,6 +1713,7 @@
         "needs_preview": "Önizleme bekleniyor",
         "needs_review": "İnsan incelemesi bekleniyor",
         "design_ready": "Tasarım incelemesi hazır",
+        "approval_recorded": "Admin onayı kaydedildi",
         "blocked": "Uygulama planı blokeli"
       },
       "descriptions": {
@@ -1668,6 +1721,7 @@
         "needs_preview": "Satırlar kanonik modele göre önizlenmeden uygulama kapıları güvenilir biçimde değerlendirilemez.",
         "needs_review": "Önizleme hazır. Apply açılmadan önce insan incelemesi, onay politikası ve operasyon kapıları ayrı ayrı tamamlanmalı.",
         "design_ready": "İnsan incelemesi kaydedildi. Bu, canlı yazım izni değil; kontrollü apply tasarımı için kapıların görünür olduğunu gösterir.",
+        "approval_recorded": "Admin onayı audit kaydı olarak işlendi. Bu hâlâ canlı yazım izni değildir; apply için kilit, rollback, bildirim ve runtime kapıları kapalıdır.",
         "blocked": "Önizleme hataları veya eksik kanıtlar varken kontrollü uygulama planı ilerletilemez."
       },
       "metrics": {
@@ -1684,6 +1738,8 @@
         "checksumReady": "Kaynak checksum mevcut",
         "checksumMissing": "Kaynak checksum bekleniyor",
         "policyNeeded": "Onay politikası tanımlanmalı",
+        "policyAdminOnly": "MVP politikası: admin-only",
+        "policyApproved": "Admin onayı audit kaydında",
         "lockNeeded": "Batch kilidi ve tekil çalıştırma sınırı doğrulanmalı",
         "rollbackNeeded": "Geri alma planı tamamlanmalı",
         "auditReady": "Denetim izi mevcut",

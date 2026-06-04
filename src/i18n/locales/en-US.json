@@ -1004,6 +1004,9 @@
       },
       "applyReadiness": {
         "reviewRequested": "Human review request was recorded. Apply execution remains closed."
+      },
+      "applyApprovalPolicy": {
+        "approvalRecorded": "Admin approval was recorded as an audit event. Apply execution remains closed."
       }
     },
     "errors": {
@@ -1017,7 +1020,8 @@
       "domainOwned": "This data domain is already managed by another source. Manage the existing setup or choose an empty domain.",
       "permissionDenied": "You do not have permission to save this connection. Try again with an admin role.",
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment.",
-      "applyReviewBlocked": "Human review can be requested only after a clean import preview is available."
+      "applyReviewBlocked": "Human review can be requested only after a clean import preview is available.",
+      "applyApprovalBlocked": "Admin approval requires a clean preview and a recorded human review first."
     },
     "sections": {
       "lifecycle": "Lifecycle",
@@ -1436,6 +1440,9 @@
         },
         "import_apply_review_requested": {
           "title": "Human review request recorded"
+        },
+        "import_apply_approval_recorded": {
+          "title": "Admin approval recorded as audit"
         }
       },
       "summaries": {
@@ -1499,7 +1506,8 @@
         "review_import_preview": "Review dry-run preview results; live apply requires separate approval.",
         "review_import_errors": "Resolve import validation errors before preview.",
         "review_activity": "Review the record and move to the next safe setup step.",
-        "hold_for_apply_design": "Hold for future apply design, approval, and rollback gates."
+        "hold_for_apply_design": "Hold for future apply design, approval, and rollback gates.",
+        "hold_for_apply_execution_design": "Hold until apply execution design, batch lock, and rollback plan are complete."
       }
     },
     "syncLogMessages": {
@@ -1653,6 +1661,50 @@
         }
       }
     },
+    "applyApprovalPolicy": {
+      "recording": "Recording approval",
+      "adminRequired": "Admin approval required",
+      "approvalRecordedAt": "Approval recorded at: {{value}}",
+      "approverRoles": {
+        "admin": "Admin approval"
+      },
+      "status": {
+        "not_available": "Approval policy not ready",
+        "needs_review": "Review pending",
+        "admin_only": "Admin approval required",
+        "approval_recorded": "Admin approval recorded",
+        "blocked": "Approval blocked"
+      },
+      "descriptions": {
+        "not_available": "Approval policy needs a source, dry-run batch, and preview evidence first.",
+        "needs_review": "The MVP approval policy is admin-only; human review must be recorded before admin approval.",
+        "admin_only": "In this release, the apply decision can move forward only through an admin audit record. This does not execute apply.",
+        "approval_recorded": "Admin approval was saved as a safe audit record. Apply execution, batch lock, and rollback gates remain closed.",
+        "blocked": "Admin approval cannot be recorded while preview errors or missing evidence remain."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no safe approval action at this stage."
+        },
+        "run_review_first": {
+          "label": "Record review first",
+          "description": "Admin approval requires a human review audit signal first."
+        },
+        "record_admin_approval": {
+          "label": "Record admin approval",
+          "description": "Save an audit record that the admin accepts the preview outcome. This is not live apply."
+        },
+        "approval_recorded": {
+          "label": "Approval recorded",
+          "description": "Admin approval is recorded; apply execution remains closed."
+        },
+        "resolve_blockers": {
+          "label": "Resolve blockers",
+          "description": "Close preview or setup blockers before approval."
+        }
+      }
+    },
     "controlledApply": {
       "executionClosed": "Execution closed",
       "boundaryNote": "This plan makes decision gates visible only. This screen does not apply a batch, run a connector, read credentials, or write ERP or canonical records.",
@@ -1661,6 +1713,7 @@
         "needs_preview": "Preview pending",
         "needs_review": "Human review pending",
         "design_ready": "Design review ready",
+        "approval_recorded": "Admin approval recorded",
         "blocked": "Apply plan blocked"
       },
       "descriptions": {
@@ -1668,6 +1721,7 @@
         "needs_preview": "Rows must be previewed against the canonical model before apply gates can be evaluated reliably.",
         "needs_review": "Preview is ready. Human review, approval policy, and operating gates must still be completed before apply can open.",
         "design_ready": "Human review is recorded. This is not live-write permission; it means the controlled apply design gates are visible.",
+        "approval_recorded": "Admin approval is recorded as audit. This is still not live-write permission; apply lock, rollback, notification, and runtime gates remain closed.",
         "blocked": "Preview errors or missing evidence prevent the controlled apply plan from moving forward."
       },
       "metrics": {
@@ -1684,6 +1738,8 @@
         "checksumReady": "Source checksum present",
         "checksumMissing": "Source checksum pending",
         "policyNeeded": "Approval policy must be defined",
+        "policyAdminOnly": "MVP policy: admin-only",
+        "policyApproved": "Admin approval in audit trail",
         "lockNeeded": "Batch lock and single-run boundary must be verified",
         "rollbackNeeded": "Rollback plan must be completed",
         "auditReady": "Audit trail present",

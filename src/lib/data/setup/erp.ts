@@ -407,6 +407,7 @@ export type ConnectorControlledApplyPlanStatus =
   | 'needs_preview'
   | 'needs_review'
   | 'design_ready'
+  | 'approval_recorded'
   | 'blocked'
 
 export type ConnectorControlledApplyGateId =
@@ -444,6 +445,36 @@ export type ConnectorControlledApplyPlan = {
     partialCount: number
     blockedCount: number
   }
+}
+
+export type ConnectorApplyApprovalPolicyStatus =
+  | 'not_available'
+  | 'needs_review'
+  | 'admin_only'
+  | 'approval_recorded'
+  | 'blocked'
+
+export type ConnectorApplyApprovalPolicyAction =
+  | 'none'
+  | 'run_review_first'
+  | 'record_admin_approval'
+  | 'approval_recorded'
+  | 'resolve_blockers'
+
+export type ConnectorApplyApprovalPolicy = {
+  status: ConnectorApplyApprovalPolicyStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  action: ConnectorApplyApprovalPolicyAction
+  actionLabelKey: string
+  actionDescriptionKey: string
+  approverRoleKey: string
+  requestable: boolean
+  safeToApply: false
+  approvalRecordedAt: string | null
+  approvalRecordedByEmployeeId: string | null
+  batchId: string | null
 }
 
 export type ConnectorNamespaceSummary = {
@@ -559,6 +590,7 @@ export type ErpOverview = {
   credentialHandoff: ConnectorCredentialHandoff
   importPreview: ConnectorImportPreview
   applyReadiness: ConnectorApplyReadiness
+  applyApprovalPolicy: ConnectorApplyApprovalPolicy
   controlledApplyPlan: ConnectorControlledApplyPlan
   capabilities: ConnectorSourceCapability[]
   domainOwnership: ConnectorDomainOwnership[]
@@ -731,6 +763,14 @@ export type RequestConnectorApplyReviewResult = {
   safeToApply: false
 }
 
+export type RecordConnectorApplyApprovalResult = {
+  connectionId: string
+  batchId: string
+  status: ConnectorApplyApprovalPolicyStatus
+  approvalRecordedAt: string | null
+  safeToApply: false
+}
+
 export type ConnectorSetupErrorMapping = {
   code:
     | 'missing_tenant'
@@ -741,6 +781,7 @@ export type ConnectorSetupErrorMapping = {
     | 'import_batch_missing'
     | 'import_preview_blocked'
     | 'apply_review_blocked'
+    | 'apply_approval_blocked'
     | 'permission_denied'
     | 'domain_owned'
     | 'save_failed'
@@ -1160,6 +1201,9 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
     }
     if (error.code === 'PULS_CONNECTOR_APPLY_REVIEW_BLOCKED') {
       return { code: 'apply_review_blocked', toastKey: 'erp.errors.applyReviewBlocked' }
+    }
+    if (error.code === 'PULS_CONNECTOR_APPLY_APPROVAL_BLOCKED') {
+      return { code: 'apply_approval_blocked', toastKey: 'erp.errors.applyApprovalBlocked' }
     }
     if (error.code === 'PULS_CONNECTOR_DOMAIN_OWNED') {
       return { code: 'domain_owned', toastKey: 'erp.errors.domainOwned' }
@@ -1895,21 +1939,94 @@ function buildConnectorApplyReadiness({
   }
 }
 
+function buildConnectorApplyApprovalPolicy({
+  connectorState,
+  importPreview,
+  applyReadiness,
+  approvalEvent,
+}: {
+  connectorState: ConnectorLifecycleState
+  importPreview: ConnectorImportPreview
+  applyReadiness: ConnectorApplyReadiness
+  approvalEvent: ErpSyncBatchRow | null
+}): ConnectorApplyApprovalPolicy {
+  const batch = importPreview.batch
+  const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
+  const reviewRecorded = Boolean(applyReadiness.reviewRequestedAt)
+  const approvalRecorded =
+    previewReady &&
+    reviewRecorded &&
+    eventIsAtOrAfter(approvalEvent?.created_at, applyReadiness.reviewRequestedAt)
+      ? approvalEvent
+      : null
+  const hasRowErrors = importPreview.summary.errorCount > 0
+
+  const status: ConnectorApplyApprovalPolicyStatus =
+    connectorState !== 'connector_selected' || !batch?.id
+      ? 'not_available'
+      : hasRowErrors || importPreview.status === 'blocked'
+        ? 'blocked'
+        : !previewReady || !reviewRecorded
+          ? 'needs_review'
+          : approvalRecorded
+            ? 'approval_recorded'
+            : 'admin_only'
+
+  const readiness: ConnectorReadinessStatus =
+    status === 'approval_recorded' || status === 'admin_only'
+      ? 'ready'
+      : status === 'blocked'
+        ? 'blocked'
+        : 'partial'
+  const action: ConnectorApplyApprovalPolicyAction =
+    status === 'approval_recorded'
+      ? 'approval_recorded'
+      : status === 'admin_only'
+        ? 'record_admin_approval'
+        : status === 'blocked'
+          ? 'resolve_blockers'
+          : status === 'needs_review'
+            ? 'run_review_first'
+            : 'none'
+
+  return {
+    status,
+    readiness,
+    statusLabelKey: `erp.applyApprovalPolicy.status.${status}`,
+    descriptionKey: `erp.applyApprovalPolicy.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.applyApprovalPolicy.actions.${action}.label`,
+    actionDescriptionKey: `erp.applyApprovalPolicy.actions.${action}.description`,
+    approverRoleKey: 'erp.applyApprovalPolicy.approverRoles.admin',
+    requestable: status === 'admin_only',
+    safeToApply: false,
+    approvalRecordedAt: approvalRecorded?.created_at ?? null,
+    approvalRecordedByEmployeeId: approvalRecorded?.actor_employee_id ?? null,
+    batchId: batch?.id ?? null,
+  }
+}
+
 function buildConnectorControlledApplyPlan({
   connectorState,
   importPreview,
   credentialBoundary,
   applyReadiness,
+  applyApprovalPolicy,
 }: {
   connectorState: ConnectorLifecycleState
   importPreview: ConnectorImportPreview
   credentialBoundary: ConnectorCredentialBoundary
   applyReadiness: ConnectorApplyReadiness
+  applyApprovalPolicy: ConnectorApplyApprovalPolicy
 }): ConnectorControlledApplyPlan {
   const batch = importPreview.batch
   const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
   const hasRowErrors = importPreview.summary.errorCount > 0
   const reviewRecorded = Boolean(applyReadiness.reviewRequestedAt)
+  const approvalPolicyReady =
+    applyApprovalPolicy.status === 'admin_only' ||
+    applyApprovalPolicy.status === 'approval_recorded'
+  const approvalRecorded = applyApprovalPolicy.status === 'approval_recorded'
   const credentialReady =
     !credentialBoundary.required ||
     credentialBoundary.state === 'verified' ||
@@ -1923,9 +2040,11 @@ function buildConnectorControlledApplyPlan({
         ? 'blocked'
         : !previewReady
           ? 'needs_preview'
-          : reviewRecorded
-            ? 'design_ready'
-            : 'needs_review'
+          : approvalRecorded
+            ? 'approval_recorded'
+            : reviewRecorded
+              ? 'design_ready'
+              : 'needs_review'
 
   const gate = (
     id: ConnectorControlledApplyGateId,
@@ -1963,7 +2082,15 @@ function buildConnectorControlledApplyPlan({
         ? 'erp.controlledApply.values.checksumReady'
         : 'erp.controlledApply.values.checksumMissing',
     ),
-    gate('approval_policy', 'partial', 'erp.controlledApply.values.policyNeeded'),
+    gate(
+      'approval_policy',
+      approvalPolicyReady ? 'ready' : previewReady ? 'partial' : 'blocked',
+      approvalRecorded
+        ? 'erp.controlledApply.values.policyApproved'
+        : approvalPolicyReady
+          ? 'erp.controlledApply.values.policyAdminOnly'
+          : 'erp.controlledApply.values.policyNeeded',
+    ),
     gate('batch_lock', batch?.id ? 'partial' : 'blocked', 'erp.controlledApply.values.lockNeeded'),
     gate('rollback_strategy', 'blocked', 'erp.controlledApply.values.rollbackNeeded'),
     gate(
@@ -2953,6 +3080,7 @@ function buildOverview({
   credentialBoundary,
   importPreview,
   applyReadiness,
+  applyApprovalPolicy,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
   credentialHandoffRequestedByEmployeeId,
@@ -2982,6 +3110,7 @@ function buildOverview({
   credentialBoundary: ConnectorCredentialBoundary
   importPreview?: ConnectorImportPreview
   applyReadiness?: ConnectorApplyReadiness
+  applyApprovalPolicy?: ConnectorApplyApprovalPolicy
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
   credentialHandoffRequestedByEmployeeId?: string | null
@@ -3052,6 +3181,14 @@ function buildOverview({
       credentialBoundary,
       reviewEvent: null,
     })
+  const resolvedApplyApprovalPolicy =
+    applyApprovalPolicy ??
+    buildConnectorApplyApprovalPolicy({
+      connectorState,
+      importPreview: resolvedImportPreview,
+      applyReadiness: resolvedApplyReadiness,
+      approvalEvent: null,
+    })
 
   return {
     connectorState,
@@ -3105,11 +3242,13 @@ function buildOverview({
     credentialHandoff,
     importPreview: resolvedImportPreview,
     applyReadiness: resolvedApplyReadiness,
+    applyApprovalPolicy: resolvedApplyApprovalPolicy,
     controlledApplyPlan: buildConnectorControlledApplyPlan({
       connectorState,
       importPreview: resolvedImportPreview,
       credentialBoundary,
       applyReadiness: resolvedApplyReadiness,
+      applyApprovalPolicy: resolvedApplyApprovalPolicy,
     }),
     capabilities,
     domainOwnership,
@@ -3484,11 +3623,23 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
         row.sync_type === 'import_apply_review' &&
         row.event_key === 'import_apply_review_requested',
     ) ?? null
+  const latestApplyApprovalEvent =
+    batches.find(
+      (row) =>
+        row.sync_type === 'import_apply_review' &&
+        row.event_key === 'import_apply_approval_recorded',
+    ) ?? null
   const applyReadiness = buildConnectorApplyReadiness({
     connectorState: connection ? 'connector_selected' : 'no_connector',
     importPreview,
     credentialBoundary,
     reviewEvent: latestApplyReviewEvent,
+  })
+  const applyApprovalPolicy = buildConnectorApplyApprovalPolicy({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    importPreview,
+    applyReadiness,
+    approvalEvent: latestApplyApprovalEvent,
   })
 
   return buildOverview({
@@ -3537,6 +3688,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     credentialBoundary,
     importPreview,
     applyReadiness,
+    applyApprovalPolicy,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
     credentialHandoffRequestedByEmployeeId:
@@ -4207,6 +4359,124 @@ export async function requestConnectorApplyReview(
     batchId: batch.id,
     status: 'review_requested',
     requestedAt: now,
+    safeToApply: false,
+  }
+}
+
+export async function recordConnectorApplyApproval(
+  userId: string,
+): Promise<RecordConnectorApplyApprovalResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector apply approval requires tenant context',
+      source: 'adapter',
+      operation: 'recordConnectorApplyApproval',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector apply approval requires admin permission',
+      source: 'adapter',
+      operation: 'recordConnectorApplyApproval',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.importPreview.batch
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector apply approval requires a selected source',
+      source: 'adapter',
+      operation: 'recordConnectorApplyApproval',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector apply approval requires a preview batch',
+      source: 'adapter',
+      operation: 'recordConnectorApplyApproval',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (overview.applyApprovalPolicy.status === 'approval_recorded') {
+    return {
+      connectionId,
+      batchId: batch.id,
+      status: 'approval_recorded',
+      approvalRecordedAt: overview.applyApprovalPolicy.approvalRecordedAt,
+      safeToApply: false,
+    }
+  }
+  if (!overview.applyApprovalPolicy.requestable) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_APPLY_APPROVAL_BLOCKED',
+      message: 'Connector apply approval is blocked until preview review is recorded',
+      source: 'adapter',
+      operation: 'recordConnectorApplyApproval',
+      i18nKey: 'erp.errors.applyApprovalBlocked',
+    })
+  }
+
+  const now = new Date().toISOString()
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_apply_review',
+      event_key: 'import_apply_approval_recorded',
+      actor_employee_id: ctx.employeeId,
+      status: 'success',
+      started_at: now,
+      finished_at: now,
+      records_seen: overview.importPreview.summary.rowCount,
+      records_inserted: overview.importPreview.summary.createCount,
+      records_updated: overview.importPreview.summary.updateCount,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        mode: batch.mode,
+        source_namespace_code: batch.sourceNamespaceCode,
+        row_count: overview.importPreview.summary.rowCount,
+        create_count: overview.importPreview.summary.createCount,
+        update_count: overview.importPreview.summary.updateCount,
+        skip_count: overview.importPreview.summary.skipCount,
+        approval_policy: 'admin_only',
+        approval_recorded: true,
+        approver_role: ctx.personaRole,
+        safe_to_apply: false,
+        apply_execution_open: false,
+        canonical_write_open: false,
+      },
+      next_action_key: 'hold_for_apply_execution_design',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'recordConnectorApplyApproval',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch.id,
+    status: 'approval_recorded',
+    approvalRecordedAt: now,
     safeToApply: false,
   }
 }

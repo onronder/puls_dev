@@ -1,6 +1,6 @@
-# PR14.8-PR14.18 Connector Implementation Roadmap
+# PR14.8-PR14.19 Connector Implementation Roadmap
 
-PR14.8 through PR14.18 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow with safe preview, human review, and controlled apply design boundaries. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, credential-boundary, preview, review-readiness, and apply-gate contracts.
+PR14.8 through PR14.19 turns the connector setup surface from a proven empty-state and preflight UI into a persisted, observable, source-independent setup flow with safe preview, human review, controlled apply design, and explicit admin approval policy boundaries. The goal is not to build a Canias-only product. The goal is to make PULS a canonical HR operations layer that can connect to many external data sources through stable mapping, namespace, identity, preflight, credential-boundary, preview, review-readiness, approval-policy, and apply-gate contracts.
 
 ## Product Claim
 
@@ -41,6 +41,7 @@ Runtime sync, credential capture, ERP writes, and destructive operations remain 
 | PR14.16  | Connector import preview dry-run     | Prepared dry-run batches can be validated and classified without apply/import execution.                                                 |
 | PR14.17  | Connector apply readiness boundary   | Preview results can be marked ready for human review while canonical apply remains closed.                                               |
 | PR14.18  | Controlled apply design              | Future apply execution gates are visible before any canonical write path is exposed.                                                     |
+| PR14.19  | Connector apply approval policy      | MVP admin-only approval is explicit and auditable while canonical apply remains closed.                                                  |
 
 ## PR14.8 - Connector Setup Persistence
 
@@ -461,9 +462,46 @@ PR14.18 makes the future apply path understandable before it becomes executable.
 - Controlled apply gates are source-independent and visible in `/erp`.
 - Tests prove clean preview and review-requested states still keep execution closed.
 
+## PR14.19 - Connector Apply Approval Policy
+
+### Business Value
+
+PR14.19 makes the MVP approval authority explicit before any apply runtime exists. Admin approval is represented as a source-independent product policy and recorded as an audit event, not as canonical import apply.
+
+### Scope
+
+| Area                | PR14.19 behavior                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Approval policy     | Adapter exposes `applyApprovalPolicy` with admin-only MVP policy, requestable state, recorded state, and `safeToApply: false`. |
+| Admin audit action  | Admin can record approval only after preview is clean and human review is recorded.                                            |
+| Controlled gates    | `approval_policy` gate becomes ready when the admin-only policy is defined or approval is recorded.                            |
+| Activity history    | Approval writes safe `import_apply_approval_recorded` history with counters and no payload or credential detail.               |
+| UI                  | `/erp` shows the approval policy card inside controlled apply without opening apply execution.                                 |
+
+### Out Of Scope
+
+- Canonical import apply
+- Runtime connector execution
+- Credential capture or readback
+- ERP or external source writeback
+- Batch lock implementation
+- Rollback execution
+- Notification delivery
+
+### Acceptance Criteria
+
+- PR14.19 defines admin approval policy, not canonical import apply.
+- Admin-only approval is explicit product state, not hidden copy.
+- Approval can be recorded only after human review audit exists.
+- Approval creates a safe activity event.
+- Non-admin users cannot record approval.
+- `applyApprovalPolicy.safeToApply` remains false.
+- No product UI action calls `apply_import_batch`.
+- `controlledApplyPlan.executionOpen` and `controlledApplyPlan.applyRpcExposed` remain false.
+
 ## Roadmap Stop Condition
 
-After PR14.18, PULS should be able to say:
+After PR14.19, PULS should be able to say:
 
 - A tenant can start connector setup from an empty product state.
 - Connector setup state is persisted and role-scoped.
@@ -474,9 +512,10 @@ After PR14.18, PULS should be able to say:
 - Prepared dry-run import batches can be previewed safely before any apply/runtime work.
 - Preview results can be marked ready for human review while canonical apply remains closed.
 - Controlled apply gates are visible before any canonical write path is exposed.
+- MVP admin-only approval is explicit and auditable while canonical apply remains closed.
 - Runtime connector execution remains a separate future phase.
 
-## Handoff After PR14.18
+## Handoff After PR14.19
 
 Future work can then move into runtime connector design with safer foundations:
 
