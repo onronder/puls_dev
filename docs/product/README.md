@@ -476,6 +476,16 @@ PR15.4 adds the source-independent secure credential boundary required before ru
 | [`20260604130000_puls_integration_secure_credential_runtime_boundary.sql`](../../supabase/migrations/20260604130000_puls_integration_secure_credential_runtime_boundary.sql) | Service-role-only credential reference RPCs, safe credential events, and runtime-preflight blocker |
 | [`scripts/verify-15-secure-credential-runtime-boundary.sh`](../../scripts/verify-15-secure-credential-runtime-boundary.sh) | PR15.4 verify gate |
 
+## PR15.5 Runtime preflight with credential reference
+
+PR15.5 adds the first safe runtime-preflight path on top of PR15.4. Admins can queue a `connector_runtime_preflight` job only when required credentials are verified; the worker reads safe setup/credential context and records a safe job result. Provider API calls, credential readback, import apply, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_connector_runtime_preflight_credential_reference.md](./15_connector_runtime_preflight_credential_reference.md) | PR15.5 runtime preflight request, verified credential gate, worker safe context, and AI evidence boundary |
+| [`20260604140000_puls_integration_runtime_preflight_credential_reference.sql`](../../supabase/migrations/20260604140000_puls_integration_runtime_preflight_credential_reference.sql) | Runtime preflight request/context RPCs and stricter verified credential enqueue gate |
+| [`scripts/verify-15-runtime-preflight-credential-reference.sh`](../../scripts/verify-15-runtime-preflight-credential-reference.sh) | PR15.5 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

@@ -1016,6 +1016,9 @@
       },
       "applyApprovalPolicy": {
         "approvalRecorded": "Admin onayı audit kaydı olarak işlendi. Apply çalıştırma hâlâ kapalı."
+      },
+      "runtimePreflight": {
+        "queued": "Runtime ön kontrol job'ı güvenli kuyruğa alındı. Worker sonucu activity içinde görünecek."
       }
     },
     "errors": {
@@ -1030,7 +1033,8 @@
       "permissionDenied": "Bu bağlantıyı kaydetme yetkin yok. Admin rolüyle tekrar dene.",
       "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin.",
       "applyReviewBlocked": "İnsan incelemesi yalnızca temiz bir import önizlemesi hazırlandıktan sonra talep edilebilir.",
-      "applyApprovalBlocked": "Admin onayı için önce temiz önizleme ve insan incelemesi kaydı gerekir."
+      "applyApprovalBlocked": "Admin onayı için önce temiz önizleme ve insan incelemesi kaydı gerekir.",
+      "runtimePreflightBlocked": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
     },
     "sections": {
       "lifecycle": "Yaşam döngüsü",
@@ -1521,18 +1525,44 @@
         "connector_job_lease_expired": "Worker lease süresi dolduğu için iş güvenli recovery akışına alındı.",
         "connector_job_type_not_supported_by_worker_skeleton": "Bu job tipi skeleton worker tarafından çalıştırılmaz.",
         "connector_worker_loop_failed": "Worker loop güvenli hata kodu kaydetti.",
-        "connector_worker_not_configured": "Worker runtime ayarı tamamlanmadığı için iş çalıştırılmadı."
+        "connector_worker_not_configured": "Worker runtime ayarı tamamlanmadığı için iş çalıştırılmadı.",
+        "runtime_preflight_context_missing": "Worker runtime ön kontrol için güvenli bağlantı bağlamını okuyamadı.",
+        "runtime_preflight_credential_not_verified": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
       },
       "nextActions": {
         "review_job_status": "İş durumunu ve sıradaki runtime adımını incele.",
+        "wait_for_worker_runtime_preflight": "Runtime ön kontrol job'ının worker tarafından ele alınmasını bekle.",
         "wait_for_worker_runtime": "Worker runtime açılana kadar iş çalıştırılmaz.",
         "review_safe_error": "Güvenli hata sınıfını incele; secret veya provider payload gösterilmez.",
         "retry_scheduled": "Planlanan retry zamanını bekle.",
         "worker_contract_ready": "Worker sözleşmesi hazır; provider-specific runtime ayrı geliştirilir.",
+        "run_credential_verification": "Önce güvenli referans doğrulamasını çalıştır.",
+        "review_runtime_preflight_context": "Runtime ön kontrol bağlamını ve güvenli hata kodunu incele.",
+        "review_runtime_preflight_result": "Runtime ön kontrol sonucunu incele.",
+        "provider_runtime_implementation_required": "Provider-specific runtime implementasyonu başlamadan canlı API çağrısı yapılmaz.",
         "wait_for_provider_runtime_implementation": "Bu job tipi için provider runtime implementasyonu beklenir.",
         "wait_for_retry_window": "Planlanan retry zamanı beklenir.",
         "retry_after_worker_recovery": "Lease recovery sonrası planlanan retry zamanını bekle.",
         "review_dead_letter_job": "Maksimum deneme sınırına ulaşan job için manuel inceleme yap."
+      }
+    },
+    "runtimePreflight": {
+      "title": "Runtime ön kontrol",
+      "description": "Worker canlı provider çağrısı veya veri aktarımı başlatmadan, güvenli referans ve kurulum bağlamını server-side doğrular.",
+      "status": {
+        "ready": "Kuyruğa alınabilir",
+        "blocked": "Bekliyor"
+      },
+      "hints": {
+        "ready": "Credential referansı doğrulanmış ve worker bu job tipini destekliyor.",
+        "credentialRequired": "Önce güvenli referans doğrulanmalı; secret değeri bu ekranda toplanmaz veya gösterilmez.",
+        "workerRequired": "Worker heartbeat içinde runtime preflight desteği görünmeden job başlatılmaz."
+      },
+      "actions": {
+        "request": "Runtime ön kontrol iste",
+        "requesting": "Kuyruğa alınıyor",
+        "blocked": "Ön koşullar bekleniyor",
+        "adminRequired": "Admin yetkisi gerekir"
       }
     },
     "activityTimeline": {

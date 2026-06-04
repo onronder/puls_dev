@@ -41,6 +41,7 @@ import {
   recordConnectorApplyApproval,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
+  requestConnectorRuntimePreflight,
   runConnectorImportPreview,
   runConnectorPreflight,
   startConnectorSetup,
@@ -306,6 +307,25 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestRuntimePreflightMutation = useMutation({
+    mutationFn: () => requestConnectorRuntimePreflight(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.runtimePreflight.queued'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      showWorkbenchTab('activity', 'erp-runtime-queue')
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_runtime',
+        operation: 'requestConnectorRuntimePreflight',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
 
   const data = erpResult?.data
   const hasSelectedConnector = data?.connectorState === 'connector_selected'
@@ -317,6 +337,12 @@ function ErpPage() {
   const canRequestApplyReview = data?.applyReadiness.requestable === true && canManageConnectors
   const canRecordApplyApproval =
     data?.applyApprovalPolicy.requestable === true && canManageConnectors
+  const runtimePreflightCredentialReady = data?.credentialBoundary.status === 'ready'
+  const runtimePreflightWorkerReady =
+    data?.runtimeQueue.worker.supportedJobTypes.includes('connector_runtime_preflight') === true &&
+    (data.runtimeQueue.worker.status === 'idle' || data.runtimeQueue.worker.status === 'running')
+  const canRequestRuntimePreflight =
+    canManageConnectors && runtimePreflightCredentialReady === true && runtimePreflightWorkerReady
   const selectedProvider =
     selectedProviderId == null
       ? null
@@ -1866,11 +1892,62 @@ function ErpPage() {
           </TabsContent>
 
           <TabsContent value="activity" className="mt-6">
-            <section className="space-y-6">
+            <section id="erp-runtime-queue" className="space-y-6">
               <SectionHeader
                 title={t('erp.sections.runtimeQueue')}
                 description={t('erp.sections.runtimeQueueDescription')}
               />
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-bg-elevated)] text-[var(--color-primary)]">
+                      <SearchCheck className="h-5 w-5" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {t('erp.runtimePreflight.title')}
+                        </p>
+                        <StatusPill
+                          tone={canRequestRuntimePreflight ? 'success' : 'warning'}
+                        >
+                          {canRequestRuntimePreflight
+                            ? t('erp.runtimePreflight.status.ready')
+                            : t('erp.runtimePreflight.status.blocked')}
+                        </StatusPill>
+                      </div>
+                      <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                        {t('erp.runtimePreflight.description')}
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                        {runtimePreflightCredentialReady
+                          ? runtimePreflightWorkerReady
+                            ? t('erp.runtimePreflight.hints.ready')
+                            : t('erp.runtimePreflight.hints.workerRequired')
+                          : t('erp.runtimePreflight.hints.credentialRequired')}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full md:w-auto"
+                    disabled={
+                      !canRequestRuntimePreflight || requestRuntimePreflightMutation.isPending
+                    }
+                    onClick={() => void requestRuntimePreflightMutation.mutateAsync()}
+                  >
+                    <SearchCheck className="h-4 w-4" />
+                    {!canManageConnectors
+                      ? t('erp.runtimePreflight.actions.adminRequired')
+                      : requestRuntimePreflightMutation.isPending
+                        ? t('erp.runtimePreflight.actions.requesting')
+                        : canRequestRuntimePreflight
+                          ? t('erp.runtimePreflight.actions.request')
+                          : t('erp.runtimePreflight.actions.blocked')}
+                  </Button>
+                </div>
+              </div>
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
                   <div className="flex items-center justify-between gap-3">
