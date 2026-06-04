@@ -660,6 +660,32 @@ describe('fetchErpOverviewWithMeta', () => {
       safeToApply: false,
       batchId: 'batch-import-preview',
     })
+    expect(result.data.applyExecutionContract).toMatchObject({
+      status: 'needs_approval',
+      readiness: 'partial',
+      contractVersion: 'pr14.20-closed-apply-contract-v1',
+      executionEnabled: false,
+      canonicalWriteEnabled: false,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      applyRpcExposed: false,
+      safeToExecute: false,
+      executorMode: 'future_background_job',
+      batchId: 'batch-import-preview',
+      sourceChecksum: 'pr14_16_connector_preview_proof_v1',
+      sourceNamespaceCode: 'CANIAS',
+    })
+    expect(
+      result.data.applyExecutionContract.controls.find((control) => control.id === 'admin_approval'),
+    ).toMatchObject({
+      status: 'partial',
+      valueKey: 'erp.applyExecutionContract.values.approvalMissing',
+    })
+    expect(
+      result.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'execution_boundary',
+      ),
+    ).toMatchObject({ status: 'blocked' })
     expect(
       result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'human_review'),
     ).toMatchObject({ status: 'ready' })
@@ -764,6 +790,35 @@ describe('fetchErpOverviewWithMeta', () => {
       executionOpen: false,
       applyRpcExposed: false,
     })
+    expect(result.data.applyExecutionContract).toMatchObject({
+      status: 'contract_ready',
+      readiness: 'partial',
+      executionEnabled: false,
+      canonicalWriteEnabled: false,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      applyRpcExposed: false,
+      safeToExecute: false,
+      executorMode: 'future_background_job',
+      batchId: 'batch-import-preview',
+      sourceChecksum: 'pr14_16_connector_preview_proof_v1',
+      sourceNamespaceCode: 'CANIAS',
+    })
+    expect(
+      result.data.applyExecutionContract.controls.find((control) => control.id === 'admin_approval'),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.applyExecutionContract.values.approvalRecorded',
+    })
+    expect(
+      result.data.applyExecutionContract.controls.find((control) => control.id === 'idempotency_key'),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.applyExecutionContract.values.checksumReady',
+    })
+    expect(
+      result.data.applyExecutionContract.controls.find((control) => control.id === 'batch_lock'),
+    ).toMatchObject({ status: 'blocked' })
     expect(
       result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'approval_policy'),
     ).toMatchObject({
@@ -809,6 +864,18 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.lifecycle).toMatchObject({
       stage: 'source_selection',
       status: 'partial',
+    })
+    expect(result.data.applyExecutionContract).toMatchObject({
+      status: 'not_available',
+      executionEnabled: false,
+      canonicalWriteEnabled: false,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      applyRpcExposed: false,
+      safeToExecute: false,
+      batchId: null,
+      sourceChecksum: null,
+      sourceNamespaceCode: null,
     })
     expect(result.data.domainOwnership.every((domain) => domain.status === 'available')).toBe(true)
     expect(result.data.setupSteps.map((step) => step.status)).toEqual([

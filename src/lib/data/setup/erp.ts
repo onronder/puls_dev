@@ -447,6 +447,53 @@ export type ConnectorControlledApplyPlan = {
   }
 }
 
+export type ConnectorApplyExecutionContractStatus =
+  | 'not_available'
+  | 'needs_approval'
+  | 'contract_ready'
+  | 'blocked'
+
+export type ConnectorApplyExecutionControlId =
+  | 'dry_run_only'
+  | 'idempotency_key'
+  | 'admin_approval'
+  | 'batch_lock'
+  | 'rollback_plan'
+  | 'notification_plan'
+  | 'execution_boundary'
+
+export type ConnectorApplyExecutionControl = {
+  id: ConnectorApplyExecutionControlId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+  valueKey: string
+}
+
+export type ConnectorApplyExecutionContract = {
+  status: ConnectorApplyExecutionContractStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  contractVersion: 'pr14.20-closed-apply-contract-v1'
+  executionEnabled: false
+  canonicalWriteEnabled: false
+  sourceWritebackEnabled: false
+  credentialReadbackEnabled: false
+  applyRpcExposed: false
+  safeToExecute: false
+  executorMode: 'future_background_job'
+  batchId: string | null
+  sourceChecksum: string | null
+  sourceNamespaceCode: string | null
+  controls: ConnectorApplyExecutionControl[]
+  summary: {
+    readyCount: number
+    partialCount: number
+    blockedCount: number
+  }
+}
+
 export type ConnectorApplyApprovalPolicyStatus =
   | 'not_available'
   | 'needs_review'
@@ -592,6 +639,7 @@ export type ErpOverview = {
   applyReadiness: ConnectorApplyReadiness
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
   controlledApplyPlan: ConnectorControlledApplyPlan
+  applyExecutionContract: ConnectorApplyExecutionContract
   capabilities: ConnectorSourceCapability[]
   domainOwnership: ConnectorDomainOwnership[]
   canonicalClasses: ConnectorCanonicalDataClass[]
@@ -2129,6 +2177,100 @@ function buildConnectorControlledApplyPlan({
   }
 }
 
+function buildConnectorApplyExecutionContract({
+  connectorState,
+  importPreview,
+  applyApprovalPolicy,
+  controlledApplyPlan,
+}: {
+  connectorState: ConnectorLifecycleState
+  importPreview: ConnectorImportPreview
+  applyApprovalPolicy: ConnectorApplyApprovalPolicy
+  controlledApplyPlan: ConnectorControlledApplyPlan
+}): ConnectorApplyExecutionContract {
+  const batch = importPreview.batch
+  const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
+  const approvalRecorded = applyApprovalPolicy.status === 'approval_recorded'
+  const hasChecksum = Boolean(batch?.sourceChecksum)
+  const hasRowErrors = importPreview.summary.errorCount > 0
+
+  const status: ConnectorApplyExecutionContractStatus =
+    connectorState !== 'connector_selected' || !batch?.id
+      ? 'not_available'
+      : hasRowErrors ||
+          !hasChecksum ||
+          importPreview.status === 'blocked' ||
+          controlledApplyPlan.status === 'blocked'
+        ? 'blocked'
+        : !previewReady || !approvalRecorded
+          ? 'needs_approval'
+          : 'contract_ready'
+
+  const control = (
+    id: ConnectorApplyExecutionControlId,
+    statusValue: ConnectorReadinessStatus,
+    valueKey: string,
+  ): ConnectorApplyExecutionControl => ({
+    id,
+    labelKey: `erp.applyExecutionContract.controls.${id}.label`,
+    descriptionKey: `erp.applyExecutionContract.controls.${id}.description`,
+    status: statusValue,
+    valueKey,
+  })
+
+  const controls: ConnectorApplyExecutionControl[] = [
+    control(
+      'dry_run_only',
+      batch?.mode === 'dry_run' ? 'ready' : 'blocked',
+      batch?.mode === 'dry_run'
+        ? 'erp.applyExecutionContract.values.dryRunOnly'
+        : 'erp.applyExecutionContract.values.notDryRun',
+    ),
+    control(
+      'idempotency_key',
+      hasChecksum ? 'ready' : 'blocked',
+      hasChecksum
+        ? 'erp.applyExecutionContract.values.checksumReady'
+        : 'erp.applyExecutionContract.values.checksumMissing',
+    ),
+    control(
+      'admin_approval',
+      approvalRecorded ? 'ready' : previewReady ? 'partial' : 'blocked',
+      approvalRecorded
+        ? 'erp.applyExecutionContract.values.approvalRecorded'
+        : 'erp.applyExecutionContract.values.approvalMissing',
+    ),
+    control('batch_lock', 'blocked', 'erp.applyExecutionContract.values.lockClosed'),
+    control('rollback_plan', 'blocked', 'erp.applyExecutionContract.values.rollbackClosed'),
+    control('notification_plan', 'blocked', 'erp.applyExecutionContract.values.notificationClosed'),
+    control('execution_boundary', 'blocked', 'erp.applyExecutionContract.values.executionClosed'),
+  ]
+
+  return {
+    status,
+    readiness: status === 'blocked' ? 'blocked' : 'partial',
+    statusLabelKey: `erp.applyExecutionContract.status.${status}`,
+    descriptionKey: `erp.applyExecutionContract.descriptions.${status}`,
+    contractVersion: 'pr14.20-closed-apply-contract-v1',
+    executionEnabled: false,
+    canonicalWriteEnabled: false,
+    sourceWritebackEnabled: false,
+    credentialReadbackEnabled: false,
+    applyRpcExposed: false,
+    safeToExecute: false,
+    executorMode: 'future_background_job',
+    batchId: batch?.id ?? null,
+    sourceChecksum: batch?.sourceChecksum ?? null,
+    sourceNamespaceCode: batch?.sourceNamespaceCode ?? null,
+    controls,
+    summary: {
+      readyCount: controls.filter((item) => item.status === 'ready').length,
+      partialCount: controls.filter((item) => item.status === 'partial').length,
+      blockedCount: controls.filter((item) => item.status === 'blocked').length,
+    },
+  }
+}
+
 function emptyErpOverview(connectorState: ConnectorLifecycleState = 'no_tenant'): ErpOverview {
   const credentialBoundary = buildConnectorCredentialBoundary({
     hasConnection: false,
@@ -3189,6 +3331,19 @@ function buildOverview({
       applyReadiness: resolvedApplyReadiness,
       approvalEvent: null,
     })
+  const controlledApplyPlan = buildConnectorControlledApplyPlan({
+    connectorState,
+    importPreview: resolvedImportPreview,
+    credentialBoundary,
+    applyReadiness: resolvedApplyReadiness,
+    applyApprovalPolicy: resolvedApplyApprovalPolicy,
+  })
+  const applyExecutionContract = buildConnectorApplyExecutionContract({
+    connectorState,
+    importPreview: resolvedImportPreview,
+    applyApprovalPolicy: resolvedApplyApprovalPolicy,
+    controlledApplyPlan,
+  })
 
   return {
     connectorState,
@@ -3243,13 +3398,8 @@ function buildOverview({
     importPreview: resolvedImportPreview,
     applyReadiness: resolvedApplyReadiness,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
-    controlledApplyPlan: buildConnectorControlledApplyPlan({
-      connectorState,
-      importPreview: resolvedImportPreview,
-      credentialBoundary,
-      applyReadiness: resolvedApplyReadiness,
-      applyApprovalPolicy: resolvedApplyApprovalPolicy,
-    }),
+    controlledApplyPlan,
+    applyExecutionContract,
     capabilities,
     domainOwnership,
     canonicalClasses,
