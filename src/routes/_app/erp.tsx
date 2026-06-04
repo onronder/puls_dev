@@ -124,9 +124,16 @@ function SyncLogIcon({ level }: { level: ConnectorSyncLevel }) {
 function formatActivityDetailValue(
   value: ConnectorActivityEvent['detailItems'][number]['value'],
   translate: (key: string) => string,
+  labelKey?: string,
 ) {
   if (typeof value === 'boolean') {
     return translate(value ? 'erp.activityTimeline.values.yes' : 'erp.activityTimeline.values.no')
+  }
+  if (labelKey === 'erp.activityTimeline.details.authMode') {
+    return translate(`erp.authModes.${value}`)
+  }
+  if (labelKey === 'erp.activityTimeline.details.credentialState') {
+    return translate(`erp.credentialBoundary.states.${value}`)
   }
   return String(value)
 }
@@ -2061,7 +2068,7 @@ function ErpPage() {
                                   {t(item.labelKey)}
                                 </dt>
                                 <dd className="mt-1 font-mono text-sm text-[var(--color-text-primary)]">
-                                  {formatActivityDetailValue(item.value, t)}
+                                  {formatActivityDetailValue(item.value, t, item.labelKey)}
                                 </dd>
                               </div>
                             ))}

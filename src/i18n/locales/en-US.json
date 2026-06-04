@@ -1040,7 +1040,7 @@
       "importPreview": "Import preview",
       "importPreviewDescription": "Classify prepared dry-run batch records against the canonical model; review create, update, and skip outcomes without starting live transfer or writes.",
       "credentialBoundary": "Credential boundary",
-      "credentialBoundaryDescription": "This section shows credential posture needed for a live connection. Secret values are not collected, read, or displayed in the regular product UI.",
+      "credentialBoundaryDescription": "This section shows credential posture needed for a live connection. Secret values are not collected, read, or displayed in the product UI; only server-side opaque reference state is visible.",
       "namespaces": "Source identities",
       "namespacesDescription": "Shows the scope used to match external records with PULS records.",
       "domainOwnership": "Domain ownership",
@@ -1109,7 +1109,7 @@
       "required": "Required?",
       "lastVerified": "Last verified",
       "notRecorded": "Not yet",
-      "noReadback": "PULS does not collect API keys, passwords, FTP secrets, OAuth tokens, or connection strings in the regular setup screen; future secure capture is write-only and server-side.",
+      "noReadback": "PULS does not collect API keys, passwords, FTP secrets, OAuth tokens, or connection strings in the regular setup screen; the server-side boundary only produces opaque reference state and readback is disabled.",
       "requiredValues": {
         "yes": "Required",
         "no": "Not required"
@@ -1538,6 +1538,7 @@
     "activityTimeline": {
       "actors": {
         "admin": "Admin",
+        "operator": "Operator",
         "system": "System",
         "worker": "Worker"
       },
@@ -1561,6 +1562,21 @@
         },
         "credential_handoff_requested": {
           "title": "Secure reference request saved"
+        },
+        "credential_reference_configured": {
+          "title": "Secure reference configured"
+        },
+        "credential_reference_updated": {
+          "title": "Secure reference updated"
+        },
+        "credential_reference_revoked": {
+          "title": "Secure reference revoked"
+        },
+        "credential_verification_succeeded": {
+          "title": "Secure reference verified"
+        },
+        "credential_verification_failed": {
+          "title": "Secure reference verification failed"
         },
         "import_preview_generated": {
           "title": "Import preview generated"
@@ -1611,6 +1627,13 @@
           "partial": "Request saved; the product tracks reference state, not the secret value.",
           "failed": "Secure reference request could not be saved; an admin should try again."
         },
+        "credentialReference": {
+          "reference_configured": "The server-side boundary stored an opaque reference; the product did not read the secret value.",
+          "reference_updated": "The opaque reference was updated; previous and new secret values were not written to activity history.",
+          "reference_revoked": "The reference was revoked; pending runtime-preflight jobs are stopped safely.",
+          "verification_succeeded": "Server-side verification completed; live runtime still requires separate approval.",
+          "verification_failed": "Verification failed with a safe error class; raw errors and secrets are not shown."
+        },
         "importPreview": {
           "success": "The dry-run batch was classified against the canonical model; no live write happened.",
           "partial": "Preview stopped because errors were found; only safe counters were recorded.",
@@ -1652,7 +1675,9 @@
         "jobType": "Job type",
         "failureClass": "Failure class",
         "retryAfterSeconds": "Retry delay",
-        "operatorReview": "Manual review"
+        "operatorReview": "Manual review",
+        "authMode": "Auth mode",
+        "credentialState": "Credential state"
       },
       "safeErrors": {
         "setup_preflight_blocked": "Setup check found missing items. Detail is limited to check names and counters.",
@@ -1663,7 +1688,9 @@
         "connector_job_failed": "The connector job stopped with a safe failure class. Raw provider responses and secrets are not shown.",
         "connector_job_lease_expired": "The worker lease expired and the job moved into the safe recovery model.",
         "connector_job_type_not_supported_by_worker_skeleton": "This job type is not executed by the current skeleton worker.",
-        "connector_worker_loop_failed": "The worker loop recorded a safe error code; details are limited to scrubbed status signals."
+        "connector_worker_loop_failed": "The worker loop recorded a safe error code; details are limited to scrubbed status signals.",
+        "credential_reference_revoked": "The secure reference was revoked. Runtime jobs cannot start until a new reference is prepared.",
+        "credential_verification_failed": "The secure reference could not be verified. A safe error class is recorded without showing the secret value."
       },
       "nextActions": {
         "review_identity_scope": "Review source identity and record matching scope.",
@@ -1682,7 +1709,11 @@
         "retry_after_worker_recovery": "Wait for the scheduled retry after lease recovery.",
         "review_dead_letter_job": "Manually review the job that reached the maximum attempt boundary.",
         "review_safe_error": "Review the safe error class; secrets and provider payloads are not shown.",
-        "review_job_status": "Review the job status and next runtime step."
+        "review_job_status": "Review the job status and next runtime step.",
+        "run_credential_verification": "Queue server-side verification for the opaque reference.",
+        "restore_secure_reference": "Prepare a new secure reference to replace the revoked one.",
+        "run_runtime_preflight": "Proceed to runtime preflight with the verified reference.",
+        "review_secure_reference": "Review the secure reference verification outcome as an operator."
       }
     },
     "syncLogMessages": {

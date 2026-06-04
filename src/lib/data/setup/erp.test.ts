@@ -607,6 +607,55 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(serialized).not.toContain('must-not-render')
   })
 
+  it('surfaces safe credential reference events without reference readback', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      'rpc:list_connector_credential_events': {
+        data: [
+          {
+            id: 'credential-event-1',
+            tenant_id: 'a0000001-0001-4001-8001-000000000001',
+            connection_id: 'connection-1',
+            event_key: 'reference_configured',
+            auth_mode: 'custom_secret_ref',
+            credential_state: 'configured',
+            actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+            safe_error_code: null,
+            safe_context: { reference_available: true },
+            next_action_key: 'run_credential_verification',
+            created_at: '2026-06-04T10:30:00.000Z',
+            credentials_ref: 'pulsref://must-not-render-reference',
+          },
+        ],
+      },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.activityTimeline[0]).toMatchObject({
+      id: 'credential-event-1',
+      kind: 'credential_reference',
+      level: 'info',
+      titleKey: 'erp.activityTimeline.events.credential_reference_configured.title',
+      summaryKey: 'erp.activityTimeline.summaries.credentialReference.reference_configured',
+      nextActionKey: 'erp.activityTimeline.nextActions.run_credential_verification',
+      actorLabelKey: 'erp.activityTimeline.actors.operator',
+      rawStatus: 'configured',
+    })
+    expect(result.data.activityTimeline[0].detailItems).toEqual(
+      expect.arrayContaining([
+        { labelKey: 'erp.activityTimeline.details.authMode', value: 'custom_secret_ref' },
+        { labelKey: 'erp.activityTimeline.details.credentialState', value: 'configured' },
+        { labelKey: 'erp.activityTimeline.details.referenceAvailable', value: true },
+      ]),
+    )
+
+    const serialized = JSON.stringify(result.data)
+    expect(serialized).not.toContain('credentials_ref')
+    expect(serialized).not.toContain('pulsref://')
+    expect(serialized).not.toContain('must-not-render')
+  })
+
   it('surfaces safe dry-run import preview records without payload readback', async () => {
     demoEnabled.mockReturnValue(false)
     setupSeededMocks({
@@ -1665,6 +1714,7 @@ describe('fetchErpOverviewWithMeta', () => {
     })
     expect(capture.rpcCalls?.map((call) => call.fn)).toEqual([
       'list_connector_job_events',
+      'list_connector_credential_events',
       'list_connector_import_preview_records',
       'validate_import_batch',
       'preview_import_diff',
@@ -1745,6 +1795,7 @@ describe('fetchErpOverviewWithMeta', () => {
     })
     expect(capture.rpcCalls?.map((call) => call.fn)).toEqual([
       'list_connector_job_events',
+      'list_connector_credential_events',
       'list_connector_import_preview_records',
       'validate_import_batch',
     ])

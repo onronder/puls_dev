@@ -1040,7 +1040,7 @@
       "importPreview": "İçe aktarma önizlemesi",
       "importPreviewDescription": "Hazır dry-run batch kayıtlarını kanonik modele göre sınıflandır; canlı aktarım veya yazma başlatmadan yaratma, güncelleme ve atlama sonuçlarını gör.",
       "credentialBoundary": "Kimlik bilgisi sınırı",
-      "credentialBoundaryDescription": "Bu bölüm canlı bağlantı için gereken kimlik bilgisi durumunu gösterir. Secret değeri normal ürün ekranında toplanmaz, okunmaz veya gösterilmez.",
+      "credentialBoundaryDescription": "Bu bölüm canlı bağlantı için gereken kimlik bilgisi durumunu gösterir. Secret değeri ürün ekranında toplanmaz, okunmaz veya gösterilmez; yalnızca server-side opaque referans state'i görünür.",
       "namespaces": "Kaynak kimlikleri",
       "namespacesDescription": "Dış kaynaktan gelen kayıtların PULS kayıtlarıyla hangi kapsamda eşleştiğini gösterir.",
       "domainOwnership": "Alan sahipliği",
@@ -1109,7 +1109,7 @@
       "required": "Gerekli mi?",
       "lastVerified": "Son doğrulama",
       "notRecorded": "Henüz yok",
-      "noReadback": "PULS normal kurulum ekranında API anahtarı, parola, FTP bilgisi, OAuth token veya bağlantı dizgesi toplamaz; güvenli capture akışı ileride write-only ve sunucu tarafı çalışır.",
+      "noReadback": "PULS normal kurulum ekranında API anahtarı, parola, FTP bilgisi, OAuth token veya bağlantı dizgesi toplamaz; server-side boundary yalnızca opaque referans state'i üretir ve readback kapalıdır.",
       "requiredValues": {
         "yes": "Gerekli",
         "no": "Gerekli değil"
@@ -1538,6 +1538,7 @@
     "activityTimeline": {
       "actors": {
         "admin": "Admin",
+        "operator": "Operatör",
         "system": "Sistem",
         "worker": "Worker"
       },
@@ -1561,6 +1562,21 @@
         },
         "credential_handoff_requested": {
           "title": "Güvenli referans talebi kaydedildi"
+        },
+        "credential_reference_configured": {
+          "title": "Güvenli referans tanımlandı"
+        },
+        "credential_reference_updated": {
+          "title": "Güvenli referans güncellendi"
+        },
+        "credential_reference_revoked": {
+          "title": "Güvenli referans kapatıldı"
+        },
+        "credential_verification_succeeded": {
+          "title": "Güvenli referans doğrulandı"
+        },
+        "credential_verification_failed": {
+          "title": "Güvenli referans doğrulanamadı"
         },
         "import_preview_generated": {
           "title": "İçe aktarma önizlemesi üretildi"
@@ -1611,6 +1627,13 @@
           "partial": "Talep kaydedildi; secret değeri değil, yalnızca referans sürecinin durumu takip ediliyor.",
           "failed": "Güvenli referans talebi kaydedilemedi; admin yeniden denemeli."
         },
+        "credentialReference": {
+          "reference_configured": "Server-side boundary opaque referansı kaydetti; secret değeri ürün içinde okunmadı.",
+          "reference_updated": "Opaque referans güncellendi; önceki veya yeni secret değeri activity kaydına yazılmadı.",
+          "reference_revoked": "Referans kapatıldı; bekleyen runtime-preflight işleri güvenli şekilde durdurulur.",
+          "verification_succeeded": "Server-side doğrulama tamamlandı; canlı runtime yine ayrı onay gerektirir.",
+          "verification_failed": "Doğrulama güvenli hata sınıfıyla başarısız oldu; ham hata veya secret gösterilmez."
+        },
         "importPreview": {
           "success": "Dry-run batch kanonik modele göre sınıflandırıldı; canlı yazma yapılmadı.",
           "partial": "Önizleme hatalar nedeniyle durdu; yalnızca güvenli sayaçlar kaydedildi.",
@@ -1652,7 +1675,9 @@
         "jobType": "Job tipi",
         "failureClass": "Hata sınıfı",
         "retryAfterSeconds": "Retry gecikmesi",
-        "operatorReview": "Manuel inceleme"
+        "operatorReview": "Manuel inceleme",
+        "authMode": "Yetki modu",
+        "credentialState": "Kimlik bilgisi durumu"
       },
       "safeErrors": {
         "setup_preflight_blocked": "Kurulum kontrolü eksik maddeler buldu. Detaylar check adları ve sayaçlarla sınırlı tutulur.",
@@ -1663,7 +1688,9 @@
         "connector_job_failed": "Connector job güvenli hata sınıfıyla durdu. Ham provider cevabı veya secret gösterilmez.",
         "connector_job_lease_expired": "Worker lease süresi doldu; iş güvenli recovery modeline taşındı.",
         "connector_job_type_not_supported_by_worker_skeleton": "Bu job tipi mevcut skeleton worker tarafından çalıştırılmaz.",
-        "connector_worker_loop_failed": "Worker loop güvenli hata kodu kaydetti; detaylar scrub edilmiş durum sinyalleriyle sınırlıdır."
+        "connector_worker_loop_failed": "Worker loop güvenli hata kodu kaydetti; detaylar scrub edilmiş durum sinyalleriyle sınırlıdır.",
+        "credential_reference_revoked": "Güvenli referans kapatıldı. Runtime işleri yeni referans hazırlanana kadar başlamaz.",
+        "credential_verification_failed": "Güvenli referans doğrulanamadı. Secret değeri gösterilmeden safe hata sınıfı kaydedilir."
       },
       "nextActions": {
         "review_identity_scope": "Kaynak kimliği ve kayıt eşleştirme kapsamını gözden geçir.",
@@ -1682,7 +1709,11 @@
         "retry_after_worker_recovery": "Lease recovery sonrası planlanan retry zamanını bekle.",
         "review_dead_letter_job": "Maksimum deneme sınırına ulaşan job için manuel inceleme yap.",
         "review_safe_error": "Güvenli hata sınıfını incele; secret veya provider payload gösterilmez.",
-        "review_job_status": "Job durumunu ve sıradaki runtime adımını incele."
+        "review_job_status": "Job durumunu ve sıradaki runtime adımını incele.",
+        "run_credential_verification": "Opaque referansı server-side doğrulama kuyruğuna al.",
+        "restore_secure_reference": "Kapatılmış referans yerine yeni güvenli referans hazırla.",
+        "run_runtime_preflight": "Doğrulanmış referansla runtime preflight adımına geç.",
+        "review_secure_reference": "Güvenli referans doğrulama sonucunu operatör olarak incele."
       }
     },
     "syncLogMessages": {
