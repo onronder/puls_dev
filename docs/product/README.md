@@ -466,6 +466,16 @@ PR15.3 adds safe runtime observability on top of the PR15.1 queue and PR15.2 wor
 | [`20260604120000_puls_integration_connector_runtime_observability.sql`](../../supabase/migrations/20260604120000_puls_integration_connector_runtime_observability.sql) | Runtime failure class, retry/backoff, connector job events, and safe read-model DB contract |
 | [`scripts/verify-15-connector-runtime-observability.sh`](../../scripts/verify-15-connector-runtime-observability.sh) | PR15.3 verify gate |
 
+## PR15.4 Secure credential runtime boundary
+
+PR15.4 adds the source-independent secure credential boundary required before runtime preflight can use real connector credentials. It keeps credential values outside product UI, client adapters, activity history, and AI context; the product DB stores only opaque reference state through service-role-only RPCs. Provider API runtime, secret manager implementation, import apply, canonical writes, and ERP/source writeback remain closed.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_connector_secure_credential_runtime_boundary.md](./15_connector_secure_credential_runtime_boundary.md) | PR15.4 credential reference, no-readback, safe event, and AI evidence boundary |
+| [`20260604130000_puls_integration_secure_credential_runtime_boundary.sql`](../../supabase/migrations/20260604130000_puls_integration_secure_credential_runtime_boundary.sql) | Service-role-only credential reference RPCs, safe credential events, and runtime-preflight blocker |
+| [`scripts/verify-15-secure-credential-runtime-boundary.sh`](../../scripts/verify-15-secure-credential-runtime-boundary.sh) | PR15.4 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

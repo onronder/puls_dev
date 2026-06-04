@@ -570,6 +570,7 @@ export type ConnectorActivityEventKind =
   | 'setup_lifecycle'
   | 'setup_preflight'
   | 'credential_handoff'
+  | 'credential_reference'
   | 'import_preview'
   | 'import_apply_review'
   | 'connector_job'
@@ -888,6 +889,26 @@ type ConnectorJobEventRow = {
   retry_after_seconds?: number | null
   operator_review_required?: boolean | null
   worker_id?: string | null
+  created_at?: string | null
+}
+
+type ConnectorCredentialEventRow = {
+  id?: string | null
+  tenant_id?: string | null
+  connection_id?: string | null
+  event_key?:
+    | 'reference_configured'
+    | 'reference_updated'
+    | 'reference_revoked'
+    | 'verification_succeeded'
+    | 'verification_failed'
+    | null
+  auth_mode?: ConnectorAuthMode | null
+  credential_state?: ConnectorCredentialState | null
+  actor_employee_id?: string | null
+  safe_error_code?: string | null
+  safe_context?: Record<string, unknown> | null
+  next_action_key?: string | null
   created_at?: string | null
 }
 
@@ -2834,6 +2855,80 @@ function buildConnectorJobActivityEvent(
   }
 }
 
+function mapCredentialEventSummaryKey(row: ConnectorCredentialEventRow): string {
+  const eventKey = row.event_key ?? 'reference_configured'
+  return `erp.activityTimeline.summaries.credentialReference.${eventKey}`
+}
+
+function mapCredentialEventNextActionKey(row: ConnectorCredentialEventRow): string {
+  const key = row.next_action_key?.trim()
+  if (key) return `erp.activityTimeline.nextActions.${key}`
+
+  switch (row.event_key) {
+    case 'reference_configured':
+    case 'reference_updated':
+      return 'erp.activityTimeline.nextActions.run_credential_verification'
+    case 'reference_revoked':
+      return 'erp.activityTimeline.nextActions.restore_secure_reference'
+    case 'verification_succeeded':
+      return 'erp.activityTimeline.nextActions.run_runtime_preflight'
+    case 'verification_failed':
+      return 'erp.activityTimeline.nextActions.review_secure_reference'
+    default:
+      return 'erp.activityTimeline.nextActions.review_activity'
+  }
+}
+
+function buildCredentialEventActivityDetails(
+  row: ConnectorCredentialEventRow,
+): ConnectorActivityDetail[] {
+  return [
+    {
+      labelKey: 'erp.activityTimeline.details.authMode',
+      value: row.auth_mode ?? 'custom_secret_ref',
+    },
+    {
+      labelKey: 'erp.activityTimeline.details.credentialState',
+      value: row.credential_state ?? 'missing',
+    },
+    {
+      labelKey: 'erp.activityTimeline.details.referenceAvailable',
+      value: row.credential_state !== 'missing' && row.credential_state !== 'revoked',
+    },
+  ]
+}
+
+function buildCredentialEventActivityEvent(
+  row: ConnectorCredentialEventRow,
+  index: number,
+): ConnectorActivityEvent {
+  const eventKey = row.event_key?.trim() || 'reference_configured'
+  const safeErrorCode = row.safe_error_code?.trim() || null
+  const level: ConnectorSyncLogLevel =
+    row.credential_state === 'failed' || row.credential_state === 'revoked'
+      ? 'warning'
+      : row.credential_state === 'verified'
+        ? 'success'
+        : 'info'
+
+  return {
+    id: row.id ?? `credential-event-${index}`,
+    at: formatSyncTimestamp(row.created_at),
+    level,
+    kind: 'credential_reference',
+    titleKey: `erp.activityTimeline.events.credential_${eventKey}.title`,
+    summaryKey: mapCredentialEventSummaryKey(row),
+    detailItems: buildCredentialEventActivityDetails(row),
+    safeErrorCode,
+    safeErrorSummaryKey: safeErrorCode ? `erp.activityTimeline.safeErrors.${safeErrorCode}` : null,
+    nextActionKey: mapCredentialEventNextActionKey(row),
+    actorLabelKey: row.actor_employee_id
+      ? 'erp.activityTimeline.actors.operator'
+      : 'erp.activityTimeline.actors.system',
+    rawStatus: row.credential_state ?? 'missing',
+  }
+}
+
 function mapOperatorSeverityLevel(
   severity: ConnectorRuntimeOperatorSeverity | null | undefined,
   status?: ConnectorRuntimeJobStatus | null,
@@ -4056,7 +4151,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
 
   const connections = (connectionsRow.data ?? []) as ErpConnectionRow[]
   const connection = pickCurrentErpConnection(connections)
-  const [mappingsRow, batchesRow, jobsRow, jobEventsRow] = connection?.id
+  const [mappingsRow, batchesRow, jobsRow, jobEventsRow, credentialEventsRow] = connection?.id
     ? await Promise.all([
         pulsIntegration()
           .from('erp_field_mappings')
@@ -4118,8 +4213,13 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
           p_connection_id: connection.id,
           p_limit: 10,
         }),
+        pulsIntegration().rpc('list_connector_credential_events', {
+          p_connection_id: connection.id,
+          p_limit: 10,
+        }),
       ])
     : [
+        { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
@@ -4143,6 +4243,9 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       : ((workerHeartbeatsRow.data ?? []) as ConnectorWorkerHeartbeatRow[]),
   )
   const jobEvents = jobEventsRow.error ? [] : ((jobEventsRow.data ?? []) as ConnectorJobEventRow[])
+  const credentialEvents = credentialEventsRow.error
+    ? []
+    : ((credentialEventsRow.data ?? []) as ConnectorCredentialEventRow[])
 
   const identityCounts = identities.reduce<Record<string, number>>((counts, row) => {
     const namespaceId = row.source_namespace_id
@@ -4362,6 +4465,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     })),
     activityTimeline: [
       ...jobEvents.map((row, index) => buildConnectorJobActivityEvent(row, index)),
+      ...credentialEvents.map((row, index) => buildCredentialEventActivityEvent(row, index)),
       ...batches.map((row, index) => buildConnectorActivityEvent(row, index)),
     ].slice(0, 12),
     runtimeJobs,

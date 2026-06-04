@@ -149,6 +149,8 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 
 **Ürün değeri:** Canias, custom API, SFTP gibi kaynaklar için gerekli bağlantı bilgileri güvenli şekilde alınabilir; ürün secret değerini göstermez ve product DB'ye düz metin yazmaz.
 
+**Implementation status:** PR15.4 implements the source-independent secure credential runtime boundary: service-role-only opaque reference writes, no-readback credential events, safe UI/AI evidence, and revoked/missing/failed credential blockers for runtime-preflight jobs. Provider API runtime, secret manager implementation, import apply, canonical writes, and ERP/source writeback remain closed.
+
 **Kapsam:**
 
 - Secure credential capture flow
