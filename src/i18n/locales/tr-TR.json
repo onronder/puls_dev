@@ -1055,6 +1055,8 @@
       "guardrailsDescription": "Bağlantı hazırlığı yapılırken hangi işlemlerin kapalı kaldığını açıkça gösterir.",
       "syncLogs": "Kontrol geçmişi",
       "syncLogsDescription": "Kurulum ve kontrol adımlarında oluşan son kayıtlar.",
+      "runtimeQueue": "Runtime iş kuyruğu",
+      "runtimeQueueDescription": "Canlı connector çalıştırmadan önce işlerin hangi güvenli kuyruk sözleşmesiyle yönetileceğini gösterir.",
       "activityTimeline": "Aktivite geçmişi",
       "activityTimelineDescription": "Kurulum, güvenli referans ve kontrol adımlarında oluşan güvenli kayıtlar.",
       "applyReadiness": "Uygulama hazırlığı",
@@ -1410,7 +1412,74 @@
       "mappings": "Henüz alan eşleştirme yok. Kaynak alanları PULS alanlarına bağlandığında burada görünecek.",
       "importPreview": "Henüz gösterilecek dry-run önizleme kaydı yok. Proof batch hazırlandığında burada güvenli satır sonuçları görünür.",
       "syncLogs": "Henüz kontrol kaydı yok. Kurulum adımları ilerledikçe geçmiş burada birikecek.",
+      "runtimeQueue": "Henüz connector job kaydı yok. Worker runtime açılmadan önce kuyruk sözleşmesi hazır tutulur.",
       "activityTimeline": "Henüz aktivite kaydı yok. Kaynak seçimi, güvenli referans talebi ve kurulum kontrolleri ilerledikçe burada görünecek."
+    },
+    "runtimeQueue": {
+      "status": {
+        "not_available": "Kaynak bekliyor",
+        "contract_ready": "Sözleşme hazır",
+        "active": "İş bekliyor",
+        "blocked": "İnceleme gerekli"
+      },
+      "descriptions": {
+        "not_available": "Kuyruk sözleşmesi kullanılmadan önce veri kaynağı seçilmeli.",
+        "contract_ready": "DB job queue sözleşmesi hazır. Worker ve gerçek runtime ayrı PR ile açılacak.",
+        "active": "Kuyrukta veya çalışıyor görünen güvenli job kayıtları var. Bu ekran iş çalıştırmaz.",
+        "blocked": "Son job kayıtlarında güvenli hata sinyali var. Detaylar raw provider verisi olmadan gösterilir."
+      },
+      "cards": {
+        "contract": "Queue contract",
+        "worker": "Worker",
+        "jobs": "Son işler"
+      },
+      "values": {
+        "enabled": "Açık",
+        "disabled": "Kapalı",
+        "workerFuture": "Railway worker sonraki runtime adımıdır",
+        "queueSummary": "{{queued}} sırada · {{running}} çalışıyor · {{retrying}} tekrar denenecek",
+        "noTimestamp": "Zaman yok"
+      },
+      "labels": {
+        "attempts": "Deneme {{attempt}} / {{max}}"
+      },
+      "jobStatus": {
+        "queued": "Sırada",
+        "running": "Çalışıyor",
+        "succeeded": "Tamamlandı",
+        "failed": "Hata",
+        "retrying": "Tekrar denenecek",
+        "cancelled": "İptal",
+        "dead_letter": "Kilitli hata"
+      },
+      "jobTypes": {
+        "setup_preflight": "Kurulum kontrolü",
+        "credential_verification": "Kimlik doğrulama",
+        "import_preview": "İçe aktarma önizlemesi",
+        "import_apply": "Kontrollü uygulama",
+        "connector_runtime_preflight": "Runtime ön kontrol",
+        "source_discovery": "Kaynak keşfi",
+        "noop_health": "Worker sağlık kontrolü"
+      },
+      "jobSummaries": {
+        "queued": "İş güvenli kuyruğa alındı; worker açıldığında sırayla ele alınır.",
+        "running": "İş bir worker tarafından kilitlendi. UI bu işi çalıştırmaz veya yeniden başlatmaz.",
+        "succeeded": "İş güvenli şekilde tamamlandı ve sonucu kayıt altına alındı.",
+        "failed": "İş güvenli hata koduyla durdu. Raw provider cevabı gösterilmez.",
+        "retrying": "İş güvenli retry zamanına bırakıldı.",
+        "cancelled": "İş iptal edildi; otomatik tekrar başlamaz.",
+        "dead_letter": "İş maksimum deneme sınırına ulaştı ve manuel inceleme bekliyor."
+      },
+      "safeErrors": {
+        "connector_job_failed": "İş güvenli hata sınıfıyla durdu.",
+        "connector_job_has_blockers": "İş ilerlemeden önce eksik veya riskli maddeler kapatılmalı."
+      },
+      "nextActions": {
+        "review_job_status": "İş durumunu ve sıradaki runtime adımını incele.",
+        "wait_for_worker_runtime": "Worker runtime açılana kadar iş çalıştırılmaz.",
+        "review_safe_error": "Güvenli hata sınıfını incele; secret veya provider payload gösterilmez.",
+        "retry_scheduled": "Planlanan retry zamanını bekle."
+      }
     },
     "activityTimeline": {
       "actors": {
