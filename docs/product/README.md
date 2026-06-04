@@ -435,6 +435,16 @@ PR14 closes with the connector control plane in place: setup, mapping, preflight
 | [14_21_executive_status_report.md](./14_21_executive_status_report.md) | Turkish executive status report for product/sales stakeholders, including completion estimates and remaining work |
 | [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md) | Detailed PR15-PR16 plan for DB-backed job queue, Railway worker, credential runtime boundary, controlled data movement, notifications, and AI operational recommendations |
 
+## PR15.1 Connector job queue contract
+
+PR15.1 opens the connector runtime phase by adding a tenant-scoped, idempotent, service-role worker job queue contract. It does not run connectors, resolve secrets, apply imports, write canonical data, or write back to ERP/source systems.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_connector_job_queue_contract.md](./15_connector_job_queue_contract.md) | PR15.1 queue contract, security boundary, AI-safe evidence, and PR15.2 handoff |
+| [`20260604100000_puls_integration_connector_job_queue.sql`](../../supabase/migrations/20260604100000_puls_integration_connector_job_queue.sql) | DB-backed connector job queue contract |
+| [`scripts/verify-15-connector-job-queue-contract.sh`](../../scripts/verify-15-connector-job-queue-contract.sh) | PR15.1 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

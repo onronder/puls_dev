@@ -594,6 +594,76 @@ export type ConnectorActivityEvent = {
   rawStatus: string
 }
 
+export type ConnectorRuntimeJobStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'retrying'
+  | 'cancelled'
+  | 'dead_letter'
+
+export type ConnectorRuntimeJobType =
+  | 'setup_preflight'
+  | 'credential_verification'
+  | 'import_preview'
+  | 'import_apply'
+  | 'connector_runtime_preflight'
+  | 'source_discovery'
+  | 'noop_health'
+
+export type ConnectorRuntimeQueueStatus =
+  | 'not_available'
+  | 'contract_ready'
+  | 'active'
+  | 'blocked'
+
+export type ConnectorRuntimeJobSummary = {
+  id: string
+  jobType: ConnectorRuntimeJobType
+  status: ConnectorRuntimeJobStatus
+  level: ConnectorSyncLogLevel
+  domain: string | null
+  statusLabelKey: string
+  titleKey: string
+  summaryKey: string
+  safeErrorCode: string | null
+  safeErrorSummaryKey: string | null
+  nextActionKey: string
+  attemptCount: number
+  maxAttempts: number
+  priority: number
+  scheduledAt: string | null
+  startedAt: string | null
+  finishedAt: string | null
+  lockedAt: string | null
+  lockedBy: string | null
+  sourceNamespaceId: string | null
+  importBatchId: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export type ConnectorRuntimeQueue = {
+  contractVersion: 'pr15.1-db-job-queue-v1'
+  status: ConnectorRuntimeQueueStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  workerEnabled: false
+  executionEnabled: false
+  jobs: ConnectorRuntimeJobSummary[]
+  summary: {
+    total: number
+    queued: number
+    running: number
+    retrying: number
+    succeeded: number
+    failed: number
+    deadLetter: number
+  }
+}
+
 export type ConnectorProviderOption = {
   id: 'canias' | 'logo' | 'csv_import' | 'custom_api'
   labelKey: string
@@ -640,6 +710,7 @@ export type ErpOverview = {
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
   controlledApplyPlan: ConnectorControlledApplyPlan
   applyExecutionContract: ConnectorApplyExecutionContract
+  runtimeQueue: ConnectorRuntimeQueue
   capabilities: ConnectorSourceCapability[]
   domainOwnership: ConnectorDomainOwnership[]
   canonicalClasses: ConnectorCanonicalDataClass[]
@@ -716,6 +787,29 @@ type ErpSyncBatchRow = {
   records_inserted?: number | null
   records_updated?: number | null
   records_failed?: number | null
+}
+
+type ConnectorJobRow = {
+  id?: string | null
+  job_type?: ConnectorRuntimeJobType | null
+  status?: ConnectorRuntimeJobStatus | null
+  domain?: string | null
+  priority?: number | null
+  attempt_count?: number | null
+  max_attempts?: number | null
+  scheduled_at?: string | null
+  started_at?: string | null
+  finished_at?: string | null
+  locked_at?: string | null
+  locked_by?: string | null
+  safe_error_code?: string | null
+  safe_error_context?: Record<string, unknown> | null
+  next_action_key?: string | null
+  connection_id?: string | null
+  source_namespace_id?: string | null
+  import_batch_id?: string | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 type SourceNamespaceRow = {
@@ -2583,6 +2677,95 @@ function buildConnectorActivityEvent(row: ErpSyncBatchRow, index: number): Conne
   }
 }
 
+function mapRuntimeJobLevel(status: ConnectorRuntimeJobStatus): ConnectorSyncLogLevel {
+  if (status === 'succeeded') return 'success'
+  if (status === 'failed' || status === 'dead_letter') return 'error'
+  if (status === 'retrying' || status === 'cancelled') return 'warning'
+  return 'info'
+}
+
+function mapRuntimeQueueStatus(
+  connectorState: ConnectorLifecycleState,
+  jobs: ConnectorRuntimeJobSummary[],
+): ConnectorRuntimeQueueStatus {
+  if (connectorState !== 'connector_selected') return 'not_available'
+  if (jobs.some((job) => job.status === 'failed' || job.status === 'dead_letter')) return 'blocked'
+  if (jobs.some((job) => job.status === 'queued' || job.status === 'running' || job.status === 'retrying')) {
+    return 'active'
+  }
+  return 'contract_ready'
+}
+
+function mapRuntimeQueueReadiness(status: ConnectorRuntimeQueueStatus): ConnectorReadinessStatus {
+  if (status === 'contract_ready') return 'ready'
+  if (status === 'active') return 'partial'
+  if (status === 'blocked') return 'partial'
+  return 'blocked'
+}
+
+function mapConnectorRuntimeJob(row: ConnectorJobRow, index: number): ConnectorRuntimeJobSummary {
+  const status = row.status ?? 'queued'
+  const jobType = row.job_type ?? 'noop_health'
+  const safeErrorCode = row.safe_error_code?.trim() || null
+  const nextAction = row.next_action_key?.trim() || 'review_job_status'
+
+  return {
+    id: row.id ?? `connector-job-${index}`,
+    jobType,
+    status,
+    level: mapRuntimeJobLevel(status),
+    domain: row.domain ?? null,
+    statusLabelKey: `erp.runtimeQueue.jobStatus.${status}`,
+    titleKey: `erp.runtimeQueue.jobTypes.${jobType}`,
+    summaryKey: `erp.runtimeQueue.jobSummaries.${status}`,
+    safeErrorCode,
+    safeErrorSummaryKey: safeErrorCode ? `erp.runtimeQueue.safeErrors.${safeErrorCode}` : null,
+    nextActionKey: `erp.runtimeQueue.nextActions.${nextAction}`,
+    attemptCount: Number(row.attempt_count ?? 0),
+    maxAttempts: Number(row.max_attempts ?? 0),
+    priority: Number(row.priority ?? 100),
+    scheduledAt: row.scheduled_at ?? null,
+    startedAt: row.started_at ?? null,
+    finishedAt: row.finished_at ?? null,
+    lockedAt: row.locked_at ?? null,
+    lockedBy: row.locked_by ?? null,
+    sourceNamespaceId: row.source_namespace_id ?? null,
+    importBatchId: row.import_batch_id ?? null,
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
+  }
+}
+
+function buildConnectorRuntimeQueue({
+  connectorState,
+  jobs,
+}: {
+  connectorState: ConnectorLifecycleState
+  jobs: ConnectorRuntimeJobSummary[]
+}): ConnectorRuntimeQueue {
+  const status = mapRuntimeQueueStatus(connectorState, jobs)
+
+  return {
+    contractVersion: 'pr15.1-db-job-queue-v1',
+    status,
+    readiness: mapRuntimeQueueReadiness(status),
+    statusLabelKey: `erp.runtimeQueue.status.${status}`,
+    descriptionKey: `erp.runtimeQueue.descriptions.${status}`,
+    workerEnabled: false,
+    executionEnabled: false,
+    jobs,
+    summary: {
+      total: jobs.length,
+      queued: jobs.filter((job) => job.status === 'queued').length,
+      running: jobs.filter((job) => job.status === 'running').length,
+      retrying: jobs.filter((job) => job.status === 'retrying').length,
+      succeeded: jobs.filter((job) => job.status === 'succeeded').length,
+      failed: jobs.filter((job) => job.status === 'failed').length,
+      deadLetter: jobs.filter((job) => job.status === 'dead_letter').length,
+    },
+  }
+}
+
 function mapPreflightStatusToSyncStatus(status: ConnectorReadinessStatus) {
   if (status === 'ready') return 'success'
   if (status === 'partial') return 'partial_success'
@@ -3219,6 +3402,7 @@ function buildOverview({
   namespaces,
   syncLogs,
   activityTimeline,
+  runtimeJobs,
   credentialBoundary,
   importPreview,
   applyReadiness,
@@ -3249,6 +3433,7 @@ function buildOverview({
   namespaces: ConnectorNamespaceSummary[]
   syncLogs: ConnectorSyncLog[]
   activityTimeline: ConnectorActivityEvent[]
+  runtimeJobs?: ConnectorRuntimeJobSummary[]
   credentialBoundary: ConnectorCredentialBoundary
   importPreview?: ConnectorImportPreview
   applyReadiness?: ConnectorApplyReadiness
@@ -3344,6 +3529,10 @@ function buildOverview({
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
     controlledApplyPlan,
   })
+  const runtimeQueue = buildConnectorRuntimeQueue({
+    connectorState,
+    jobs: runtimeJobs ?? [],
+  })
 
   return {
     connectorState,
@@ -3400,6 +3589,7 @@ function buildOverview({
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
     controlledApplyPlan,
     applyExecutionContract,
+    runtimeQueue,
     capabilities,
     domainOwnership,
     canonicalClasses,
@@ -3585,7 +3775,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
 
   const connections = (connectionsRow.data ?? []) as ErpConnectionRow[]
   const connection = pickCurrentErpConnection(connections)
-  const [mappingsRow, batchesRow] = connection?.id
+  const [mappingsRow, batchesRow, jobsRow] = connection?.id
     ? await Promise.all([
         pulsIntegration()
           .from('erp_field_mappings')
@@ -3605,13 +3795,49 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
           .eq('connection_id', connection.id)
           .order('created_at', { ascending: false })
           .limit(10),
+        pulsIntegration()
+          .from('connector_jobs')
+          .select(
+            [
+              'id',
+              'job_type',
+              'status',
+              'domain',
+              'priority',
+              'attempt_count',
+              'max_attempts',
+              'scheduled_at',
+              'started_at',
+              'finished_at',
+              'locked_at',
+              'locked_by',
+              'safe_error_code',
+              'safe_error_context',
+              'next_action_key',
+              'connection_id',
+              'source_namespace_id',
+              'import_batch_id',
+              'created_at',
+              'updated_at',
+            ].join(', '),
+          )
+          .eq('tenant_id', ctx.tenantId)
+          .eq('connection_id', connection.id)
+          .order('updated_at', { ascending: false })
+          .limit(10),
       ])
     : [
+        { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
       ]
   const rawMappings = mappingsRow.error ? [] : ((mappingsRow.data ?? []) as ErpFieldMappingRow[])
   const batches = batchesRow.error ? [] : ((batchesRow.data ?? []) as ErpSyncBatchRow[])
+  const runtimeJobs = jobsRow.error
+    ? []
+    : ((jobsRow.data ?? []) as ConnectorJobRow[]).map((row, index) =>
+        mapConnectorRuntimeJob(row, index),
+      )
   const readiness = readinessRow.error ? null : (readinessRow.data as SetupReadinessRow | null)
   const rawNamespaces = namespacesRow.error
     ? []
@@ -3835,6 +4061,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
                   : 'sync_batch',
     })),
     activityTimeline: batches.map((row, index) => buildConnectorActivityEvent(row, index)),
+    runtimeJobs,
     credentialBoundary,
     importPreview,
     applyReadiness,

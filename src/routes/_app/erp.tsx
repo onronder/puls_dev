@@ -100,6 +100,13 @@ function syncLogTone(level: ConnectorSyncLevel): string {
   }
 }
 
+function runtimeJobStatusTone(level: ConnectorSyncLevel): StatusTone {
+  if (level === 'success') return 'success'
+  if (level === 'error') return 'danger'
+  if (level === 'warning') return 'warning'
+  return 'info'
+}
+
 function domainOwnershipTone(status: ConnectorDomainOwnership['status']): StatusTone {
   if (status === 'owned_by_current') return 'success'
   if (status === 'owned_by_other') return 'warning'
@@ -1852,7 +1859,117 @@ function ErpPage() {
           </TabsContent>
 
           <TabsContent value="activity" className="mt-6">
-            <section>
+            <section className="space-y-6">
+              <SectionHeader
+                title={t('erp.sections.runtimeQueue')}
+                description={t('erp.sections.runtimeQueueDescription')}
+              />
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {t('erp.runtimeQueue.cards.contract')}
+                    </p>
+                    <StatusPill tone={readinessTone(data.runtimeQueue.readiness)}>
+                      {t(data.runtimeQueue.statusLabelKey)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                    {t(data.runtimeQueue.descriptionKey)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {t('erp.runtimeQueue.cards.worker')}
+                  </p>
+                  <p className="mt-3 font-mono text-2xl font-semibold text-[var(--color-text-primary)]">
+                    {data.runtimeQueue.workerEnabled
+                      ? t('erp.runtimeQueue.values.enabled')
+                      : t('erp.runtimeQueue.values.disabled')}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                    {t('erp.runtimeQueue.values.workerFuture')}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {t('erp.runtimeQueue.cards.jobs')}
+                  </p>
+                  <p className="mt-3 font-mono text-2xl font-semibold text-[var(--color-text-primary)]">
+                    {data.runtimeQueue.summary.total}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                    {t('erp.runtimeQueue.values.queueSummary', {
+                      queued: data.runtimeQueue.summary.queued,
+                      running: data.runtimeQueue.summary.running,
+                      retrying: data.runtimeQueue.summary.retrying,
+                    })}
+                  </p>
+                </div>
+              </div>
+              <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+                {data.runtimeQueue.jobs.length > 0 ? (
+                  data.runtimeQueue.jobs.map((job) => (
+                    <li key={job.id} className="grid gap-3 p-4 sm:grid-cols-[auto_1fr_auto]">
+                      <span
+                        className={cn(
+                          'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
+                          syncLogTone(job.level),
+                        )}
+                      >
+                        <RefreshCw className="h-4 w-4" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {t(job.titleKey)}
+                          </p>
+                          <StatusPill tone={runtimeJobStatusTone(job.level)}>
+                            {t(job.statusLabelKey)}
+                          </StatusPill>
+                        </div>
+                        <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                          {t(job.summaryKey)}
+                        </p>
+                        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                          {t('erp.runtimeQueue.labels.attempts', {
+                            attempt: job.attemptCount,
+                            max: job.maxAttempts,
+                          })}
+                        </p>
+                        {job.safeErrorSummaryKey ? (
+                          <div className="mt-3 rounded-lg border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[var(--color-warning-soft)] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                            <span className="font-semibold text-[var(--color-warning)]">
+                              {t('erp.activityTimeline.labels.safeDetails')}
+                            </span>{' '}
+                            {t(job.safeErrorSummaryKey)}
+                          </div>
+                        ) : null}
+                        <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+                          <span className="font-semibold">
+                            {t('erp.activityTimeline.labels.nextAction')}:
+                          </span>{' '}
+                          {t(job.nextActionKey)}
+                        </p>
+                      </div>
+                      <time className="text-xs text-[var(--color-text-muted)] sm:text-right">
+                        {formatDateTime(
+                          job.updatedAt ?? job.createdAt,
+                          i18n.language,
+                          t('erp.runtimeQueue.values.noTimestamp'),
+                        )}
+                      </time>
+                    </li>
+                  ))
+                ) : (
+                  <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                    {t('erp.empty.runtimeQueue')}
+                  </li>
+                )}
+              </ul>
+            </section>
+
+            <section className="mt-8">
               <SectionHeader
                 title={t('erp.sections.activityTimeline')}
                 description={t('erp.sections.activityTimelineDescription')}

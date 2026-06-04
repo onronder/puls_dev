@@ -1055,6 +1055,8 @@
       "guardrailsDescription": "Shows which actions remain closed while setup is being prepared.",
       "syncLogs": "Check history",
       "syncLogsDescription": "Recent records from setup and readiness checks.",
+      "runtimeQueue": "Runtime job queue",
+      "runtimeQueueDescription": "Shows the safe queue contract that will govern connector work before live connector execution opens.",
       "activityTimeline": "Activity history",
       "activityTimelineDescription": "Safe records from setup, secure reference, and readiness-check steps.",
       "applyReadiness": "Apply readiness",
@@ -1410,7 +1412,74 @@
       "mappings": "No field mappings yet. Mapped source fields will appear here.",
       "importPreview": "No dry-run preview records to show yet. Safe row outcomes will appear here when a proof batch is ready.",
       "syncLogs": "No check records yet. Setup history will appear as the connection progresses.",
+      "runtimeQueue": "No connector job records yet. The queue contract is ready before worker runtime opens.",
       "activityTimeline": "No activity records yet. Source selection, secure reference requests, and setup checks will appear here as setup progresses."
+    },
+    "runtimeQueue": {
+      "status": {
+        "not_available": "Source pending",
+        "contract_ready": "Contract ready",
+        "active": "Work pending",
+        "blocked": "Review needed"
+      },
+      "descriptions": {
+        "not_available": "A data source must be selected before the queue contract is used.",
+        "contract_ready": "The DB job queue contract is ready. Worker execution and live runtime open in a separate PR.",
+        "active": "Safe job records are queued or running. This screen does not execute work.",
+        "blocked": "Recent job records include a safe error signal. Details are shown without raw provider data."
+      },
+      "cards": {
+        "contract": "Queue contract",
+        "worker": "Worker",
+        "jobs": "Recent jobs"
+      },
+      "values": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "workerFuture": "Railway worker is the next runtime step",
+        "queueSummary": "{{queued}} queued · {{running}} running · {{retrying}} retrying",
+        "noTimestamp": "No time"
+      },
+      "labels": {
+        "attempts": "Attempt {{attempt}} / {{max}}"
+      },
+      "jobStatus": {
+        "queued": "Queued",
+        "running": "Running",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "retrying": "Retrying",
+        "cancelled": "Cancelled",
+        "dead_letter": "Dead letter"
+      },
+      "jobTypes": {
+        "setup_preflight": "Setup preflight",
+        "credential_verification": "Credential verification",
+        "import_preview": "Import preview",
+        "import_apply": "Controlled apply",
+        "connector_runtime_preflight": "Runtime preflight",
+        "source_discovery": "Source discovery",
+        "noop_health": "Worker health check"
+      },
+      "jobSummaries": {
+        "queued": "The job is safely queued and will be picked up when worker runtime opens.",
+        "running": "The job is locked by a worker. The UI does not execute or restart it.",
+        "succeeded": "The job completed safely and its result was recorded.",
+        "failed": "The job stopped with a safe error code. Raw provider responses are not shown.",
+        "retrying": "The job is waiting for its safe retry time.",
+        "cancelled": "The job was cancelled and will not restart automatically.",
+        "dead_letter": "The job reached the maximum attempt boundary and needs manual review."
+      },
+      "safeErrors": {
+        "connector_job_failed": "The job stopped with a safe error class.",
+        "connector_job_has_blockers": "Missing or risky items must be closed before the job can continue."
+      },
+      "nextActions": {
+        "review_job_status": "Review the job status and next runtime step.",
+        "wait_for_worker_runtime": "No work runs until worker runtime opens.",
+        "review_safe_error": "Review the safe error class; secrets and provider payloads are not shown.",
+        "retry_scheduled": "Wait for the scheduled retry time."
+      }
     },
     "activityTimeline": {
       "actors": {

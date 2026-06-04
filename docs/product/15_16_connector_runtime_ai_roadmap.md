@@ -47,9 +47,11 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 
 **Ürün değeri:** PULS çok tenant'lı connector işlerini güvenli kuyruğa alabilir. Aynı tenant/domain üzerinde çakışan işler kontrol edilir.
 
+**Implementation status:** PR15.1 implements the DB-backed queue contract, safe UI read model, and verify gate. Worker execution remains PR15.2.
+
 **Kapsam:**
 
-- `connector_jobs` veya eşdeğer tenant-scoped job tablosu
+- `puls_integration.connector_jobs` tenant-scoped job tablosu
 - Job status modeli: `queued`, `running`, `succeeded`, `failed`, `retrying`, `cancelled`, `dead_letter`
 - `tenant_id`, `connection_id`, `source_namespace_id`, `provider`, `domain`, `job_type`
 - `idempotency_key`, `attempt_count`, `max_attempts`
@@ -57,6 +59,7 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 - `safe_error_code`, `safe_error_context`, `next_action_key`
 - Per-tenant/domain concurrency kuralı
 - Service-role worker read/write boundary
+- `/erp` safe runtime job queue read model
 
 **Kapsam dışı:**
 

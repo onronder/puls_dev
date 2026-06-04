@@ -188,6 +188,7 @@ function setupSeededMocks(
             data: [{ source_namespace_id: 'namespace-1', canonical_table: 'departments' }],
           },
           import_batches: { data: [] },
+          connector_jobs: { data: [] },
           ...overrides,
         },
         capture,
@@ -391,7 +392,119 @@ describe('fetchErpOverviewWithMeta', () => {
       titleKey: 'erp.activityTimeline.events.setup_mapping_contract_ready.title',
       nextActionKey: 'erp.activityTimeline.nextActions.review_identity_scope',
     })
+    expect(result.data.runtimeQueue).toMatchObject({
+      contractVersion: 'pr15.1-db-job-queue-v1',
+      status: 'contract_ready',
+      readiness: 'ready',
+      workerEnabled: false,
+      executionEnabled: false,
+      summary: {
+        total: 0,
+        queued: 0,
+        running: 0,
+        retrying: 0,
+        succeeded: 0,
+        failed: 0,
+        deadLetter: 0,
+      },
+    })
     expect(JSON.stringify(result.data)).not.toContain('credentials_ref')
+  })
+
+  it('surfaces safe connector job queue summaries without payload or secret readback', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      connector_jobs: {
+        data: [
+          {
+            id: 'job-running',
+            job_type: 'import_preview',
+            status: 'running',
+            domain: 'employees',
+            priority: 20,
+            attempt_count: 1,
+            max_attempts: 3,
+            scheduled_at: '2026-06-04T08:00:00.000Z',
+            started_at: '2026-06-04T08:01:00.000Z',
+            finished_at: null,
+            locked_at: '2026-06-04T08:01:00.000Z',
+            locked_by: 'worker-a',
+            safe_error_code: null,
+            safe_error_context: { records_seen: 5 },
+            next_action_key: 'wait_for_worker_runtime',
+            connection_id: 'connection-1',
+            source_namespace_id: 'namespace-1',
+            import_batch_id: 'batch-1',
+            created_at: '2026-06-04T08:00:00.000Z',
+            updated_at: '2026-06-04T08:01:00.000Z',
+            raw_payload: { password: 'must-not-render' },
+          },
+          {
+            id: 'job-failed',
+            job_type: 'credential_verification',
+            status: 'failed',
+            domain: 'credentials',
+            priority: 10,
+            attempt_count: 3,
+            max_attempts: 3,
+            scheduled_at: '2026-06-04T07:00:00.000Z',
+            started_at: '2026-06-04T07:01:00.000Z',
+            finished_at: '2026-06-04T07:02:00.000Z',
+            locked_at: null,
+            locked_by: null,
+            safe_error_code: 'connector_job_failed',
+            safe_error_context: { reference_available: false },
+            next_action_key: 'review_safe_error',
+            connection_id: 'connection-1',
+            source_namespace_id: null,
+            import_batch_id: null,
+            created_at: '2026-06-04T07:00:00.000Z',
+            updated_at: '2026-06-04T07:02:00.000Z',
+            credentials_ref: 'secret://must-not-render',
+          },
+        ],
+      },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.runtimeQueue).toMatchObject({
+      status: 'blocked',
+      readiness: 'partial',
+      workerEnabled: false,
+      executionEnabled: false,
+      summary: {
+        total: 2,
+        queued: 0,
+        running: 1,
+        retrying: 0,
+        succeeded: 0,
+        failed: 1,
+        deadLetter: 0,
+      },
+    })
+    expect(result.data.runtimeQueue.jobs.map((job) => job.jobType)).toEqual([
+      'import_preview',
+      'credential_verification',
+    ])
+    expect(result.data.runtimeQueue.jobs[0]).toMatchObject({
+      status: 'running',
+      level: 'info',
+      titleKey: 'erp.runtimeQueue.jobTypes.import_preview',
+      nextActionKey: 'erp.runtimeQueue.nextActions.wait_for_worker_runtime',
+    })
+    expect(result.data.runtimeQueue.jobs[1]).toMatchObject({
+      status: 'failed',
+      level: 'error',
+      safeErrorSummaryKey: 'erp.runtimeQueue.safeErrors.connector_job_failed',
+      nextActionKey: 'erp.runtimeQueue.nextActions.review_safe_error',
+    })
+
+    const serialized = JSON.stringify(result.data.runtimeQueue)
+    expect(serialized).not.toContain('raw_payload')
+    expect(serialized).not.toContain('credentials_ref')
+    expect(serialized).not.toContain('secret://')
+    expect(serialized).not.toContain('must-not-render')
   })
 
   it('surfaces safe dry-run import preview records without payload readback', async () => {
