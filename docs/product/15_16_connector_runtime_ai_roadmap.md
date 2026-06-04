@@ -213,6 +213,8 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 
 **Ürün değeri:** Connector runtime ve HR operasyon sinyalleri AI Coach için güvenli ve tutarlı bir veri zemini oluşturur.
 
+**Implementation status:** PR15.6 implements the AI-safe runtime evidence contract, adds the `connector_runtime` context domain to AI Coach, and reads only count/status/source-disclosed signals from connector jobs, worker events, credential state, import preview, and safe activity records. No migration, job start, credential read, import apply, canonical write, ERP/source writeback, or autonomous AI action is added.
+
 **Kapsam:**
 
 - AI'ın okuyabileceği safe evidence contract

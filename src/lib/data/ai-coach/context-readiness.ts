@@ -10,6 +10,10 @@ import type {
   AiCoachOverview,
   AiCoachProductPosture,
   AiCoachReadinessItem,
+  AiCoachRuntimeEvidenceActionId,
+  AiCoachRuntimeEvidenceContract,
+  AiCoachRuntimeEvidenceForbiddenActionId,
+  AiCoachRuntimeEvidenceSignal,
 } from '#/lib/data/ai-coach/types'
 
 const QUERY_UNAVAILABLE = 'unavailable'
@@ -46,6 +50,8 @@ export function buildDefaultGuardrails(): AiCoachGuardrail[] {
     { id: 'g5', labelKey: 'aiCoachSetup.guardrails.noAutoApprovals.label', status: 'enforced' },
     { id: 'g6', labelKey: 'aiCoachSetup.guardrails.noErpWrites.label', status: 'enforced' },
     { id: 'g7', labelKey: 'aiCoachSetup.guardrails.noVaultSeed.label', status: 'enforced' },
+    { id: 'g8', labelKey: 'aiCoachSetup.guardrails.sourceDisclosure.label', status: 'enforced' },
+    { id: 'g9', labelKey: 'aiCoachSetup.guardrails.noCredentialRead.label', status: 'enforced' },
   ]
 }
 
@@ -77,6 +83,27 @@ function deriveSetupStatus(snapshot: AiCoachContextSnapshot): AiCoachContextRead
     (snapshot.employeeCount ?? 0) >= 1
   ) {
     return 'ready'
+  }
+  return 'partial'
+}
+
+function deriveConnectorRuntimeStatus(
+  snapshot: AiCoachContextSnapshot,
+): AiCoachContextReadinessStatus {
+  if (!snapshot.tenantPresent) return 'blocked'
+  if (snapshot.connectorConnectionCount === null || snapshot.connectorRuntimeJobCount === null) {
+    return 'partial'
+  }
+  if (
+    snapshot.connectorConnectionCount >= 1 &&
+    ((snapshot.connectorRuntimeJobCount ?? 0) >= 1 ||
+      (snapshot.connectorJobEventCount ?? 0) >= 1 ||
+      (snapshot.connectorSafeActivityCount ?? 0) >= 1)
+  ) {
+    return 'ready'
+  }
+  if (snapshot.connectorConnectionCount >= 1 || (snapshot.sourceNamespaceCount ?? 0) >= 1) {
+    return 'partial'
   }
   return 'partial'
 }
@@ -166,6 +193,12 @@ const DOMAIN_META: Record<
     guardrailKey: 'aiCoachSetup.contextDomains.setup.guardrail',
     route: '/sirket-kurulum',
   },
+  connector_runtime: {
+    titleKey: 'aiCoachSetup.contextDomains.connector_runtime.title',
+    descriptionKey: 'aiCoachSetup.contextDomains.connector_runtime.description',
+    guardrailKey: 'aiCoachSetup.contextDomains.connector_runtime.guardrail',
+    route: '/erp',
+  },
   employee_quality: {
     titleKey: 'aiCoachSetup.contextDomains.employee_quality.title',
     descriptionKey: 'aiCoachSetup.contextDomains.employee_quality.description',
@@ -215,6 +248,7 @@ const STATUS_DERIVERS: Record<
   (snapshot: AiCoachContextSnapshot) => AiCoachContextReadinessStatus
 > = {
   setup: deriveSetupStatus,
+  connector_runtime: deriveConnectorRuntimeStatus,
   employee_quality: deriveEmployeeQualityStatus,
   leave: deriveLeaveStatus,
   expense: deriveExpenseStatus,
@@ -245,6 +279,29 @@ function buildDomainEvidence(
           'aiCoachSetup.contextDomains.evidence.positionCount',
           snapshot.positionCount,
           snapshot.positionCount !== null,
+        ),
+      ]
+    case 'connector_runtime':
+      return [
+        countEvidence(
+          'aiCoachSetup.contextDomains.evidence.connectorConnectionCount',
+          snapshot.connectorConnectionCount,
+          snapshot.connectorConnectionCount !== null,
+        ),
+        countEvidence(
+          'aiCoachSetup.contextDomains.evidence.connectorRuntimeJobCount',
+          snapshot.connectorRuntimeJobCount,
+          snapshot.connectorRuntimeJobCount !== null,
+        ),
+        countEvidence(
+          'aiCoachSetup.contextDomains.evidence.connectorJobEventCount',
+          snapshot.connectorJobEventCount,
+          snapshot.connectorJobEventCount !== null,
+        ),
+        countEvidence(
+          'aiCoachSetup.contextDomains.evidence.connectorCredentialVerifiedCount',
+          snapshot.connectorCredentialVerifiedCount,
+          snapshot.connectorCredentialVerifiedCount !== null,
         ),
       ]
     case 'employee_quality':
@@ -360,6 +417,92 @@ export function buildAiCoachContextDomains(
   })
 }
 
+const ALLOWED_RUNTIME_EVIDENCE_ACTIONS: AiCoachRuntimeEvidenceActionId[] = [
+  'explain',
+  'summarize',
+  'detect_gap',
+  'recommend_next_step',
+  'prepare_review',
+  'source_disclosure',
+]
+
+const FORBIDDEN_RUNTIME_EVIDENCE_ACTIONS: AiCoachRuntimeEvidenceForbiddenActionId[] = [
+  'start_connector_job',
+  'read_credential',
+  'apply_import',
+  'write_to_source',
+  'mutate_workflow',
+]
+
+function buildRuntimeSignal(
+  id: string,
+  labelKey: string,
+  value: number | string | boolean | null,
+  sourceKey: string,
+  disclosureKey: string,
+): AiCoachRuntimeEvidenceSignal {
+  return {
+    id,
+    labelKey,
+    value: value ?? QUERY_UNAVAILABLE,
+    sourceKey,
+    disclosureKey,
+    status: value === null ? 'partial' : 'ready',
+  }
+}
+
+export function buildRuntimeEvidenceContract(
+  snapshot: AiCoachContextSnapshot,
+): AiCoachRuntimeEvidenceContract {
+  const runtimeBlockers =
+    (snapshot.connectorRuntimeFailedJobCount ?? 0) +
+    (snapshot.connectorRuntimeDeadLetterJobCount ?? 0) +
+    (snapshot.connectorCredentialMissingCount ?? 0)
+
+  return {
+    sourceDisclosureRequired: true,
+    signals: [
+      buildRuntimeSignal(
+        'connector_jobs',
+        'aiCoachSetup.runtimeEvidence.signals.connectorJobs.label',
+        snapshot.connectorRuntimeJobCount,
+        'aiCoachSetup.runtimeEvidence.sources.connectorJobs',
+        'aiCoachSetup.runtimeEvidence.disclosures.connectorJobs',
+      ),
+      buildRuntimeSignal(
+        'connector_job_events',
+        'aiCoachSetup.runtimeEvidence.signals.connectorJobEvents.label',
+        snapshot.connectorJobEventCount,
+        'aiCoachSetup.runtimeEvidence.sources.connectorJobEvents',
+        'aiCoachSetup.runtimeEvidence.disclosures.connectorJobEvents',
+      ),
+      buildRuntimeSignal(
+        'credential_state',
+        'aiCoachSetup.runtimeEvidence.signals.credentialState.label',
+        snapshot.connectorCredentialVerifiedCount,
+        'aiCoachSetup.runtimeEvidence.sources.credentialState',
+        'aiCoachSetup.runtimeEvidence.disclosures.credentialState',
+      ),
+      buildRuntimeSignal(
+        'import_preview',
+        'aiCoachSetup.runtimeEvidence.signals.importPreview.label',
+        snapshot.connectorImportPreviewBatchCount,
+        'aiCoachSetup.runtimeEvidence.sources.importPreview',
+        'aiCoachSetup.runtimeEvidence.disclosures.importPreview',
+      ),
+      buildRuntimeSignal(
+        'runtime_blockers',
+        'aiCoachSetup.runtimeEvidence.signals.runtimeBlockers.label',
+        runtimeBlockers,
+        'aiCoachSetup.runtimeEvidence.sources.runtimeBlockers',
+        'aiCoachSetup.runtimeEvidence.disclosures.runtimeBlockers',
+      ),
+    ],
+    allowedSuggestionActions: ALLOWED_RUNTIME_EVIDENCE_ACTIONS,
+    forbiddenActions: FORBIDDEN_RUNTIME_EVIDENCE_ACTIONS,
+  }
+}
+
 export function buildLegacyReadiness(snapshot: AiCoachContextSnapshot): AiCoachReadinessItem[] {
   const erpReady =
     (snapshot.sourceNamespaceCount ?? 0) >= 1 || snapshot.inactiveErpConnectionPresent
@@ -413,6 +556,15 @@ export function buildBlockedContextSnapshot(): AiCoachContextSnapshot {
     dashboardOverviewPresent: false,
     sourceNamespaceCount: null,
     inactiveErpConnectionPresent: false,
+    connectorConnectionCount: null,
+    connectorRuntimeJobCount: null,
+    connectorRuntimeFailedJobCount: null,
+    connectorRuntimeDeadLetterJobCount: null,
+    connectorJobEventCount: null,
+    connectorCredentialVerifiedCount: null,
+    connectorCredentialMissingCount: null,
+    connectorImportPreviewBatchCount: null,
+    connectorSafeActivityCount: null,
     leaveOverviewPresent: false,
     expenseOverviewPresent: false,
     performanceOverviewPresent: false,
@@ -430,6 +582,7 @@ export function buildAiCoachOverviewFromSnapshot(
     readiness: buildLegacyReadiness(snapshot),
     contextDomains,
     guardrails: buildDefaultGuardrails(),
+    runtimeEvidence: buildRuntimeEvidenceContract(snapshot),
     productPosture: deriveAiCoachProductPosture(contextDomains),
   }
 }
@@ -463,6 +616,15 @@ function buildDemoContextDomains(): AiCoachContextDomain[] {
     dashboardOverviewPresent: true,
     sourceNamespaceCount: 1,
     inactiveErpConnectionPresent: true,
+    connectorConnectionCount: 1,
+    connectorRuntimeJobCount: 4,
+    connectorRuntimeFailedJobCount: 1,
+    connectorRuntimeDeadLetterJobCount: 0,
+    connectorJobEventCount: 6,
+    connectorCredentialVerifiedCount: 0,
+    connectorCredentialMissingCount: 1,
+    connectorImportPreviewBatchCount: 1,
+    connectorSafeActivityCount: 3,
     leaveOverviewPresent: true,
     expenseOverviewPresent: true,
     performanceOverviewPresent: true,
@@ -487,6 +649,43 @@ export async function buildDemoAiCoachOverview(): Promise<AiCoachOverview> {
     })),
     contextDomains: buildDemoContextDomains(),
     guardrails: buildDefaultGuardrails(),
+    runtimeEvidence: buildRuntimeEvidenceContract({
+      tenantPresent: true,
+      employeeId: 'demo-employee',
+      employeeName: 'Demo Employee',
+      setupReadinessPct: 75,
+      setupQueryOk: true,
+      departmentCount: 12,
+      positionCount: 36,
+      employeeCount: 120,
+      reportingLineCount: 100,
+      leaveTypeCount: 8,
+      leaveBalanceCount: 120,
+      leaveRequestCount: 30,
+      expenseCategoryCount: 10,
+      expenseClaimCount: 30,
+      performanceCycleCount: 1,
+      competencyTemplateCount: 10,
+      performanceScoreCount: 45,
+      competencyEvaluationCount: 45,
+      contractCount: 20,
+      contractsOverviewPresent: true,
+      dashboardOverviewPresent: true,
+      sourceNamespaceCount: 1,
+      inactiveErpConnectionPresent: true,
+      connectorConnectionCount: 1,
+      connectorRuntimeJobCount: 4,
+      connectorRuntimeFailedJobCount: 1,
+      connectorRuntimeDeadLetterJobCount: 0,
+      connectorJobEventCount: 6,
+      connectorCredentialVerifiedCount: 0,
+      connectorCredentialMissingCount: 1,
+      connectorImportPreviewBatchCount: 1,
+      connectorSafeActivityCount: 3,
+      leaveOverviewPresent: true,
+      expenseOverviewPresent: true,
+      performanceOverviewPresent: true,
+    }),
     productPosture: 'teaser_context_partial',
   }
 }

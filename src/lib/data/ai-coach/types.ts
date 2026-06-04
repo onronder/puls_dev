@@ -16,6 +16,7 @@ export type AiCoachContextReadinessStatus = 'ready' | 'partial' | 'blocked'
 
 export type AiCoachContextDomainId =
   | 'setup'
+  | 'connector_runtime'
   | 'employee_quality'
   | 'leave'
   | 'expense'
@@ -46,11 +47,43 @@ export type AiCoachGuardrail = {
 
 export type AiCoachProductPosture = 'teaser_context_ready' | 'teaser_context_partial'
 
+export type AiCoachRuntimeEvidenceActionId =
+  | 'explain'
+  | 'summarize'
+  | 'detect_gap'
+  | 'recommend_next_step'
+  | 'prepare_review'
+  | 'source_disclosure'
+
+export type AiCoachRuntimeEvidenceForbiddenActionId =
+  | 'start_connector_job'
+  | 'read_credential'
+  | 'apply_import'
+  | 'write_to_source'
+  | 'mutate_workflow'
+
+export type AiCoachRuntimeEvidenceSignal = {
+  id: string
+  labelKey: string
+  value: number | string | boolean
+  sourceKey: string
+  disclosureKey: string
+  status: AiCoachContextReadinessStatus
+}
+
+export type AiCoachRuntimeEvidenceContract = {
+  sourceDisclosureRequired: true
+  signals: AiCoachRuntimeEvidenceSignal[]
+  allowedSuggestionActions: AiCoachRuntimeEvidenceActionId[]
+  forbiddenActions: AiCoachRuntimeEvidenceForbiddenActionId[]
+}
+
 export type AiCoachOverview = {
   capabilities: AiCoachCapability[]
   readiness: AiCoachReadinessItem[]
   contextDomains: AiCoachContextDomain[]
   guardrails: AiCoachGuardrail[]
+  runtimeEvidence: AiCoachRuntimeEvidenceContract
   productPosture: AiCoachProductPosture
 }
 
@@ -78,6 +111,15 @@ export type AiCoachContextSnapshot = {
   dashboardOverviewPresent: boolean
   sourceNamespaceCount: number | null
   inactiveErpConnectionPresent: boolean
+  connectorConnectionCount: number | null
+  connectorRuntimeJobCount: number | null
+  connectorRuntimeFailedJobCount: number | null
+  connectorRuntimeDeadLetterJobCount: number | null
+  connectorJobEventCount: number | null
+  connectorCredentialVerifiedCount: number | null
+  connectorCredentialMissingCount: number | null
+  connectorImportPreviewBatchCount: number | null
+  connectorSafeActivityCount: number | null
   leaveOverviewPresent: boolean
   expenseOverviewPresent: boolean
   performanceOverviewPresent: boolean

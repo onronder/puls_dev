@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   buildAiCoachContextDomains,
+  buildAiCoachOverviewFromSnapshot,
   buildBlockedAiCoachOverview,
   buildDemoAiCoachOverview,
+  buildRuntimeEvidenceContract,
   deriveAiCoachProductPosture,
   isAiCoachOverviewEmpty,
 } from '#/lib/data/ai-coach/context-readiness'
@@ -74,6 +76,15 @@ function seededSnapshot(overrides: Partial<AiCoachContextSnapshot> = {}): AiCoac
     dashboardOverviewPresent: true,
     sourceNamespaceCount: 1,
     inactiveErpConnectionPresent: true,
+    connectorConnectionCount: 1,
+    connectorRuntimeJobCount: 4,
+    connectorRuntimeFailedJobCount: 1,
+    connectorRuntimeDeadLetterJobCount: 0,
+    connectorJobEventCount: 6,
+    connectorCredentialVerifiedCount: 0,
+    connectorCredentialMissingCount: 1,
+    connectorImportPreviewBatchCount: 1,
+    connectorSafeActivityCount: 3,
     leaveOverviewPresent: true,
     expenseOverviewPresent: true,
     performanceOverviewPresent: true,
@@ -108,11 +119,12 @@ function setupSeededMocks() {
 }
 
 describe('context-readiness pure helpers', () => {
-  it('builds 8 context domains from seeded snapshot', () => {
+  it('builds 9 context domains from seeded snapshot', () => {
     const domains = buildAiCoachContextDomains(seededSnapshot())
-    expect(domains).toHaveLength(8)
+    expect(domains).toHaveLength(9)
     expect(domains.map((domain) => domain.id)).toEqual([
       'setup',
+      'connector_runtime',
       'employee_quality',
       'leave',
       'expense',
@@ -147,6 +159,52 @@ describe('context-readiness pure helpers', () => {
     const blocked = buildBlockedAiCoachOverview()
     expect(isAiCoachOverviewEmpty(blocked)).toBe(true)
   })
+
+  it('builds a source-disclosed runtime evidence contract without execution actions', () => {
+    const overview = buildAiCoachOverviewFromSnapshot(seededSnapshot())
+
+    expect(overview.runtimeEvidence.sourceDisclosureRequired).toBe(true)
+    expect(overview.runtimeEvidence.allowedSuggestionActions).toEqual([
+      'explain',
+      'summarize',
+      'detect_gap',
+      'recommend_next_step',
+      'prepare_review',
+      'source_disclosure',
+    ])
+    expect(overview.runtimeEvidence.forbiddenActions).toEqual([
+      'start_connector_job',
+      'read_credential',
+      'apply_import',
+      'write_to_source',
+      'mutate_workflow',
+    ])
+    expect(overview.runtimeEvidence.signals.map((signal) => signal.id)).toEqual([
+      'connector_jobs',
+      'connector_job_events',
+      'credential_state',
+      'import_preview',
+      'runtime_blockers',
+    ])
+    expect(JSON.stringify(overview.runtimeEvidence)).not.toMatch(/credential reference|secret value/i)
+  })
+
+  it('marks runtime signals partial when source counts are unavailable', () => {
+    const contract = buildRuntimeEvidenceContract(
+      seededSnapshot({
+        connectorRuntimeJobCount: null,
+        connectorJobEventCount: null,
+        connectorCredentialVerifiedCount: null,
+        connectorImportPreviewBatchCount: null,
+        connectorRuntimeFailedJobCount: null,
+        connectorRuntimeDeadLetterJobCount: null,
+        connectorCredentialMissingCount: null,
+      }),
+    )
+
+    expect(contract.signals.slice(0, 4).every((signal) => signal.status === 'partial')).toBe(true)
+    expect(contract.signals[4]?.status).toBe('ready')
+  })
 })
 
 describe('fetchAiCoachOverviewWithMeta', () => {
@@ -154,7 +212,7 @@ describe('fetchAiCoachOverviewWithMeta', () => {
     vi.clearAllMocks()
   })
 
-  it('returns real success with 8 domains when tenant is seeded', async () => {
+  it('returns real success with 9 domains when tenant is seeded', async () => {
     demoEnabled.mockReturnValue(false)
     setupSeededMocks()
 
@@ -162,9 +220,12 @@ describe('fetchAiCoachOverviewWithMeta', () => {
 
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
-    expect(result.data.contextDomains).toHaveLength(8)
+    expect(result.data.contextDomains).toHaveLength(9)
+    expect(result.data.contextDomains.some((domain) => domain.id === 'connector_runtime')).toBe(true)
     expect(result.data.guardrails.some((g) => g.id === 'g3')).toBe(true)
     expect(result.data.guardrails.some((g) => g.id === 'g4')).toBe(true)
+    expect(result.data.runtimeEvidence.sourceDisclosureRequired).toBe(true)
+    expect(result.data.runtimeEvidence.forbiddenActions).toContain('start_connector_job')
   })
 
   it('returns real blocked overview without demo fallback when demo mode off', async () => {
@@ -208,7 +269,7 @@ describe('fetchAiCoachOverviewWithMeta', () => {
 
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
-    expect(result.data.contextDomains.length).toBe(8)
+    expect(result.data.contextDomains.length).toBe(9)
     const employeeQuality = result.data.contextDomains.find((d) => d.id === 'employee_quality')
     expect(employeeQuality?.status).toBe('partial')
   })
