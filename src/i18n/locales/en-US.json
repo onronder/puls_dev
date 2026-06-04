@@ -749,6 +749,15 @@
       "title": "Connection setup steps",
       "description": "This workspace shows where the source is, which fields are mapped, and what needs to happen next."
     },
+    "tabs": {
+      "label": "Data connection workspace",
+      "setup": "Setup",
+      "fields": "Fields",
+      "check": "Check",
+      "credentials": "Credentials",
+      "previewApply": "Preview & Apply",
+      "activity": "Activity"
+    },
     "setupSteps": {
       "source": {
         "label": "Source",

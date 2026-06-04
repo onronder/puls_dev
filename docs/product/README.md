@@ -386,34 +386,45 @@ PR14.17 adds the human review boundary after dry-run preview. `/erp` can show wh
 
 PR14.18 makes the future apply path visible without making it executable. `/erp` now shows source-independent apply gates for approval, idempotency, batch locking, rollback, audit, notification, runtime credentials, and execution boundary while canonical apply remains closed.
 
-| Document / artifact                                                                                      | Purpose                                                                           |
-| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| [14_connector_controlled_apply_design.md](./14_connector_controlled_apply_design.md)                     | Controlled apply gate model, UX contract, and acceptance criteria                 |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Builds `controlledApplyPlan` from preview, review, and credential posture         |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                               | Renders controlled apply gates with execution closed                              |
-| [`scripts/verify-14-controlled-apply-design.sh`](../../scripts/verify-14-controlled-apply-design.sh)     | PR14.18 verify gate                                                               |
+| Document / artifact                                                                                  | Purpose                                                                   |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [14_connector_controlled_apply_design.md](./14_connector_controlled_apply_design.md)                 | Controlled apply gate model, UX contract, and acceptance criteria         |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                       | Builds `controlledApplyPlan` from preview, review, and credential posture |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                           | Renders controlled apply gates with execution closed                      |
+| [`scripts/verify-14-controlled-apply-design.sh`](../../scripts/verify-14-controlled-apply-design.sh) | PR14.18 verify gate                                                       |
 
 ## PR14.19 Connector apply approval policy
 
 PR14.19 makes the MVP approval authority explicit before any canonical apply runtime exists. Admin approval is represented as source-independent product policy and recorded as safe audit metadata while apply execution, runtime connector calls, credential readback, and ERP/source writes remain closed.
 
-| Document / artifact                                                                                                  | Purpose                                                                       |
-| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [14_connector_apply_approval_policy.md](./14_connector_apply_approval_policy.md)                                     | Admin-only approval policy, audit contract, and acceptance criteria           |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                       | Builds `applyApprovalPolicy` and records safe admin approval audit metadata   |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                           | Renders approval policy inside controlled apply without opening execution     |
-| [`scripts/verify-14-connector-apply-approval-policy.sh`](../../scripts/verify-14-connector-apply-approval-policy.sh) | PR14.19 verify gate                                                           |
+| Document / artifact                                                                                                  | Purpose                                                                     |
+| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [14_connector_apply_approval_policy.md](./14_connector_apply_approval_policy.md)                                     | Admin-only approval policy, audit contract, and acceptance criteria         |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                       | Builds `applyApprovalPolicy` and records safe admin approval audit metadata |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                           | Renders approval policy inside controlled apply without opening execution   |
+| [`scripts/verify-14-connector-apply-approval-policy.sh`](../../scripts/verify-14-connector-apply-approval-policy.sh) | PR14.19 verify gate                                                         |
 
 ## PR14.20 Connector apply execution contract
 
 PR14.20 makes the future apply execution contract explicit while keeping canonical apply, runtime connector calls, credential readback, and ERP/source writes closed. Admin approval can make the contract ready, but execution remains disabled until batch lock, rollback, notification, and runtime job boundaries are implemented.
 
-| Document / artifact                                                                                                | Purpose                                                                               |
-| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| [14_connector_apply_execution_contract.md](./14_connector_apply_execution_contract.md)                             | Closed execution contract, control model, UX debt, and acceptance criteria            |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                     | Builds `applyExecutionContract` from preview, approval, and controlled apply posture  |
-| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                         | Renders the closed execution contract without adding an apply action                  |
-| [`scripts/verify-14-connector-apply-execution-contract.sh`](../../scripts/verify-14-connector-apply-execution-contract.sh) | PR14.20 verify gate                                                           |
+| Document / artifact                                                                                                        | Purpose                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [14_connector_apply_execution_contract.md](./14_connector_apply_execution_contract.md)                                     | Closed execution contract, control model, UX debt, and acceptance criteria           |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                             | Builds `applyExecutionContract` from preview, approval, and controlled apply posture |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                 | Renders the closed execution contract without adding an apply action                 |
+| [`scripts/verify-14-connector-apply-execution-contract.sh`](../../scripts/verify-14-connector-apply-execution-contract.sh) | PR14.20 verify gate                                                                  |
+
+## PR14.21 ERP workbench information architecture
+
+PR14.21 refactors `/erp` from one long vertical connector page into a source-independent tabbed workbench. It keeps setup, mapping, preflight, credential, preview/apply, and activity information visible without forcing users to read every section at once. No migration, connector runtime, credential capture, import apply, or ERP/source writeback is added.
+
+| Document / artifact                                                                                                                | Purpose                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [14_erp_workbench_information_architecture.md](./14_erp_workbench_information_architecture.md)                                     | Tabbed workbench IA, mobile rules, scope, and acceptance criteria |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                         | Source-independent tabbed workbench UI                            |
+| [`e2e/ui-stabilization.spec.ts`](../../e2e/ui-stabilization.spec.ts)                                                               | Authenticated tab navigation and mobile overflow coverage         |
+| [`scripts/verify-14-erp-workbench-information-architecture.sh`](../../scripts/verify-14-erp-workbench-information-architecture.sh) | PR14.21 verify gate                                               |
 
 ## Related packs
 
