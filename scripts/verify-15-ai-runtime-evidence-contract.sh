@@ -225,6 +225,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/ai-coach/overview.test.ts) ;;
       src/lib/data/ai-coach/overview.ts) ;;
       src/lib/data/ai-coach/types.ts) ;;
+      src/lib/observability/sentry.ts) ;;
       src/routes/_app/ai-koc.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR15.6 AI runtime evidence contract: $changed" >&2
