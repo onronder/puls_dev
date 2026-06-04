@@ -426,6 +426,15 @@ PR14.21 refactors `/erp` from one long vertical connector page into a source-ind
 | [`e2e/ui-stabilization.spec.ts`](../../e2e/ui-stabilization.spec.ts)                                                               | Authenticated tab navigation and mobile overflow coverage         |
 | [`scripts/verify-14-erp-workbench-information-architecture.sh`](../../scripts/verify-14-erp-workbench-information-architecture.sh) | PR14.21 verify gate                                               |
 
+## PR14 closeout and PR15-PR16 runtime roadmap
+
+PR14 closes with the connector control plane in place: setup, mapping, preflight, credential boundary, activity history, dry-run preview, review, approval policy, closed apply contract, and a tabbed `/erp` workbench. PR15-PR16 move the product toward a multi-tenant connector runtime and HR AI operating layer without weakening the human-confirmation boundary.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [14_21_executive_status_report.md](./14_21_executive_status_report.md) | Turkish executive status report for product/sales stakeholders, including completion estimates and remaining work |
+| [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md) | Detailed PR15-PR16 plan for DB-backed job queue, Railway worker, credential runtime boundary, controlled data movement, notifications, and AI operational recommendations |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
