@@ -1971,6 +1971,14 @@
         "checksumMissing": "Checksum eksik",
         "approvalRecorded": "Admin onayı audit kaydında",
         "approvalMissing": "Admin onayı bekleniyor",
+        "serviceRoleOnly": "Sadece service-role",
+        "rpcExposed": "Authenticated RPC açık",
+        "importApplyClosed": "import_apply kapalı",
+        "importApplyOpen": "import_apply açık",
+        "objectAndFieldAudit": "Object event + field diff",
+        "auditPolicyMissing": "Audit policy eksik",
+        "ninetyDayHotRetention": "90 gün sıcak retention",
+        "retentionPolicyMissing": "Retention policy eksik",
         "lockClosed": "Batch lock henüz açılmadı",
         "rollbackClosed": "Rollback planı kapalı",
         "notificationClosed": "Bildirim akışı kapalı",
@@ -1988,6 +1996,22 @@
         "admin_approval": {
           "label": "Admin onayı",
           "description": "Apply execution ileride açılmadan önce admin audit onayı görünür olmalı."
+        },
+        "direct_rpc_permission": {
+          "label": "Direct apply RPC",
+          "description": "Browser ve authenticated kullanıcılar eski apply_import_batch RPC'sini çalıştıramaz."
+        },
+        "worker_apply_gate": {
+          "label": "Worker apply gate",
+          "description": "import_apply job'ı PR16 create-only kapıları gelene kadar kuyruğa alınamaz veya claim edilemez."
+        },
+        "crud_audit_policy": {
+          "label": "CRUD audit policy",
+          "description": "Her canonical mutation için object event; update için field diff audit politikası zorunludur."
+        },
+        "retention_policy": {
+          "label": "Retention policy",
+          "description": "Field diff ve rollback snapshot sıcak saklama sınırı varsayılan 90 gündür."
         },
         "batch_lock": {
           "label": "Batch lock",
