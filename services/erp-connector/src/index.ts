@@ -17,6 +17,7 @@ export const server = createServer((_req, res) => {
 export function startService() {
   const stopWorker =
     config.enabled && config.configured ? startConnectorWorkerLoop(config) : () => undefined
+  let stopped = false
 
   server.listen(config.port, () => {
     const workerMode =
@@ -25,11 +26,22 @@ export function startService() {
   })
 
   return () => {
+    if (stopped) return
+    stopped = true
     stopWorker()
     server.close()
   }
 }
 
+export function installShutdownHandlers(stopService: () => void) {
+  const shutdown = () => {
+    stopService()
+  }
+
+  process.once('SIGTERM', shutdown)
+  process.once('SIGINT', shutdown)
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  startService()
+  installShutdownHandlers(startService())
 }

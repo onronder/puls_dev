@@ -266,6 +266,37 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 - `noop_health` job is claimed and completed by the Railway worker.
 - Worker safe context contains no credential, raw payload, request, or response body.
 
+### PR15.8 - Railway Worker Production Guardrails
+
+**Ürün değeri:** PR16 data movement açılmadan önce Railway worker yanlış ortamda, yanlış job tipiyle veya çift worker penceresiyle çalışamaz hale gelir.
+
+**Implementation status:** PR15.8 adds Railway production guardrails: non-production worker loops are disabled by default, `import_apply` requires an explicit PR16 enablement flag, `railway.toml` pins one replica with zero deploy overlap and graceful drain, and the worker handles shutdown signals cleanly. Provider API runtime, credential readback, import apply execution, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
+
+**Kapsam:**
+
+- `RAILWAY_ENVIRONMENT_NAME` based non-production disablement
+- `PULS_CONNECTOR_WORKER_ALLOW_NON_PRODUCTION` explicit override
+- `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED` explicit apply gate
+- `numReplicas = 1`, `overlapSeconds = 0`, `drainingSeconds = 30`
+- Railway `watchPatterns` for monorepo-safe deploy scope
+- `SIGTERM` / `SIGINT` shutdown handling
+- PR16 handoff checklist for enabling `import_apply`
+
+**Kapsam dışı:**
+
+- CSV / Excel apply execution
+- Canias runtime
+- Provider credentials in Railway
+- Multi-worker horizontal scaling
+- Autonomous AI execution
+
+**Doğrulama:**
+
+- Preview/staging Railway env does not run worker loop unless explicitly allowed.
+- `import_apply` is filtered out unless the PR16 flag is true.
+- Health payload exposes guardrail state but never service-role or provider secrets.
+- Remote smoke uses `connector_job_events.worker_id` as the canonical worker proof.
+
 ## PR16 - First Controlled Data Movement
 
 PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Öncelik CSV / Excel olmalıdır; çünkü external API belirsizliği olmadan canonical apply, audit, idempotency ve rollback disiplini kanıtlanabilir.

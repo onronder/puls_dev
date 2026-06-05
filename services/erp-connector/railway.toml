@@ -1,9 +1,17 @@
 [build]
 builder = "RAILPACK"
+watchPatterns = [
+  "/services/erp-connector/**",
+  "/package.json",
+  "/pnpm-lock.yaml",
+]
 
 [deploy]
 startCommand = "pnpm start:railway"
+numReplicas = 1
 healthcheckPath = "/health"
 healthcheckTimeout = 100
+overlapSeconds = 0
+drainingSeconds = 30
 restartPolicyType = "ALWAYS"
 restartPolicyMaxRetries = 10

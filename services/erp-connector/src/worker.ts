@@ -50,6 +50,9 @@ export type ConnectorWorkerConfig = {
   port: number
   workerId: string
   runtimeVersion: string
+  railwayEnvironmentName: string | null
+  nonProductionWorkerAllowed: boolean
+  importApplyEnabled: boolean
   supabaseUrl: string | null
   serviceRoleKey: string | null
   pollMs: number
@@ -68,6 +71,9 @@ export type ConnectorWorkerHealth = {
     enabled: boolean
     configured: boolean
     workerId: string
+    railwayEnvironmentName: string | null
+    nonProductionWorkerAllowed: boolean
+    importApplyEnabled: boolean
     pollMs: number
     leaseSeconds: number
     recoverStaleJobs: boolean
@@ -170,6 +176,15 @@ function parseBoolean(value: string | undefined, fallback = false) {
   return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase())
 }
 
+function normalizeOptionalText(value: string | undefined) {
+  const normalized = value?.trim()
+  return normalized ? normalized : null
+}
+
+function isProductionRailwayEnvironment(value: string | null) {
+  return value === null || value.toLowerCase() === 'production'
+}
+
 function isConnectorJobType(value: string): value is ConnectorJobType {
   return CONNECTOR_JOB_TYPES.includes(value as ConnectorJobType)
 }
@@ -238,13 +253,17 @@ export function buildSafeWorkerFailureObservation(
   }
 }
 
-export function parseSupportedJobTypes(value: string | undefined): ConnectorJobType[] {
+export function parseSupportedJobTypes(
+  value: string | undefined,
+  options: { importApplyEnabled?: boolean } = {},
+): ConnectorJobType[] {
   if (!value?.trim()) return [...DEFAULT_SUPPORTED_JOB_TYPES]
 
   const parsed = value
     .split(',')
     .map((item) => item.trim())
     .filter(isConnectorJobType)
+    .filter((jobType) => jobType !== 'import_apply' || options.importApplyEnabled === true)
 
   return parsed.length > 0 ? parsed : [...DEFAULT_SUPPORTED_JOB_TYPES]
 }
@@ -256,20 +275,34 @@ export function resolveWorkerConfig(env: WorkerEnv = process.env): ConnectorWork
     env.SUPABASE_SERVICE_ROLE_KEY ??
     ''
   ).trim()
+  const railwayEnvironmentName = normalizeOptionalText(env.RAILWAY_ENVIRONMENT_NAME)
+  const nonProductionWorkerAllowed = parseBoolean(
+    env.PULS_CONNECTOR_WORKER_ALLOW_NON_PRODUCTION,
+    false,
+  )
+  const importApplyEnabled = parseBoolean(env.PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED, false)
+  const environmentAllowsWorker =
+    isProductionRailwayEnvironment(railwayEnvironmentName) || nonProductionWorkerAllowed
+  const requestedEnabled = parseBoolean(env.PULS_CONNECTOR_WORKER_ENABLED, false)
 
   return {
-    enabled: parseBoolean(env.PULS_CONNECTOR_WORKER_ENABLED, false),
+    enabled: requestedEnabled && environmentAllowsWorker,
     configured: supabaseUrl !== '' && serviceRoleKey !== '',
     port: clampNumber(Number(env.PORT ?? 8081), 1, 65535),
     workerId: (env.PULS_CONNECTOR_WORKER_ID ?? 'erp-connector-worker').trim(),
     runtimeVersion: (env.PULS_CONNECTOR_WORKER_VERSION ?? DEFAULT_RUNTIME_VERSION).trim(),
+    railwayEnvironmentName,
+    nonProductionWorkerAllowed,
+    importApplyEnabled,
     supabaseUrl: supabaseUrl || null,
     serviceRoleKey: serviceRoleKey || null,
     pollMs: clampNumber(Number(env.PULS_CONNECTOR_WORKER_POLL_MS ?? 5000), 1000, 60000),
     leaseSeconds: clampNumber(Number(env.PULS_CONNECTOR_WORKER_LEASE_SECONDS ?? 300), 30, 3600),
     recoverStaleJobs: parseBoolean(env.PULS_CONNECTOR_WORKER_RECOVER_STALE, true),
     recoveryLimit: clampNumber(Number(env.PULS_CONNECTOR_WORKER_RECOVERY_LIMIT ?? 25), 1, 100),
-    supportedJobTypes: parseSupportedJobTypes(env.PULS_CONNECTOR_WORKER_JOB_TYPES),
+    supportedJobTypes: parseSupportedJobTypes(env.PULS_CONNECTOR_WORKER_JOB_TYPES, {
+      importApplyEnabled,
+    }),
   }
 }
 
@@ -283,6 +316,9 @@ export function buildHealthPayload(config: ConnectorWorkerConfig): ConnectorWork
       enabled: config.enabled,
       configured: config.configured,
       workerId: config.workerId,
+      railwayEnvironmentName: config.railwayEnvironmentName,
+      nonProductionWorkerAllowed: config.nonProductionWorkerAllowed,
+      importApplyEnabled: config.importApplyEnabled,
       pollMs: config.pollMs,
       leaseSeconds: config.leaseSeconds,
       recoverStaleJobs: config.recoverStaleJobs,
