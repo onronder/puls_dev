@@ -1017,6 +1017,9 @@
       "applyApprovalPolicy": {
         "approvalRecorded": "Admin approval was recorded as an audit event. Apply execution remains closed."
       },
+      "applyChangeSet": {
+        "generated": "Change-set and risk evidence were generated. No canonical data was written."
+      },
       "runtimePreflight": {
         "queued": "Runtime preflight job was safely queued. The worker result will appear in activity."
       }
@@ -1034,6 +1037,7 @@
       "setupSaveFailed": "The setup draft could not be saved right now. Try again in a moment.",
       "applyReviewBlocked": "Human review can be requested only after a clean import preview is available.",
       "applyApprovalBlocked": "Admin approval requires a clean preview and a recorded human review first.",
+      "applyChangeSetBlocked": "Change-set generation requires a clean previewed dry-run batch.",
       "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
     "sections": {
@@ -1065,6 +1069,8 @@
       "activityTimelineDescription": "Safe records from setup, secure reference, and readiness-check steps.",
       "applyReadiness": "Apply readiness",
       "applyReadinessDescription": "Review whether the prepared preview is ready for human decisioning. This records audit intent only; it does not apply records or write canonical data.",
+      "applyChangeSet": "Change-set and risk evidence",
+      "applyChangeSetDescription": "Generates immutable decision evidence for the previewed batch, showing which rows would create, which rows are blocked, and which audit/retention boundary applies.",
       "controlledApply": "Controlled apply design",
       "controlledApplyDescription": "Shows the approval, lock, rollback, notification, and audit gates that must exist before canonical writes can open."
     },
@@ -1771,6 +1777,7 @@
       },
       "importApplyReview": {
         "success": "Human review request was recorded.",
+        "partial": "Change-set risks were recorded as blocked.",
         "pending": "Human review request was created.",
         "failed": "Human review request could not be recorded."
       }
@@ -1939,6 +1946,85 @@
           "label": "Resolve blockers",
           "description": "Close preview or setup blockers before approval."
         }
+      }
+    },
+    "applyChangeSet": {
+      "generating": "Generating change-set",
+      "adminRequired": "Admin permission required",
+      "executionClosed": "Execution closed",
+      "generatedAt": "Change-set generated at: {{value}}",
+      "empty": "No change-set item evidence has been generated yet.",
+      "boundaryNote": "This section shows immutable decision evidence only. This screen does not apply a batch, write canonical records, read credentials, write back to ERP, or show raw payloads.",
+      "status": {
+        "not_available": "Change-set not available",
+        "needs_preview": "Preview required",
+        "needs_generation": "Change-set can be generated",
+        "ready_for_create_only_review": "Ready for create-only review",
+        "blocked": "Change-set blocked"
+      },
+      "descriptions": {
+        "not_available": "A source and dry-run batch are required before a change-set can be generated.",
+        "needs_preview": "Batch rows must be previewed against the canonical model before change-set generation.",
+        "needs_generation": "Preview is ready. An admin can generate immutable change-set and risk ledger evidence; this does not write data.",
+        "ready_for_create_only_review": "The change-set was generated with no blocked rows. Live apply still cannot run until PR16.3 worker and create-only gates open.",
+        "blocked": "Change-set risks are present. Guarded update, destructive, source conflict, or stale preview risks must be resolved before apply can open."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no safe change-set action at this stage."
+        },
+        "run_preview_first": {
+          "label": "Run preview first",
+          "description": "A clean dry-run preview is required for change-set generation."
+        },
+        "generate_change_set": {
+          "label": "Generate change-set",
+          "description": "Generate immutable risk and audit evidence from the preview result. This does not execute apply."
+        },
+        "review_change_set": {
+          "label": "Review change-set",
+          "description": "Evidence has been generated. Execution is closed, so only the risk summary can be reviewed."
+        },
+        "resolve_blockers": {
+          "label": "Resolve risks",
+          "description": "Fix blocked rows and run preview again if needed."
+        }
+      },
+      "metrics": {
+        "intent": "Intent",
+        "blockers": "Blocks",
+        "risk": "Overwrite risk",
+        "drift": "Drift"
+      },
+      "values": {
+        "createUpdateSkip": "Create / update / skip",
+        "blockedRows": "Blocked rows",
+        "guardedDestructive": "Guarded / destructive",
+        "staleConflict": "Stale / source conflict",
+        "noFieldDiff": "No field-name evidence",
+        "rollbackSnapshot": "Rollback snapshot metadata required"
+      },
+      "columns": {
+        "row": "Row",
+        "target": "Target",
+        "evidence": "Evidence",
+        "risk": "Risk"
+      },
+      "retention": {
+        "object_event": "Object event audit",
+        "field_diff": "Field diff intent",
+        "rollback_snapshot": "Rollback snapshot metadata"
+      },
+      "riskClasses": {
+        "create_only": "Create-only",
+        "no_change_skip": "No change",
+        "safe_additive_update": "Additive update",
+        "guarded_overwrite": "Guarded overwrite",
+        "destructive_equivalent": "Destructive-equivalent",
+        "source_conflict": "Source conflict",
+        "stale_preview": "Stale preview",
+        "rollback_required": "Rollback required"
       }
     },
     "applyExecutionContract": {

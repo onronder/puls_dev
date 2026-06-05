@@ -538,6 +538,16 @@ PR16.1 implements the first closed execution boundary for controlled data moveme
 | [`supabase/migrations/20260605100000_puls_integration_apply_safety_contract.sql`](../../supabase/migrations/20260605100000_puls_integration_apply_safety_contract.sql) | Service-role-only apply RPC, closed `import_apply` job trigger, and apply safety contract RPC            |
 | [`scripts/verify-16-1-apply-safety-contract.sh`](../../scripts/verify-16-1-apply-safety-contract.sh)                                                                   | PR16.1 verify gate                                                                                       |
 
+## PR16.2 apply change-set and risk ledger
+
+PR16.2 adds immutable change-set evidence for previewed dry-run batches. Admins can generate and inspect safe row-level risk summaries before PR16.3 opens any create-only worker apply path. The change-set records create/update/skip intent, blocker counts, stale/source-conflict risk, audit tier, retention bucket, and expected-current-hash metadata without exposing raw payloads or writing canonical data.
+
+| Document / artifact                                                                                                                                                  | Purpose                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [16_2_apply_change_set_risk_ledger.md](./16_2_apply_change_set_risk_ledger.md)                                                                                       | PR16.2 immutable change-set, safe risk ledger, data minimization, and PR16.3 handoff              |
+| [`supabase/migrations/20260605110000_puls_integration_apply_change_set.sql`](../../supabase/migrations/20260605110000_puls_integration_apply_change_set.sql)         | Change-set tables, risk classes, immutable triggers, admin generation RPC, and safe summary RPC   |
+| [`scripts/verify-16-2-apply-change-set.sh`](../../scripts/verify-16-2-apply-change-set.sh)                                                                           | PR16.2 verify gate                                                                                |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

@@ -332,6 +332,84 @@ export type ConnectorImportPreview = {
   safeToApply: false
 }
 
+export type ConnectorApplyChangeSetStatus =
+  | 'not_available'
+  | 'needs_preview'
+  | 'needs_generation'
+  | 'ready_for_create_only_review'
+  | 'blocked'
+
+export type ConnectorApplyChangeSetAction =
+  | 'none'
+  | 'run_preview_first'
+  | 'generate_change_set'
+  | 'review_change_set'
+  | 'resolve_blockers'
+
+export type ConnectorApplyRiskClass =
+  | 'create_only'
+  | 'no_change_skip'
+  | 'safe_additive_update'
+  | 'guarded_overwrite'
+  | 'destructive_equivalent'
+  | 'source_conflict'
+  | 'stale_preview'
+  | 'rollback_required'
+
+export type ConnectorApplyChangeSetItemSummary = {
+  id: string
+  rowNumber: number
+  entityType: string
+  externalId: string
+  targetTable: string
+  operation: ConnectorApplyOperation | null
+  riskClass: ConnectorApplyRiskClass
+  blocked: boolean
+  riskReasons: string[]
+  auditTiers: ConnectorApplyAuditTier[]
+  retentionBucket: 'object_event' | 'field_diff' | 'rollback_snapshot'
+  expectedCurrentHashAvailable: boolean
+  safeFieldNames: string[]
+  destructiveFieldNames: string[]
+  rollbackSnapshotRequired: boolean
+}
+
+export type ConnectorApplyChangeSet = {
+  id: string | null
+  status: ConnectorApplyChangeSetStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  action: ConnectorApplyChangeSetAction
+  actionLabelKey: string
+  actionDescriptionKey: string
+  requestable: boolean
+  safeToApply: false
+  executionEnabled: false
+  canonicalWriteEnabled: false
+  sourceWritebackEnabled: false
+  credentialReadbackEnabled: false
+  approvalRequired: boolean
+  batchId: string | null
+  sourceChecksum: string | null
+  changeSetChecksum: string | null
+  previewedAt: string | null
+  createdAt: string | null
+  summary: {
+    rowCount: number
+    createCount: number
+    updateCount: number
+    skipCount: number
+    blockedCount: number
+    staleCount: number
+    destructiveCount: number
+    sourceConflictCount: number
+    guardedUpdateCount: number
+    noChangeCount: number
+  }
+  sampleItems: ConnectorApplyChangeSetItemSummary[]
+}
+
 export type ConnectorApplyReadinessStatus =
   | 'not_available'
   | 'needs_preview'
@@ -802,6 +880,7 @@ export type ErpOverview = {
   importPreview: ConnectorImportPreview
   applyReadiness: ConnectorApplyReadiness
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
+  applyChangeSet: ConnectorApplyChangeSet
   applySafetyContract: ConnectorApplySafetyContract
   controlledApplyPlan: ConnectorControlledApplyPlan
   applyExecutionContract: ConnectorApplyExecutionContract
@@ -958,6 +1037,36 @@ type ConnectorApplySafetyContractRow = {
   next_action_key?: string | null
 }
 
+type ConnectorApplyChangeSetRow = {
+  id?: string | null
+  tenant_id?: string | null
+  connection_id?: string | null
+  source_namespace_id?: string | null
+  import_batch_id?: string | null
+  status?: 'ready_for_create_only_review' | 'blocked' | null
+  source_checksum?: string | null
+  change_set_checksum?: string | null
+  previewed_at?: string | null
+  row_count?: number | null
+  create_count?: number | null
+  update_count?: number | null
+  skip_count?: number | null
+  blocked_count?: number | null
+  stale_count?: number | null
+  destructive_count?: number | null
+  source_conflict_count?: number | null
+  guarded_update_count?: number | null
+  no_change_count?: number | null
+  execution_enabled?: boolean | null
+  canonical_write_enabled?: boolean | null
+  source_writeback_enabled?: boolean | null
+  credential_readback_enabled?: boolean | null
+  approval_required?: boolean | null
+  safe_summary?: Record<string, unknown> | null
+  sample_items?: unknown
+  created_at?: string | null
+}
+
 type ConnectorCredentialEventRow = {
   id?: string | null
   tenant_id?: string | null
@@ -1092,6 +1201,15 @@ export type RecordConnectorApplyApprovalResult = {
   safeToApply: false
 }
 
+export type RequestConnectorApplyChangeSetResult = {
+  connectionId: string
+  batchId: string
+  changeSetId: string | null
+  status: ConnectorApplyChangeSetStatus
+  blockedCount: number
+  safeToApply: false
+}
+
 export type RequestConnectorRuntimePreflightResult = {
   connectionId: string
   jobId: string | null
@@ -1111,6 +1229,7 @@ export type ConnectorSetupErrorMapping = {
     | 'import_preview_blocked'
     | 'apply_review_blocked'
     | 'apply_approval_blocked'
+    | 'apply_change_set_blocked'
     | 'runtime_preflight_blocked'
     | 'permission_denied'
     | 'domain_owned'
@@ -1536,6 +1655,18 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
       return { code: 'apply_approval_blocked', toastKey: 'erp.errors.applyApprovalBlocked' }
     }
     if (
+      error.code === 'PULS_CONNECTOR_APPLY_CHANGE_SET_BLOCKED' ||
+      error.code === 'PULS_CONNECTOR_APPLY_CHANGE_SET_PREVIEW_REQUIRED' ||
+      error.code === 'PULS_CONNECTOR_APPLY_CHANGE_SET_ROW_ERRORS' ||
+      error.code === 'PULS_CONNECTOR_APPLY_CHANGE_SET_CHECKSUM_REQUIRED' ||
+      error.code === 'PULS_CONNECTOR_APPLY_CHANGE_SET_DRY_RUN_REQUIRED'
+    ) {
+      return {
+        code: 'apply_change_set_blocked',
+        toastKey: 'erp.errors.applyChangeSetBlocked',
+      }
+    }
+    if (
       error.code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
       error.code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
     ) {
@@ -1570,10 +1701,12 @@ function fromConnectorRpcError(
     i18nKey:
       code === 'PULS_IMPORT_BATCH_STATE_INVALID'
         ? 'erp.errors.importPreviewBlocked'
-        : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
-            code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
-          ? 'erp.errors.runtimePreflightBlocked'
-          : 'erp.errors.setupSaveFailed',
+        : code.startsWith('PULS_CONNECTOR_APPLY_CHANGE_SET_')
+          ? 'erp.errors.applyChangeSetBlocked'
+          : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
+              code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
+            ? 'erp.errors.runtimePreflightBlocked'
+            : 'erp.errors.setupSaveFailed',
   })
 }
 
@@ -2131,6 +2264,200 @@ function buildConnectorImportPreview({
       warningCount,
     },
     safeToApply: false,
+  }
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : []
+}
+
+function normalizeAuditTierArray(value: unknown): ConnectorApplyAuditTier[] {
+  const allowed = new Set<ConnectorApplyAuditTier>([
+    'object_event',
+    'field_diff',
+    'rollback_snapshot',
+    'archive_summary',
+  ])
+  return normalizeStringArray(value).filter((item): item is ConnectorApplyAuditTier =>
+    allowed.has(item as ConnectorApplyAuditTier),
+  )
+}
+
+function normalizeApplyOperation(value: unknown): ConnectorApplyOperation | null {
+  const allowed = new Set<ConnectorApplyOperation>([
+    'insert',
+    'update',
+    'soft_delete',
+    'restore',
+    'rollback',
+    'compensating_update',
+  ])
+  return typeof value === 'string' && allowed.has(value as ConnectorApplyOperation)
+    ? (value as ConnectorApplyOperation)
+    : null
+}
+
+function normalizeApplyRiskClass(value: unknown): ConnectorApplyRiskClass {
+  const allowed = new Set<ConnectorApplyRiskClass>([
+    'create_only',
+    'no_change_skip',
+    'safe_additive_update',
+    'guarded_overwrite',
+    'destructive_equivalent',
+    'source_conflict',
+    'stale_preview',
+    'rollback_required',
+  ])
+  return typeof value === 'string' && allowed.has(value as ConnectorApplyRiskClass)
+    ? (value as ConnectorApplyRiskClass)
+    : 'stale_preview'
+}
+
+function normalizeRetentionBucket(
+  value: unknown,
+): ConnectorApplyChangeSetItemSummary['retentionBucket'] {
+  return value === 'field_diff' || value === 'rollback_snapshot' ? value : 'object_event'
+}
+
+function normalizeApplyChangeSetItems(value: unknown): ConnectorApplyChangeSetItemSummary[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+    .map((item, index) => ({
+      id: typeof item.id === 'string' ? item.id : `change-set-item-${index}`,
+      rowNumber: Number(item.row_number ?? index + 1),
+      entityType: typeof item.entity_type === 'string' ? item.entity_type : 'unknown',
+      externalId: typeof item.external_id === 'string' ? item.external_id : '—',
+      targetTable: typeof item.target_table === 'string' ? item.target_table : 'unknown',
+      operation: normalizeApplyOperation(item.operation),
+      riskClass: normalizeApplyRiskClass(item.risk_class),
+      blocked: item.blocked === true,
+      riskReasons: normalizeStringArray(item.risk_reasons),
+      auditTiers: normalizeAuditTierArray(item.audit_tiers),
+      retentionBucket: normalizeRetentionBucket(item.retention_bucket),
+      expectedCurrentHashAvailable: item.expected_current_hash_available === true,
+      safeFieldNames: normalizeStringArray(item.safe_field_names),
+      destructiveFieldNames: normalizeStringArray(item.destructive_field_names),
+      rollbackSnapshotRequired: item.rollback_snapshot_required === true,
+    }))
+}
+
+function emptyConnectorApplyChangeSet(
+  connectorState: ConnectorLifecycleState,
+  importPreview: ConnectorImportPreview,
+): ConnectorApplyChangeSet {
+  const batch = importPreview.batch
+  const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
+  const status: ConnectorApplyChangeSetStatus =
+    connectorState !== 'connector_selected' || !batch?.id
+      ? 'not_available'
+      : previewReady
+        ? 'needs_generation'
+        : 'needs_preview'
+  const action: ConnectorApplyChangeSetAction =
+    status === 'needs_generation'
+      ? 'generate_change_set'
+      : status === 'needs_preview'
+        ? 'run_preview_first'
+        : 'none'
+  const readiness: ConnectorReadinessStatus =
+    status === 'not_available' ? 'blocked' : status === 'needs_generation' ? 'partial' : 'partial'
+
+  return {
+    id: null,
+    status,
+    readiness,
+    statusLabelKey: `erp.applyChangeSet.status.${status}`,
+    descriptionKey: `erp.applyChangeSet.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.applyChangeSet.actions.${action}.label`,
+    actionDescriptionKey: `erp.applyChangeSet.actions.${action}.description`,
+    requestable: status === 'needs_generation',
+    safeToApply: false,
+    executionEnabled: false,
+    canonicalWriteEnabled: false,
+    sourceWritebackEnabled: false,
+    credentialReadbackEnabled: false,
+    approvalRequired: true,
+    batchId: batch?.id ?? null,
+    sourceChecksum: batch?.sourceChecksum ?? null,
+    changeSetChecksum: null,
+    previewedAt: batch?.previewedAt ?? null,
+    createdAt: null,
+    summary: {
+      rowCount: importPreview.summary.rowCount,
+      createCount: 0,
+      updateCount: 0,
+      skipCount: 0,
+      blockedCount: 0,
+      staleCount: 0,
+      destructiveCount: 0,
+      sourceConflictCount: 0,
+      guardedUpdateCount: 0,
+      noChangeCount: 0,
+    },
+    sampleItems: [],
+  }
+}
+
+function buildConnectorApplyChangeSet({
+  connectorState,
+  importPreview,
+  row,
+}: {
+  connectorState: ConnectorLifecycleState
+  importPreview: ConnectorImportPreview
+  row: ConnectorApplyChangeSetRow | null
+}): ConnectorApplyChangeSet {
+  if (!row?.id) {
+    return emptyConnectorApplyChangeSet(connectorState, importPreview)
+  }
+
+  const blockedCount = Number(row.blocked_count ?? 0)
+  const status: ConnectorApplyChangeSetStatus =
+    row.status === 'ready_for_create_only_review' && blockedCount === 0
+      ? 'ready_for_create_only_review'
+      : 'blocked'
+  const action: ConnectorApplyChangeSetAction =
+    status === 'ready_for_create_only_review' ? 'review_change_set' : 'resolve_blockers'
+
+  return {
+    id: row.id,
+    status,
+    readiness: status === 'ready_for_create_only_review' ? 'ready' : 'blocked',
+    statusLabelKey: `erp.applyChangeSet.status.${status}`,
+    descriptionKey: `erp.applyChangeSet.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.applyChangeSet.actions.${action}.label`,
+    actionDescriptionKey: `erp.applyChangeSet.actions.${action}.description`,
+    requestable: false,
+    safeToApply: false,
+    executionEnabled: false,
+    canonicalWriteEnabled: false,
+    sourceWritebackEnabled: false,
+    credentialReadbackEnabled: false,
+    approvalRequired: row.approval_required !== false,
+    batchId: row.import_batch_id ?? importPreview.batch?.id ?? null,
+    sourceChecksum: row.source_checksum ?? importPreview.batch?.sourceChecksum ?? null,
+    changeSetChecksum: row.change_set_checksum ?? null,
+    previewedAt: row.previewed_at ?? importPreview.batch?.previewedAt ?? null,
+    createdAt: row.created_at ?? null,
+    summary: {
+      rowCount: Number(row.row_count ?? 0),
+      createCount: Number(row.create_count ?? 0),
+      updateCount: Number(row.update_count ?? 0),
+      skipCount: Number(row.skip_count ?? 0),
+      blockedCount,
+      staleCount: Number(row.stale_count ?? 0),
+      destructiveCount: Number(row.destructive_count ?? 0),
+      sourceConflictCount: Number(row.source_conflict_count ?? 0),
+      guardedUpdateCount: Number(row.guarded_update_count ?? 0),
+      noChangeCount: Number(row.no_change_count ?? 0),
+    },
+    sampleItems: normalizeApplyChangeSetItems(row.sample_items),
   }
 }
 
@@ -3338,6 +3665,7 @@ function mapSyncLogMessageKey(row: ErpSyncBatchRow): string | undefined {
   }
   if (row.sync_type === 'import_apply_review') {
     if (row.status === 'success') return 'erp.syncLogMessages.importApplyReview.success'
+    if (row.status === 'partial_success') return 'erp.syncLogMessages.importApplyReview.partial'
     if (row.status === 'failed') return 'erp.syncLogMessages.importApplyReview.failed'
     return 'erp.syncLogMessages.importApplyReview.pending'
   }
@@ -3952,6 +4280,7 @@ function buildOverview({
   importPreview,
   applyReadiness,
   applyApprovalPolicy,
+  applyChangeSet,
   applySafetyContract,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
@@ -3985,6 +4314,7 @@ function buildOverview({
   importPreview?: ConnectorImportPreview
   applyReadiness?: ConnectorApplyReadiness
   applyApprovalPolicy?: ConnectorApplyApprovalPolicy
+  applyChangeSet?: ConnectorApplyChangeSet
   applySafetyContract?: ConnectorApplySafetyContract
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
@@ -4065,6 +4395,8 @@ function buildOverview({
       approvalEvent: null,
     })
   const resolvedApplySafetyContract = applySafetyContract ?? buildConnectorApplySafetyContract(null)
+  const resolvedApplyChangeSet =
+    applyChangeSet ?? emptyConnectorApplyChangeSet(connectorState, resolvedImportPreview)
   const controlledApplyPlan = buildConnectorControlledApplyPlan({
     connectorState,
     importPreview: resolvedImportPreview,
@@ -4138,6 +4470,7 @@ function buildOverview({
     importPreview: resolvedImportPreview,
     applyReadiness: resolvedApplyReadiness,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
+    applyChangeSet: resolvedApplyChangeSet,
     applySafetyContract: resolvedApplySafetyContract,
     controlledApplyPlan,
     applyExecutionContract,
@@ -4529,6 +4862,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   let importBatch: ImportBatchRow | null = null
   let importPreviewRecords: ImportPreviewRecordRow[] = []
   let applySafetyContractRow: ConnectorApplySafetyContractRow | null = null
+  let applyChangeSetRow: ConnectorApplyChangeSetRow | null = null
 
   if (connectorNamespaceIds.length > 0) {
     const importBatchRow = await pulsIntegration()
@@ -4588,6 +4922,21 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       applySafetyContractRow =
         ((applySafetyContractResult.data ?? []) as ConnectorApplySafetyContractRow[])[0] ?? null
     }
+
+    if (importBatch?.id) {
+      const applyChangeSetResult = await pulsIntegration().rpc(
+        'list_connector_apply_change_set_summaries',
+        {
+          p_batch_id: importBatch.id,
+          p_connection_id: connection.id,
+        },
+      )
+
+      if (!applyChangeSetResult.error) {
+        applyChangeSetRow =
+          ((applyChangeSetResult.data ?? []) as ConnectorApplyChangeSetRow[])[0] ?? null
+      }
+    }
   }
 
   const importPreview = buildConnectorImportPreview({
@@ -4621,6 +4970,11 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     approvalEvent: latestApplyApprovalEvent,
   })
   const applySafetyContract = buildConnectorApplySafetyContract(applySafetyContractRow)
+  const applyChangeSet = buildConnectorApplyChangeSet({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    importPreview,
+    row: applyChangeSetRow,
+  })
 
   return buildOverview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
@@ -4675,6 +5029,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     importPreview,
     applyReadiness,
     applyApprovalPolicy,
+    applyChangeSet,
     applySafetyContract,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
@@ -5417,6 +5772,161 @@ export async function requestConnectorApplyReview(
     batchId: batch.id,
     status: 'review_requested',
     requestedAt: now,
+    safeToApply: false,
+  }
+}
+
+export async function requestConnectorApplyChangeSet(
+  userId: string,
+): Promise<RequestConnectorApplyChangeSetResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector apply change-set requires tenant context',
+      source: 'adapter',
+      operation: 'requestConnectorApplyChangeSet',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector apply change-set requires admin permission',
+      source: 'adapter',
+      operation: 'requestConnectorApplyChangeSet',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.importPreview.batch
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector apply change-set requires a selected source',
+      source: 'adapter',
+      operation: 'requestConnectorApplyChangeSet',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector apply change-set requires a preview batch',
+      source: 'adapter',
+      operation: 'requestConnectorApplyChangeSet',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (overview.applyChangeSet.id) {
+    return {
+      connectionId,
+      batchId: batch.id,
+      changeSetId: overview.applyChangeSet.id,
+      status: overview.applyChangeSet.status,
+      blockedCount: overview.applyChangeSet.summary.blockedCount,
+      safeToApply: false,
+    }
+  }
+  if (!overview.applyChangeSet.requestable) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_APPLY_CHANGE_SET_BLOCKED',
+      message: 'Connector apply change-set is blocked until preview is ready',
+      source: 'adapter',
+      operation: 'requestConnectorApplyChangeSet',
+      i18nKey: 'erp.errors.applyChangeSetBlocked',
+    })
+  }
+
+  const generated = await pulsIntegration().rpc('create_connector_apply_change_set', {
+    p_batch_id: batch.id,
+  })
+
+  if (generated.error) {
+    throw fromConnectorRpcError(generated.error, 'requestConnectorApplyChangeSet')
+  }
+
+  const row = ((generated.data ?? []) as ConnectorApplyChangeSetRow[])[0] ?? null
+  const changeSet = buildConnectorApplyChangeSet({
+    connectorState: 'connector_selected',
+    importPreview: overview.importPreview,
+    row,
+  })
+  if (!changeSet.id) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_APPLY_CHANGE_SET_BLOCKED',
+      message: 'Connector apply change-set RPC returned no change-set evidence',
+      source: 'adapter',
+      operation: 'requestConnectorApplyChangeSet',
+      i18nKey: 'erp.errors.applyChangeSetBlocked',
+    })
+  }
+  const now = new Date().toISOString()
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_apply_review',
+      event_key: 'import_apply_change_set_generated',
+      actor_employee_id: ctx.employeeId,
+      status: changeSet.summary.blockedCount > 0 ? 'partial_success' : 'success',
+      started_at: now,
+      finished_at: now,
+      records_seen: changeSet.summary.rowCount,
+      records_inserted: changeSet.summary.createCount,
+      records_updated: changeSet.summary.updateCount,
+      records_failed: changeSet.summary.blockedCount,
+      error_summary: null,
+      safe_error_code: changeSet.summary.blockedCount > 0 ? 'apply_change_set_has_blockers' : null,
+      safe_error_context: {
+        change_set_id: changeSet.id,
+        contract_version: 'pr16.2-apply-change-set-v1',
+        source_namespace_code: batch.sourceNamespaceCode,
+        source_checksum_available: Boolean(changeSet.sourceChecksum),
+        row_count: changeSet.summary.rowCount,
+        create_count: changeSet.summary.createCount,
+        update_count: changeSet.summary.updateCount,
+        skip_count: changeSet.summary.skipCount,
+        blocked_count: changeSet.summary.blockedCount,
+        stale_count: changeSet.summary.staleCount,
+        destructive_count: changeSet.summary.destructiveCount,
+        source_conflict_count: changeSet.summary.sourceConflictCount,
+        guarded_update_count: changeSet.summary.guardedUpdateCount,
+        no_change_count: changeSet.summary.noChangeCount,
+        field_value_readback: false,
+        raw_payload_readback: false,
+        safe_to_apply: false,
+        apply_execution_open: false,
+        canonical_write_open: false,
+        source_writeback_open: false,
+        credential_readback_open: false,
+      },
+      next_action_key:
+        changeSet.summary.blockedCount > 0
+          ? 'resolve_change_set_blockers'
+          : 'review_create_only_change_set',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'requestConnectorApplyChangeSet',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch.id,
+    changeSetId: changeSet.id,
+    status: changeSet.status,
+    blockedCount: changeSet.summary.blockedCount,
     safeToApply: false,
   }
 }

@@ -8,6 +8,7 @@ import {
   mapConnectorSetupError,
   mapProviderLabel,
   recordConnectorApplyApproval,
+  requestConnectorApplyChangeSet,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
   requestConnectorRuntimePreflight,
@@ -819,6 +820,20 @@ describe('fetchErpOverviewWithMeta', () => {
       'dry_run_only',
       'apply_execution_closed',
     ])
+    expect(result.data.applyChangeSet).toMatchObject({
+      status: 'needs_generation',
+      action: 'generate_change_set',
+      requestable: true,
+      safeToApply: false,
+      batchId: 'batch-import-preview',
+      summary: {
+        rowCount: 5,
+        createCount: 0,
+        updateCount: 0,
+        skipCount: 0,
+        blockedCount: 0,
+      },
+    })
     expect(result.data.applySafetyContract).toMatchObject({
       contractVersion: 'pr16.1-apply-safety-contract-v1',
       authenticatedApplyRpcExposed: false,
@@ -860,9 +875,112 @@ describe('fetchErpOverviewWithMeta', () => {
       result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'rollback_strategy'),
     ).toMatchObject({ status: 'blocked' })
     expect(JSON.stringify(result.data.applyReadiness)).not.toContain('apply_import_batch')
+    expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('apply_import_batch')
     expect(JSON.stringify(result.data.applySafetyContract)).not.toContain('apply_import_batch')
     expect(JSON.stringify(result.data.controlledApplyPlan)).not.toContain('apply_import_batch')
     expect(JSON.stringify(result.data.controlledApplyPlan)).not.toContain('credentials_ref')
+  })
+
+  it('exposes safe apply change-set risk evidence without raw payloads', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      import_batches: {
+        data: [
+          {
+            id: 'batch-import-preview',
+            source_namespace_id: 'namespace-1',
+            status: 'previewed',
+            mode: 'dry_run',
+            source_checksum: 'pr16_2_change_set_v1',
+            row_count: 3,
+            create_count: 1,
+            update_count: 1,
+            skip_count: 1,
+            error_count: 0,
+            violation_count: 0,
+            validated_at: '2026-06-05T10:00:00.000Z',
+            previewed_at: '2026-06-05T10:01:00.000Z',
+            created_at: '2026-06-05T09:59:00.000Z',
+            updated_at: '2026-06-05T10:01:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_import_preview_records': { data: [] },
+      'rpc:list_connector_apply_change_set_summaries': {
+        data: [
+          {
+            id: 'change-set-1',
+            import_batch_id: 'batch-import-preview',
+            status: 'blocked',
+            source_checksum: 'pr16_2_change_set_v1',
+            change_set_checksum: 'safe-change-set-hash',
+            previewed_at: '2026-06-05T10:01:00.000Z',
+            row_count: 3,
+            create_count: 1,
+            update_count: 1,
+            skip_count: 1,
+            blocked_count: 1,
+            stale_count: 0,
+            destructive_count: 0,
+            source_conflict_count: 0,
+            guarded_update_count: 1,
+            no_change_count: 1,
+            approval_required: true,
+            sample_items: [
+              {
+                id: 'change-set-item-1',
+                row_number: 2,
+                entity_type: 'department',
+                external_id: 'DEPT-1',
+                target_table: 'departments',
+                operation: 'update',
+                risk_class: 'guarded_overwrite',
+                blocked: true,
+                risk_reasons: ['blocked_update_requires_policy'],
+                audit_tiers: ['object_event', 'field_diff', 'rollback_snapshot'],
+                retention_bucket: 'field_diff',
+                expected_current_hash_available: true,
+                safe_field_names: ['name', 'parent_department_id'],
+                destructive_field_names: [],
+                rollback_snapshot_required: true,
+              },
+            ],
+            created_at: '2026-06-05T10:02:00.000Z',
+          },
+        ],
+      },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.applyChangeSet).toMatchObject({
+      id: 'change-set-1',
+      status: 'blocked',
+      action: 'resolve_blockers',
+      requestable: false,
+      safeToApply: false,
+      changeSetChecksum: 'safe-change-set-hash',
+      summary: {
+        rowCount: 3,
+        createCount: 1,
+        updateCount: 1,
+        skipCount: 1,
+        blockedCount: 1,
+        guardedUpdateCount: 1,
+        noChangeCount: 1,
+      },
+    })
+    expect(result.data.applyChangeSet.sampleItems[0]).toMatchObject({
+      riskClass: 'guarded_overwrite',
+      blocked: true,
+      retentionBucket: 'field_diff',
+      expectedCurrentHashAvailable: true,
+      safeFieldNames: ['name', 'parent_department_id'],
+    })
+    expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('raw_payload')
+    expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('sanitized_payload')
+    expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('normalized_payload')
+    expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('credentials_ref')
   })
 
   it('shows review requested only when the audit event is newer than the preview', async () => {
@@ -1860,6 +1978,7 @@ describe('fetchErpOverviewWithMeta', () => {
       'list_connector_credential_events',
       'list_connector_import_preview_records',
       'list_connector_apply_safety_contracts',
+      'list_connector_apply_change_set_summaries',
       'validate_import_batch',
       'preview_import_diff',
     ])
@@ -1882,7 +2001,7 @@ describe('fetchErpOverviewWithMeta', () => {
         next_action_key: 'review_import_preview',
       }),
     })
-    expect(JSON.stringify(capture.inserts)).not.toContain('raw_payload')
+    expect(JSON.stringify(capture.inserts)).not.toContain('"raw_payload":')
     expect(JSON.stringify(capture.inserts)).not.toContain('credentials_ref')
   })
 
@@ -1942,6 +2061,7 @@ describe('fetchErpOverviewWithMeta', () => {
       'list_connector_credential_events',
       'list_connector_import_preview_records',
       'list_connector_apply_safety_contracts',
+      'list_connector_apply_change_set_summaries',
       'validate_import_batch',
     ])
     expect(capture.rpcCalls?.some((call) => call.fn === 'preview_import_diff')).toBe(false)
@@ -2027,7 +2147,111 @@ describe('fetchErpOverviewWithMeta', () => {
         next_action_key: 'hold_for_apply_design',
       }),
     })
-    expect(JSON.stringify(capture.inserts)).not.toContain('raw_payload')
+    expect(JSON.stringify(capture.inserts)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(capture.inserts)).not.toContain('credentials_ref')
+    expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
+  })
+
+  it('generates connector apply change-set evidence without calling apply import', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        import_batches: {
+          data: [
+            {
+              id: 'batch-import-preview',
+              source_namespace_id: 'namespace-1',
+              status: 'previewed',
+              mode: 'dry_run',
+              source_checksum: 'pr16_2_change_set_v1',
+              row_count: 3,
+              create_count: 2,
+              update_count: 1,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-05T10:00:00.000Z',
+              previewed_at: '2026-06-05T10:01:00.000Z',
+              created_at: '2026-06-05T09:59:00.000Z',
+              updated_at: '2026-06-05T10:01:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:create_connector_apply_change_set': {
+          data: [
+            {
+              id: 'change-set-1',
+              import_batch_id: 'batch-import-preview',
+              status: 'blocked',
+              source_checksum: 'pr16_2_change_set_v1',
+              change_set_checksum: 'safe-change-set-hash',
+              previewed_at: '2026-06-05T10:01:00.000Z',
+              row_count: 3,
+              create_count: 2,
+              update_count: 1,
+              skip_count: 0,
+              blocked_count: 1,
+              stale_count: 0,
+              destructive_count: 0,
+              source_conflict_count: 0,
+              guarded_update_count: 1,
+              no_change_count: 0,
+              approval_required: true,
+              sample_items: [],
+              created_at: '2026-06-05T10:02:00.000Z',
+            },
+          ],
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const result = await requestConnectorApplyChangeSet('user-1')
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-1',
+      batchId: 'batch-import-preview',
+      changeSetId: 'change-set-1',
+      status: 'blocked',
+      blockedCount: 1,
+      safeToApply: false,
+    })
+    expect(capture.rpcCalls?.some((call) => call.fn === 'create_connector_apply_change_set')).toBe(
+      true,
+    )
+    expect(capture.rpcCalls?.some((call) => call.fn === 'apply_import_batch')).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_apply_review',
+        event_key: 'import_apply_change_set_generated',
+        status: 'partial_success',
+        safe_error_code: 'apply_change_set_has_blockers',
+        safe_error_context: expect.objectContaining({
+          change_set_id: 'change-set-1',
+          contract_version: 'pr16.2-apply-change-set-v1',
+          source_namespace_code: 'CANIAS',
+          source_checksum_available: true,
+          row_count: 3,
+          create_count: 2,
+          update_count: 1,
+          blocked_count: 1,
+          guarded_update_count: 1,
+          field_value_readback: false,
+          raw_payload_readback: false,
+          safe_to_apply: false,
+          apply_execution_open: false,
+          canonical_write_open: false,
+        }),
+        next_action_key: 'resolve_change_set_blockers',
+      }),
+    })
+    expect(JSON.stringify(capture.inserts)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(capture.inserts)).not.toContain('normalized_payload')
     expect(JSON.stringify(capture.inserts)).not.toContain('credentials_ref')
     expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
   })
@@ -2287,6 +2511,20 @@ describe('fetchErpOverviewWithMeta', () => {
     ).toEqual({
       code: 'apply_approval_blocked',
       toastKey: 'erp.errors.applyApprovalBlocked',
+    })
+
+    expect(
+      mapConnectorSetupError(
+        new DataAdapterError({
+          code: 'PULS_CONNECTOR_APPLY_CHANGE_SET_PREVIEW_REQUIRED',
+          message: 'Connector apply change-set requires preview',
+          source: 'adapter',
+          operation: 'requestConnectorApplyChangeSet',
+        }),
+      ),
+    ).toEqual({
+      code: 'apply_change_set_blocked',
+      toastKey: 'erp.errors.applyChangeSetBlocked',
     })
 
     expect(
