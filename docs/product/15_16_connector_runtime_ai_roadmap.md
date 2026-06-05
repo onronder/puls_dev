@@ -299,84 +299,196 @@ PR15 gerçek veri hareketi açmadan runtime omurgasını kurar. Bu fazın sonund
 
 ## PR16 - First Controlled Data Movement
 
-PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Öncelik CSV / Excel olmalıdır; çünkü external API belirsizliği olmadan canonical apply, audit, idempotency ve rollback disiplini kanıtlanabilir.
+PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Öncelik CSV / Excel olmalıdır; çünkü external API belirsizliği olmadan canonical write, audit, idempotency, overwrite policy ve rollback disiplini kanıtlanabilir.
 
-### PR16.1 - CSV / Excel Controlled Import Execution
+PR16'nın ana kuralı şudur:
 
-**Ürün değeri:** PULS ilk kez kontrollü şekilde canonical modele gerçek veri yazabilir.
+> PULS blind overwrite yapmaz. Her canonical write önce preview, change-set, risk sınıfı, before snapshot, admin approval, batch lock ve worker execution sınırından geçer. Delete/tombstone, ERP writeback ve AI autonomous apply kapalı kalır.
+
+### PR16.1 - Apply Safety Contract Ve Permission Hardening
+
+**Ürün değeri:** PULS veri yazmaya başlamadan önce yanlış Excel, eski dosya, hatalı mapping veya accidental overwrite senaryolarını ürün politikasıyla sınırlar.
 
 **Kapsam:**
 
-- Preview edilmiş ve onaylanmış batch'ten execution job oluşturma
-- Worker üzerinden import apply
-- Admin-only execution request
-- Browser direct apply yok
-- Batch mode/status kuralları
-- Safe activity event
+- Existing `apply_import_batch` direct kullanım yüzeyinin yeniden değerlendirilmesi
+- Browser/authenticated direct apply path'in worker-only/service-role boundary'ye çekilmesi
+- Apply policy state modeli:
+  - `create_only`
+  - `guarded_update`
+  - `blocked_destructive`
+  - `rollback_preview_required`
+- Destructive-equivalent alan sınıfları:
+  - `employment_status`
+  - `is_active`
+  - assignment close/deactivate
+  - manager / reporting line
+- Missing field vs explicit clear-field ayrımı
+- Source ownership ve source priority kuralı
+- PR16 flag'leri için enablement checklist
 
 **Kapsam dışı:**
 
+- Canonical write execution
 - Canias API import
 - ERP writeback
 - AI autonomous apply
-- Unapproved batch execution
+- Rollback execution
 
 **AI-ready çıktı:**
 
-- AI Coach import sonucunu özetleyebilir: kaç create/update/skip, hangi domain, hangi riskler.
+- AI Coach "neden apply kapalı?", "hangi risk sınıfı var?", "hangi onay eksik?" gibi soruları safe policy evidence üzerinden yanıtlayabilir.
 
 **Doğrulama:**
 
-- Preview edilmemiş batch apply edilemez.
-- Human review ve admin approval olmadan execution job oluşmaz.
-- Worker dışında canonical write path kapalı kalır.
+- Authenticated/browser direct apply mümkün değildir.
+- `import_apply` worker claim'i PR16.1 boyunca kapalı kalır veya only dry-run safety job olarak kalır.
+- App code eski `apply_import_batch` RPC'yi çağırmaz.
+- Policy secret, raw payload veya credential reference içermez.
 
-### PR16.2 - Batch Lock, Idempotency Ve Audit
+### PR16.2 - Change Set, Before Snapshot Ve Risk Ledger
 
-**Ürün değeri:** Veri aktarımı tekrar çalışsa bile sistemi bozmaz; enterprise güven için gerekli temel oluşur.
+**Ürün değeri:** Admin neyin değişeceğini satır ve alan seviyesinde görmeden PULS veri yazmaz. Yanlış veri yüklenirse neyin geri alınabileceği apply öncesi bilinir.
 
 **Kapsam:**
 
-- Batch lock
-- Idempotency key enforcement
-- Canonical write audit trail
-- Row-level apply result
-- Identity map update kuralları
-- Duplicate execution protection
+- Preview edilmiş batch'ten immutable apply change-set üretme
+- Field-level before/after diff
+- Before row hash ve expected current hash
+- Service-role-only rollback snapshot metadata
+- Safe UI summary: create/update/skip/block/risk counters
+- Update risk sınıfları:
+  - safe additive
+  - guarded overwrite
+  - destructive-equivalent
+  - source conflict
+  - stale preview
+- `blocked_update_requires_policy` ve `stale_target_requires_repreview`
+- AI-safe evidence contract
 
 **Kapsam dışı:**
 
-- Full automatic rollback
+- Canonical write execution
+- Rollback execution
 - ERP writeback
-- Multi-provider conflict resolver UI
+- Raw payload readback
 
 **AI-ready çıktı:**
 
-- AI güvenli audit üzerinden "bu değişiklik hangi batch ile geldi?" sorusuna cevap verebilir.
+- AI Coach import öncesi risk özetleri üretebilir: "12 create, 3 guarded update, 1 destructive-equivalent blocked."
+
+**Doğrulama:**
+
+- Change-set olmadan apply job oluşturulamaz.
+- Before snapshot raw secret/payload içermez.
+- Preview sonrası canonical kayıt değiştiyse apply blocked olur.
+- UI yalnızca safe diff özetlerini görür.
+
+### PR16.3 - Create-Only Worker Apply
+
+**Ürün değeri:** PULS ilk gerçek canonical write'ı en düşük riskli şekilde açar: sadece yeni master-data kayıtları oluşturulur, mevcut kayıtlar ezilmez.
+
+**Kapsam:**
+
+- Worker üzerinden `import_apply` job execution
+- `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=true` için create-only gate
+- Preview + review + admin approval + change-set zorunluluğu
+- Batch lock
+- Idempotency key enforcement for create-only writes
+- Reference dimensions first:
+  - legal entities
+  - locations
+  - departments
+  - cost centers
+  - positions
+- Existing target found ise update değil block/skip
+- Row-level apply result
+- Identity map create/update for newly created records
+- Safe activity and connector job event
+
+**Kapsam dışı:**
+
+- Employee guarded update
+- Existing record overwrite
+- Assignment close/deactivate
+- Delete/tombstone
+- ERP writeback
+- Canias API import
+- AI autonomous apply
+
+**AI-ready çıktı:**
+
+- AI Coach "hangi yeni organizasyon kayıtları oluşturuldu?" sorusunu safe audit üzerinden yanıtlayabilir.
 
 **Doğrulama:**
 
 - Aynı batch iki kez apply edilemez.
-- Aynı idempotency key iki kez canonical write üretemez.
+- Aynı idempotency key iki create üretemez.
+- Existing record update denenirse apply blocked olur.
+- Worker dışında canonical write path kapalı kalır.
 - Cross-tenant apply engellenir.
 
-### PR16.3 - Rollback / Compensating Action Model
+### PR16.4 - Guarded Update Apply
 
-**Ürün değeri:** Hatalı import durumunda operasyon ekibi neyin nasıl geri alınacağını bilir.
+**Ürün değeri:** PULS kontrollü update yapabilir; ancak yanlış dosyanın var olan doğru veriyi sessizce ezmesine izin vermez.
+
+**Kapsam:**
+
+- Allowlisted field updates
+- Existing record overwrite only with:
+  - change-set
+  - before snapshot
+  - expected current hash
+  - admin approval
+  - source ownership check
+  - worker execution
+- Missing field does not clear existing value
+- Explicit clear-field action ayrı risk olarak işaretlenir
+- Destructive-equivalent updates blocked by default
+- Employee master guarded update can start with low-risk fields only
+- Assignment/status/manager updates require separate approval class
+- Canonical write audit trail
+
+**Kapsam dışı:**
+
+- Delete/tombstone sync
+- ERP writeback
+- Multi-provider conflict resolver UI
+- Automatic destructive rollback
+
+**AI-ready çıktı:**
+
+- AI güvenli audit üzerinden "hangi alanlar değişti, hangi alanlar blocked kaldı?" sorusuna cevap verebilir.
+
+**Doğrulama:**
+
+- Stale before hash update'i durdurur.
+- Manual lower-priority source higher-priority owned field'i ezemez.
+- Empty/missing fields accidental clear yapmaz.
+- High-risk alanlar ayrı approval olmadan update olmaz.
+
+### PR16.5 - Rollback / Compensating Preview And Execution
+
+**Ürün değeri:** Hatalı import durumunda PULS sadece "geçmiş olsun" demez; güvenli geri alma veya telafi batch'i üretir.
 
 **Kapsam:**
 
 - Apply sonucu için recovery plan metadata
+- Before snapshot üzerinden rollback preview
+- Compensating batch generation
+- Rollback approval policy
+- Worker-executed rollback job
+- Current hash guard: kayıt apply sonrası başka işlemle değiştiyse rollback blocked
 - Written rows summary
-- Compensating action tasarımı
-- Manuel rollback runbook
+- Manual rollback runbook
 - Risk sınıfları
 
 **Kapsam dışı:**
 
-- Tam otomatik rollback execution
-- Destructive source overwrite
-- ERP writeback
+- Tek tık destructive rollback
+- ERP/source writeback
+- Raw payload rollback UI
+- Cross-source conflict automation
 
 **AI-ready çıktı:**
 
@@ -386,9 +498,10 @@ PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Önce
 
 - Her apply job recovery metadata üretir.
 - Recovery metadata secret/raw payload içermez.
-- Destructive rollback UI action açılmaz.
+- Rollback de preview + approval + worker execution ister.
+- Current state drift varsa rollback blocked olur.
 
-### PR16.4 - Notification Center Foundation
+### PR16.6 - Notification Center Foundation
 
 **Ürün değeri:** Admin ve ilgili roller önemli connector olaylarını ekran aramadan takip eder.
 
@@ -396,6 +509,7 @@ PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Önce
 
 - Notification entity/model
 - Connector job tamamlandı, hata aldı, approval bekliyor, credential eksik, import tamamlandı event'leri
+- Riskli update blocked, stale preview, rollback required event'leri
 - Role-based notification visibility
 - Read/unread state
 - `/dashboard`, `/erp` ve ileride AI Coach bağlantısı
@@ -416,7 +530,7 @@ PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Önce
 - Secret/raw payload notification içinde yoktur.
 - Role visibility doğru çalışır.
 
-### PR16.5 - Canias Runtime Spike On Generic Connector Foundation
+### PR16.7 - Canias Runtime Spike On Generic Connector Foundation
 
 **Ürün değeri:** Canias artık sadece metadata/demo profili olmaktan çıkar; generic PULS runtime omurgası üzerinde ilk ERP API connector denemesi başlar.
 
@@ -428,12 +542,13 @@ PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Önce
 - Dry-run import batch oluşturma
 - Preview üretme
 - Runtime logs
+- PR16 safety modeline uygun change-set handoff
 
 **Kapsam dışı:**
 
 - ERP writeback
 - Destructive sync
-- Direct canonical apply without PR16 controls
+- Direct canonical apply without PR16 safety controls
 - Canias-specific product architecture
 
 **AI-ready çıktı:**
@@ -446,7 +561,7 @@ PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Önce
 - Provider-specific code generic connector contract dışına taşmaz.
 - Raw provider payload UI/AI/Sentry içinde görünmez.
 
-### PR16.6 - AI Operational Recommendations
+### PR16.8 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.
 
@@ -459,6 +574,8 @@ PR16, PR15 runtime omurgası üzerinde ilk gerçek data movement'ı açar. Önce
   - data_quality_risk
   - approval_bottleneck
   - import_review_needed
+  - overwrite_risk
+  - rollback_recommended
   - employee_data_change_summary
   - policy_or_process_gap
 - Source disclosure
@@ -486,8 +603,10 @@ PR15-PR16 tamamlandığında PULS şunları diyebilmelidir:
 - Worker işleri browser'dan bağımsız çalıştırır.
 - Credential değerleri product DB'de veya UI'da görünmez.
 - Runtime preflight güvenli credential reference ile çalışabilir.
-- CSV / Excel üzerinden ilk controlled canonical data movement kanıtlanmıştır.
-- Apply işlemleri admin approval, batch lock, idempotency ve audit ile korunur.
+- CSV / Excel üzerinden ilk controlled canonical data movement create-only ve worker-only şekilde kanıtlanmıştır.
+- Blind overwrite kapalıdır; update ancak change-set, before snapshot, source ownership, stale hash guard ve admin approval ile açılır.
+- Apply işlemleri admin approval, batch lock, idempotency, change-set, before snapshot, audit ve recovery metadata ile korunur.
+- Rollback veya compensating action preview + approval + worker execution olmadan çalışmaz.
 - Connector job ve import sonuçları Notification Center ve activity timeline'a bağlanır.
 - AI Coach connector/runtime/canonical data sinyallerinden güvenli öneriler üretebilir.
 - AI hâlâ autonomous mutation, ERP writeback, credential access veya import apply çalıştırmaz.
@@ -500,12 +619,15 @@ Bu fazlarda aşağıdaki durumlardan biri görülürse sonraki adıma geçilmeme
 - Worker duplicate job execution riski varsa
 - Credential secret herhangi bir app table, log, Sentry event veya UI response içinde görünüyorsa
 - Batch lock/idempotency testleri geçmiyorsa
+- Change-set ve before snapshot üretilmeden canonical write açılıyorsa
+- Blind overwrite veya missing-field clear riski varsa
 - Apply audit ve recovery metadata yoksa
+- Rollback preview/approval/current-hash guard yoksa
 - AI context raw payload veya secret taşıyorsa
 - Canias-specific kararlar generic connector contract'in yerini alıyorsa
 
 ## Sonuç
 
-PR15-PR16, PULS'un connector setup ürünü olmaktan çıkarak gerçek runtime ve HR AI platformuna dönüşmeye başladığı fazdır. En doğru sıra önce queue/worker/credential/runtime safety, sonra controlled CSV / Excel execution, ardından Canias runtime spike ve AI operational recommendations'dır.
+PR15-PR16, PULS'un connector setup ürünü olmaktan çıkarak gerçek runtime ve HR AI platformuna dönüşmeye başladığı fazdır. En doğru sıra önce queue/worker/credential/runtime safety, sonra overwrite-safe controlled CSV / Excel execution, ardından Canias runtime spike ve AI operational recommendations'dır.
 
 Bu sıra sade kalır, RabbitMQ gibi erken karmaşıklıkları ötelemiş olur, ama ileride daha yüksek hacimli queue sistemlerine geçişi de kapatmaz.

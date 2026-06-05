@@ -517,6 +517,15 @@ PR15.8 hardens the deployed Railway worker before PR16 data movement. It disable
 | [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Worker service guardrail env contract |
 | [`scripts/verify-15-railway-worker-production-guardrails.sh`](../../scripts/verify-15-railway-worker-production-guardrails.sh) | PR15.8 verify gate |
 
+## PR16 controlled data movement safety model
+
+PR16 must not open blind import apply. Before canonical writes are enabled, PULS needs an overwrite-safe change-set model with before snapshots, source ownership, stale-hash guards, admin approval, worker-only execution, audit, and rollback/compensating preview. The first execution path should be create-only master-data import; guarded updates and rollback execution follow only after their safety gates are proven.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_controlled_data_movement_safety_model.md](./16_controlled_data_movement_safety_model.md) | PR16 overwrite, rollback, change-set, worker execution, and AI evidence safety model |
+| [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md) | Updated PR16 delivery order from apply safety contract through AI operational recommendations |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
