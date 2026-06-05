@@ -40,6 +40,7 @@ import {
   mapConnectorSetupError,
   recordConnectorApplyApproval,
   requestConnectorApplyChangeSet,
+  requestConnectorGuardedUpdateEvidence,
   requestConnectorCreateOnlyApplyJob,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
@@ -119,6 +120,15 @@ function applyChangeSetRiskTone(
   if (riskClass === 'destructive_equivalent' || riskClass === 'stale_preview') return 'danger'
   if (blocked) return 'warning'
   return 'info'
+}
+
+function guardedUpdateFieldTone(
+  fieldClass: ErpOverview['guardedUpdateEvidence']['sampleFieldDiffs'][number]['fieldClass'],
+  staleBlocked: boolean,
+): StatusTone {
+  if (staleBlocked || fieldClass === 'destructive_equivalent') return 'danger'
+  if (fieldClass === 'sensitive') return 'warning'
+  return 'success'
 }
 
 function domainOwnershipTone(status: ConnectorDomainOwnership['status']): StatusTone {
@@ -320,6 +330,25 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestGuardedUpdateEvidenceMutation = useMutation({
+    mutationFn: () => requestConnectorGuardedUpdateEvidence(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.guardedUpdateEvidence.generated'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      showWorkbenchTab('previewApply', 'erp-guarded-update-evidence')
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'requestConnectorGuardedUpdateEvidence',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
   const recordApplyApprovalMutation = useMutation({
     mutationFn: () => recordConnectorApplyApproval(user!.id),
     onSuccess: () => {
@@ -387,6 +416,8 @@ function ErpPage() {
     data?.importPreview.action === 'run_dry_run_preview' && canManageConnectors
   const canRequestApplyReview = data?.applyReadiness.requestable === true && canManageConnectors
   const canRequestApplyChangeSet = data?.applyChangeSet.requestable === true && canManageConnectors
+  const canRequestGuardedUpdateEvidence =
+    data?.guardedUpdateEvidence.requestable === true && canManageConnectors
   const canRecordApplyApproval =
     data?.applyApprovalPolicy.requestable === true && canManageConnectors
   const canRequestCreateOnlyApplyJob =
@@ -1492,6 +1523,184 @@ function ErpPage() {
               </div>
             </section>
 
+            <section id="erp-guarded-update-evidence" className="mt-8 scroll-mt-6">
+              <SectionHeader
+                title={t('erp.sections.guardedUpdateEvidence')}
+                description={t('erp.sections.guardedUpdateEvidenceDescription')}
+              />
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                        {t(data.guardedUpdateEvidence.statusLabelKey)}
+                      </h2>
+                      <StatusPill tone={readinessTone(data.guardedUpdateEvidence.readiness)}>
+                        {t(`erp.readinessStatus.${data.guardedUpdateEvidence.readiness}`)}
+                      </StatusPill>
+                      <StatusPill tone="neutral">
+                        {t('erp.guardedUpdateEvidence.executionClosed')}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                      {t(data.guardedUpdateEvidence.descriptionKey)}
+                    </p>
+                    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                      {t(data.guardedUpdateEvidence.actionDescriptionKey)}
+                    </p>
+                    {data.guardedUpdateEvidence.generatedAt ? (
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateEvidence.generatedAt', {
+                          value: formatDateTime(
+                            data.guardedUpdateEvidence.generatedAt,
+                            i18n.language,
+                            t('erp.credentialBoundary.notRecorded'),
+                          ),
+                        })}
+                      </p>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full lg:w-auto"
+                    disabled={
+                      !canRequestGuardedUpdateEvidence ||
+                      requestGuardedUpdateEvidenceMutation.isPending
+                    }
+                    onClick={() => void requestGuardedUpdateEvidenceMutation.mutateAsync()}
+                  >
+                    <ShieldCheck
+                      className={cn(
+                        'h-4 w-4',
+                        requestGuardedUpdateEvidenceMutation.isPending ? 'animate-pulse' : null,
+                      )}
+                    />
+                    {canRequestGuardedUpdateEvidence
+                      ? requestGuardedUpdateEvidenceMutation.isPending
+                        ? t('erp.guardedUpdateEvidence.generating')
+                        : t(data.guardedUpdateEvidence.actionLabelKey)
+                      : !canManageConnectors &&
+                          data.guardedUpdateEvidence.action === 'generate_evidence'
+                        ? t('erp.guardedUpdateEvidence.adminRequired')
+                        : t(data.guardedUpdateEvidence.actionLabelKey)}
+                  </Button>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.metrics.guardedRows')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateEvidence.summary.guardedUpdateCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.values.updateRows')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.metrics.fieldDiffs')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateEvidence.summary.fieldDiffCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.values.hashOnly')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.metrics.snapshots')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateEvidence.summary.rollbackSnapshotCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.values.rollbackReady')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.metrics.retention')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateEvidence.summary.hotRetentionDays}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateEvidence.values.days')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                  <div className="grid gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] md:grid-cols-[72px_1fr_1fr_140px]">
+                    <span>{t('erp.guardedUpdateEvidence.columns.row')}</span>
+                    <span>{t('erp.guardedUpdateEvidence.columns.target')}</span>
+                    <span>{t('erp.guardedUpdateEvidence.columns.evidence')}</span>
+                    <span className="md:text-right">
+                      {t('erp.guardedUpdateEvidence.columns.class')}
+                    </span>
+                  </div>
+                  <ul className="divide-y divide-[var(--color-border)]">
+                    {data.guardedUpdateEvidence.sampleFieldDiffs.length > 0 ? (
+                      data.guardedUpdateEvidence.sampleFieldDiffs.map((field) => (
+                        <li
+                          key={field.id}
+                          className="grid gap-2 px-4 py-3 md:grid-cols-[72px_1fr_1fr_140px] md:items-center"
+                        >
+                          <div className="font-mono text-sm text-[var(--color-text-muted)]">
+                            #{field.rowNumber}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-sm font-semibold text-[var(--color-text-primary)]">
+                              {field.entityType}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                              {field.targetTable} · {field.externalId}
+                            </p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-[var(--color-text-secondary)]">
+                              {field.fieldName} ·{' '}
+                              {t(`erp.guardedUpdateEvidence.operations.${field.operation}`)}
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                              {field.beforeValueHashAvailable && field.afterValueHashAvailable
+                                ? t('erp.guardedUpdateEvidence.values.hashPairReady')
+                                : t('erp.guardedUpdateEvidence.values.hashPairMissing')}
+                            </p>
+                          </div>
+                          <div className="md:justify-self-end">
+                            <StatusPill
+                              tone={guardedUpdateFieldTone(field.fieldClass, field.staleBlocked)}
+                            >
+                              {t(`erp.guardedUpdateEvidence.fieldClasses.${field.fieldClass}`)}
+                            </StatusPill>
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateEvidence.empty')}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="mt-4 flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3">
+                  <Info
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                    aria-hidden
+                  />
+                  <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+                    {t('erp.guardedUpdateEvidence.boundaryNote')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
             <section id="erp-controlled-apply" className="mt-8 scroll-mt-6">
               <SectionHeader
                 title={t('erp.sections.controlledApply')}
@@ -1620,9 +1829,7 @@ function ErpPage() {
                             {t(`erp.readinessStatus.${data.applyExecutionContract.readiness}`)}
                           </StatusPill>
                           <StatusPill
-                            tone={
-                              data.applyExecutionContract.safeToExecute ? 'success' : 'neutral'
-                            }
+                            tone={data.applyExecutionContract.safeToExecute ? 'success' : 'neutral'}
                           >
                             {data.applyExecutionContract.safeToExecute
                               ? t('erp.applyExecutionContract.createOnlyWorkerReady')
@@ -1656,7 +1863,9 @@ function ErpPage() {
                             ? t('erp.applyExecutionContract.actions.enqueueCreateOnly.queuing')
                             : t('erp.applyExecutionContract.actions.enqueueCreateOnly.label')
                           : !canManageConnectors
-                            ? t('erp.applyExecutionContract.actions.enqueueCreateOnly.adminRequired')
+                            ? t(
+                                'erp.applyExecutionContract.actions.enqueueCreateOnly.adminRequired',
+                              )
                             : t('erp.applyExecutionContract.actions.enqueueCreateOnly.blocked')}
                       </Button>
                       <div className="grid grid-cols-2 gap-2 text-left">
