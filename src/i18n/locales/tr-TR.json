@@ -1026,6 +1026,9 @@
       "createOnlyApplyJob": {
         "queued": "Create-only apply job güvenli worker kuyruğuna alındı."
       },
+      "guardedUpdateApplyJob": {
+        "queued": "Guarded update apply job güvenli worker kuyruğuna alındı."
+      },
       "runtimePreflight": {
         "queued": "Runtime ön kontrol job'ı güvenli kuyruğa alındı. Worker sonucu activity içinde görünecek."
       }
@@ -1046,6 +1049,7 @@
       "applyChangeSetBlocked": "Change-set üretimi için temiz ve önizlenmiş dry-run batch gerekir.",
       "guardedUpdateEvidenceBlocked": "Guarded update kanıtı için stale, destructive veya source-conflict bloku olmayan bir guarded update change-set gerekir.",
       "createOnlyApplyBlocked": "Create-only apply için temiz change-set, admin onayı ve açık worker gate gerekir.",
+      "guardedUpdateApplyBlocked": "Guarded update apply için kanıt, rollback snapshot, admin onayı ve açık worker gate gerekir.",
       "runtimePreflightBlocked": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
     },
     "sections": {
@@ -2136,6 +2140,7 @@
     "applyExecutionContract": {
       "executionDisabled": "Execution kapalı",
       "createOnlyWorkerReady": "Worker create-only hazır",
+      "guardedUpdateWorkerReady": "Worker guarded-update hazır",
       "status": {
         "not_available": "Execution sözleşmesi hazır değil",
         "needs_approval": "Onay ve kanıt bekleniyor",
@@ -2147,6 +2152,7 @@
         "needs_approval": "Preview kanıtı, insan incelemesi ve admin onayı tamamlanmadan future apply execution tasarlanmış sayılamaz.",
         "contract_ready": "Batch, checksum ve admin audit kanıtı mevcut. Yine de execution job, batch lock, rollback ve bildirim sınırları açılmadığı için canlı uygulama kapalıdır.",
         "create_only_worker_ready": "Batch, change-set, admin onayı ve worker gate hazır. Bu aksiyon yalnızca create-only reference kayıtlarını worker kuyruğuna alır.",
+        "guarded_update_worker_ready": "Batch, guarded update kanıtı, rollback snapshot, admin onayı ve worker gate hazır. Bu aksiyon yalnızca stale guard'lı reference name update kayıtlarını worker kuyruğuna alır.",
         "blocked": "Önizleme hatası, checksum eksiği veya kapalı güvenlik sınırları varken execution sözleşmesi ilerletilemez."
       },
       "metrics": {
@@ -2158,6 +2164,7 @@
       "values": {
         "futureJob": "Gelecek background job",
         "workerCreateOnlyJob": "Worker create-only job",
+        "workerGuardedUpdateJob": "Worker guarded-update job",
         "closed": "Kapalı",
         "enabled": "Etkin",
         "disabled": "Devre dışı",
@@ -2173,6 +2180,7 @@
         "importApplyOpen": "import_apply açık",
         "importApplyUnsafe": "import_apply gate tutarsız",
         "createOnlyWorkerOpen": "Create-only worker gate açık",
+        "guardedUpdateWorkerOpen": "Guarded-update worker gate açık",
         "objectAndFieldAudit": "Object event + field diff",
         "auditPolicyMissing": "Audit policy eksik",
         "ninetyDayHotRetention": "90 gün sıcak retention",
@@ -2181,16 +2189,24 @@
         "batchLockReady": "Tekil job ve batch lock açık",
         "rollbackClosed": "Rollback planı kapalı",
         "createOnlyCompensationReady": "Create-only compensating action hazır",
+        "rollbackSnapshotReady": "Rollback snapshot hazır",
         "notificationClosed": "Bildirim akışı kapalı",
         "activityAuditReady": "Activity ve object event audit açık",
         "executionClosed": "Ürün apply execution açmıyor",
-        "createOnlyExecutionReady": "Worker kuyruğu create-only için hazır"
+        "createOnlyExecutionReady": "Worker kuyruğu create-only için hazır",
+        "guardedUpdateExecutionReady": "Worker kuyruğu guarded update için hazır"
       },
       "actions": {
         "enqueueCreateOnly": {
           "label": "Create-only apply kuyruğa al",
           "queuing": "Kuyruğa alınıyor",
           "blocked": "Apply kapıları bekleniyor",
+          "adminRequired": "Admin yetkisi gerekir"
+        },
+        "enqueueGuardedUpdate": {
+          "label": "Guarded update kuyruğa al",
+          "queuing": "Kuyruğa alınıyor",
+          "blocked": "Guarded update kapıları bekleniyor",
           "adminRequired": "Admin yetkisi gerekir"
         }
       },

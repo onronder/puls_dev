@@ -107,7 +107,16 @@ PR16.3 create-only worker apply:
 - Add `import_apply` to `PULS_CONNECTOR_WORKER_JOB_TYPES` only with the explicit PR16.3 flag:
   `noop_health,connector_runtime_preflight,import_apply`.
 - The worker still does not call provider APIs, read credentials, write back to ERP/source systems, or expose raw payloads.
-- `import_apply` execution is limited to `execute_connector_create_only_apply_job`; other apply contracts are rejected by SQL before the job can be queued.
+- PR16.3 `import_apply` execution is limited to `execute_connector_create_only_apply_job`; unsupported apply contracts are rejected by SQL before the job can be queued.
+
+PR16.4.2 guarded update worker apply:
+
+- No new Railway job type is required.
+- Keep `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=true` and `PULS_CONNECTOR_WORKER_JOB_TYPES=noop_health,connector_runtime_preflight,import_apply`.
+- The worker routes queued `import_apply` jobs by safe context:
+  - `apply_mode=create_only` goes to `execute_connector_create_only_apply_job`.
+  - `apply_mode=guarded_update` and `pr16.4.2-guarded-update-worker-apply-v1` goes to `execute_connector_guarded_update_apply_job`.
+- Guarded update execution still does not call provider APIs, read credentials, write back to ERP/source systems, expose raw payloads, expose field values, or execute rollback.
 
 Production smoke:
 

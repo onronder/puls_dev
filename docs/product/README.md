@@ -572,6 +572,16 @@ PR16.4.1 prepares overwrite-safe update evidence without opening update executio
 | [`supabase/migrations/20260605130000_puls_integration_guarded_update_evidence.sql`](../../supabase/migrations/20260605130000_puls_integration_guarded_update_evidence.sql) | Field diff and rollback snapshot ledgers plus generate/list RPCs; no guarded update execution RPC |
 | [`scripts/verify-16-4-1-guarded-update-evidence.sh`](../../scripts/verify-16-4-1-guarded-update-evidence.sh)                                                               | PR16.4.1 verify gate                                                                              |
 
+## PR16.4.2 guarded update worker apply
+
+PR16.4.2 opens a narrow worker-only guarded update path for admin-approved reference-dimension `name` updates. It preserves PR16.4.1 evidence boundaries, revalidates stale hashes immediately before write, writes object events, and keeps employee updates, destructive fields, ERP/source writeback, credential/readback, provider calls, rollback execution, browser direct apply, and AI autonomous apply closed.
+
+| Document / artifact                                                                                                                                                                | Purpose                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [16_4_2_guarded_update_worker_apply.md](./16_4_2_guarded_update_worker_apply.md)                                                                                                   | PR16.4.2 guarded update worker apply scope, safety contract, Railway posture, and PR16.5 handoff             |
+| [`supabase/migrations/20260606100000_puls_integration_guarded_update_worker_apply.sql`](../../supabase/migrations/20260606100000_puls_integration_guarded_update_worker_apply.sql) | Worker-only guarded update queue/execution RPCs, object event update audit, and `import_apply` trigger guard |
+| [`scripts/verify-16-4-2-guarded-update-worker-apply.sh`](../../scripts/verify-16-4-2-guarded-update-worker-apply.sh)                                                               | PR16.4.2 verify gate                                                                                         |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

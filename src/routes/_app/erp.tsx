@@ -41,6 +41,7 @@ import {
   recordConnectorApplyApproval,
   requestConnectorApplyChangeSet,
   requestConnectorGuardedUpdateEvidence,
+  requestConnectorGuardedUpdateApplyJob,
   requestConnectorCreateOnlyApplyJob,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
@@ -387,6 +388,25 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestGuardedUpdateApplyJobMutation = useMutation({
+    mutationFn: () => requestConnectorGuardedUpdateApplyJob(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.guardedUpdateApplyJob.queued'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      showWorkbenchTab('activity', 'erp-runtime-queue')
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_runtime',
+        operation: 'requestConnectorGuardedUpdateApplyJob',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
   const requestRuntimePreflightMutation = useMutation({
     mutationFn: () => requestConnectorRuntimePreflight(user!.id),
     onSuccess: () => {
@@ -421,7 +441,17 @@ function ErpPage() {
   const canRecordApplyApproval =
     data?.applyApprovalPolicy.requestable === true && canManageConnectors
   const canRequestCreateOnlyApplyJob =
-    data?.applyExecutionContract.safeToExecute === true && canManageConnectors
+    data?.applyExecutionContract.safeToExecute === true &&
+    data.applyExecutionContract.executorMode === 'worker_create_only_job' &&
+    canManageConnectors
+  const canRequestGuardedUpdateApplyJob =
+    data?.applyExecutionContract.safeToExecute === true &&
+    data.applyExecutionContract.executorMode === 'worker_guarded_update_job' &&
+    canManageConnectors
+  const canRequestApplyExecutionJob =
+    canRequestCreateOnlyApplyJob || canRequestGuardedUpdateApplyJob
+  const requestApplyExecutionPending =
+    requestCreateOnlyApplyJobMutation.isPending || requestGuardedUpdateApplyJobMutation.isPending
   const runtimePreflightCredentialReady = data?.credentialBoundary.status === 'ready'
   const runtimePreflightWorkerReady =
     data?.runtimeQueue.worker.supportedJobTypes.includes('connector_runtime_preflight') === true &&
@@ -1832,7 +1862,12 @@ function ErpPage() {
                             tone={data.applyExecutionContract.safeToExecute ? 'success' : 'neutral'}
                           >
                             {data.applyExecutionContract.safeToExecute
-                              ? t('erp.applyExecutionContract.createOnlyWorkerReady')
+                              ? t(
+                                  data.applyExecutionContract.executorMode ===
+                                    'worker_guarded_update_job'
+                                    ? 'erp.applyExecutionContract.guardedUpdateWorkerReady'
+                                    : 'erp.applyExecutionContract.createOnlyWorkerReady',
+                                )
                               : t('erp.applyExecutionContract.executionDisabled')}
                           </StatusPill>
                         </div>
@@ -1844,29 +1879,48 @@ function ErpPage() {
                     <div className="flex flex-col gap-3 sm:min-w-80">
                       <Button
                         type="button"
-                        variant={canRequestCreateOnlyApplyJob ? 'default' : 'outline'}
+                        variant={canRequestApplyExecutionJob ? 'default' : 'outline'}
                         className="touch-target w-full"
-                        disabled={
-                          !canRequestCreateOnlyApplyJob ||
-                          requestCreateOnlyApplyJobMutation.isPending
-                        }
-                        onClick={() => void requestCreateOnlyApplyJobMutation.mutateAsync()}
+                        disabled={!canRequestApplyExecutionJob || requestApplyExecutionPending}
+                        onClick={() => {
+                          if (canRequestGuardedUpdateApplyJob) {
+                            void requestGuardedUpdateApplyJobMutation.mutateAsync()
+                            return
+                          }
+                          void requestCreateOnlyApplyJobMutation.mutateAsync()
+                        }}
                       >
                         <Database
                           className={cn(
                             'h-4 w-4',
-                            requestCreateOnlyApplyJobMutation.isPending ? 'animate-pulse' : null,
+                            requestApplyExecutionPending ? 'animate-pulse' : null,
                           )}
                         />
-                        {canRequestCreateOnlyApplyJob
-                          ? requestCreateOnlyApplyJobMutation.isPending
-                            ? t('erp.applyExecutionContract.actions.enqueueCreateOnly.queuing')
-                            : t('erp.applyExecutionContract.actions.enqueueCreateOnly.label')
+                        {canRequestApplyExecutionJob
+                          ? requestApplyExecutionPending
+                            ? t(
+                                canRequestGuardedUpdateApplyJob
+                                  ? 'erp.applyExecutionContract.actions.enqueueGuardedUpdate.queuing'
+                                  : 'erp.applyExecutionContract.actions.enqueueCreateOnly.queuing',
+                              )
+                            : t(
+                                canRequestGuardedUpdateApplyJob
+                                  ? 'erp.applyExecutionContract.actions.enqueueGuardedUpdate.label'
+                                  : 'erp.applyExecutionContract.actions.enqueueCreateOnly.label',
+                              )
                           : !canManageConnectors
                             ? t(
-                                'erp.applyExecutionContract.actions.enqueueCreateOnly.adminRequired',
+                                data.applyExecutionContract.executorMode ===
+                                  'worker_guarded_update_job'
+                                  ? 'erp.applyExecutionContract.actions.enqueueGuardedUpdate.adminRequired'
+                                  : 'erp.applyExecutionContract.actions.enqueueCreateOnly.adminRequired',
                               )
-                            : t('erp.applyExecutionContract.actions.enqueueCreateOnly.blocked')}
+                            : t(
+                                data.applyExecutionContract.executorMode ===
+                                  'worker_guarded_update_job'
+                                  ? 'erp.applyExecutionContract.actions.enqueueGuardedUpdate.blocked'
+                                  : 'erp.applyExecutionContract.actions.enqueueCreateOnly.blocked',
+                              )}
                       </Button>
                       <div className="grid grid-cols-2 gap-2 text-left">
                         <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
@@ -1877,7 +1931,10 @@ function ErpPage() {
                             {t(
                               data.applyExecutionContract.executorMode === 'worker_create_only_job'
                                 ? 'erp.applyExecutionContract.values.workerCreateOnlyJob'
-                                : 'erp.applyExecutionContract.values.futureJob',
+                                : data.applyExecutionContract.executorMode ===
+                                    'worker_guarded_update_job'
+                                  ? 'erp.applyExecutionContract.values.workerGuardedUpdateJob'
+                                  : 'erp.applyExecutionContract.values.futureJob',
                             )}
                           </p>
                         </div>

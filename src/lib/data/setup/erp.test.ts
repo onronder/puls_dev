@@ -10,6 +10,7 @@ import {
   recordConnectorApplyApproval,
   requestConnectorApplyChangeSet,
   requestConnectorCreateOnlyApplyJob,
+  requestConnectorGuardedUpdateApplyJob,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
   requestConnectorGuardedUpdateEvidence,
@@ -1680,6 +1681,391 @@ describe('fetchErpOverviewWithMeta', () => {
     })
     expect(
       capture.rpcCalls?.some((call) => call.fn === 'enqueue_connector_create_only_apply_job'),
+    ).toBe(false)
+  })
+
+  it('queues guarded update apply only when evidence, approval, and worker gates are ready', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        erp_sync_batches: {
+          data: [
+            {
+              id: 'approval-event',
+              created_at: '2026-06-05T14:03:00.000Z',
+              status: 'success',
+              sync_type: 'import_apply_review',
+              event_key: 'import_apply_approval_recorded',
+              actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              safe_error_code: null,
+              safe_error_context: {
+                approval_policy: 'admin_only',
+                approval_recorded: true,
+                safe_to_apply: false,
+                apply_execution_open: false,
+              },
+              next_action_key: 'hold_for_apply_execution_design',
+              records_seen: 1,
+              records_inserted: 0,
+              records_updated: 1,
+              records_failed: 0,
+            },
+            {
+              id: 'review-event',
+              created_at: '2026-06-05T14:02:00.000Z',
+              status: 'success',
+              sync_type: 'import_apply_review',
+              event_key: 'import_apply_review_requested',
+              actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              safe_error_code: null,
+              safe_error_context: {
+                safe_to_apply: false,
+                apply_execution_open: false,
+                human_review_recorded: true,
+              },
+              next_action_key: 'hold_for_apply_design',
+              records_seen: 1,
+              records_inserted: 0,
+              records_updated: 1,
+              records_failed: 0,
+            },
+          ],
+        },
+        import_batches: {
+          data: [
+            {
+              id: 'batch-guarded-update',
+              source_namespace_id: 'namespace-1',
+              status: 'previewed',
+              mode: 'dry_run',
+              source_checksum: 'pr16_4_guarded_update_v1',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-05T13:00:00.000Z',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              created_at: '2026-06-05T12:59:00.000Z',
+              updated_at: '2026-06-05T13:01:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:list_connector_apply_safety_contracts': {
+          data: [
+            {
+              contract_version: 'pr16.4.2-guarded-update-worker-apply-v1',
+              browser_direct_apply_enabled: false,
+              authenticated_apply_rpc_exposed: false,
+              worker_import_apply_enqueue_enabled: true,
+              worker_import_apply_claim_enabled: true,
+              execution_enabled: true,
+              canonical_write_enabled: true,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              audit_tiers: ['object_event', 'field_diff', 'rollback_snapshot', 'archive_summary'],
+              field_diff_hot_retention_days: 90,
+              rollback_snapshot_hot_retention_days: 90,
+              object_event_retention_months: 24,
+              purge_archive_required: true,
+              safe_error_code: 'guarded_update_worker_apply_open',
+              next_action_key: 'enqueue_guarded_update_apply_after_review',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_apply_change_set_summaries': {
+          data: [
+            {
+              id: 'change-set-guarded-update',
+              import_batch_id: 'batch-guarded-update',
+              status: 'blocked',
+              source_checksum: 'pr16_4_guarded_update_v1',
+              change_set_checksum: 'safe-guarded-update-change-set-hash',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              blocked_count: 1,
+              stale_count: 0,
+              destructive_count: 0,
+              source_conflict_count: 0,
+              guarded_update_count: 1,
+              no_change_count: 0,
+              approval_required: true,
+              sample_items: [],
+              created_at: '2026-06-05T13:02:00.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_guarded_update_evidence': {
+          data: [
+            {
+              change_set_id: 'change-set-guarded-update',
+              tenant_id: 'a0000001-0001-4001-8001-000000000001',
+              connection_id: 'connection-1',
+              source_namespace_id: 'namespace-1',
+              import_batch_id: 'batch-guarded-update',
+              status: 'evidence_ready',
+              guarded_update_count: 1,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              stale_blocked_count: 0,
+              execution_enabled: false,
+              canonical_write_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              hot_retention_days: 90,
+              next_action_key: 'review_guarded_update_evidence',
+              sample_field_diffs: [],
+              created_at: '2026-06-05T13:02:30.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:enqueue_connector_guarded_update_apply_job': {
+          data: [
+            {
+              job_id: 'guarded-update-job-1',
+              status: 'queued',
+              change_set_id: 'change-set-guarded-update',
+              import_batch_id: 'batch-guarded-update',
+              update_count: 1,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              next_action_key: 'wait_for_guarded_update_worker_apply',
+            },
+          ],
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const overview = await fetchErpOverviewWithMeta('user-1')
+
+    expect(overview.data.applyExecutionContract).toMatchObject({
+      status: 'contract_ready',
+      readiness: 'ready',
+      contractVersion: 'pr16.4.2-guarded-update-worker-apply-v1',
+      executionEnabled: true,
+      canonicalWriteEnabled: true,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      applyRpcExposed: false,
+      safeToExecute: true,
+      executorMode: 'worker_guarded_update_job',
+      batchId: 'batch-guarded-update',
+      sourceChecksum: 'pr16_4_guarded_update_v1',
+    })
+    expect(
+      overview.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'worker_apply_gate',
+      ),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.applyExecutionContract.values.guardedUpdateWorkerOpen',
+    })
+    expect(
+      overview.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'execution_boundary',
+      ),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.applyExecutionContract.values.guardedUpdateExecutionReady',
+    })
+
+    await expect(requestConnectorCreateOnlyApplyJob('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_CREATE_ONLY_APPLY_BLOCKED',
+      i18nKey: 'erp.errors.createOnlyApplyBlocked',
+    })
+    expect(
+      capture.rpcCalls?.some((call) => call.fn === 'enqueue_connector_create_only_apply_job'),
+    ).toBe(false)
+
+    const result = await requestConnectorGuardedUpdateApplyJob('user-1')
+
+    expect(result).toEqual({
+      connectionId: 'connection-1',
+      batchId: 'batch-guarded-update',
+      changeSetId: 'change-set-guarded-update',
+      jobId: 'guarded-update-job-1',
+      status: 'queued',
+      nextActionKey: 'wait_for_guarded_update_worker_apply',
+      safeToApply: false,
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'enqueue_connector_guarded_update_apply_job',
+      args: { p_change_set_id: 'change-set-guarded-update' },
+    })
+    expect(capture.rpcCalls?.some((call) => call.fn === 'apply_import_batch')).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_apply_review',
+        event_key: 'import_apply_guarded_update_queued',
+        status: 'pending',
+        safe_error_code: null,
+        safe_error_context: expect.objectContaining({
+          job_id: 'guarded-update-job-1',
+          change_set_id: 'change-set-guarded-update',
+          import_batch_id: 'batch-guarded-update',
+          contract_version: 'pr16.4.2-guarded-update-worker-apply-v1',
+          update_count: 1,
+          guarded_update_count: 1,
+          field_diff_count: 1,
+          rollback_snapshot_count: 1,
+          worker_queue: true,
+          apply_execution_open: true,
+          canonical_write_open: true,
+          browser_direct_apply_open: false,
+          authenticated_apply_rpc_open: false,
+          source_writeback_open: false,
+          credential_readback_open: false,
+          provider_api_calls: false,
+          field_value_readback: false,
+          raw_payload_readback: false,
+          rollback_execution: false,
+          safe_to_apply: false,
+        }),
+        next_action_key: 'wait_for_guarded_update_worker_apply',
+      }),
+    })
+    expect(JSON.stringify(capture)).not.toContain('apply_import_batch')
+    expect(JSON.stringify(capture)).not.toContain('credentials_ref')
+    expect(JSON.stringify(capture)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(capture)).not.toContain('provider_response')
+  })
+
+  it('blocks guarded update apply before queue RPC when evidence is not ready', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { rpcCalls: [] }
+    setupSeededMocks(
+      {
+        erp_sync_batches: {
+          data: [
+            {
+              id: 'approval-event',
+              created_at: '2026-06-05T14:03:00.000Z',
+              status: 'success',
+              sync_type: 'import_apply_review',
+              event_key: 'import_apply_approval_recorded',
+              actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              safe_error_code: null,
+              safe_error_context: { approval_recorded: true, apply_execution_open: false },
+              next_action_key: 'hold_for_apply_execution_design',
+              records_seen: 1,
+              records_inserted: 0,
+              records_updated: 1,
+              records_failed: 0,
+            },
+            {
+              id: 'review-event',
+              created_at: '2026-06-05T14:02:00.000Z',
+              status: 'success',
+              sync_type: 'import_apply_review',
+              event_key: 'import_apply_review_requested',
+              actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              safe_error_code: null,
+              safe_error_context: {
+                safe_to_apply: false,
+                apply_execution_open: false,
+                human_review_recorded: true,
+              },
+              next_action_key: 'hold_for_apply_design',
+              records_seen: 1,
+              records_inserted: 0,
+              records_updated: 1,
+              records_failed: 0,
+            },
+          ],
+        },
+        import_batches: {
+          data: [
+            {
+              id: 'batch-guarded-update-blocked',
+              source_namespace_id: 'namespace-1',
+              status: 'previewed',
+              mode: 'dry_run',
+              source_checksum: 'pr16_4_guarded_update_v1',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-05T13:00:00.000Z',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              created_at: '2026-06-05T12:59:00.000Z',
+              updated_at: '2026-06-05T13:01:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:list_connector_apply_safety_contracts': {
+          data: [
+            {
+              contract_version: 'pr16.4.2-guarded-update-worker-apply-v1',
+              browser_direct_apply_enabled: false,
+              authenticated_apply_rpc_exposed: false,
+              worker_import_apply_enqueue_enabled: true,
+              worker_import_apply_claim_enabled: true,
+              execution_enabled: true,
+              canonical_write_enabled: true,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              audit_tiers: ['object_event', 'field_diff', 'rollback_snapshot', 'archive_summary'],
+              field_diff_hot_retention_days: 90,
+              rollback_snapshot_hot_retention_days: 90,
+              object_event_retention_months: 24,
+              purge_archive_required: true,
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_apply_change_set_summaries': {
+          data: [
+            {
+              id: 'change-set-guarded-update-blocked',
+              import_batch_id: 'batch-guarded-update-blocked',
+              status: 'blocked',
+              source_checksum: 'pr16_4_guarded_update_v1',
+              change_set_checksum: 'safe-guarded-update-change-set-hash',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              blocked_count: 1,
+              stale_count: 0,
+              destructive_count: 0,
+              source_conflict_count: 0,
+              guarded_update_count: 1,
+              no_change_count: 0,
+              approval_required: true,
+              sample_items: [],
+              created_at: '2026-06-05T13:02:00.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_guarded_update_evidence': { data: [] },
+      },
+      capture,
+    )
+
+    await expect(requestConnectorGuardedUpdateApplyJob('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_GUARDED_UPDATE_APPLY_BLOCKED',
+      i18nKey: 'erp.errors.guardedUpdateApplyBlocked',
+    })
+    expect(
+      capture.rpcCalls?.some((call) => call.fn === 'enqueue_connector_guarded_update_apply_job'),
     ).toBe(false)
   })
 
