@@ -421,7 +421,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Ürün değeri:** PULS ilk gerçek canonical write'ı en düşük riskli şekilde açar: sadece yeni master-data kayıtları oluşturulur, mevcut kayıtlar ezilmez.
 
-**Implementation status:** PR16.3 opens worker-only create apply for admin-approved reference-dimension change-sets. It adds service-role execution RPCs, safe object event audit, `/erp` queue gating, and worker `import_apply` handling behind `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=true`. Browser direct apply, authenticated direct canonical writes, employee apply, guarded updates, deletes, rollback execution, Canias API import, ERP/source writeback, credential readback, raw payload readback, and AI autonomous action remain closed.
+**Implementation status:** PR16.3 opens worker-only create apply for admin-approved reference-dimension change-sets. It adds service-role execution RPCs, safe object event audit, `/erp` queue gating, and worker `import_apply` handling behind `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=true`. PR16.3A create-only context hardening preserves queued job safe context during Railway worker lease heartbeats after smoke exposed heartbeat context overwrite risk. Browser direct apply, authenticated direct canonical writes, employee apply, guarded updates, deletes, rollback execution, Canias API import, ERP/source writeback, credential readback, raw payload readback, and AI autonomous action remain closed.
 
 **Kapsam:**
 
