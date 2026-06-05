@@ -457,6 +457,10 @@ export type ConnectorApplyExecutionControlId =
   | 'dry_run_only'
   | 'idempotency_key'
   | 'admin_approval'
+  | 'direct_rpc_permission'
+  | 'worker_apply_gate'
+  | 'crud_audit_policy'
+  | 'retention_policy'
   | 'batch_lock'
   | 'rollback_plan'
   | 'notification_plan'
@@ -475,12 +479,16 @@ export type ConnectorApplyExecutionContract = {
   readiness: ConnectorReadinessStatus
   statusLabelKey: string
   descriptionKey: string
-  contractVersion: 'pr14.20-closed-apply-contract-v1'
+  contractVersion: ConnectorApplySafetyContract['contractVersion']
   executionEnabled: false
   canonicalWriteEnabled: false
   sourceWritebackEnabled: false
   credentialReadbackEnabled: false
   applyRpcExposed: false
+  browserDirectApplyEnabled: false
+  authenticatedApplyRpcExposed: false
+  workerImportApplyEnqueueEnabled: false
+  workerImportApplyClaimEnabled: false
   safeToExecute: false
   executorMode: 'future_background_job'
   batchId: string | null
@@ -492,6 +500,48 @@ export type ConnectorApplyExecutionContract = {
     partialCount: number
     blockedCount: number
   }
+}
+
+export type ConnectorApplySafetyPolicyState =
+  | 'create_only'
+  | 'guarded_update'
+  | 'blocked_destructive'
+  | 'rollback_preview_required'
+
+export type ConnectorApplyOperation =
+  | 'insert'
+  | 'update'
+  | 'soft_delete'
+  | 'restore'
+  | 'rollback'
+  | 'compensating_update'
+
+export type ConnectorApplyAuditTier =
+  | 'object_event'
+  | 'field_diff'
+  | 'rollback_snapshot'
+  | 'archive_summary'
+
+export type ConnectorApplySafetyContract = {
+  contractVersion: 'pr16.1-apply-safety-contract-v1'
+  browserDirectApplyEnabled: false
+  authenticatedApplyRpcExposed: false
+  workerImportApplyEnqueueEnabled: false
+  workerImportApplyClaimEnabled: false
+  executionEnabled: false
+  canonicalWriteEnabled: false
+  sourceWritebackEnabled: false
+  credentialReadbackEnabled: false
+  policyStates: ConnectorApplySafetyPolicyState[]
+  coveredOperations: ConnectorApplyOperation[]
+  auditTiers: ConnectorApplyAuditTier[]
+  destructiveFieldClasses: string[]
+  fieldDiffHotRetentionDays: number
+  rollbackSnapshotHotRetentionDays: number
+  objectEventRetentionMonths: number
+  purgeArchiveRequired: true
+  safeErrorCode: string
+  nextActionKey: string
 }
 
 export type ConnectorApplyApprovalPolicyStatus =
@@ -614,18 +664,9 @@ export type ConnectorRuntimeJobType =
   | 'source_discovery'
   | 'noop_health'
 
-export type ConnectorRuntimeQueueStatus =
-  | 'not_available'
-  | 'contract_ready'
-  | 'active'
-  | 'blocked'
+export type ConnectorRuntimeQueueStatus = 'not_available' | 'contract_ready' | 'active' | 'blocked'
 
-export type ConnectorRuntimeWorkerStatus =
-  | 'not_configured'
-  | 'idle'
-  | 'running'
-  | 'stale'
-  | 'error'
+export type ConnectorRuntimeWorkerStatus = 'not_configured' | 'idle' | 'running' | 'stale' | 'error'
 
 export type ConnectorRuntimeLeaseStatus = 'not_started' | 'active' | 'expired' | 'released'
 
@@ -761,6 +802,7 @@ export type ErpOverview = {
   importPreview: ConnectorImportPreview
   applyReadiness: ConnectorApplyReadiness
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
+  applySafetyContract: ConnectorApplySafetyContract
   controlledApplyPlan: ConnectorControlledApplyPlan
   applyExecutionContract: ConnectorApplyExecutionContract
   runtimeQueue: ConnectorRuntimeQueue
@@ -890,6 +932,30 @@ type ConnectorJobEventRow = {
   operator_review_required?: boolean | null
   worker_id?: string | null
   created_at?: string | null
+}
+
+type ConnectorApplySafetyContractRow = {
+  connection_id?: string | null
+  tenant_id?: string | null
+  contract_version?: string | null
+  browser_direct_apply_enabled?: boolean | null
+  authenticated_apply_rpc_exposed?: boolean | null
+  worker_import_apply_enqueue_enabled?: boolean | null
+  worker_import_apply_claim_enabled?: boolean | null
+  execution_enabled?: boolean | null
+  canonical_write_enabled?: boolean | null
+  source_writeback_enabled?: boolean | null
+  credential_readback_enabled?: boolean | null
+  policy_states?: ConnectorApplySafetyPolicyState[] | null
+  covered_operations?: ConnectorApplyOperation[] | null
+  audit_tiers?: ConnectorApplyAuditTier[] | null
+  destructive_field_classes?: string[] | null
+  field_diff_hot_retention_days?: number | null
+  rollback_snapshot_hot_retention_days?: number | null
+  object_event_retention_months?: number | null
+  purge_archive_required?: boolean | null
+  safe_error_code?: string | null
+  next_action_key?: string | null
 }
 
 type ConnectorCredentialEventRow = {
@@ -1507,7 +1573,7 @@ function fromConnectorRpcError(
         : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
             code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
           ? 'erp.errors.runtimePreflightBlocked'
-        : 'erp.errors.setupSaveFailed',
+          : 'erp.errors.setupSaveFailed',
   })
 }
 
@@ -2405,16 +2471,62 @@ function buildConnectorControlledApplyPlan({
   }
 }
 
+function buildConnectorApplySafetyContract(
+  row: ConnectorApplySafetyContractRow | null,
+): ConnectorApplySafetyContract {
+  return {
+    contractVersion: 'pr16.1-apply-safety-contract-v1',
+    browserDirectApplyEnabled: false,
+    authenticatedApplyRpcExposed: false,
+    workerImportApplyEnqueueEnabled: false,
+    workerImportApplyClaimEnabled: false,
+    executionEnabled: false,
+    canonicalWriteEnabled: false,
+    sourceWritebackEnabled: false,
+    credentialReadbackEnabled: false,
+    policyStates:
+      row?.policy_states && row.policy_states.length > 0
+        ? row.policy_states
+        : ['create_only', 'guarded_update', 'blocked_destructive', 'rollback_preview_required'],
+    coveredOperations:
+      row?.covered_operations && row.covered_operations.length > 0
+        ? row.covered_operations
+        : ['insert', 'update', 'soft_delete', 'restore', 'rollback', 'compensating_update'],
+    auditTiers:
+      row?.audit_tiers && row.audit_tiers.length > 0
+        ? row.audit_tiers
+        : ['object_event', 'field_diff', 'rollback_snapshot', 'archive_summary'],
+    destructiveFieldClasses:
+      row?.destructive_field_classes && row.destructive_field_classes.length > 0
+        ? row.destructive_field_classes
+        : [
+            'employment_status',
+            'is_active',
+            'assignment_close',
+            'manager_reporting_line',
+            'explicit_clear',
+          ],
+    fieldDiffHotRetentionDays: row?.field_diff_hot_retention_days ?? 90,
+    rollbackSnapshotHotRetentionDays: row?.rollback_snapshot_hot_retention_days ?? 90,
+    objectEventRetentionMonths: row?.object_event_retention_months ?? 24,
+    purgeArchiveRequired: true,
+    safeErrorCode: row?.safe_error_code ?? 'apply_execution_closed_pr16_1',
+    nextActionKey: row?.next_action_key ?? 'implement_create_only_apply_change_set',
+  }
+}
+
 function buildConnectorApplyExecutionContract({
   connectorState,
   importPreview,
   applyApprovalPolicy,
   controlledApplyPlan,
+  applySafetyContract,
 }: {
   connectorState: ConnectorLifecycleState
   importPreview: ConnectorImportPreview
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
   controlledApplyPlan: ConnectorControlledApplyPlan
+  applySafetyContract: ConnectorApplySafetyContract
 }): ConnectorApplyExecutionContract {
   const batch = importPreview.batch
   const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
@@ -2468,6 +2580,48 @@ function buildConnectorApplyExecutionContract({
         ? 'erp.applyExecutionContract.values.approvalRecorded'
         : 'erp.applyExecutionContract.values.approvalMissing',
     ),
+    control(
+      'direct_rpc_permission',
+      applySafetyContract.authenticatedApplyRpcExposed ? 'blocked' : 'ready',
+      applySafetyContract.authenticatedApplyRpcExposed
+        ? 'erp.applyExecutionContract.values.rpcExposed'
+        : 'erp.applyExecutionContract.values.serviceRoleOnly',
+    ),
+    control(
+      'worker_apply_gate',
+      applySafetyContract.workerImportApplyEnqueueEnabled ||
+        applySafetyContract.workerImportApplyClaimEnabled
+        ? 'blocked'
+        : 'ready',
+      applySafetyContract.workerImportApplyEnqueueEnabled ||
+        applySafetyContract.workerImportApplyClaimEnabled
+        ? 'erp.applyExecutionContract.values.importApplyOpen'
+        : 'erp.applyExecutionContract.values.importApplyClosed',
+    ),
+    control(
+      'crud_audit_policy',
+      applySafetyContract.auditTiers.includes('object_event') &&
+        applySafetyContract.auditTiers.includes('field_diff')
+        ? 'ready'
+        : 'blocked',
+      applySafetyContract.auditTiers.includes('object_event') &&
+        applySafetyContract.auditTiers.includes('field_diff')
+        ? 'erp.applyExecutionContract.values.objectAndFieldAudit'
+        : 'erp.applyExecutionContract.values.auditPolicyMissing',
+    ),
+    control(
+      'retention_policy',
+      applySafetyContract.fieldDiffHotRetentionDays === 90 &&
+        applySafetyContract.rollbackSnapshotHotRetentionDays === 90 &&
+        applySafetyContract.purgeArchiveRequired
+        ? 'ready'
+        : 'blocked',
+      applySafetyContract.fieldDiffHotRetentionDays === 90 &&
+        applySafetyContract.rollbackSnapshotHotRetentionDays === 90 &&
+        applySafetyContract.purgeArchiveRequired
+        ? 'erp.applyExecutionContract.values.ninetyDayHotRetention'
+        : 'erp.applyExecutionContract.values.retentionPolicyMissing',
+    ),
     control('batch_lock', 'blocked', 'erp.applyExecutionContract.values.lockClosed'),
     control('rollback_plan', 'blocked', 'erp.applyExecutionContract.values.rollbackClosed'),
     control('notification_plan', 'blocked', 'erp.applyExecutionContract.values.notificationClosed'),
@@ -2479,12 +2633,16 @@ function buildConnectorApplyExecutionContract({
     readiness: status === 'blocked' ? 'blocked' : 'partial',
     statusLabelKey: `erp.applyExecutionContract.status.${status}`,
     descriptionKey: `erp.applyExecutionContract.descriptions.${status}`,
-    contractVersion: 'pr14.20-closed-apply-contract-v1',
+    contractVersion: applySafetyContract.contractVersion,
     executionEnabled: false,
     canonicalWriteEnabled: false,
     sourceWritebackEnabled: false,
     credentialReadbackEnabled: false,
     applyRpcExposed: false,
+    browserDirectApplyEnabled: false,
+    authenticatedApplyRpcExposed: false,
+    workerImportApplyEnqueueEnabled: false,
+    workerImportApplyClaimEnabled: false,
     safeToExecute: false,
     executorMode: 'future_background_job',
     batchId: batch?.id ?? null,
@@ -3022,9 +3180,7 @@ function mapRuntimeWorkerReadiness(status: ConnectorRuntimeWorkerStatus): Connec
   return 'blocked'
 }
 
-function mapConnectorRuntimeWorker(
-  rows: ConnectorWorkerHeartbeatRow[],
-): ConnectorRuntimeWorker {
+function mapConnectorRuntimeWorker(rows: ConnectorWorkerHeartbeatRow[]): ConnectorRuntimeWorker {
   const row = rows[0] ?? null
   const status = mapRuntimeWorkerStatus(row)
   const safeErrorCode = row?.safe_error_code?.trim() || null
@@ -3052,7 +3208,11 @@ function mapRuntimeQueueStatus(
   if (connectorState !== 'connector_selected') return 'not_available'
   if (jobs.some((job) => job.status === 'failed' || job.status === 'dead_letter')) return 'blocked'
   if (worker.status === 'stale' || worker.status === 'error') return 'blocked'
-  if (jobs.some((job) => job.status === 'queued' || job.status === 'running' || job.status === 'retrying')) {
+  if (
+    jobs.some(
+      (job) => job.status === 'queued' || job.status === 'running' || job.status === 'retrying',
+    )
+  ) {
     return 'active'
   }
   return 'contract_ready'
@@ -3792,6 +3952,7 @@ function buildOverview({
   importPreview,
   applyReadiness,
   applyApprovalPolicy,
+  applySafetyContract,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
   credentialHandoffRequestedByEmployeeId,
@@ -3824,6 +3985,7 @@ function buildOverview({
   importPreview?: ConnectorImportPreview
   applyReadiness?: ConnectorApplyReadiness
   applyApprovalPolicy?: ConnectorApplyApprovalPolicy
+  applySafetyContract?: ConnectorApplySafetyContract
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
   credentialHandoffRequestedByEmployeeId?: string | null
@@ -3902,6 +4064,7 @@ function buildOverview({
       applyReadiness: resolvedApplyReadiness,
       approvalEvent: null,
     })
+  const resolvedApplySafetyContract = applySafetyContract ?? buildConnectorApplySafetyContract(null)
   const controlledApplyPlan = buildConnectorControlledApplyPlan({
     connectorState,
     importPreview: resolvedImportPreview,
@@ -3914,13 +4077,12 @@ function buildOverview({
     importPreview: resolvedImportPreview,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
     controlledApplyPlan,
+    applySafetyContract: resolvedApplySafetyContract,
   })
   const runtimeQueue = buildConnectorRuntimeQueue({
     connectorState,
     jobs: runtimeJobs ?? [],
-    worker:
-      runtimeWorker ??
-      mapConnectorRuntimeWorker([]),
+    worker: runtimeWorker ?? mapConnectorRuntimeWorker([]),
   })
 
   return {
@@ -3976,6 +4138,7 @@ function buildOverview({
     importPreview: resolvedImportPreview,
     applyReadiness: resolvedApplyReadiness,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
+    applySafetyContract: resolvedApplySafetyContract,
     controlledApplyPlan,
     applyExecutionContract,
     runtimeQueue,
@@ -4101,65 +4264,65 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
 
   const [connectionsRow, readinessRow, namespacesRow, identitiesRow, workerHeartbeatsRow] =
     await Promise.all([
-    pulsIntegration()
-      .from('erp_connections')
-      .select(
-        [
-          'id',
-          'provider',
-          'display_name',
-          'connection_method',
-          'connection_key',
-          'is_active',
-          'last_sync_at',
-          'last_status',
-          'setup_status',
-          'setup_step',
-          'is_enabled',
-          'owned_domains',
-          'selected_at',
-          'setup_started_at',
-          'auth_mode',
-          'credential_required',
-          'credential_state',
-          'credential_last_verified_at',
-          'credential_last_failed_at',
-          'credential_error_code',
-          'credential_handoff_status',
-          'credential_handoff_requested_at',
-          'credential_handoff_requested_by_employee_id',
-          'credential_handoff_updated_at',
-          'created_at',
-          'updated_at',
-        ].join(', '),
-      )
-      .eq('tenant_id', ctx.tenantId)
-      .order('created_at', { ascending: false })
-      .limit(10),
-    pulsCalc()
-      .from('setup_readiness_summary')
-      .select('integration_setup_pct')
-      .eq('tenant_id', ctx.tenantId)
-      .maybeSingle(),
-    pulsIntegration()
-      .from('source_namespaces')
-      .select('id, code, name, source_type, connection_id')
-      .eq('tenant_id', ctx.tenantId)
-      .eq('is_active', true)
-      .order('priority_rank', { ascending: true }),
-    pulsIntegration()
-      .from('entity_identity_map')
-      .select('source_namespace_id, canonical_table')
-      .eq('tenant_id', ctx.tenantId)
-      .eq('is_active', true),
-    pulsIntegration()
-      .from('connector_worker_heartbeats')
-      .select(
-        'worker_id, status, runtime_version, supported_job_types, last_seen_at, last_claimed_job_id, safe_error_code, safe_context, created_at, updated_at',
-      )
-      .order('last_seen_at', { ascending: false })
-      .limit(5),
-  ])
+      pulsIntegration()
+        .from('erp_connections')
+        .select(
+          [
+            'id',
+            'provider',
+            'display_name',
+            'connection_method',
+            'connection_key',
+            'is_active',
+            'last_sync_at',
+            'last_status',
+            'setup_status',
+            'setup_step',
+            'is_enabled',
+            'owned_domains',
+            'selected_at',
+            'setup_started_at',
+            'auth_mode',
+            'credential_required',
+            'credential_state',
+            'credential_last_verified_at',
+            'credential_last_failed_at',
+            'credential_error_code',
+            'credential_handoff_status',
+            'credential_handoff_requested_at',
+            'credential_handoff_requested_by_employee_id',
+            'credential_handoff_updated_at',
+            'created_at',
+            'updated_at',
+          ].join(', '),
+        )
+        .eq('tenant_id', ctx.tenantId)
+        .order('created_at', { ascending: false })
+        .limit(10),
+      pulsCalc()
+        .from('setup_readiness_summary')
+        .select('integration_setup_pct')
+        .eq('tenant_id', ctx.tenantId)
+        .maybeSingle(),
+      pulsIntegration()
+        .from('source_namespaces')
+        .select('id, code, name, source_type, connection_id')
+        .eq('tenant_id', ctx.tenantId)
+        .eq('is_active', true)
+        .order('priority_rank', { ascending: true }),
+      pulsIntegration()
+        .from('entity_identity_map')
+        .select('source_namespace_id, canonical_table')
+        .eq('tenant_id', ctx.tenantId)
+        .eq('is_active', true),
+      pulsIntegration()
+        .from('connector_worker_heartbeats')
+        .select(
+          'worker_id, status, runtime_version, supported_job_types, last_seen_at, last_claimed_job_id, safe_error_code, safe_context, created_at, updated_at',
+        )
+        .order('last_seen_at', { ascending: false })
+        .limit(5),
+    ])
 
   if (connectionsRow.error) {
     throw fromSupabaseError(
@@ -4365,6 +4528,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   }, {})
   let importBatch: ImportBatchRow | null = null
   let importPreviewRecords: ImportPreviewRecordRow[] = []
+  let applySafetyContractRow: ConnectorApplySafetyContractRow | null = null
 
   if (connectorNamespaceIds.length > 0) {
     const importBatchRow = await pulsIntegration()
@@ -4411,6 +4575,21 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
       }
     }
   }
+
+  if (connection?.id) {
+    const applySafetyContractResult = await pulsIntegration().rpc(
+      'list_connector_apply_safety_contracts',
+      {
+        p_connection_id: connection.id,
+      },
+    )
+
+    if (!applySafetyContractResult.error) {
+      applySafetyContractRow =
+        ((applySafetyContractResult.data ?? []) as ConnectorApplySafetyContractRow[])[0] ?? null
+    }
+  }
+
   const importPreview = buildConnectorImportPreview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
     batch: importBatch,
@@ -4441,6 +4620,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     applyReadiness,
     approvalEvent: latestApplyApprovalEvent,
   })
+  const applySafetyContract = buildConnectorApplySafetyContract(applySafetyContractRow)
 
   return buildOverview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
@@ -4495,6 +4675,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     importPreview,
     applyReadiness,
     applyApprovalPolicy,
+    applySafetyContract,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
     credentialHandoffRequestedByEmployeeId:
@@ -4884,10 +5065,7 @@ export async function requestConnectorRuntimePreflight(
     })
   }
 
-  if (
-    overview.credentialBoundary.required &&
-    overview.credentialBoundary.state !== 'verified'
-  ) {
+  if (overview.credentialBoundary.required && overview.credentialBoundary.state !== 'verified') {
     throw new DataAdapterError({
       code: 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED',
       message: 'Connector runtime preflight requires verified credential state',
