@@ -1017,6 +1017,9 @@
       "applyApprovalPolicy": {
         "approvalRecorded": "Admin onayı audit kaydı olarak işlendi. Apply çalıştırma hâlâ kapalı."
       },
+      "applyChangeSet": {
+        "generated": "Change-set ve risk kanıtı üretildi. Kanonik veri yazılmadı."
+      },
       "runtimePreflight": {
         "queued": "Runtime ön kontrol job'ı güvenli kuyruğa alındı. Worker sonucu activity içinde görünecek."
       }
@@ -1034,6 +1037,7 @@
       "setupSaveFailed": "Kurulum taslağı şu anda kaydedilemedi. Biraz sonra tekrar deneyebilirsin.",
       "applyReviewBlocked": "İnsan incelemesi yalnızca temiz bir import önizlemesi hazırlandıktan sonra talep edilebilir.",
       "applyApprovalBlocked": "Admin onayı için önce temiz önizleme ve insan incelemesi kaydı gerekir.",
+      "applyChangeSetBlocked": "Change-set üretimi için temiz ve önizlenmiş dry-run batch gerekir.",
       "runtimePreflightBlocked": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
     },
     "sections": {
@@ -1065,6 +1069,8 @@
       "activityTimelineDescription": "Kurulum, güvenli referans ve kontrol adımlarında oluşan güvenli kayıtlar.",
       "applyReadiness": "Uygulama hazırlığı",
       "applyReadinessDescription": "Hazırlanan önizlemenin insan kararı için hazır olup olmadığını gösterir. Bu adım yalnızca denetim niyeti kaydeder; kayıt uygulamaz veya kanonik veri yazmaz.",
+      "applyChangeSet": "Change-set ve risk kanıtı",
+      "applyChangeSetDescription": "Önizlenen batch için immutable karar kanıtı üretir; hangi satırın yaratılacağını, hangisinin blokeli olduğunu ve hangi audit/retention sınırına girdiğini gösterir.",
       "controlledApply": "Kontrollü uygulama tasarımı",
       "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
@@ -1771,6 +1777,7 @@
       },
       "importApplyReview": {
         "success": "İnsan incelemesi talebi kaydedildi.",
+        "partial": "Change-set riskleri blokeli olarak kaydedildi.",
         "pending": "İnsan incelemesi talebi oluşturuldu.",
         "failed": "İnsan incelemesi talebi kaydedilemedi."
       }
@@ -1939,6 +1946,85 @@
           "label": "Engelleri kapat",
           "description": "Onay öncesinde önizleme veya kurulum engellerini kapat."
         }
+      }
+    },
+    "applyChangeSet": {
+      "generating": "Change-set üretiliyor",
+      "adminRequired": "Admin yetkisi gerekir",
+      "executionClosed": "Execution kapalı",
+      "generatedAt": "Change-set zamanı: {{value}}",
+      "empty": "Change-set item kanıtı henüz üretilmedi.",
+      "boundaryNote": "Bu bölüm yalnızca immutable karar kanıtı gösterir. Bu ekrandan batch uygulanmaz, kanonik kayıt yazılmaz, credential okunmaz, ERP'ye geri yazım yapılmaz ve ham payload gösterilmez.",
+      "status": {
+        "not_available": "Change-set hazır değil",
+        "needs_preview": "Önizleme gerekli",
+        "needs_generation": "Change-set üretilebilir",
+        "ready_for_create_only_review": "Create-only incelemeye hazır",
+        "blocked": "Change-set blokeli"
+      },
+      "descriptions": {
+        "not_available": "Kaynak ve dry-run batch olmadan change-set üretilemez.",
+        "needs_preview": "Change-set üretmeden önce batch satırları kanonik modele göre önizlenmeli.",
+        "needs_generation": "Önizleme hazır. Admin immutable change-set ve risk ledger kanıtını üretebilir; bu işlem veri yazmaz.",
+        "ready_for_create_only_review": "Change-set üretildi ve blokeli satır yok. Canlı apply yine PR16.3 worker ve create-only kapıları açılmadan çalışmaz.",
+        "blocked": "Change-set riskleri mevcut. Guarded update, destructive, source conflict veya stale preview riskleri çözülmeden apply açılamaz."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada güvenli change-set aksiyonu yok."
+        },
+        "run_preview_first": {
+          "label": "Önce önizleme çalıştır",
+          "description": "Change-set için temiz dry-run önizleme gerekir."
+        },
+        "generate_change_set": {
+          "label": "Change-set üret",
+          "description": "Önizleme sonucundan immutable risk ve audit kanıtı üret. Bu apply çalıştırmaz."
+        },
+        "review_change_set": {
+          "label": "Change-set'i incele",
+          "description": "Kanıt üretildi. Execution kapalı kaldığı için yalnızca risk özeti incelenebilir."
+        },
+        "resolve_blockers": {
+          "label": "Riskleri çöz",
+          "description": "Blokeli satırları düzelt, gerekirse önizlemeyi yeniden çalıştır."
+        }
+      },
+      "metrics": {
+        "intent": "İşlem niyeti",
+        "blockers": "Blok",
+        "risk": "Overwrite riski",
+        "drift": "Drift"
+      },
+      "values": {
+        "createUpdateSkip": "Yarat / güncelle / atla",
+        "blockedRows": "Blokeli satır",
+        "guardedDestructive": "Guarded / destructive",
+        "staleConflict": "Stale / kaynak çatışması",
+        "noFieldDiff": "Alan adı kanıtı yok",
+        "rollbackSnapshot": "Rollback snapshot metadata gerekir"
+      },
+      "columns": {
+        "row": "Satır",
+        "target": "Hedef",
+        "evidence": "Kanıt",
+        "risk": "Risk"
+      },
+      "retention": {
+        "object_event": "Object event audit",
+        "field_diff": "Field diff intent",
+        "rollback_snapshot": "Rollback snapshot metadata"
+      },
+      "riskClasses": {
+        "create_only": "Create-only",
+        "no_change_skip": "Değişiklik yok",
+        "safe_additive_update": "Additive update",
+        "guarded_overwrite": "Guarded overwrite",
+        "destructive_equivalent": "Destructive-equivalent",
+        "source_conflict": "Kaynak çatışması",
+        "stale_preview": "Stale preview",
+        "rollback_required": "Rollback gerekli"
       }
     },
     "applyExecutionContract": {

@@ -371,6 +371,8 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Ürün değeri:** Admin neyin değişeceğini satır ve alan seviyesinde görmeden PULS veri yazmaz. Yanlış veri yüklenirse neyin geri alınabileceği apply öncesi bilinir.
 
+**Implementation status:** PR16.2 implements immutable change-set generation from previewed dry-run batches, safe risk ledger summaries on `/erp`, audit tier and retention bucket evidence, idempotent generation by source checksum, and admin-checked RPC boundaries. Canonical writes, worker `import_apply`, ERP/source writeback, credential readback, rollback execution, raw payload readback, and AI autonomous action remain closed.
+
 **Kapsam:**
 
 - Preview edilmiş batch'ten immutable apply change-set üretme
