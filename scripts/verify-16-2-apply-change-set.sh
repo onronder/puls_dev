@@ -76,6 +76,15 @@ for forbidden in \
   fi
 done
 
+CHECKSUM_FUNCTION="$(
+  awk '/CREATE OR REPLACE FUNCTION puls_integration\._connector_apply_change_set_checksum/,/^\$\$;/' \
+    <<< "$MIGRATION"
+)"
+if grep -Fxq "      )," <<< "$CHECKSUM_FUNCTION"; then
+  echo "FAIL: checksum helper has an invalid trailing comma after convert_to(...)" >&2
+  exit 1
+fi
+
 for needle in \
   "ConnectorApplyChangeSet" \
   "ConnectorApplyRiskClass" \
