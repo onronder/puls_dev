@@ -49,6 +49,9 @@ PR15.2 adds DB-backed heartbeat visibility through `puls_integration.connector_w
 | --- | --- | --- |
 | `PORT` | `8081` | HTTP health port |
 | `PULS_CONNECTOR_WORKER_ENABLED` | `false` | Enables the queue loop only when explicitly set |
+| `RAILWAY_ENVIRONMENT_NAME` | platform-provided | Railway environment name; non-production names disable the queue loop by default |
+| `PULS_CONNECTOR_WORKER_ALLOW_NON_PRODUCTION` | `false` | Allows preview/staging Railway environments to run the queue loop only when intentionally enabled |
+| `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED` | `false` | Allows `import_apply` to be claimed only after PR16 apply controls are live |
 | `PULS_SUPABASE_URL` / `SUPABASE_URL` | none | Supabase project URL for service-role RPC calls |
 | `PULS_SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | none | Service-role key; never returned in health payload |
 | `PULS_CONNECTOR_WORKER_ID` | `erp-connector-worker` | Stable worker id for locks and heartbeats |
@@ -76,6 +79,8 @@ Railway service settings:
 Required Railway variables:
 
 - `PULS_CONNECTOR_WORKER_ENABLED=true`
+- `PULS_CONNECTOR_WORKER_ALLOW_NON_PRODUCTION=false`
+- `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=false`
 - `PULS_SUPABASE_URL`
 - `PULS_SUPABASE_SERVICE_ROLE_KEY`
 - `PULS_CONNECTOR_WORKER_ID=railway-erp-connector-production-1`
@@ -86,6 +91,14 @@ Required Railway variables:
 - `PULS_CONNECTOR_WORKER_RECOVERY_LIMIT=25`
 
 Do not set provider API credentials in this service yet. PR15.7 proves deployment, heartbeat, claim, complete, and safe runtime-preflight plumbing only. Provider API calls, credential readback, import apply execution, canonical writes, and ERP/source writeback remain closed.
+
+PR15.8 production guardrails:
+
+- Railway `production` may run the queue loop when `PULS_CONNECTOR_WORKER_ENABLED=true`.
+- Railway preview, staging, or other non-production environments remain disabled unless `PULS_CONNECTOR_WORKER_ALLOW_NON_PRODUCTION=true`.
+- `import_apply` is ignored in `PULS_CONNECTOR_WORKER_JOB_TYPES` unless `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=true`.
+- `railway.toml` keeps `numReplicas = 1`, `overlapSeconds = 0`, and `drainingSeconds = 30` until PR16 batch lock and idempotency are proven.
+- The service handles `SIGTERM` and `SIGINT` by stopping the worker loop before the process drains.
 
 Production smoke:
 

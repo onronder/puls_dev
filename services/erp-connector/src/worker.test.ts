@@ -59,7 +59,7 @@ describe('erp-connector worker config', () => {
     const serialized = JSON.stringify(buildHealthPayload(config))
 
     expect(config.configured).toBe(true)
-    expect(config.supportedJobTypes).toEqual(['noop_health', 'import_apply'])
+    expect(config.supportedJobTypes).toEqual(['noop_health'])
     expect(serialized).not.toContain('service-role-secret-value')
     expect(serialized).not.toContain('SERVICE_ROLE')
   })
@@ -106,6 +106,48 @@ describe('erp-connector worker config', () => {
   it('falls back to noop_health when job type config is empty or invalid', () => {
     expect(parseSupportedJobTypes('')).toEqual(['noop_health'])
     expect(parseSupportedJobTypes('unknown,still_unknown')).toEqual(['noop_health'])
+  })
+
+  it('keeps Railway non-production worker loops disabled unless explicitly allowed', () => {
+    const config = resolveWorkerConfig({
+      RAILWAY_ENVIRONMENT_NAME: 'preview',
+      PULS_SUPABASE_URL: 'https://example.supabase.co/',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+    })
+    const allowedConfig = resolveWorkerConfig({
+      RAILWAY_ENVIRONMENT_NAME: 'preview',
+      PULS_CONNECTOR_WORKER_ALLOW_NON_PRODUCTION: 'true',
+      PULS_SUPABASE_URL: 'https://example.supabase.co/',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+    })
+
+    expect(config.configured).toBe(true)
+    expect(config.enabled).toBe(false)
+    expect(config.railwayEnvironmentName).toBe('preview')
+    expect(config.nonProductionWorkerAllowed).toBe(false)
+    expect(allowedConfig.enabled).toBe(true)
+    expect(allowedConfig.nonProductionWorkerAllowed).toBe(true)
+  })
+
+  it('requires an explicit PR16 gate before claiming import_apply jobs', () => {
+    expect(parseSupportedJobTypes('import_apply,noop_health')).toEqual(['noop_health'])
+    expect(
+      parseSupportedJobTypes('import_apply', {
+        importApplyEnabled: true,
+      }),
+    ).toEqual(['import_apply'])
+
+    const config = resolveWorkerConfig({
+      PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_JOB_TYPES: 'import_apply,noop_health',
+    })
+    const health = buildHealthPayload(config)
+
+    expect(config.importApplyEnabled).toBe(true)
+    expect(config.supportedJobTypes).toEqual(['import_apply', 'noop_health'])
+    expect(health.worker.importApplyEnabled).toBe(true)
   })
 })
 

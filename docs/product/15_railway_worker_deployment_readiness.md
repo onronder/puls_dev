@@ -52,8 +52,12 @@ References:
 | `PULS_CONNECTOR_WORKER_RECOVER_STALE` | `true` |
 | `PULS_CONNECTOR_WORKER_RECOVERY_LIMIT` | `25` |
 | `PULS_CONNECTOR_WORKER_VERSION` | Optional deployment label, for example `0.2.0-worker-skeleton` |
+| `PULS_CONNECTOR_WORKER_ALLOW_NON_PRODUCTION` | `false`; PR15.8 guardrail, non-production Railway envs do not run the queue loop by default |
+| `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED` | `false`; PR15.8 guardrail, `import_apply` is not claimable until PR16 enables it |
 
 Do not add provider credentials to Railway for PR15.7. Provider-specific API credentials remain closed until the corresponding connector runtime implementation exists.
+
+PR15.8 extends this setup with production guardrails: one Railway replica, zero deploy overlap, graceful drain, non-production worker disablement by default, and an explicit `import_apply` enablement flag. See `15_railway_worker_production_guardrails.md`.
 
 ## Remote Smoke Procedure
 
@@ -109,7 +113,37 @@ where idempotency_key = 'pr15_7_railway_noop_health_smoke_v1';
 Expected result:
 
 - `status='succeeded'`
-- `locked_by='railway-erp-connector-production-1'`
+- `started_at` and `finished_at` are not null
+- `safe_error_code is null`
+- job completion clears lock ownership, so `locked_by` does not need to remain populated after completion
+- `safe_error_context` contains no credential, payload, request, or response values
+
+Use job events as the canonical worker proof:
+
+```sql
+select
+  job_id,
+  job_type,
+  status,
+  event_key,
+  level,
+  worker_id,
+  safe_error_code,
+  safe_error_context,
+  created_at
+from puls_integration.connector_job_events
+where job_id = (
+  select id
+  from puls_integration.connector_jobs
+  where idempotency_key = 'pr15_7_railway_noop_health_smoke_v1'
+)
+order by created_at desc;
+```
+
+Expected event result:
+
+- `event_key='connector_job_succeeded'`
+- `worker_id='railway-erp-connector-production-1'`
 - `safe_error_context` contains no credential, payload, request, or response values
 
 ## Runtime Troubleshooting

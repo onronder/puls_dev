@@ -506,6 +506,17 @@ PR15.7 makes the connector worker operationally deployable on Railway before PR1
 | [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Worker service posture, env contract, and Railway smoke checklist |
 | [`scripts/verify-15-railway-worker-deployment-readiness.sh`](../../scripts/verify-15-railway-worker-deployment-readiness.sh) | PR15.7 verify gate |
 
+## PR15.8 Railway worker production guardrails
+
+PR15.8 hardens the deployed Railway worker before PR16 data movement. It disables non-production Railway queue loops by default, gates `import_apply` behind an explicit PR16 flag, pins one worker replica with zero deploy overlap and graceful drain, narrows monorepo redeploy scope with watch patterns, and updates the remote smoke proof to use connector job events for worker attribution. Provider API runtime, credential readback, import apply execution, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [15_railway_worker_production_guardrails.md](./15_railway_worker_production_guardrails.md) | PR15.8 Railway production guardrails, env defaults, smoke expectations, and PR16 handoff |
+| [`services/erp-connector/railway.toml`](../../services/erp-connector/railway.toml) | One-replica, zero-overlap, graceful-drain Railway config-as-code |
+| [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Worker service guardrail env contract |
+| [`scripts/verify-15-railway-worker-production-guardrails.sh`](../../scripts/verify-15-railway-worker-production-guardrails.sh) | PR15.8 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
