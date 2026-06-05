@@ -548,6 +548,17 @@ PR16.2 adds immutable change-set evidence for previewed dry-run batches. Admins 
 | [`supabase/migrations/20260605110000_puls_integration_apply_change_set.sql`](../../supabase/migrations/20260605110000_puls_integration_apply_change_set.sql)         | Change-set tables, risk classes, immutable triggers, admin generation RPC, and safe summary RPC   |
 | [`scripts/verify-16-2-apply-change-set.sh`](../../scripts/verify-16-2-apply-change-set.sh)                                                                           | PR16.2 verify gate                                                                                |
 
+## PR16.3 create-only worker apply
+
+PR16.3 opens the first controlled canonical write path, but only through the service-role Railway worker and only for admin-approved create-only reference-dimension rows. Browser direct apply, authenticated direct canonical writes, existing-record updates, employee apply, ERP/source writeback, credential readback, raw payload readback, provider API calls, and AI autonomous actions remain closed.
+
+| Document / artifact                                                                                                                                                            | Purpose                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| [16_3_create_only_worker_apply.md](./16_3_create_only_worker_apply.md)                                                                                                         | PR16.3 create-only worker apply scope, Railway env gate, business rules, and PR16.4 handoff                  |
+| [`supabase/migrations/20260605120000_puls_integration_create_only_worker_apply.sql`](../../supabase/migrations/20260605120000_puls_integration_create_only_worker_apply.sql) | Worker-only create apply RPCs, object event audit ledger, and PR16.3 `import_apply` trigger exception        |
+| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                                                           | Worker execution path for PR16.3 create-only apply jobs behind an explicit env gate                          |
+| [`scripts/verify-16-3-create-only-worker-apply.sh`](../../scripts/verify-16-3-create-only-worker-apply.sh)                                                                     | PR16.3 verify gate                                                                                           |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

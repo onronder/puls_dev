@@ -4,8 +4,11 @@ import {
   buildSafeWorkerFailureObservation,
   callSupabaseRpc,
   buildConnectorJobCompletion,
+  buildCreateOnlyApplyCompletionFromResult,
+  buildCreateOnlyApplyFailureCompletion,
   buildHealthPayload,
   buildRuntimePreflightCompletionFromContext,
+  ConnectorWorkerRpcError,
   parseSupportedJobTypes,
   resolveWorkerConfig,
   runWorkerOnce,
@@ -148,6 +151,39 @@ describe('erp-connector worker config', () => {
     expect(config.importApplyEnabled).toBe(true)
     expect(config.supportedJobTypes).toEqual(['import_apply', 'noop_health'])
     expect(health.worker.importApplyEnabled).toBe(true)
+    expect(health.boundaries.canonicalWrites).toBe(true)
+    expect(health.boundaries.providerApiCalls).toBe(false)
+    expect(health.boundaries.credentialReadback).toBe(false)
+    expect(health.boundaries.sourceWriteback).toBe(false)
+  })
+
+  it('normalizes safe PULS SQL error messages for worker completion', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co/',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        return new Response(
+          JSON.stringify({
+            code: 'P0001',
+            message:
+              'PULS_CONNECTOR_CREATE_ONLY_APPROVAL_REQUIRED: admin approval is required before enqueue.',
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }),
+    )
+
+    await expect(callSupabaseRpc(config, 'execute_connector_create_only_apply_job', {})).rejects
+      .toMatchObject({
+        code: 'puls_connector_create_only_approval_required',
+      })
   })
 })
 
@@ -216,6 +252,116 @@ describe('erp-connector worker job handling', () => {
         retry_after_seconds: 0,
       }),
       p_next_action_key: 'wait_for_provider_runtime_implementation',
+    })
+  })
+
+  it('executes import_apply only through the PR16 create-only worker RPC when explicitly enabled', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_JOB_TYPES: 'import_apply',
+      PULS_CONNECTOR_WORKER_ID: 'worker-a',
+    })
+    const calls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
+      calls.push({ fn, args })
+      if (fn === 'claim_next_connector_job') {
+        return [
+          noopJob({
+            id: 'apply-job-1',
+            job_type: 'import_apply',
+          }),
+        ] as T
+      }
+      if (fn === 'execute_connector_create_only_apply_job') {
+        return [
+          {
+            change_set_id: 'change-set-1',
+            import_batch_id: 'batch-1',
+            status: 'applied_create_only',
+            row_count: 2,
+            create_count: 2,
+            object_event_count: 2,
+            execution_enabled: true,
+            canonical_write_enabled: true,
+            source_writeback_enabled: false,
+            credential_readback_enabled: false,
+            next_action_key: 'review_created_canonical_records',
+          },
+        ] as T
+      }
+      if (fn === 'complete_connector_job') return 'apply-job-1' as T
+      if (fn === 'upsert_connector_worker_heartbeat') return 'worker-a' as T
+      if (fn === 'heartbeat_connector_job') return 'apply-job-1' as T
+      return [] as T
+    }
+
+    const result = await runWorkerOnce(config, rpc)
+
+    expect(result).toEqual({ claimed: true, jobId: 'apply-job-1', status: 'succeeded' })
+    expect(calls.find((call) => call.fn === 'claim_next_connector_job')?.args).toMatchObject({
+      p_job_types: ['import_apply'],
+    })
+    expect(
+      calls.find((call) => call.fn === 'execute_connector_create_only_apply_job')?.args,
+    ).toMatchObject({
+      p_job_id: 'apply-job-1',
+      p_worker_id: 'worker-a',
+    })
+    expect(calls.find((call) => call.fn === 'complete_connector_job')?.args).toMatchObject({
+      p_job_id: 'apply-job-1',
+      p_status: 'succeeded',
+      p_safe_error_code: null,
+      p_next_action_key: 'review_created_canonical_records',
+      p_safe_error_context: expect.objectContaining({
+        apply_contract: 'pr16.3-create-only-worker-apply-v1',
+        apply_mode: 'create_only',
+        canonical_write: true,
+        source_writeback: false,
+        credential_readback: false,
+        external_call: false,
+      }),
+    })
+
+    const serialized = JSON.stringify(calls)
+    expect(serialized).not.toContain('apply_import_batch')
+    expect(serialized).not.toContain('service-role-secret-value')
+    expect(serialized).not.toContain('"raw_payload":')
+    expect(serialized).not.toContain('provider_response')
+  })
+
+  it('fails import_apply safely when the create-only RPC rejects the job', async () => {
+    const failure = buildCreateOnlyApplyFailureCompletion(
+      noopJob({ job_type: 'import_apply' }),
+      new ConnectorWorkerRpcError(400, 'puls_connector_create_only_target_exists'),
+    )
+
+    expect(failure).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'puls_connector_create_only_target_exists',
+      p_next_action_key: 'review_create_only_apply_failure',
+      p_safe_error_context: expect.objectContaining({
+        apply_contract: 'pr16.3-create-only-worker-apply-v1',
+        canonical_write: false,
+        source_writeback: false,
+        credential_readback: false,
+        provider_api_calls: false,
+      }),
+    })
+    expect(JSON.stringify(failure)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(failure)).not.toContain('credentials_ref')
+  })
+
+  it('does not mark create-only apply successful when the RPC result is missing', () => {
+    expect(buildCreateOnlyApplyCompletionFromResult(null)).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'create_only_apply_result_missing',
+      p_next_action_key: 'review_create_only_apply_result',
+      p_safe_error_context: expect.objectContaining({
+        canonical_write: false,
+      }),
     })
   })
 
