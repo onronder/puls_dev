@@ -631,7 +631,7 @@ export type ConnectorApplyExecutionContract = {
   workerImportApplyEnqueueEnabled: boolean
   workerImportApplyClaimEnabled: boolean
   safeToExecute: boolean
-  executorMode: 'future_background_job' | 'worker_create_only_job'
+  executorMode: 'future_background_job' | 'worker_create_only_job' | 'worker_guarded_update_job'
   batchId: string | null
   sourceChecksum: string | null
   sourceNamespaceCode: string | null
@@ -1164,6 +1164,17 @@ type ConnectorCreateOnlyApplyJobRow = {
   next_action_key?: string | null
 }
 
+type ConnectorGuardedUpdateApplyJobRow = {
+  job_id?: string | null
+  status?: ConnectorRuntimeJobStatus | null
+  change_set_id?: string | null
+  import_batch_id?: string | null
+  update_count?: number | null
+  field_diff_count?: number | null
+  rollback_snapshot_count?: number | null
+  next_action_key?: string | null
+}
+
 type ConnectorCredentialEventRow = {
   id?: string | null
   tenant_id?: string | null
@@ -1327,6 +1338,16 @@ export type RequestConnectorCreateOnlyApplyJobResult = {
   safeToApply: false
 }
 
+export type RequestConnectorGuardedUpdateApplyJobResult = {
+  connectionId: string
+  batchId: string
+  changeSetId: string
+  jobId: string | null
+  status: ConnectorRuntimeJobStatus
+  nextActionKey: string
+  safeToApply: false
+}
+
 export type RequestConnectorRuntimePreflightResult = {
   connectionId: string
   jobId: string | null
@@ -1348,6 +1369,7 @@ export type ConnectorSetupErrorMapping = {
     | 'apply_approval_blocked'
     | 'apply_change_set_blocked'
     | 'create_only_apply_blocked'
+    | 'guarded_update_apply_blocked'
     | 'runtime_preflight_blocked'
     | 'permission_denied'
     | 'domain_owned'
@@ -1790,6 +1812,12 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
         toastKey: 'erp.errors.createOnlyApplyBlocked',
       }
     }
+    if (error.code.startsWith('PULS_CONNECTOR_GUARDED_UPDATE_')) {
+      return {
+        code: 'guarded_update_apply_blocked',
+        toastKey: 'erp.errors.guardedUpdateApplyBlocked',
+      }
+    }
     if (
       error.code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
       error.code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
@@ -1829,10 +1857,12 @@ function fromConnectorRpcError(
           ? 'erp.errors.applyChangeSetBlocked'
           : code.startsWith('PULS_CONNECTOR_CREATE_ONLY_')
             ? 'erp.errors.createOnlyApplyBlocked'
-            : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
-                code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
-              ? 'erp.errors.runtimePreflightBlocked'
-              : 'erp.errors.setupSaveFailed',
+            : code.startsWith('PULS_CONNECTOR_GUARDED_UPDATE_')
+              ? 'erp.errors.guardedUpdateApplyBlocked'
+              : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
+                  code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
+                ? 'erp.errors.runtimePreflightBlocked'
+                : 'erp.errors.setupSaveFailed',
   })
 }
 
@@ -3100,6 +3130,7 @@ function buildConnectorApplyExecutionContract({
   controlledApplyPlan,
   applySafetyContract,
   applyChangeSet,
+  guardedUpdateEvidence,
 }: {
   connectorState: ConnectorLifecycleState
   importPreview: ConnectorImportPreview
@@ -3107,6 +3138,7 @@ function buildConnectorApplyExecutionContract({
   controlledApplyPlan: ConnectorControlledApplyPlan
   applySafetyContract: ConnectorApplySafetyContract
   applyChangeSet: ConnectorApplyChangeSet
+  guardedUpdateEvidence: ConnectorGuardedUpdateEvidence
 }): ConnectorApplyExecutionContract {
   const batch = importPreview.batch
   const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
@@ -3114,7 +3146,7 @@ function buildConnectorApplyExecutionContract({
   const hasChecksum = Boolean(batch?.sourceChecksum)
   const hasRowErrors = importPreview.summary.errorCount > 0
   const changeSetSummary = applyChangeSet.summary
-  const changeSetReady =
+  const createOnlyChangeSetReady =
     Boolean(applyChangeSet.id) &&
     applyChangeSet.status === 'ready_for_create_only_review' &&
     changeSetSummary.rowCount > 0 &&
@@ -3127,8 +3159,26 @@ function buildConnectorApplyExecutionContract({
     changeSetSummary.sourceConflictCount === 0 &&
     changeSetSummary.guardedUpdateCount === 0 &&
     changeSetSummary.noChangeCount === 0
-  const workerCreateOnlyOpen =
-    applySafetyContract.contractVersion === 'pr16.3-create-only-worker-apply-v1' &&
+  const guardedUpdateEvidenceReady =
+    guardedUpdateEvidence.status === 'evidence_ready' &&
+    guardedUpdateEvidence.summary.fieldDiffCount > 0 &&
+    guardedUpdateEvidence.summary.rollbackSnapshotCount ===
+      guardedUpdateEvidence.summary.guardedUpdateCount
+  const guardedUpdateChangeSetReady =
+    Boolean(applyChangeSet.id) &&
+    applyChangeSet.status === 'blocked' &&
+    changeSetSummary.rowCount > 0 &&
+    changeSetSummary.updateCount === changeSetSummary.rowCount &&
+    changeSetSummary.guardedUpdateCount === changeSetSummary.rowCount &&
+    changeSetSummary.createCount === 0 &&
+    changeSetSummary.skipCount === 0 &&
+    changeSetSummary.blockedCount === changeSetSummary.guardedUpdateCount &&
+    changeSetSummary.staleCount === 0 &&
+    changeSetSummary.destructiveCount === 0 &&
+    changeSetSummary.sourceConflictCount === 0 &&
+    changeSetSummary.noChangeCount === 0 &&
+    guardedUpdateEvidenceReady
+  const workerApplyBoundaryOpen =
     applySafetyContract.executionEnabled &&
     applySafetyContract.canonicalWriteEnabled &&
     applySafetyContract.workerImportApplyEnqueueEnabled &&
@@ -3137,13 +3187,36 @@ function buildConnectorApplyExecutionContract({
     !applySafetyContract.authenticatedApplyRpcExposed &&
     !applySafetyContract.sourceWritebackEnabled &&
     !applySafetyContract.credentialReadbackEnabled
-  const safeToExecute =
+  const workerCreateOnlyOpen =
+    workerApplyBoundaryOpen &&
+    (applySafetyContract.contractVersion === 'pr16.3-create-only-worker-apply-v1' ||
+      applySafetyContract.contractVersion === 'pr16.4.2-guarded-update-worker-apply-v1')
+  const workerGuardedUpdateOpen =
+    workerApplyBoundaryOpen &&
+    applySafetyContract.contractVersion === 'pr16.4.2-guarded-update-worker-apply-v1'
+  const createOnlySafeToExecute =
     previewReady &&
     approvalRecorded &&
     hasChecksum &&
     !hasRowErrors &&
-    changeSetReady &&
+    createOnlyChangeSetReady &&
     workerCreateOnlyOpen
+  const guardedUpdateSafeToExecute =
+    previewReady &&
+    approvalRecorded &&
+    hasChecksum &&
+    !hasRowErrors &&
+    guardedUpdateChangeSetReady &&
+    workerGuardedUpdateOpen
+  const safeToExecute = createOnlySafeToExecute || guardedUpdateSafeToExecute
+  const executorMode: ConnectorApplyExecutionContract['executorMode'] = createOnlySafeToExecute
+    ? 'worker_create_only_job'
+    : guardedUpdateSafeToExecute
+      ? 'worker_guarded_update_job'
+      : 'future_background_job'
+  const executionReadyValueKey = guardedUpdateSafeToExecute
+    ? 'erp.applyExecutionContract.values.guardedUpdateExecutionReady'
+    : 'erp.applyExecutionContract.values.createOnlyExecutionReady'
 
   const status: ConnectorApplyExecutionContractStatus =
     connectorState !== 'connector_selected' || !batch?.id
@@ -3205,18 +3278,20 @@ function buildConnectorApplyExecutionContract({
     ),
     control(
       'worker_apply_gate',
-      workerCreateOnlyOpen
+      workerCreateOnlyOpen || workerGuardedUpdateOpen
         ? 'ready'
         : applySafetyContract.workerImportApplyEnqueueEnabled ||
             applySafetyContract.workerImportApplyClaimEnabled
           ? 'blocked'
           : 'ready',
-      workerCreateOnlyOpen
-        ? 'erp.applyExecutionContract.values.createOnlyWorkerOpen'
-        : applySafetyContract.workerImportApplyEnqueueEnabled ||
-            applySafetyContract.workerImportApplyClaimEnabled
-          ? 'erp.applyExecutionContract.values.importApplyUnsafe'
-          : 'erp.applyExecutionContract.values.importApplyClosed',
+      workerGuardedUpdateOpen && guardedUpdateChangeSetReady
+        ? 'erp.applyExecutionContract.values.guardedUpdateWorkerOpen'
+        : workerCreateOnlyOpen
+          ? 'erp.applyExecutionContract.values.createOnlyWorkerOpen'
+          : applySafetyContract.workerImportApplyEnqueueEnabled ||
+              applySafetyContract.workerImportApplyClaimEnabled
+            ? 'erp.applyExecutionContract.values.importApplyUnsafe'
+            : 'erp.applyExecutionContract.values.importApplyClosed',
     ),
     control(
       'crud_audit_policy',
@@ -3244,31 +3319,31 @@ function buildConnectorApplyExecutionContract({
     ),
     control(
       'batch_lock',
-      workerCreateOnlyOpen ? 'ready' : 'blocked',
-      workerCreateOnlyOpen
+      workerCreateOnlyOpen || workerGuardedUpdateOpen ? 'ready' : 'blocked',
+      workerCreateOnlyOpen || workerGuardedUpdateOpen
         ? 'erp.applyExecutionContract.values.batchLockReady'
         : 'erp.applyExecutionContract.values.lockClosed',
     ),
     control(
       'rollback_plan',
-      workerCreateOnlyOpen ? 'partial' : 'blocked',
-      workerCreateOnlyOpen
-        ? 'erp.applyExecutionContract.values.createOnlyCompensationReady'
-        : 'erp.applyExecutionContract.values.rollbackClosed',
+      guardedUpdateSafeToExecute ? 'ready' : workerCreateOnlyOpen ? 'partial' : 'blocked',
+      guardedUpdateSafeToExecute
+        ? 'erp.applyExecutionContract.values.rollbackSnapshotReady'
+        : workerCreateOnlyOpen
+          ? 'erp.applyExecutionContract.values.createOnlyCompensationReady'
+          : 'erp.applyExecutionContract.values.rollbackClosed',
     ),
     control(
       'notification_plan',
-      workerCreateOnlyOpen ? 'partial' : 'blocked',
-      workerCreateOnlyOpen
+      workerCreateOnlyOpen || workerGuardedUpdateOpen ? 'partial' : 'blocked',
+      workerCreateOnlyOpen || workerGuardedUpdateOpen
         ? 'erp.applyExecutionContract.values.activityAuditReady'
         : 'erp.applyExecutionContract.values.notificationClosed',
     ),
     control(
       'execution_boundary',
       safeToExecute ? 'ready' : 'blocked',
-      safeToExecute
-        ? 'erp.applyExecutionContract.values.createOnlyExecutionReady'
-        : 'erp.applyExecutionContract.values.executionClosed',
+      safeToExecute ? executionReadyValueKey : 'erp.applyExecutionContract.values.executionClosed',
     ),
   ]
 
@@ -3276,9 +3351,11 @@ function buildConnectorApplyExecutionContract({
     status,
     readiness,
     statusLabelKey: `erp.applyExecutionContract.status.${status}`,
-    descriptionKey: safeToExecute
+    descriptionKey: createOnlySafeToExecute
       ? 'erp.applyExecutionContract.descriptions.create_only_worker_ready'
-      : `erp.applyExecutionContract.descriptions.${status}`,
+      : guardedUpdateSafeToExecute
+        ? 'erp.applyExecutionContract.descriptions.guarded_update_worker_ready'
+        : `erp.applyExecutionContract.descriptions.${status}`,
     contractVersion: applySafetyContract.contractVersion,
     executionEnabled: safeToExecute,
     canonicalWriteEnabled: safeToExecute,
@@ -3292,7 +3369,7 @@ function buildConnectorApplyExecutionContract({
     workerImportApplyEnqueueEnabled: applySafetyContract.workerImportApplyEnqueueEnabled,
     workerImportApplyClaimEnabled: applySafetyContract.workerImportApplyClaimEnabled,
     safeToExecute,
-    executorMode: safeToExecute ? 'worker_create_only_job' : 'future_background_job',
+    executorMode,
     batchId: batch?.id ?? null,
     sourceChecksum: batch?.sourceChecksum ?? null,
     sourceNamespaceCode: batch?.sourceNamespaceCode ?? null,
@@ -4758,6 +4835,7 @@ function buildOverview({
     controlledApplyPlan,
     applySafetyContract: resolvedApplySafetyContract,
     applyChangeSet: resolvedApplyChangeSet,
+    guardedUpdateEvidence: resolvedGuardedUpdateEvidence,
   })
   const runtimeQueue = buildConnectorRuntimeQueue({
     connectorState,
@@ -6608,7 +6686,11 @@ export async function requestConnectorCreateOnlyApplyJob(
       i18nKey: 'erp.errors.importBatchMissing',
     })
   }
-  if (!changeSetId || !overview.applyExecutionContract.safeToExecute) {
+  if (
+    !changeSetId ||
+    !overview.applyExecutionContract.safeToExecute ||
+    overview.applyExecutionContract.executorMode !== 'worker_create_only_job'
+  ) {
     throw new DataAdapterError({
       code: 'PULS_CONNECTOR_CREATE_ONLY_APPLY_BLOCKED',
       message: 'Connector create-only worker apply is blocked by the current safety contract',
@@ -6698,6 +6780,154 @@ export async function requestConnectorCreateOnlyApplyJob(
     jobId,
     status: row?.status ?? 'queued',
     nextActionKey: row?.next_action_key ?? 'wait_for_create_only_worker_apply',
+    safeToApply: false,
+  }
+}
+
+export async function requestConnectorGuardedUpdateApplyJob(
+  userId: string,
+): Promise<RequestConnectorGuardedUpdateApplyJobResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector guarded update apply requires tenant context',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateApplyJob',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector guarded update apply requires admin permission',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateApplyJob',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.importPreview.batch
+  const changeSetId = overview.applyChangeSet.id
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector guarded update apply requires a selected source',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateApplyJob',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector guarded update apply requires a preview batch',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateApplyJob',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (
+    !changeSetId ||
+    !overview.applyExecutionContract.safeToExecute ||
+    overview.applyExecutionContract.executorMode !== 'worker_guarded_update_job'
+  ) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_GUARDED_UPDATE_APPLY_BLOCKED',
+      message: 'Connector guarded update worker apply is blocked by the current safety contract',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateApplyJob',
+      i18nKey: 'erp.errors.guardedUpdateApplyBlocked',
+    })
+  }
+
+  const queued = await pulsIntegration().rpc('enqueue_connector_guarded_update_apply_job', {
+    p_change_set_id: changeSetId,
+  })
+
+  if (queued.error) {
+    throw fromConnectorRpcError(queued.error, 'requestConnectorGuardedUpdateApplyJob')
+  }
+
+  const row = ((queued.data ?? []) as ConnectorGuardedUpdateApplyJobRow[])[0] ?? null
+  const jobId = row?.job_id ?? null
+  if (!jobId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_GUARDED_UPDATE_APPLY_BLOCKED',
+      message: 'Connector guarded update apply queue RPC returned no job evidence',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateApplyJob',
+      i18nKey: 'erp.errors.guardedUpdateApplyBlocked',
+    })
+  }
+
+  const now = new Date().toISOString()
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_apply_review',
+      event_key: 'import_apply_guarded_update_queued',
+      actor_employee_id: ctx.employeeId,
+      status: 'pending',
+      started_at: now,
+      records_seen: overview.applyChangeSet.summary.rowCount,
+      records_inserted: 0,
+      records_updated: overview.applyChangeSet.summary.updateCount,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        job_id: jobId,
+        change_set_id: changeSetId,
+        import_batch_id: batch.id,
+        contract_version: overview.applyExecutionContract.contractVersion,
+        source_namespace_code: batch.sourceNamespaceCode,
+        row_count: overview.applyChangeSet.summary.rowCount,
+        create_count: 0,
+        update_count: overview.applyChangeSet.summary.updateCount,
+        guarded_update_count: overview.applyChangeSet.summary.guardedUpdateCount,
+        field_diff_count: overview.guardedUpdateEvidence.summary.fieldDiffCount,
+        rollback_snapshot_count: overview.guardedUpdateEvidence.summary.rollbackSnapshotCount,
+        skip_count: 0,
+        blocked_count: overview.applyChangeSet.summary.blockedCount,
+        worker_queue: true,
+        safe_to_apply: false,
+        apply_execution_open: true,
+        canonical_write_open: true,
+        browser_direct_apply_open: false,
+        authenticated_apply_rpc_open: false,
+        source_writeback_open: false,
+        credential_readback_open: false,
+        provider_api_calls: false,
+        field_value_readback: false,
+        raw_payload_readback: false,
+        rollback_execution: false,
+      },
+      next_action_key: row?.next_action_key ?? 'wait_for_guarded_update_worker_apply',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'requestConnectorGuardedUpdateApplyJob',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch.id,
+    changeSetId,
+    jobId,
+    status: row?.status ?? 'queued',
+    nextActionKey: row?.next_action_key ?? 'wait_for_guarded_update_worker_apply',
     safeToApply: false,
   }
 }

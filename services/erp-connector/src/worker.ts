@@ -95,6 +95,7 @@ export type ClaimedConnectorJob = {
   attempt_count: number
   max_attempts: number
   domain: string | null
+  safe_error_context?: Record<string, unknown> | null
 }
 
 export type ConnectorRuntimePreflightContext = {
@@ -127,6 +128,22 @@ export type ConnectorCreateOnlyApplyResult = {
   status: string
   row_count: number
   create_count: number
+  object_event_count: number
+  execution_enabled: boolean
+  canonical_write_enabled: boolean
+  source_writeback_enabled: boolean
+  credential_readback_enabled: boolean
+  next_action_key: string | null
+}
+
+export type ConnectorGuardedUpdateApplyResult = {
+  change_set_id: string
+  import_batch_id: string
+  status: string
+  row_count: number
+  update_count: number
+  field_diff_count: number
+  rollback_snapshot_count: number
   object_event_count: number
   execution_enabled: boolean
   canonical_write_enabled: boolean
@@ -168,6 +185,7 @@ const DEFAULT_SUPPORTED_JOB_TYPES: ConnectorJobType[] = ['noop_health']
 const DEFAULT_RUNTIME_VERSION = '0.2.0-worker-skeleton'
 const WORKER_CONTRACT_VERSION = 'pr15.2-worker-skeleton-v1'
 const CREATE_ONLY_APPLY_CONTRACT_VERSION = 'pr16.3-create-only-worker-apply-v1'
+const GUARDED_UPDATE_APPLY_CONTRACT_VERSION = 'pr16.4.2-guarded-update-worker-apply-v1'
 const SUPABASE_RPC_SCHEMA = 'puls_integration'
 
 export class ConnectorWorkerRpcError extends Error {
@@ -586,6 +604,120 @@ export function buildCreateOnlyApplyFailureCompletion(
   }
 }
 
+export function buildGuardedUpdateApplyCompletionFromResult(
+  result: ConnectorGuardedUpdateApplyResult | null,
+): ConnectorJobCompletion {
+  if (!result || result.status !== 'applied_guarded_update') {
+    const observation = buildSafeWorkerFailureObservation(
+      'guarded_update_apply_result_missing',
+      'review_guarded_update_apply_result',
+    )
+
+    return {
+      p_status: 'failed',
+      p_safe_error_code: 'guarded_update_apply_result_missing',
+      p_safe_error_context: {
+        worker_contract: WORKER_CONTRACT_VERSION,
+        apply_contract: GUARDED_UPDATE_APPLY_CONTRACT_VERSION,
+        apply_mode: 'guarded_update',
+        failure_class: observation.failureClass,
+        operator_severity: observation.operatorSeverity,
+        operator_review_required: observation.operatorReviewRequired,
+        retry_after_seconds: observation.retryAfterSeconds,
+        external_call: false,
+        credential_read: false,
+        credential_readback: false,
+        canonical_write: false,
+        canonical_write_enabled: false,
+        source_writeback: false,
+        source_writeback_enabled: false,
+        provider_api_calls: false,
+        raw_payload_readback: false,
+        field_value_readback: false,
+        rollback_execution: false,
+      },
+      p_next_action_key: 'review_guarded_update_apply_result',
+    }
+  }
+
+  return {
+    p_status: 'succeeded',
+    p_safe_error_code: null,
+    p_safe_error_context: {
+      worker_contract: WORKER_CONTRACT_VERSION,
+      apply_contract: GUARDED_UPDATE_APPLY_CONTRACT_VERSION,
+      apply_mode: 'guarded_update',
+      change_set_id: result.change_set_id,
+      import_batch_id: result.import_batch_id,
+      row_count: Number(result.row_count ?? 0),
+      update_count: Number(result.update_count ?? 0),
+      field_diff_count: Number(result.field_diff_count ?? 0),
+      rollback_snapshot_count: Number(result.rollback_snapshot_count ?? 0),
+      object_event_count: Number(result.object_event_count ?? 0),
+      execution_enabled: result.execution_enabled === true,
+      canonical_write: result.canonical_write_enabled === true,
+      canonical_write_enabled: result.canonical_write_enabled === true,
+      source_writeback: false,
+      source_writeback_enabled: false,
+      credential_read: false,
+      credential_readback: false,
+      credential_readback_enabled: false,
+      provider_api_calls: false,
+      external_call: false,
+      raw_payload_readback: false,
+      field_value_readback: false,
+      rollback_execution: false,
+    },
+    p_next_action_key: result.next_action_key ?? 'review_guarded_update_object_events',
+  }
+}
+
+export function buildGuardedUpdateApplyFailureCompletion(
+  job: ClaimedConnectorJob,
+  error: ConnectorWorkerRpcError,
+): ConnectorJobCompletion {
+  const observation = buildSafeWorkerFailureObservation(
+    error.code,
+    'review_guarded_update_apply_failure',
+  )
+
+  return {
+    p_status: 'failed',
+    p_safe_error_code: error.code,
+    p_safe_error_context: {
+      worker_contract: WORKER_CONTRACT_VERSION,
+      apply_contract: GUARDED_UPDATE_APPLY_CONTRACT_VERSION,
+      apply_mode: 'guarded_update',
+      job_type: job.job_type,
+      failure_class: observation.failureClass,
+      operator_severity: observation.operatorSeverity,
+      operator_review_required: observation.operatorReviewRequired,
+      retry_after_seconds: observation.retryAfterSeconds,
+      external_call: false,
+      credential_read: false,
+      credential_readback: false,
+      canonical_write: false,
+      canonical_write_enabled: false,
+      source_writeback: false,
+      source_writeback_enabled: false,
+      provider_api_calls: false,
+      raw_payload_readback: false,
+      field_value_readback: false,
+      rollback_execution: false,
+    },
+    p_next_action_key: 'review_guarded_update_apply_failure',
+  }
+}
+
+function isGuardedUpdateApplyJob(job: ClaimedConnectorJob) {
+  const safeContext = job.safe_error_context ?? {}
+  return (
+    safeContext.apply_mode === 'guarded_update' ||
+    safeContext.contract_version === GUARDED_UPDATE_APPLY_CONTRACT_VERSION ||
+    job.domain === 'import_apply_guarded_update'
+  )
+}
+
 async function resolveConnectorJobCompletion(
   job: ClaimedConnectorJob,
   config: ConnectorWorkerConfig,
@@ -593,6 +725,26 @@ async function resolveConnectorJobCompletion(
 ): Promise<ConnectorJobCompletion> {
   if (job.job_type === 'import_apply') {
     if (!config.importApplyEnabled) return buildConnectorJobCompletion(job)
+
+    if (isGuardedUpdateApplyJob(job)) {
+      try {
+        const rows = await rpc<ConnectorGuardedUpdateApplyResult[]>(
+          'execute_connector_guarded_update_apply_job',
+          {
+            p_job_id: job.id,
+            p_worker_id: config.workerId,
+          },
+        )
+
+        return buildGuardedUpdateApplyCompletionFromResult(rows[0] ?? null)
+      } catch (error) {
+        if (error instanceof ConnectorWorkerRpcError) {
+          return buildGuardedUpdateApplyFailureCompletion(job, error)
+        }
+
+        throw error
+      }
+    }
 
     try {
       const rows = await rpc<ConnectorCreateOnlyApplyResult[]>(
@@ -715,9 +867,7 @@ export function startConnectorWorkerLoop(
       await runWorkerOnce(config, rpc)
     } catch (error) {
       const code =
-        error instanceof ConnectorWorkerRpcError
-          ? error.code
-          : 'connector_worker_loop_failed'
+        error instanceof ConnectorWorkerRpcError ? error.code : 'connector_worker_loop_failed'
       await upsertWorkerHeartbeat(config, rpc, 'error', null, code).catch(() => undefined)
       console.warn(`erp-connector worker loop recorded safe error: ${code}`)
     } finally {

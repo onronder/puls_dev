@@ -1026,6 +1026,9 @@
       "createOnlyApplyJob": {
         "queued": "Create-only apply job was queued for the safe worker."
       },
+      "guardedUpdateApplyJob": {
+        "queued": "Guarded update apply job was queued for the safe worker."
+      },
       "runtimePreflight": {
         "queued": "Runtime preflight job was safely queued. The worker result will appear in activity."
       }
@@ -1046,6 +1049,7 @@
       "applyChangeSetBlocked": "Change-set generation requires a clean previewed dry-run batch.",
       "guardedUpdateEvidenceBlocked": "Guarded update evidence requires a guarded update change-set with no stale, destructive, or source-conflict blockers.",
       "createOnlyApplyBlocked": "Create-only apply requires a clean change-set, admin approval, and an open worker gate.",
+      "guardedUpdateApplyBlocked": "Guarded update apply requires evidence, rollback snapshots, admin approval, and an open worker gate.",
       "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
     "sections": {
@@ -2136,6 +2140,7 @@
     "applyExecutionContract": {
       "executionDisabled": "Execution closed",
       "createOnlyWorkerReady": "Worker create-only ready",
+      "guardedUpdateWorkerReady": "Worker guarded-update ready",
       "status": {
         "not_available": "Execution contract not ready",
         "needs_approval": "Approval and evidence pending",
@@ -2147,6 +2152,7 @@
         "needs_approval": "Future apply execution is not contract-ready until preview evidence, human review, and admin approval are complete.",
         "contract_ready": "Batch, checksum, and admin audit evidence are present. Live apply remains closed until execution job, batch lock, rollback, and notification boundaries open.",
         "create_only_worker_ready": "Batch, change-set, admin approval, and worker gate are ready. This action queues only create-only reference records for the worker.",
+        "guarded_update_worker_ready": "Batch, guarded update evidence, rollback snapshots, admin approval, and worker gate are ready. This action queues only stale-guarded reference name updates for the worker.",
         "blocked": "Execution contract cannot move forward while preview errors, missing checksum, or closed safety boundaries remain."
       },
       "metrics": {
@@ -2158,6 +2164,7 @@
       "values": {
         "futureJob": "Future background job",
         "workerCreateOnlyJob": "Worker create-only job",
+        "workerGuardedUpdateJob": "Worker guarded-update job",
         "closed": "Closed",
         "enabled": "Enabled",
         "disabled": "Disabled",
@@ -2173,6 +2180,7 @@
         "importApplyOpen": "import_apply open",
         "importApplyUnsafe": "import_apply gate inconsistent",
         "createOnlyWorkerOpen": "Create-only worker gate open",
+        "guardedUpdateWorkerOpen": "Guarded-update worker gate open",
         "objectAndFieldAudit": "Object event + field diff",
         "auditPolicyMissing": "Audit policy missing",
         "ninetyDayHotRetention": "90-day hot retention",
@@ -2181,16 +2189,24 @@
         "batchLockReady": "Single job and batch lock open",
         "rollbackClosed": "Rollback plan closed",
         "createOnlyCompensationReady": "Create-only compensating action ready",
+        "rollbackSnapshotReady": "Rollback snapshot ready",
         "notificationClosed": "Notification flow closed",
         "activityAuditReady": "Activity and object event audit open",
         "executionClosed": "Product does not open apply execution",
-        "createOnlyExecutionReady": "Worker queue ready for create-only"
+        "createOnlyExecutionReady": "Worker queue ready for create-only",
+        "guardedUpdateExecutionReady": "Worker queue ready for guarded update"
       },
       "actions": {
         "enqueueCreateOnly": {
           "label": "Queue create-only apply",
           "queuing": "Queueing",
           "blocked": "Apply gates pending",
+          "adminRequired": "Admin permission required"
+        },
+        "enqueueGuardedUpdate": {
+          "label": "Queue guarded update",
+          "queuing": "Queueing",
+          "blocked": "Guarded update gates pending",
           "adminRequired": "Admin permission required"
         }
       },

@@ -6,6 +6,8 @@ import {
   buildConnectorJobCompletion,
   buildCreateOnlyApplyCompletionFromResult,
   buildCreateOnlyApplyFailureCompletion,
+  buildGuardedUpdateApplyCompletionFromResult,
+  buildGuardedUpdateApplyFailureCompletion,
   buildHealthPayload,
   buildRuntimePreflightCompletionFromContext,
   ConnectorWorkerRpcError,
@@ -371,6 +373,91 @@ describe('erp-connector worker job handling', () => {
     })
   })
 
+  it('routes guarded update import_apply jobs through the PR16.4.2 worker RPC', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_JOB_TYPES: 'import_apply',
+      PULS_CONNECTOR_WORKER_ID: 'worker-a',
+    })
+    const calls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
+      calls.push({ fn, args })
+      if (fn === 'claim_next_connector_job') {
+        return [
+          noopJob({
+            id: 'guarded-job-1',
+            job_type: 'import_apply',
+            domain: 'import_apply_guarded_update',
+            safe_error_context: {
+              contract_version: 'pr16.4.2-guarded-update-worker-apply-v1',
+              apply_mode: 'guarded_update',
+            },
+          }),
+        ] as T
+      }
+      if (fn === 'execute_connector_guarded_update_apply_job') {
+        return [
+          {
+            change_set_id: 'change-set-1',
+            import_batch_id: 'batch-1',
+            status: 'applied_guarded_update',
+            row_count: 1,
+            update_count: 1,
+            field_diff_count: 1,
+            rollback_snapshot_count: 1,
+            object_event_count: 1,
+            execution_enabled: true,
+            canonical_write_enabled: true,
+            source_writeback_enabled: false,
+            credential_readback_enabled: false,
+            next_action_key: 'review_guarded_update_object_events',
+          },
+        ] as T
+      }
+      if (fn === 'complete_connector_job') return 'guarded-job-1' as T
+      if (fn === 'upsert_connector_worker_heartbeat') return 'worker-a' as T
+      if (fn === 'heartbeat_connector_job') return 'guarded-job-1' as T
+      return [] as T
+    }
+
+    const result = await runWorkerOnce(config, rpc)
+
+    expect(result).toEqual({ claimed: true, jobId: 'guarded-job-1', status: 'succeeded' })
+    expect(calls.some((call) => call.fn === 'execute_connector_create_only_apply_job')).toBe(false)
+    expect(
+      calls.find((call) => call.fn === 'execute_connector_guarded_update_apply_job')?.args,
+    ).toMatchObject({
+      p_job_id: 'guarded-job-1',
+      p_worker_id: 'worker-a',
+    })
+    expect(calls.find((call) => call.fn === 'complete_connector_job')?.args).toMatchObject({
+      p_job_id: 'guarded-job-1',
+      p_status: 'succeeded',
+      p_safe_error_code: null,
+      p_next_action_key: 'review_guarded_update_object_events',
+      p_safe_error_context: expect.objectContaining({
+        apply_contract: 'pr16.4.2-guarded-update-worker-apply-v1',
+        apply_mode: 'guarded_update',
+        update_count: 1,
+        field_diff_count: 1,
+        rollback_snapshot_count: 1,
+        canonical_write: true,
+        source_writeback: false,
+        credential_readback: false,
+        raw_payload_readback: false,
+        field_value_readback: false,
+      }),
+    })
+
+    const serialized = JSON.stringify(calls)
+    expect(serialized).not.toContain('service-role-secret-value')
+    expect(serialized).not.toContain('"raw_payload":')
+    expect(serialized).not.toContain('provider_response')
+  })
+
   it('fails import_apply safely when the create-only RPC rejects the job', async () => {
     const failure = buildCreateOnlyApplyFailureCompletion(
       noopJob({ job_type: 'import_apply' }),
@@ -393,6 +480,36 @@ describe('erp-connector worker job handling', () => {
     expect(JSON.stringify(failure)).not.toContain('credentials_ref')
   })
 
+  it('fails guarded update import_apply safely when the PR16.4.2 RPC rejects the job', () => {
+    const failure = buildGuardedUpdateApplyFailureCompletion(
+      noopJob({
+        job_type: 'import_apply',
+        safe_error_context: {
+          contract_version: 'pr16.4.2-guarded-update-worker-apply-v1',
+          apply_mode: 'guarded_update',
+        },
+      }),
+      new ConnectorWorkerRpcError(400, 'puls_connector_guarded_update_stale_target'),
+    )
+
+    expect(failure).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'puls_connector_guarded_update_stale_target',
+      p_next_action_key: 'review_guarded_update_apply_failure',
+      p_safe_error_context: expect.objectContaining({
+        apply_contract: 'pr16.4.2-guarded-update-worker-apply-v1',
+        apply_mode: 'guarded_update',
+        canonical_write: false,
+        source_writeback: false,
+        credential_readback: false,
+        provider_api_calls: false,
+        rollback_execution: false,
+      }),
+    })
+    expect(JSON.stringify(failure)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(failure)).not.toContain('credentials_ref')
+  })
+
   it('does not mark create-only apply successful when the RPC result is missing', () => {
     expect(buildCreateOnlyApplyCompletionFromResult(null)).toMatchObject({
       p_status: 'failed',
@@ -400,6 +517,18 @@ describe('erp-connector worker job handling', () => {
       p_next_action_key: 'review_create_only_apply_result',
       p_safe_error_context: expect.objectContaining({
         canonical_write: false,
+      }),
+    })
+  })
+
+  it('does not mark guarded update apply successful when the RPC result is missing', () => {
+    expect(buildGuardedUpdateApplyCompletionFromResult(null)).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'guarded_update_apply_result_missing',
+      p_next_action_key: 'review_guarded_update_apply_result',
+      p_safe_error_context: expect.objectContaining({
+        canonical_write: false,
+        rollback_execution: false,
       }),
     })
   })
