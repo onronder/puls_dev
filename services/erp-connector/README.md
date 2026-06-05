@@ -95,6 +95,8 @@ Production smoke:
 4. Enqueue a `noop_health` job with a unique idempotency key and verify it becomes `succeeded`.
 5. If credentials are verified for a connector, request runtime preflight from `/erp` and verify the worker completes it without provider API calls.
 
+If Railway logs repeat `erp-connector worker loop recorded safe error: PGRST202`, treat it as a PostgREST RPC schema-profile issue first. Worker RPC fetches must send `Accept-Profile: puls_integration` and `Content-Profile: puls_integration`; if the latest worker version is deployed and the error persists, confirm Supabase exposes `puls_integration`, run `notify pgrst, 'reload schema';`, then restart the worker and repeat the heartbeat smoke.
+
 ## Local dev
 
 ```bash

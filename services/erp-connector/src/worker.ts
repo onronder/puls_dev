@@ -147,6 +147,7 @@ const CONNECTOR_JOB_TYPES: ConnectorJobType[] = [
 const DEFAULT_SUPPORTED_JOB_TYPES: ConnectorJobType[] = ['noop_health']
 const DEFAULT_RUNTIME_VERSION = '0.2.0-worker-skeleton'
 const WORKER_CONTRACT_VERSION = 'pr15.2-worker-skeleton-v1'
+const SUPABASE_RPC_SCHEMA = 'puls_integration'
 
 export class ConnectorWorkerRpcError extends Error {
   readonly status: number
@@ -310,7 +311,9 @@ export async function callSupabaseRpc<T>(
     headers: {
       apikey: config.serviceRoleKey,
       Authorization: `Bearer ${config.serviceRoleKey}`,
+      'Accept-Profile': SUPABASE_RPC_SCHEMA,
       'Content-Type': 'application/json',
+      'Content-Profile': SUPABASE_RPC_SCHEMA,
     },
     body: JSON.stringify(args),
   })

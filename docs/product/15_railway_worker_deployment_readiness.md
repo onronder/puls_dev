@@ -112,6 +112,22 @@ Expected result:
 - `locked_by='railway-erp-connector-production-1'`
 - `safe_error_context` contains no credential, payload, request, or response values
 
+## Runtime Troubleshooting
+
+If Railway logs repeat `erp-connector worker loop recorded safe error: PGRST202`, the worker can reach Supabase but PostgREST cannot resolve the requested RPC in its active schema profile. The worker must call RPC endpoints with `Accept-Profile: puls_integration` and `Content-Profile: puls_integration`; otherwise PostgREST may look in `public` and report the function as missing.
+
+If `PGRST202` persists after deploying this worker version:
+
+1. Confirm Railway deployed the latest commit.
+2. Confirm Supabase API exposes the `puls_integration` schema.
+3. Refresh the PostgREST schema cache from Supabase SQL editor:
+
+```sql
+notify pgrst, 'reload schema';
+```
+
+4. Restart the Railway worker and re-run the heartbeat and `noop_health` smoke checks.
+
 ## Operational Boundaries
 
 - One Railway worker replica only until PR16.2 idempotency and batch-lock proof is live.

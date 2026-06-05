@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   buildSafeWorkerFailureObservation,
+  callSupabaseRpc,
   buildConnectorJobCompletion,
   buildHealthPayload,
   buildRuntimePreflightCompletionFromContext,
@@ -10,6 +11,10 @@ import {
   runWorkerOnce,
   type ClaimedConnectorJob,
 } from './worker.ts'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 function noopJob(overrides: Partial<ClaimedConnectorJob> = {}): ClaimedConnectorJob {
   return {
@@ -57,6 +62,45 @@ describe('erp-connector worker config', () => {
     expect(config.supportedJobTypes).toEqual(['noop_health', 'import_apply'])
     expect(serialized).not.toContain('service-role-secret-value')
     expect(serialized).not.toContain('SERVICE_ROLE')
+  })
+
+  it('calls Supabase RPC endpoints through the puls_integration schema profile', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co/',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+    })
+    const fetchMock = vi.fn(
+      async (_url: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => {
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      callSupabaseRpc(config, 'upsert_connector_worker_heartbeat', {
+        p_worker_id: 'worker-a',
+      }),
+    ).resolves.toEqual({ ok: true })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const firstCall = fetchMock.mock.calls[0]
+    if (!firstCall) throw new Error('expected Supabase RPC fetch call')
+    const [url, init] = firstCall
+    if (!init) throw new Error('expected Supabase RPC fetch options')
+    const headers = init.headers as Record<string, string>
+
+    expect(String(url)).toBe('https://example.supabase.co/rest/v1/rpc/upsert_connector_worker_heartbeat')
+    expect(init.method).toBe('POST')
+    expect(headers.apikey).toBe('service-role-secret-value')
+    expect(headers.Authorization).toBe('Bearer service-role-secret-value')
+    expect(headers['Accept-Profile']).toBe('puls_integration')
+    expect(headers['Content-Profile']).toBe('puls_integration')
+    expect(headers['Content-Type']).toBe('application/json')
+    expect(init.body).toBe(JSON.stringify({ p_worker_id: 'worker-a' }))
   })
 
   it('falls back to noop_health when job type config is empty or invalid', () => {
