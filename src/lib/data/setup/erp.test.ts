@@ -12,6 +12,7 @@ import {
   requestConnectorCreateOnlyApplyJob,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
+  requestConnectorGuardedUpdateEvidence,
   requestConnectorRuntimePreflight,
   runConnectorImportPreview,
   runConnectorPreflight,
@@ -982,6 +983,158 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('sanitized_payload')
     expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('normalized_payload')
     expect(JSON.stringify(result.data.applyChangeSet)).not.toContain('credentials_ref')
+  })
+
+  it('exposes guarded update evidence without values or execution flags', async () => {
+    demoEnabled.mockReturnValue(false)
+    setupSeededMocks({
+      import_batches: {
+        data: [
+          {
+            id: 'batch-guarded-update',
+            source_namespace_id: 'namespace-1',
+            status: 'previewed',
+            mode: 'dry_run',
+            source_checksum: 'pr16_4_guarded_update_v1',
+            row_count: 1,
+            create_count: 0,
+            update_count: 1,
+            skip_count: 0,
+            error_count: 0,
+            violation_count: 0,
+            validated_at: '2026-06-05T13:00:00.000Z',
+            previewed_at: '2026-06-05T13:01:00.000Z',
+            created_at: '2026-06-05T12:59:00.000Z',
+            updated_at: '2026-06-05T13:01:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_import_preview_records': { data: [] },
+      'rpc:list_connector_apply_change_set_summaries': {
+        data: [
+          {
+            id: 'change-set-guarded-update',
+            import_batch_id: 'batch-guarded-update',
+            status: 'blocked',
+            source_checksum: 'pr16_4_guarded_update_v1',
+            change_set_checksum: 'safe-guarded-update-change-set-hash',
+            previewed_at: '2026-06-05T13:01:00.000Z',
+            row_count: 1,
+            create_count: 0,
+            update_count: 1,
+            skip_count: 0,
+            blocked_count: 0,
+            stale_count: 0,
+            destructive_count: 0,
+            source_conflict_count: 0,
+            guarded_update_count: 1,
+            no_change_count: 0,
+            approval_required: true,
+            sample_items: [
+              {
+                id: 'change-set-item-guarded-update',
+                row_number: 1,
+                entity_type: 'department',
+                external_id: 'DEPT-1',
+                target_table: 'departments',
+                operation: 'update',
+                risk_class: 'guarded_overwrite',
+                blocked: false,
+                risk_reasons: ['guarded_update_evidence_required'],
+                audit_tiers: ['object_event', 'field_diff', 'rollback_snapshot'],
+                retention_bucket: 'field_diff',
+                expected_current_hash_available: true,
+                safe_field_names: ['code', 'name'],
+                destructive_field_names: [],
+                rollback_snapshot_required: true,
+              },
+            ],
+            created_at: '2026-06-05T13:02:00.000Z',
+          },
+        ],
+      },
+      'rpc:list_connector_guarded_update_evidence': {
+        data: [
+          {
+            change_set_id: 'change-set-guarded-update',
+            tenant_id: 'a0000001-0001-4001-8001-000000000001',
+            connection_id: 'connection-1',
+            source_namespace_id: 'namespace-1',
+            import_batch_id: 'batch-guarded-update',
+            status: 'evidence_ready',
+            guarded_update_count: 1,
+            field_diff_count: 1,
+            rollback_snapshot_count: 1,
+            stale_blocked_count: 0,
+            execution_enabled: false,
+            canonical_write_enabled: false,
+            source_writeback_enabled: false,
+            credential_readback_enabled: false,
+            value_readback_enabled: false,
+            hot_retention_days: 90,
+            next_action_key: 'review_guarded_update_evidence',
+            sample_field_diffs: [
+              {
+                id: 'field-diff-1',
+                row_number: 1,
+                entity_type: 'department',
+                external_id: 'DEPT-1',
+                target_table: 'departments',
+                field_name: 'name',
+                field_class: 'safe',
+                operation: 'set',
+                before_value_hash_available: true,
+                after_value_hash_available: true,
+                before_value_present: true,
+                after_value_present: true,
+                expected_current_hash_available: true,
+                current_hash_available: true,
+                stale_blocked: false,
+                rollback_snapshot_required: true,
+                retention_bucket: 'field_diff',
+                hot_retention_expires_at: '2026-09-03T13:02:00.000Z',
+              },
+            ],
+            created_at: '2026-06-05T13:02:30.000Z',
+          },
+        ],
+      },
+    })
+
+    const result = await fetchErpOverviewWithMeta('user-1')
+
+    expect(result.data.guardedUpdateEvidence).toMatchObject({
+      changeSetId: 'change-set-guarded-update',
+      status: 'evidence_ready',
+      action: 'review_evidence',
+      requestable: false,
+      safeToApply: false,
+      safeToExecute: false,
+      executionEnabled: false,
+      canonicalWriteEnabled: false,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      valueReadbackEnabled: false,
+      summary: {
+        guardedUpdateCount: 1,
+        fieldDiffCount: 1,
+        rollbackSnapshotCount: 1,
+        staleBlockedCount: 0,
+        hotRetentionDays: 90,
+      },
+    })
+    expect(result.data.guardedUpdateEvidence.sampleFieldDiffs[0]).toMatchObject({
+      fieldName: 'name',
+      fieldClass: 'safe',
+      operation: 'set',
+      beforeValueHashAvailable: true,
+      afterValueHashAvailable: true,
+      rollbackSnapshotRequired: true,
+    })
+    expect(JSON.stringify(result.data.guardedUpdateEvidence)).not.toContain('snapshot_payload')
+    expect(JSON.stringify(result.data.guardedUpdateEvidence)).not.toContain('normalized_payload')
+    expect(JSON.stringify(result.data.guardedUpdateEvidence)).not.toContain('credentials_ref')
+    expect(JSON.stringify(result.data.guardedUpdateEvidence)).not.toContain('"raw_payload":')
   })
 
   it('shows review requested only when the audit event is newer than the preview', async () => {
@@ -2519,6 +2672,161 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(capture.inserts)).not.toContain('provider_response')
   })
 
+  it('generates guarded update evidence without queueing execution or exposing values', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        import_batches: {
+          data: [
+            {
+              id: 'batch-guarded-update',
+              source_namespace_id: 'namespace-1',
+              status: 'previewed',
+              mode: 'dry_run',
+              source_checksum: 'pr16_4_guarded_update_v1',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-05T13:00:00.000Z',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              created_at: '2026-06-05T12:59:00.000Z',
+              updated_at: '2026-06-05T13:01:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:list_connector_apply_change_set_summaries': {
+          data: [
+            {
+              id: 'change-set-guarded-update',
+              import_batch_id: 'batch-guarded-update',
+              status: 'blocked',
+              source_checksum: 'pr16_4_guarded_update_v1',
+              change_set_checksum: 'safe-guarded-update-change-set-hash',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              blocked_count: 0,
+              stale_count: 0,
+              destructive_count: 0,
+              source_conflict_count: 0,
+              guarded_update_count: 1,
+              no_change_count: 0,
+              approval_required: true,
+              sample_items: [],
+              created_at: '2026-06-05T13:02:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_guarded_update_evidence': { data: [] },
+        'rpc:generate_connector_guarded_update_evidence': {
+          data: [
+            {
+              change_set_id: 'change-set-guarded-update',
+              tenant_id: 'a0000001-0001-4001-8001-000000000001',
+              connection_id: 'connection-1',
+              source_namespace_id: 'namespace-1',
+              import_batch_id: 'batch-guarded-update',
+              status: 'evidence_ready',
+              guarded_update_count: 1,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              stale_blocked_count: 0,
+              execution_enabled: false,
+              canonical_write_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              hot_retention_days: 90,
+              next_action_key: 'review_guarded_update_evidence',
+              sample_field_diffs: [
+                {
+                  id: 'field-diff-1',
+                  row_number: 1,
+                  entity_type: 'department',
+                  external_id: 'DEPT-1',
+                  target_table: 'departments',
+                  field_name: 'name',
+                  field_class: 'safe',
+                  operation: 'set',
+                  before_value_hash_available: true,
+                  after_value_hash_available: true,
+                  before_value_present: true,
+                  after_value_present: true,
+                  expected_current_hash_available: true,
+                  current_hash_available: true,
+                  stale_blocked: false,
+                  rollback_snapshot_required: true,
+                  retention_bucket: 'field_diff',
+                  hot_retention_expires_at: '2026-09-03T13:02:00.000Z',
+                },
+              ],
+              created_at: '2026-06-05T13:02:30.000Z',
+            },
+          ],
+        },
+      },
+      capture,
+    )
+
+    const result = await requestConnectorGuardedUpdateEvidence('user-1')
+
+    expect(result).toEqual({
+      connectionId: 'connection-1',
+      batchId: 'batch-guarded-update',
+      changeSetId: 'change-set-guarded-update',
+      status: 'evidence_ready',
+      fieldDiffCount: 1,
+      rollbackSnapshotCount: 1,
+      safeToApply: false,
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'generate_connector_guarded_update_evidence',
+      args: { p_change_set_id: 'change-set-guarded-update' },
+    })
+    expect(capture.rpcCalls?.some((call) => call.fn === 'apply_import_batch')).toBe(false)
+    expect(capture.rpcCalls?.some((call) => call.fn.includes('apply_job'))).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_apply_review',
+        event_key: 'import_apply_guarded_update_evidence_generated',
+        status: 'success',
+        safe_error_code: null,
+        safe_error_context: expect.objectContaining({
+          change_set_id: 'change-set-guarded-update',
+          contract_version: 'pr16.4.1-guarded-update-evidence-v1',
+          source_namespace_code: 'CANIAS',
+          field_diff_count: 1,
+          rollback_snapshot_count: 1,
+          guarded_update_count: 1,
+          stale_blocked_count: 0,
+          hot_retention_days: 90,
+          field_value_readback: false,
+          raw_payload_readback: false,
+          safe_to_apply: false,
+          apply_execution_open: false,
+          canonical_write_open: false,
+          source_writeback_open: false,
+          credential_readback_open: false,
+        }),
+        next_action_key: 'review_guarded_update_evidence',
+      }),
+    })
+    expect(JSON.stringify(capture)).not.toContain('apply_import_batch')
+    expect(JSON.stringify(capture)).not.toContain('credentials_ref')
+    expect(JSON.stringify(capture)).not.toContain('snapshot_payload')
+    expect(JSON.stringify(capture)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(capture)).not.toContain('provider_response')
+  })
+
   it('records admin apply approval as audit without calling apply import', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
     demoEnabled.mockReturnValue(false)
@@ -2665,6 +2973,18 @@ describe('fetchErpOverviewWithMeta', () => {
     })
 
     await expect(recordConnectorApplyApproval('user-1')).rejects.toMatchObject({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  })
+
+  it('rejects guarded update evidence when persona is not admin scoped', async () => {
+    resolveTenant.mockResolvedValue({
+      ...mockTenantContext(),
+      personaRole: 'employee',
+    })
+
+    await expect(requestConnectorGuardedUpdateEvidence('user-1')).rejects.toMatchObject({
       code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
       i18nKey: 'erp.errors.adminRequired',
     })

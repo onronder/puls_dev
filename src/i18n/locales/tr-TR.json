@@ -1020,6 +1020,9 @@
       "applyChangeSet": {
         "generated": "Change-set ve risk kanıtı üretildi. Kanonik veri yazılmadı."
       },
+      "guardedUpdateEvidence": {
+        "generated": "Guarded update kanıtı üretildi. Değerler yalnızca hash olarak tutulur ve execution kapalı kalır."
+      },
       "createOnlyApplyJob": {
         "queued": "Create-only apply job güvenli worker kuyruğuna alındı."
       },
@@ -1041,6 +1044,7 @@
       "applyReviewBlocked": "İnsan incelemesi yalnızca temiz bir import önizlemesi hazırlandıktan sonra talep edilebilir.",
       "applyApprovalBlocked": "Admin onayı için önce temiz önizleme ve insan incelemesi kaydı gerekir.",
       "applyChangeSetBlocked": "Change-set üretimi için temiz ve önizlenmiş dry-run batch gerekir.",
+      "guardedUpdateEvidenceBlocked": "Guarded update kanıtı için stale, destructive veya source-conflict bloku olmayan bir guarded update change-set gerekir.",
       "createOnlyApplyBlocked": "Create-only apply için temiz change-set, admin onayı ve açık worker gate gerekir.",
       "runtimePreflightBlocked": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
     },
@@ -1075,6 +1079,8 @@
       "applyReadinessDescription": "Hazırlanan önizlemenin insan kararı için hazır olup olmadığını gösterir. Bu adım yalnızca denetim niyeti kaydeder; kayıt uygulamaz veya kanonik veri yazmaz.",
       "applyChangeSet": "Change-set ve risk kanıtı",
       "applyChangeSetDescription": "Önizlenen batch için immutable karar kanıtı üretir; hangi satırın yaratılacağını, hangisinin blokeli olduğunu ve hangi audit/retention sınırına girdiğini gösterir.",
+      "guardedUpdateEvidence": "Guarded update kanıtı",
+      "guardedUpdateEvidenceDescription": "Guarded update satırları için hash-only field diff ve rollback snapshot kanıtı üretir. Güncelleme çalıştırmaz veya değerleri göstermez.",
       "controlledApply": "Kontrollü uygulama tasarımı",
       "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
@@ -2056,6 +2062,75 @@
         "source_conflict": "Kaynak çatışması",
         "stale_preview": "Stale preview",
         "rollback_required": "Rollback gerekli"
+      }
+    },
+    "guardedUpdateEvidence": {
+      "generating": "Kanıt üretiliyor",
+      "adminRequired": "Admin yetkisi gerekir",
+      "executionClosed": "Update execution kapalı",
+      "generatedAt": "Kanıt zamanı: {{value}}",
+      "empty": "Guarded update field-diff kanıtı henüz üretilmedi.",
+      "boundaryNote": "Bu bölüm yalnızca alan adlarını, hash durumunu, rollback snapshot sayılarını ve retention metadata bilgisini gösterir. Önceki veya sonraki değerleri göstermez, güncelleme çalıştırmaz, provider çağırmaz, credential okumaz veya ERP'ye geri yazmaz.",
+      "status": {
+        "not_available": "Guarded kanıt gerekmiyor",
+        "needs_change_set": "Change-set gerekli",
+        "needs_evidence": "Kanıt üretilebilir",
+        "evidence_ready": "Kanıt hazır",
+        "blocked": "Kanıt blokeli"
+      },
+      "descriptions": {
+        "not_available": "Mevcut change-set içinde guarded update satırı yok.",
+        "needs_change_set": "Guarded update kanıtı hazırlanabilmeden önce change-set risk kanıtı üretilmeli.",
+        "needs_evidence": "Guarded update satırları mevcut ve stale, destructive veya source-conflict bloku yok. Admin hash-only field-diff ve rollback snapshot kanıtı üretebilir.",
+        "evidence_ready": "Hash-only field diff ve rollback snapshot kanıtları inceleme için kaydedildi. Kanonik update execution kapalı kalır.",
+        "blocked": "Stale, destructive veya source-conflict blokları çözülmeden guarded update kanıtı üretilemez."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada guarded update kanıt aksiyonu yok."
+        },
+        "generate_evidence": {
+          "label": "Kanıt üret",
+          "description": "Kanonik veri yazmadan field-diff hashleri ve rollback snapshot kanıtı üret."
+        },
+        "review_evidence": {
+          "label": "Kanıtı incele",
+          "description": "Kanıt incelemeye hazır. Update execution bilinçli olarak kapalı kalır."
+        },
+        "resolve_blockers": {
+          "label": "Engelleri kapat",
+          "description": "Stale, destructive veya source-conflict satırları düzelt ve yeni change-set üret."
+        }
+      },
+      "metrics": {
+        "guardedRows": "Guarded satır",
+        "fieldDiffs": "Field diff",
+        "snapshots": "Snapshot",
+        "retention": "Sıcak retention"
+      },
+      "values": {
+        "updateRows": "Kanıt gerektiren update satırı",
+        "hashOnly": "Hash-only önce / sonra kanıtı",
+        "rollbackReady": "Rollback snapshot kaydedildi",
+        "days": "Gün",
+        "hashPairReady": "Önce ve sonra hashleri mevcut",
+        "hashPairMissing": "Hash çifti eksik"
+      },
+      "columns": {
+        "row": "Satır",
+        "target": "Hedef",
+        "evidence": "Kanıt",
+        "class": "Sınıf"
+      },
+      "operations": {
+        "set": "Set",
+        "clear": "Clear"
+      },
+      "fieldClasses": {
+        "safe": "Güvenli",
+        "sensitive": "Hassas",
+        "destructive_equivalent": "Destructive"
       }
     },
     "applyExecutionContract": {

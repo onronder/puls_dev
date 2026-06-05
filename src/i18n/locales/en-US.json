@@ -1020,6 +1020,9 @@
       "applyChangeSet": {
         "generated": "Change-set and risk evidence were generated. No canonical data was written."
       },
+      "guardedUpdateEvidence": {
+        "generated": "Guarded update evidence was generated. Values are hash-only and execution remains closed."
+      },
       "createOnlyApplyJob": {
         "queued": "Create-only apply job was queued for the safe worker."
       },
@@ -1041,6 +1044,7 @@
       "applyReviewBlocked": "Human review can be requested only after a clean import preview is available.",
       "applyApprovalBlocked": "Admin approval requires a clean preview and a recorded human review first.",
       "applyChangeSetBlocked": "Change-set generation requires a clean previewed dry-run batch.",
+      "guardedUpdateEvidenceBlocked": "Guarded update evidence requires a guarded update change-set with no stale, destructive, or source-conflict blockers.",
       "createOnlyApplyBlocked": "Create-only apply requires a clean change-set, admin approval, and an open worker gate.",
       "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
@@ -1075,6 +1079,8 @@
       "applyReadinessDescription": "Review whether the prepared preview is ready for human decisioning. This records audit intent only; it does not apply records or write canonical data.",
       "applyChangeSet": "Change-set and risk evidence",
       "applyChangeSetDescription": "Generates immutable decision evidence for the previewed batch, showing which rows would create, which rows are blocked, and which audit/retention boundary applies.",
+      "guardedUpdateEvidence": "Guarded update evidence",
+      "guardedUpdateEvidenceDescription": "Generates hash-only field diffs and rollback snapshot evidence for guarded update rows. It does not execute updates or expose values.",
       "controlledApply": "Controlled apply design",
       "controlledApplyDescription": "Shows the approval, lock, rollback, notification, and audit gates that must exist before canonical writes can open."
     },
@@ -2056,6 +2062,75 @@
         "source_conflict": "Source conflict",
         "stale_preview": "Stale preview",
         "rollback_required": "Rollback required"
+      }
+    },
+    "guardedUpdateEvidence": {
+      "generating": "Generating evidence",
+      "adminRequired": "Admin permission required",
+      "executionClosed": "Update execution closed",
+      "generatedAt": "Evidence generated at: {{value}}",
+      "empty": "No guarded update field-diff evidence has been generated yet.",
+      "boundaryNote": "This section exposes only field names, hash availability, rollback snapshot counts, and retention metadata. It does not show before or after values, execute updates, call providers, read credentials, or write back to ERP.",
+      "status": {
+        "not_available": "Guarded evidence not needed",
+        "needs_change_set": "Change-set required",
+        "needs_evidence": "Evidence can be generated",
+        "evidence_ready": "Evidence ready",
+        "blocked": "Evidence blocked"
+      },
+      "descriptions": {
+        "not_available": "There are no guarded update rows in the current change-set.",
+        "needs_change_set": "Generate change-set risk evidence before guarded update evidence can be prepared.",
+        "needs_evidence": "Guarded update rows exist and have no stale, destructive, or source-conflict blockers. An admin can generate hash-only field-diff and rollback snapshot evidence.",
+        "evidence_ready": "Hash-only field diffs and rollback snapshots are recorded for review. Canonical update execution remains closed.",
+        "blocked": "Guarded update evidence cannot be generated until stale, destructive, or source-conflict blockers are resolved."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no guarded update evidence action at this stage."
+        },
+        "generate_evidence": {
+          "label": "Generate evidence",
+          "description": "Generate field-diff hashes and rollback snapshot evidence without writing canonical data."
+        },
+        "review_evidence": {
+          "label": "Review evidence",
+          "description": "Evidence is ready for review. Update execution remains intentionally closed."
+        },
+        "resolve_blockers": {
+          "label": "Resolve blockers",
+          "description": "Fix stale, destructive, or source-conflict rows and generate a fresh change-set."
+        }
+      },
+      "metrics": {
+        "guardedRows": "Guarded rows",
+        "fieldDiffs": "Field diffs",
+        "snapshots": "Snapshots",
+        "retention": "Hot retention"
+      },
+      "values": {
+        "updateRows": "Update rows requiring evidence",
+        "hashOnly": "Hash-only before / after evidence",
+        "rollbackReady": "Rollback snapshots recorded",
+        "days": "Days",
+        "hashPairReady": "Before and after hashes present",
+        "hashPairMissing": "Hash pair incomplete"
+      },
+      "columns": {
+        "row": "Row",
+        "target": "Target",
+        "evidence": "Evidence",
+        "class": "Class"
+      },
+      "operations": {
+        "set": "Set",
+        "clear": "Clear"
+      },
+      "fieldClasses": {
+        "safe": "Safe",
+        "sensitive": "Sensitive",
+        "destructive_equivalent": "Destructive"
       }
     },
     "applyExecutionContract": {

@@ -470,6 +470,8 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Ürün değeri:** PULS kontrollü update yapabilir; ancak yanlış dosyanın var olan doğru veriyi sessizce ezmesine izin vermez.
 
+**Implementation status:** PR16.4.1 adds guarded update evidence only: immutable hash-only field diffs, service-role rollback snapshots, admin/service-role evidence generation, authenticated-safe evidence listing, and `/erp` review visibility. Canonical update execution, worker update jobs, employee updates, destructive-equivalent fields, ERP/source writeback, provider API calls, credential readback, raw payload readback, rollback execution, and AI autonomous apply remain closed.
+
 **Kapsam:**
 
 - Allowlisted field updates

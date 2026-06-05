@@ -410,6 +410,69 @@ export type ConnectorApplyChangeSet = {
   sampleItems: ConnectorApplyChangeSetItemSummary[]
 }
 
+export type ConnectorGuardedUpdateEvidenceStatus =
+  | 'not_available'
+  | 'needs_change_set'
+  | 'needs_evidence'
+  | 'evidence_ready'
+  | 'blocked'
+
+export type ConnectorGuardedUpdateEvidenceAction =
+  | 'none'
+  | 'generate_evidence'
+  | 'review_evidence'
+  | 'resolve_blockers'
+
+export type ConnectorGuardedUpdateFieldDiffSummary = {
+  id: string
+  rowNumber: number
+  entityType: string
+  externalId: string
+  targetTable: string
+  fieldName: string
+  fieldClass: 'safe' | 'sensitive' | 'destructive_equivalent'
+  operation: 'set' | 'clear'
+  beforeValueHashAvailable: boolean
+  afterValueHashAvailable: boolean
+  beforeValuePresent: boolean
+  afterValuePresent: boolean
+  expectedCurrentHashAvailable: boolean
+  currentHashAvailable: boolean
+  staleBlocked: boolean
+  rollbackSnapshotRequired: boolean
+  retentionBucket: 'field_diff'
+  hotRetentionExpiresAt: string | null
+}
+
+export type ConnectorGuardedUpdateEvidence = {
+  changeSetId: string | null
+  status: ConnectorGuardedUpdateEvidenceStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  action: ConnectorGuardedUpdateEvidenceAction
+  actionLabelKey: string
+  actionDescriptionKey: string
+  requestable: boolean
+  safeToApply: false
+  safeToExecute: false
+  executionEnabled: false
+  canonicalWriteEnabled: false
+  sourceWritebackEnabled: false
+  credentialReadbackEnabled: false
+  valueReadbackEnabled: false
+  batchId: string | null
+  generatedAt: string | null
+  summary: {
+    guardedUpdateCount: number
+    fieldDiffCount: number
+    rollbackSnapshotCount: number
+    staleBlockedCount: number
+    hotRetentionDays: number
+  }
+  sampleFieldDiffs: ConnectorGuardedUpdateFieldDiffSummary[]
+}
+
 export type ConnectorApplyReadinessStatus =
   | 'not_available'
   | 'needs_preview'
@@ -883,6 +946,7 @@ export type ErpOverview = {
   applyReadiness: ConnectorApplyReadiness
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
   applyChangeSet: ConnectorApplyChangeSet
+  guardedUpdateEvidence: ConnectorGuardedUpdateEvidence
   applySafetyContract: ConnectorApplySafetyContract
   controlledApplyPlan: ConnectorControlledApplyPlan
   applyExecutionContract: ConnectorApplyExecutionContract
@@ -1069,6 +1133,28 @@ type ConnectorApplyChangeSetRow = {
   created_at?: string | null
 }
 
+type ConnectorGuardedUpdateEvidenceRow = {
+  change_set_id?: string | null
+  tenant_id?: string | null
+  connection_id?: string | null
+  source_namespace_id?: string | null
+  import_batch_id?: string | null
+  status?: 'needs_evidence' | 'evidence_ready' | null
+  guarded_update_count?: number | null
+  field_diff_count?: number | null
+  rollback_snapshot_count?: number | null
+  stale_blocked_count?: number | null
+  execution_enabled?: boolean | null
+  canonical_write_enabled?: boolean | null
+  source_writeback_enabled?: boolean | null
+  credential_readback_enabled?: boolean | null
+  value_readback_enabled?: boolean | null
+  hot_retention_days?: number | null
+  next_action_key?: string | null
+  sample_field_diffs?: unknown
+  created_at?: string | null
+}
+
 type ConnectorCreateOnlyApplyJobRow = {
   job_id?: string | null
   status?: ConnectorRuntimeJobStatus | null
@@ -1218,6 +1304,16 @@ export type RequestConnectorApplyChangeSetResult = {
   changeSetId: string | null
   status: ConnectorApplyChangeSetStatus
   blockedCount: number
+  safeToApply: false
+}
+
+export type RequestConnectorGuardedUpdateEvidenceResult = {
+  connectionId: string
+  batchId: string
+  changeSetId: string
+  status: ConnectorGuardedUpdateEvidenceStatus
+  fieldDiffCount: number
+  rollbackSnapshotCount: number
   safeToApply: false
 }
 
@@ -1733,10 +1829,10 @@ function fromConnectorRpcError(
           ? 'erp.errors.applyChangeSetBlocked'
           : code.startsWith('PULS_CONNECTOR_CREATE_ONLY_')
             ? 'erp.errors.createOnlyApplyBlocked'
-          : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
-              code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
-            ? 'erp.errors.runtimePreflightBlocked'
-            : 'erp.errors.setupSaveFailed',
+            : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
+                code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
+              ? 'erp.errors.runtimePreflightBlocked'
+              : 'erp.errors.setupSaveFailed',
   })
 }
 
@@ -2375,6 +2471,48 @@ function normalizeApplyChangeSetItems(value: unknown): ConnectorApplyChangeSetIt
     }))
 }
 
+function normalizeGuardedUpdateFieldClass(
+  value: unknown,
+): ConnectorGuardedUpdateFieldDiffSummary['fieldClass'] {
+  return value === 'sensitive' || value === 'destructive_equivalent' ? value : 'safe'
+}
+
+function normalizeGuardedUpdateFieldOperation(
+  value: unknown,
+): ConnectorGuardedUpdateFieldDiffSummary['operation'] {
+  return value === 'clear' ? 'clear' : 'set'
+}
+
+function normalizeGuardedUpdateFieldDiffs(
+  value: unknown,
+): ConnectorGuardedUpdateFieldDiffSummary[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+    .map((item, index) => ({
+      id: typeof item.id === 'string' ? item.id : `guarded-update-field-${index}`,
+      rowNumber: Number(item.row_number ?? index + 1),
+      entityType: typeof item.entity_type === 'string' ? item.entity_type : 'unknown',
+      externalId: typeof item.external_id === 'string' ? item.external_id : '—',
+      targetTable: typeof item.target_table === 'string' ? item.target_table : 'unknown',
+      fieldName: typeof item.field_name === 'string' ? item.field_name : 'unknown',
+      fieldClass: normalizeGuardedUpdateFieldClass(item.field_class),
+      operation: normalizeGuardedUpdateFieldOperation(item.operation),
+      beforeValueHashAvailable: item.before_value_hash_available === true,
+      afterValueHashAvailable: item.after_value_hash_available === true,
+      beforeValuePresent: item.before_value_present === true,
+      afterValuePresent: item.after_value_present === true,
+      expectedCurrentHashAvailable: item.expected_current_hash_available === true,
+      currentHashAvailable: item.current_hash_available === true,
+      staleBlocked: item.stale_blocked === true,
+      rollbackSnapshotRequired: item.rollback_snapshot_required === true,
+      retentionBucket: 'field_diff',
+      hotRetentionExpiresAt:
+        typeof item.hot_retention_expires_at === 'string' ? item.hot_retention_expires_at : null,
+    }))
+}
+
 function emptyConnectorApplyChangeSet(
   connectorState: ConnectorLifecycleState,
   importPreview: ConnectorImportPreview,
@@ -2488,6 +2626,89 @@ function buildConnectorApplyChangeSet({
       noChangeCount: Number(row.no_change_count ?? 0),
     },
     sampleItems: normalizeApplyChangeSetItems(row.sample_items),
+  }
+}
+
+function buildConnectorGuardedUpdateEvidence({
+  connectorState,
+  applyChangeSet,
+  row,
+}: {
+  connectorState: ConnectorLifecycleState
+  applyChangeSet: ConnectorApplyChangeSet
+  row: ConnectorGuardedUpdateEvidenceRow | null
+}): ConnectorGuardedUpdateEvidence {
+  const hasChangeSet = Boolean(applyChangeSet.id)
+  const hasGuardedUpdates = applyChangeSet.summary.guardedUpdateCount > 0
+  const hasEvidence = Boolean(row?.change_set_id)
+  const hasBlockers =
+    applyChangeSet.summary.staleCount > 0 ||
+    applyChangeSet.summary.destructiveCount > 0 ||
+    applyChangeSet.summary.sourceConflictCount > 0
+
+  const status: ConnectorGuardedUpdateEvidenceStatus =
+    connectorState !== 'connector_selected'
+      ? 'not_available'
+      : !hasChangeSet
+        ? 'needs_change_set'
+        : !hasGuardedUpdates
+          ? 'not_available'
+          : hasBlockers
+            ? 'blocked'
+            : row?.status === 'evidence_ready'
+              ? 'evidence_ready'
+              : 'needs_evidence'
+  const action: ConnectorGuardedUpdateEvidenceAction =
+    status === 'needs_evidence'
+      ? 'generate_evidence'
+      : status === 'evidence_ready'
+        ? 'review_evidence'
+        : status === 'blocked'
+          ? 'resolve_blockers'
+          : 'none'
+  const readiness: ConnectorReadinessStatus =
+    status === 'evidence_ready'
+      ? 'ready'
+      : status === 'needs_evidence'
+        ? 'partial'
+        : status === 'blocked'
+          ? 'blocked'
+          : 'partial'
+  const guardedUpdateCount = Number(
+    row?.guarded_update_count ?? applyChangeSet.summary.guardedUpdateCount,
+  )
+  const fieldDiffCount = Number(row?.field_diff_count ?? 0)
+  const rollbackSnapshotCount = Number(row?.rollback_snapshot_count ?? 0)
+  const requestable =
+    status === 'needs_evidence' && hasChangeSet && hasGuardedUpdates && !hasBlockers
+
+  return {
+    changeSetId: row?.change_set_id ?? applyChangeSet.id,
+    status,
+    readiness,
+    statusLabelKey: `erp.guardedUpdateEvidence.status.${status}`,
+    descriptionKey: `erp.guardedUpdateEvidence.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.guardedUpdateEvidence.actions.${action}.label`,
+    actionDescriptionKey: `erp.guardedUpdateEvidence.actions.${action}.description`,
+    requestable,
+    safeToApply: false,
+    safeToExecute: false,
+    executionEnabled: false,
+    canonicalWriteEnabled: false,
+    sourceWritebackEnabled: false,
+    credentialReadbackEnabled: false,
+    valueReadbackEnabled: false,
+    batchId: row?.import_batch_id ?? applyChangeSet.batchId,
+    generatedAt: hasEvidence ? (row?.created_at ?? null) : null,
+    summary: {
+      guardedUpdateCount,
+      fieldDiffCount,
+      rollbackSnapshotCount,
+      staleBlockedCount: Number(row?.stale_blocked_count ?? 0),
+      hotRetentionDays: Number(row?.hot_retention_days ?? 90),
+    },
+    sampleFieldDiffs: normalizeGuardedUpdateFieldDiffs(row?.sample_field_diffs),
   }
 }
 
@@ -2935,8 +3156,11 @@ function buildConnectorApplyExecutionContract({
         : !previewReady || !approvalRecorded
           ? 'needs_approval'
           : 'contract_ready'
-  const readiness: ConnectorReadinessStatus =
-    safeToExecute ? 'ready' : status === 'blocked' ? 'blocked' : 'partial'
+  const readiness: ConnectorReadinessStatus = safeToExecute
+    ? 'ready'
+    : status === 'blocked'
+      ? 'blocked'
+      : 'partial'
 
   const control = (
     id: ConnectorApplyExecutionControlId,
@@ -2990,7 +3214,7 @@ function buildConnectorApplyExecutionContract({
       workerCreateOnlyOpen
         ? 'erp.applyExecutionContract.values.createOnlyWorkerOpen'
         : applySafetyContract.workerImportApplyEnqueueEnabled ||
-              applySafetyContract.workerImportApplyClaimEnabled
+            applySafetyContract.workerImportApplyClaimEnabled
           ? 'erp.applyExecutionContract.values.importApplyUnsafe'
           : 'erp.applyExecutionContract.values.importApplyClosed',
     ),
@@ -3230,7 +3454,8 @@ function mapActivitySummaryKey(row: ErpSyncBatchRow): string {
 
   if (row.sync_type === 'import_apply_execution') {
     if (row.status === 'failed') return 'erp.activityTimeline.summaries.importApplyExecution.failed'
-    if (row.status === 'success') return 'erp.activityTimeline.summaries.importApplyExecution.success'
+    if (row.status === 'success')
+      return 'erp.activityTimeline.summaries.importApplyExecution.success'
     return 'erp.activityTimeline.summaries.importApplyExecution.pending'
   }
 
@@ -4394,6 +4619,7 @@ function buildOverview({
   applyReadiness,
   applyApprovalPolicy,
   applyChangeSet,
+  guardedUpdateEvidence,
   applySafetyContract,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
@@ -4428,6 +4654,7 @@ function buildOverview({
   applyReadiness?: ConnectorApplyReadiness
   applyApprovalPolicy?: ConnectorApplyApprovalPolicy
   applyChangeSet?: ConnectorApplyChangeSet
+  guardedUpdateEvidence?: ConnectorGuardedUpdateEvidence
   applySafetyContract?: ConnectorApplySafetyContract
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
@@ -4510,6 +4737,13 @@ function buildOverview({
   const resolvedApplySafetyContract = applySafetyContract ?? buildConnectorApplySafetyContract(null)
   const resolvedApplyChangeSet =
     applyChangeSet ?? emptyConnectorApplyChangeSet(connectorState, resolvedImportPreview)
+  const resolvedGuardedUpdateEvidence =
+    guardedUpdateEvidence ??
+    buildConnectorGuardedUpdateEvidence({
+      connectorState,
+      applyChangeSet: resolvedApplyChangeSet,
+      row: null,
+    })
   const controlledApplyPlan = buildConnectorControlledApplyPlan({
     connectorState,
     importPreview: resolvedImportPreview,
@@ -4585,6 +4819,7 @@ function buildOverview({
     applyReadiness: resolvedApplyReadiness,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
     applyChangeSet: resolvedApplyChangeSet,
+    guardedUpdateEvidence: resolvedGuardedUpdateEvidence,
     applySafetyContract: resolvedApplySafetyContract,
     controlledApplyPlan,
     applyExecutionContract,
@@ -4977,6 +5212,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   let importPreviewRecords: ImportPreviewRecordRow[] = []
   let applySafetyContractRow: ConnectorApplySafetyContractRow | null = null
   let applyChangeSetRow: ConnectorApplyChangeSetRow | null = null
+  let guardedUpdateEvidenceRow: ConnectorGuardedUpdateEvidenceRow | null = null
 
   if (connectorNamespaceIds.length > 0) {
     const importBatchRow = await pulsIntegration()
@@ -5050,6 +5286,22 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
         applyChangeSetRow =
           ((applyChangeSetResult.data ?? []) as ConnectorApplyChangeSetRow[])[0] ?? null
       }
+
+      if (applyChangeSetRow?.id) {
+        const guardedUpdateEvidenceResult = await pulsIntegration().rpc(
+          'list_connector_guarded_update_evidence',
+          {
+            p_change_set_id: applyChangeSetRow.id,
+            p_limit: 8,
+          },
+        )
+
+        if (!guardedUpdateEvidenceResult.error) {
+          guardedUpdateEvidenceRow =
+            ((guardedUpdateEvidenceResult.data ?? []) as ConnectorGuardedUpdateEvidenceRow[])[0] ??
+            null
+        }
+      }
     }
   }
 
@@ -5088,6 +5340,11 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     connectorState: connection ? 'connector_selected' : 'no_connector',
     importPreview,
     row: applyChangeSetRow,
+  })
+  const guardedUpdateEvidence = buildConnectorGuardedUpdateEvidence({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    applyChangeSet,
+    row: guardedUpdateEvidenceRow,
   })
 
   return buildOverview({
@@ -5146,6 +5403,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     applyReadiness,
     applyApprovalPolicy,
     applyChangeSet,
+    guardedUpdateEvidence,
     applySafetyContract,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
@@ -6043,6 +6301,146 @@ export async function requestConnectorApplyChangeSet(
     changeSetId: changeSet.id,
     status: changeSet.status,
     blockedCount: changeSet.summary.blockedCount,
+    safeToApply: false,
+  }
+}
+
+export async function requestConnectorGuardedUpdateEvidence(
+  userId: string,
+): Promise<RequestConnectorGuardedUpdateEvidenceResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector guarded update evidence requires tenant context',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateEvidence',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector guarded update evidence requires admin permission',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateEvidence',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.importPreview.batch
+  const changeSetId = overview.applyChangeSet.id
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector guarded update evidence requires a selected source',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateEvidence',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector guarded update evidence requires a preview batch',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateEvidence',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (!changeSetId || !overview.guardedUpdateEvidence.requestable) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_GUARDED_UPDATE_EVIDENCE_BLOCKED',
+      message:
+        'Connector guarded update evidence is blocked until a guarded update change-set is ready',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateEvidence',
+      i18nKey: 'erp.errors.guardedUpdateEvidenceBlocked',
+    })
+  }
+
+  const generated = await pulsIntegration().rpc('generate_connector_guarded_update_evidence', {
+    p_change_set_id: changeSetId,
+  })
+
+  if (generated.error) {
+    throw fromConnectorRpcError(generated.error, 'requestConnectorGuardedUpdateEvidence')
+  }
+
+  const row = ((generated.data ?? []) as ConnectorGuardedUpdateEvidenceRow[])[0] ?? null
+  const evidence = buildConnectorGuardedUpdateEvidence({
+    connectorState: 'connector_selected',
+    applyChangeSet: overview.applyChangeSet,
+    row,
+  })
+  if (evidence.status !== 'evidence_ready') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_GUARDED_UPDATE_EVIDENCE_BLOCKED',
+      message: 'Connector guarded update evidence RPC did not return ready evidence',
+      source: 'adapter',
+      operation: 'requestConnectorGuardedUpdateEvidence',
+      i18nKey: 'erp.errors.guardedUpdateEvidenceBlocked',
+    })
+  }
+
+  const now = new Date().toISOString()
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_apply_review',
+      event_key: 'import_apply_guarded_update_evidence_generated',
+      actor_employee_id: ctx.employeeId,
+      status: 'success',
+      started_at: now,
+      finished_at: now,
+      records_seen: overview.applyChangeSet.summary.rowCount,
+      records_inserted: 0,
+      records_updated: evidence.summary.guardedUpdateCount,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        change_set_id: changeSetId,
+        contract_version: 'pr16.4.1-guarded-update-evidence-v1',
+        source_namespace_code: batch.sourceNamespaceCode,
+        field_diff_count: evidence.summary.fieldDiffCount,
+        rollback_snapshot_count: evidence.summary.rollbackSnapshotCount,
+        guarded_update_count: evidence.summary.guardedUpdateCount,
+        stale_blocked_count: evidence.summary.staleBlockedCount,
+        hot_retention_days: evidence.summary.hotRetentionDays,
+        field_value_readback: false,
+        raw_payload_readback: false,
+        safe_to_apply: false,
+        apply_execution_open: false,
+        canonical_write_open: false,
+        source_writeback_open: false,
+        credential_readback_open: false,
+      },
+      next_action_key: 'review_guarded_update_evidence',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'requestConnectorGuardedUpdateEvidence',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch.id,
+    changeSetId,
+    status: evidence.status,
+    fieldDiffCount: evidence.summary.fieldDiffCount,
+    rollbackSnapshotCount: evidence.summary.rollbackSnapshotCount,
     safeToApply: false,
   }
 }

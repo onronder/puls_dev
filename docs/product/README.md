@@ -562,6 +562,16 @@ PR16.3 opens the first controlled canonical write path, but only through the ser
 | [`scripts/verify-16-3-create-only-context-hardening.sh`](../../scripts/verify-16-3-create-only-context-hardening.sh)                                                           | PR16.3A verify gate                                                                                          |
 | [`scripts/verify-16-3-create-only-worker-apply.sh`](../../scripts/verify-16-3-create-only-worker-apply.sh)                                                                     | PR16.3 verify gate                                                                                           |
 
+## PR16.4.1 guarded update evidence
+
+PR16.4.1 prepares overwrite-safe update evidence without opening update execution. It adds hash-only field diffs, service-role-only rollback snapshots, admin/service-role evidence generation, authenticated-safe listing, and `/erp` visibility. Canonical update execution, worker update jobs, employee updates, destructive fields, ERP/source writeback, credential readback, raw payload readback, provider API calls, rollback execution, and AI autonomous apply remain closed.
+
+| Document / artifact                                                                                                                                                        | Purpose                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [16_4_1_guarded_update_evidence.md](./16_4_1_guarded_update_evidence.md)                                                                                                   | PR16.4.1 guarded update evidence scope, safety contract, and PR16.4.2 handoff                     |
+| [`supabase/migrations/20260605130000_puls_integration_guarded_update_evidence.sql`](../../supabase/migrations/20260605130000_puls_integration_guarded_update_evidence.sql) | Field diff and rollback snapshot ledgers plus generate/list RPCs; no guarded update execution RPC |
+| [`scripts/verify-16-4-1-guarded-update-evidence.sh`](../../scripts/verify-16-4-1-guarded-update-evidence.sh)                                                               | PR16.4.1 verify gate                                                                              |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
