@@ -305,6 +305,10 @@ PR16'nın ana kuralı şudur:
 
 > PULS blind overwrite yapmaz. Her canonical write önce preview, change-set, risk sınıfı, before snapshot, admin approval, batch lock ve worker execution sınırından geçer. Delete/tombstone, ERP writeback ve AI autonomous apply kapalı kalır.
 
+CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
+
+> PULS canonical insert, update, soft-delete, restore, rollback veya compensating update yaptığında bunu iş nesnesi seviyesinde loglar. Update gibi overwrite riski taşıyan işlemler ayrıca field-level diff ve rollback snapshot politikasına bağlıdır. Raw kişisel veri UI/AI context'e taşınmaz; hot retention ve purge/archive sınırı PR16 içinde tanımlanır.
+
 ### PR16.1 - Apply Safety Contract Ve Permission Hardening
 
 **Ürün değeri:** PULS veri yazmaya başlamadan önce yanlış Excel, eski dosya, hatalı mapping veya accidental overwrite senaryolarını ürün politikasıyla sınırlar.
@@ -313,6 +317,19 @@ PR16'nın ana kuralı şudur:
 
 - Existing `apply_import_batch` direct kullanım yüzeyinin yeniden değerlendirilmesi
 - Browser/authenticated direct apply path'in worker-only/service-role boundary'ye çekilmesi
+- CRUD audit tier modeli:
+  - object event ledger
+  - field diff ledger
+  - rollback snapshot
+  - optional cold archive summary
+- Hot retention policy:
+  - object event ledger için daha uzun, tenant-policy uyumlu saklama
+  - field diff ledger ve rollback snapshot için 90 gün default sıcak saklama
+  - purge/archive ownership
+- KVKK odaklı minimization:
+  - UI/AI safe summary
+  - sensitive before/after values için service-role-only/encrypted boundary
+  - raw payload ve provider response readback yok
 - Apply policy state modeli:
   - `create_only`
   - `guarded_update`
@@ -345,6 +362,8 @@ PR16'nın ana kuralı şudur:
 - `import_apply` worker claim'i PR16.1 boyunca kapalı kalır veya only dry-run safety job olarak kalır.
 - App code eski `apply_import_batch` RPC'yi çağırmaz.
 - Policy secret, raw payload veya credential reference içermez.
+- Insert, update, soft-delete, restore, rollback ve compensating update için audit policy tanımlanmadan execution açılmaz.
+- Field diff ve rollback snapshot retention/purge kararı olmadan high-volume update path açılmaz.
 
 ### PR16.2 - Change Set, Before Snapshot Ve Risk Ledger
 
@@ -356,6 +375,15 @@ PR16'nın ana kuralı şudur:
 - Field-level before/after diff
 - Before row hash ve expected current hash
 - Service-role-only rollback snapshot metadata
+- Object audit intent:
+  - target schema/table/entity
+  - canonical object id veya identity candidate
+  - operation type: insert/update/soft_delete/restore/rollback/compensating_update
+  - actor/job/batch/source evidence
+- Audit retention bucket:
+  - object event
+  - field diff
+  - rollback snapshot
 - Safe UI summary: create/update/skip/block/risk counters
 - Update risk sınıfları:
   - safe additive
@@ -381,6 +409,7 @@ PR16'nın ana kuralı şudur:
 
 - Change-set olmadan apply job oluşturulamaz.
 - Before snapshot raw secret/payload içermez.
+- Change-set her item için audit granularity ve retention bucket taşır.
 - Preview sonrası canonical kayıt değiştiyse apply blocked olur.
 - UI yalnızca safe diff özetlerini görür.
 
@@ -405,6 +434,8 @@ PR16'nın ana kuralı şudur:
 - Row-level apply result
 - Identity map create/update for newly created records
 - Safe activity and connector job event
+- Every create emits an object event ledger row with safe business summary.
+- Create audit does not store raw source payload or provider response.
 
 **Kapsam dışı:**
 
@@ -427,6 +458,7 @@ PR16'nın ana kuralı şudur:
 - Existing record update denenirse apply blocked olur.
 - Worker dışında canonical write path kapalı kalır.
 - Cross-tenant apply engellenir.
+- Created objects have row-level apply result plus object-level audit event.
 
 ### PR16.4 - Guarded Update Apply
 
@@ -448,6 +480,10 @@ PR16'nın ana kuralı şudur:
 - Employee master guarded update can start with low-risk fields only
 - Assignment/status/manager updates require separate approval class
 - Canonical write audit trail
+- Object event ledger for every update attempt/result
+- Field diff ledger for changed fields only
+- Sensitive before/after values redacted for UI/AI and retained only through service-role-safe snapshot when rollback requires exact value
+- 90-day default hot retention for field diffs and rollback snapshots
 
 **Kapsam dışı:**
 
@@ -466,6 +502,7 @@ PR16'nın ana kuralı şudur:
 - Manual lower-priority source higher-priority owned field'i ezemez.
 - Empty/missing fields accidental clear yapmaz.
 - High-risk alanlar ayrı approval olmadan update olmaz.
+- Update audit shows field, old safe value, new safe value, source, approval, job, and risk class without leaking raw payload.
 
 ### PR16.5 - Rollback / Compensating Preview And Execution
 
@@ -482,6 +519,9 @@ PR16'nın ana kuralı şudur:
 - Written rows summary
 - Manual rollback runbook
 - Risk sınıfları
+- Rollback and compensating execution emit their own object audit events.
+- Rollback snapshot usage is service-role-only and retention-limited.
+- Purged snapshot durumunda rollback yerine compensating review/runbook önerilir.
 
 **Kapsam dışı:**
 
@@ -500,6 +540,7 @@ PR16'nın ana kuralı şudur:
 - Recovery metadata secret/raw payload içermez.
 - Rollback de preview + approval + worker execution ister.
 - Current state drift varsa rollback blocked olur.
+- Rollback audit trail links original apply event, rollback preview, approval, worker job, and final result.
 
 ### PR16.6 - Notification Center Foundation
 
@@ -605,7 +646,9 @@ PR15-PR16 tamamlandığında PULS şunları diyebilmelidir:
 - Runtime preflight güvenli credential reference ile çalışabilir.
 - CSV / Excel üzerinden ilk controlled canonical data movement create-only ve worker-only şekilde kanıtlanmıştır.
 - Blind overwrite kapalıdır; update ancak change-set, before snapshot, source ownership, stale hash guard ve admin approval ile açılır.
-- Apply işlemleri admin approval, batch lock, idempotency, change-set, before snapshot, audit ve recovery metadata ile korunur.
+- Apply işlemleri admin approval, batch lock, idempotency, change-set, before snapshot, CRUD audit, retention policy ve recovery metadata ile korunur.
+- Insert/update/soft-delete/restore/rollback/compensating update operasyonlarının object-level audit policy'si vardır.
+- Update operasyonları field-level diff ve rollback snapshot retention sınırıyla korunur.
 - Rollback veya compensating action preview + approval + worker execution olmadan çalışmaz.
 - Connector job ve import sonuçları Notification Center ve activity timeline'a bağlanır.
 - AI Coach connector/runtime/canonical data sinyallerinden güvenli öneriler üretebilir.
@@ -621,7 +664,8 @@ Bu fazlarda aşağıdaki durumlardan biri görülürse sonraki adıma geçilmeme
 - Batch lock/idempotency testleri geçmiyorsa
 - Change-set ve before snapshot üretilmeden canonical write açılıyorsa
 - Blind overwrite veya missing-field clear riski varsa
-- Apply audit ve recovery metadata yoksa
+- CRUD audit, field diff retention veya recovery metadata yoksa
+- Purge/archive owner tanımlanmadan high-volume update path açılıyorsa
 - Rollback preview/approval/current-hash guard yoksa
 - AI context raw payload veya secret taşıyorsa
 - Canias-specific kararlar generic connector contract'in yerini alıyorsa

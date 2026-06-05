@@ -32,6 +32,12 @@ for needle in \
   "Notification Center Foundation" \
   "Canias Runtime Spike" \
   "AI Operational Recommendations" \
+  "CRUD audit" \
+  "object event ledger" \
+  "field diff ledger" \
+  "rollback snapshot" \
+  "90 gün default" \
+  "purge/archive ownership" \
   "Missing field does not clear existing value" \
   "Stale before hash update'i durdurur." \
   "Rollback de preview + approval + worker execution ister."; do
@@ -47,6 +53,13 @@ for needle in \
   "No authenticated direct \`apply_import_batch\` execution from app code." \
   "No blind overwrite." \
   "No missing-field clear." \
+  "No canonical insert, update, soft-delete, restore, rollback, or compensating update without an audit decision." \
+  "CRUD Audit And Retention Model" \
+  "full physical row-trigger audit" \
+  "Object event ledger" \
+  "Field diff ledger" \
+  "Rollback snapshot" \
+  "90 days default" \
   "create_only" \
   "guarded_overwrite" \
   "destructive_equivalent" \
@@ -63,7 +76,9 @@ done
 for needle in \
   "PR16 controlled data movement safety model" \
   "16_controlled_data_movement_safety_model.md" \
-  "overwrite-safe change-set model"; do
+  "overwrite-safe change-set model" \
+  "CRUD audit retention" \
+  "default 90-day hot retention"; do
   if ! grep -Fq "$needle" <<< "$README"; then
     echo "FAIL: product README missing PR16 safety index needle: $needle" >&2
     exit 1

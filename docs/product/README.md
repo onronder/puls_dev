@@ -519,11 +519,13 @@ PR15.8 hardens the deployed Railway worker before PR16 data movement. It disable
 
 ## PR16 controlled data movement safety model
 
-PR16 must not open blind import apply. Before canonical writes are enabled, PULS needs an overwrite-safe change-set model with before snapshots, source ownership, stale-hash guards, admin approval, worker-only execution, audit, and rollback/compensating preview. The first execution path should be create-only master-data import; guarded updates and rollback execution follow only after their safety gates are proven.
+PR16 must not open blind import apply. Before canonical writes are enabled, PULS needs an overwrite-safe change-set model with before snapshots, source ownership, stale-hash guards, admin approval, worker-only execution, CRUD audit, retention policy, and rollback/compensating preview. The first execution path should be create-only master-data import; guarded updates and rollback execution follow only after their safety gates are proven.
+
+The audit model is business-object first: every canonical insert, update, soft-delete, restore, rollback, or compensating update needs an object event ledger entry. Guarded updates add field-level diff evidence and service-role-only rollback snapshots with default 90-day hot retention, so PULS can stay transparent without turning the operational database into an unlimited raw personal-data archive.
 
 | Document / artifact | Purpose |
 | --- | --- |
-| [16_controlled_data_movement_safety_model.md](./16_controlled_data_movement_safety_model.md) | PR16 overwrite, rollback, change-set, worker execution, and AI evidence safety model |
+| [16_controlled_data_movement_safety_model.md](./16_controlled_data_movement_safety_model.md) | PR16 overwrite, rollback, change-set, CRUD audit retention, worker execution, and AI evidence safety model |
 | [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md) | Updated PR16 delivery order from apply safety contract through AI operational recommendations |
 
 ## Related packs
