@@ -684,10 +684,8 @@ export async function runWorkerOnce(
     p_job_id: job.id,
     p_worker_id: config.workerId,
     p_lease_seconds: config.leaseSeconds,
-    p_safe_context: {
-      worker_contract: WORKER_CONTRACT_VERSION,
-      job_type: job.job_type,
-    },
+    // Keep queue/execution contract context owned by SQL; worker status is recorded on the heartbeat row.
+    p_safe_context: {},
   })
 
   const completion = await resolveConnectorJobCompletion(job, config, rpc)

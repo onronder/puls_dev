@@ -310,6 +310,11 @@ describe('erp-connector worker job handling', () => {
       p_job_id: 'apply-job-1',
       p_worker_id: 'worker-a',
     })
+    expect(calls.find((call) => call.fn === 'heartbeat_connector_job')?.args).toMatchObject({
+      p_job_id: 'apply-job-1',
+      p_worker_id: 'worker-a',
+      p_safe_context: {},
+    })
     expect(calls.find((call) => call.fn === 'complete_connector_job')?.args).toMatchObject({
       p_job_id: 'apply-job-1',
       p_status: 'succeeded',
@@ -330,6 +335,40 @@ describe('erp-connector worker job handling', () => {
     expect(serialized).not.toContain('service-role-secret-value')
     expect(serialized).not.toContain('"raw_payload":')
     expect(serialized).not.toContain('provider_response')
+  })
+
+  it('does not overwrite queued job safe context during lease heartbeat', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_JOB_TYPES: 'import_apply',
+      PULS_CONNECTOR_WORKER_ID: 'worker-a',
+    })
+    const calls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
+      calls.push({ fn, args })
+      if (fn === 'claim_next_connector_job') {
+        return [
+          noopJob({
+            id: 'apply-job-1',
+            job_type: 'import_apply',
+          }),
+        ] as T
+      }
+      if (fn === 'execute_connector_create_only_apply_job') return [] as T
+      if (fn === 'complete_connector_job') return 'apply-job-1' as T
+      if (fn === 'upsert_connector_worker_heartbeat') return 'worker-a' as T
+      if (fn === 'heartbeat_connector_job') return 'apply-job-1' as T
+      return [] as T
+    }
+
+    await runWorkerOnce(config, rpc)
+
+    expect(calls.find((call) => call.fn === 'heartbeat_connector_job')?.args).toMatchObject({
+      p_safe_context: {},
+    })
   })
 
   it('fails import_apply safely when the create-only RPC rejects the job', async () => {
