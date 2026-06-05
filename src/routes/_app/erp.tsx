@@ -40,6 +40,7 @@ import {
   mapConnectorSetupError,
   recordConnectorApplyApproval,
   requestConnectorApplyChangeSet,
+  requestConnectorCreateOnlyApplyJob,
   requestConnectorApplyReview,
   requestConnectorCredentialHandoff,
   requestConnectorRuntimePreflight,
@@ -338,6 +339,25 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestCreateOnlyApplyJobMutation = useMutation({
+    mutationFn: () => requestConnectorCreateOnlyApplyJob(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.createOnlyApplyJob.queued'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      showWorkbenchTab('activity', 'erp-runtime-queue')
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_runtime',
+        operation: 'requestConnectorCreateOnlyApplyJob',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
   const requestRuntimePreflightMutation = useMutation({
     mutationFn: () => requestConnectorRuntimePreflight(user!.id),
     onSuccess: () => {
@@ -369,6 +389,8 @@ function ErpPage() {
   const canRequestApplyChangeSet = data?.applyChangeSet.requestable === true && canManageConnectors
   const canRecordApplyApproval =
     data?.applyApprovalPolicy.requestable === true && canManageConnectors
+  const canRequestCreateOnlyApplyJob =
+    data?.applyExecutionContract.safeToExecute === true && canManageConnectors
   const runtimePreflightCredentialReady = data?.credentialBoundary.status === 'ready'
   const runtimePreflightWorkerReady =
     data?.runtimeQueue.worker.supportedJobTypes.includes('connector_runtime_preflight') === true &&
@@ -1597,8 +1619,14 @@ function ErpPage() {
                           <StatusPill tone={readinessTone(data.applyExecutionContract.readiness)}>
                             {t(`erp.readinessStatus.${data.applyExecutionContract.readiness}`)}
                           </StatusPill>
-                          <StatusPill tone="neutral">
-                            {t('erp.applyExecutionContract.executionDisabled')}
+                          <StatusPill
+                            tone={
+                              data.applyExecutionContract.safeToExecute ? 'success' : 'neutral'
+                            }
+                          >
+                            {data.applyExecutionContract.safeToExecute
+                              ? t('erp.applyExecutionContract.createOnlyWorkerReady')
+                              : t('erp.applyExecutionContract.executionDisabled')}
                           </StatusPill>
                         </div>
                         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
@@ -1606,38 +1634,76 @@ function ErpPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-left sm:min-w-80">
-                      <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-                          {t('erp.applyExecutionContract.metrics.executor')}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
-                          {t('erp.applyExecutionContract.values.futureJob')}
-                        </p>
-                      </div>
-                      <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-                          {t('erp.applyExecutionContract.metrics.applyRpc')}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
-                          {t('erp.applyExecutionContract.values.closed')}
-                        </p>
-                      </div>
-                      <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-                          {t('erp.applyExecutionContract.metrics.canonicalWrites')}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
-                          {t('erp.applyExecutionContract.values.disabled')}
-                        </p>
-                      </div>
-                      <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-                          {t('erp.applyExecutionContract.metrics.sourceWriteback')}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
-                          {t('erp.applyExecutionContract.values.disabled')}
-                        </p>
+                    <div className="flex flex-col gap-3 sm:min-w-80">
+                      <Button
+                        type="button"
+                        variant={canRequestCreateOnlyApplyJob ? 'default' : 'outline'}
+                        className="touch-target w-full"
+                        disabled={
+                          !canRequestCreateOnlyApplyJob ||
+                          requestCreateOnlyApplyJobMutation.isPending
+                        }
+                        onClick={() => void requestCreateOnlyApplyJobMutation.mutateAsync()}
+                      >
+                        <Database
+                          className={cn(
+                            'h-4 w-4',
+                            requestCreateOnlyApplyJobMutation.isPending ? 'animate-pulse' : null,
+                          )}
+                        />
+                        {canRequestCreateOnlyApplyJob
+                          ? requestCreateOnlyApplyJobMutation.isPending
+                            ? t('erp.applyExecutionContract.actions.enqueueCreateOnly.queuing')
+                            : t('erp.applyExecutionContract.actions.enqueueCreateOnly.label')
+                          : !canManageConnectors
+                            ? t('erp.applyExecutionContract.actions.enqueueCreateOnly.adminRequired')
+                            : t('erp.applyExecutionContract.actions.enqueueCreateOnly.blocked')}
+                      </Button>
+                      <div className="grid grid-cols-2 gap-2 text-left">
+                        <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                            {t('erp.applyExecutionContract.metrics.executor')}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                            {t(
+                              data.applyExecutionContract.executorMode === 'worker_create_only_job'
+                                ? 'erp.applyExecutionContract.values.workerCreateOnlyJob'
+                                : 'erp.applyExecutionContract.values.futureJob',
+                            )}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                            {t('erp.applyExecutionContract.metrics.applyRpc')}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                            {t(
+                              data.applyExecutionContract.applyRpcExposed
+                                ? 'erp.applyExecutionContract.values.rpcExposed'
+                                : 'erp.applyExecutionContract.values.closed',
+                            )}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                            {t('erp.applyExecutionContract.metrics.canonicalWrites')}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                            {t(
+                              data.applyExecutionContract.canonicalWriteEnabled
+                                ? 'erp.applyExecutionContract.values.enabled'
+                                : 'erp.applyExecutionContract.values.disabled',
+                            )}
+                          </p>
+                        </div>
+                        <div className="rounded-md bg-[var(--color-bg-card)] px-3 py-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                            {t('erp.applyExecutionContract.metrics.sourceWriteback')}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-[var(--color-text-primary)]">
+                            {t('erp.applyExecutionContract.values.disabled')}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>

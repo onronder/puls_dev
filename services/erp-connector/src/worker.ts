@@ -82,7 +82,7 @@ export type ConnectorWorkerHealth = {
   boundaries: {
     providerApiCalls: false
     credentialReadback: false
-    canonicalWrites: false
+    canonicalWrites: boolean
     sourceWriteback: false
   }
 }
@@ -121,6 +121,20 @@ export type ConnectorRuntimePreflightContext = {
   next_action_key: string | null
 }
 
+export type ConnectorCreateOnlyApplyResult = {
+  change_set_id: string
+  import_batch_id: string
+  status: string
+  row_count: number
+  create_count: number
+  object_event_count: number
+  execution_enabled: boolean
+  canonical_write_enabled: boolean
+  source_writeback_enabled: boolean
+  credential_readback_enabled: boolean
+  next_action_key: string | null
+}
+
 type CompleteConnectorJobArgs = {
   p_job_id: string
   p_worker_id: string
@@ -153,6 +167,7 @@ const CONNECTOR_JOB_TYPES: ConnectorJobType[] = [
 const DEFAULT_SUPPORTED_JOB_TYPES: ConnectorJobType[] = ['noop_health']
 const DEFAULT_RUNTIME_VERSION = '0.2.0-worker-skeleton'
 const WORKER_CONTRACT_VERSION = 'pr15.2-worker-skeleton-v1'
+const CREATE_ONLY_APPLY_CONTRACT_VERSION = 'pr16.3-create-only-worker-apply-v1'
 const SUPABASE_RPC_SCHEMA = 'puls_integration'
 
 export class ConnectorWorkerRpcError extends Error {
@@ -179,6 +194,14 @@ function parseBoolean(value: string | undefined, fallback = false) {
 function normalizeOptionalText(value: string | undefined) {
   const normalized = value?.trim()
   return normalized ? normalized : null
+}
+
+function normalizeRpcSafeErrorCode(
+  payload: { code?: string; message?: string } | null,
+  status: number,
+) {
+  const messageCode = payload?.message?.match(/^(PULS_[A-Z0-9_]+)/)?.[1]
+  return messageCode?.toLowerCase() ?? payload?.code ?? `http_${status}`
 }
 
 function isProductionRailwayEnvironment(value: string | null) {
@@ -327,7 +350,7 @@ export function buildHealthPayload(config: ConnectorWorkerConfig): ConnectorWork
     boundaries: {
       providerApiCalls: false,
       credentialReadback: false,
-      canonicalWrites: false,
+      canonicalWrites: config.importApplyEnabled,
       sourceWriteback: false,
     },
   }
@@ -362,7 +385,7 @@ export async function callSupabaseRpc<T>(
   if (!response.ok) {
     throw new ConnectorWorkerRpcError(
       response.status,
-      payload?.code ?? `http_${response.status}`,
+      normalizeRpcSafeErrorCode(payload, response.status),
     )
   }
 
@@ -470,10 +493,126 @@ export function buildRuntimePreflightCompletionFromContext(
   }
 }
 
+export function buildCreateOnlyApplyCompletionFromResult(
+  result: ConnectorCreateOnlyApplyResult | null,
+): ConnectorJobCompletion {
+  if (!result || result.status !== 'applied_create_only') {
+    const observation = buildSafeWorkerFailureObservation(
+      'create_only_apply_result_missing',
+      'review_create_only_apply_result',
+    )
+
+    return {
+      p_status: 'failed',
+      p_safe_error_code: 'create_only_apply_result_missing',
+      p_safe_error_context: {
+        worker_contract: WORKER_CONTRACT_VERSION,
+        apply_contract: CREATE_ONLY_APPLY_CONTRACT_VERSION,
+        failure_class: observation.failureClass,
+        operator_severity: observation.operatorSeverity,
+        operator_review_required: observation.operatorReviewRequired,
+        retry_after_seconds: observation.retryAfterSeconds,
+        external_call: false,
+        credential_read: false,
+        credential_readback: false,
+        canonical_write: false,
+        source_writeback: false,
+      },
+      p_next_action_key: 'review_create_only_apply_result',
+    }
+  }
+
+  return {
+    p_status: 'succeeded',
+    p_safe_error_code: null,
+    p_safe_error_context: {
+      worker_contract: WORKER_CONTRACT_VERSION,
+      apply_contract: CREATE_ONLY_APPLY_CONTRACT_VERSION,
+      apply_mode: 'create_only',
+      change_set_id: result.change_set_id,
+      import_batch_id: result.import_batch_id,
+      row_count: Number(result.row_count ?? 0),
+      create_count: Number(result.create_count ?? 0),
+      object_event_count: Number(result.object_event_count ?? 0),
+      execution_enabled: result.execution_enabled === true,
+      canonical_write: result.canonical_write_enabled === true,
+      canonical_write_enabled: result.canonical_write_enabled === true,
+      source_writeback: false,
+      source_writeback_enabled: false,
+      credential_read: false,
+      credential_readback: false,
+      credential_readback_enabled: false,
+      provider_api_calls: false,
+      external_call: false,
+      raw_payload_readback: false,
+      field_value_readback: false,
+    },
+    p_next_action_key: result.next_action_key ?? 'review_created_canonical_records',
+  }
+}
+
+export function buildCreateOnlyApplyFailureCompletion(
+  job: ClaimedConnectorJob,
+  error: ConnectorWorkerRpcError,
+): ConnectorJobCompletion {
+  const observation = buildSafeWorkerFailureObservation(
+    error.code,
+    'review_create_only_apply_failure',
+  )
+
+  return {
+    p_status: 'failed',
+    p_safe_error_code: error.code,
+    p_safe_error_context: {
+      worker_contract: WORKER_CONTRACT_VERSION,
+      apply_contract: CREATE_ONLY_APPLY_CONTRACT_VERSION,
+      job_type: job.job_type,
+      failure_class: observation.failureClass,
+      operator_severity: observation.operatorSeverity,
+      operator_review_required: observation.operatorReviewRequired,
+      retry_after_seconds: observation.retryAfterSeconds,
+      external_call: false,
+      credential_read: false,
+      credential_readback: false,
+      canonical_write: false,
+      canonical_write_enabled: false,
+      source_writeback: false,
+      source_writeback_enabled: false,
+      provider_api_calls: false,
+      raw_payload_readback: false,
+      field_value_readback: false,
+    },
+    p_next_action_key: 'review_create_only_apply_failure',
+  }
+}
+
 async function resolveConnectorJobCompletion(
   job: ClaimedConnectorJob,
+  config: ConnectorWorkerConfig,
   rpc: ConnectorWorkerRpc,
 ): Promise<ConnectorJobCompletion> {
+  if (job.job_type === 'import_apply') {
+    if (!config.importApplyEnabled) return buildConnectorJobCompletion(job)
+
+    try {
+      const rows = await rpc<ConnectorCreateOnlyApplyResult[]>(
+        'execute_connector_create_only_apply_job',
+        {
+          p_job_id: job.id,
+          p_worker_id: config.workerId,
+        },
+      )
+
+      return buildCreateOnlyApplyCompletionFromResult(rows[0] ?? null)
+    } catch (error) {
+      if (error instanceof ConnectorWorkerRpcError) {
+        return buildCreateOnlyApplyFailureCompletion(job, error)
+      }
+
+      throw error
+    }
+  }
+
   if (job.job_type !== 'connector_runtime_preflight') {
     return buildConnectorJobCompletion(job)
   }
@@ -506,7 +645,7 @@ async function upsertWorkerHeartbeat(
       worker_contract: WORKER_CONTRACT_VERSION,
       provider_api_calls: false,
       credential_readback: false,
-      canonical_writes: false,
+      canonical_writes: config.importApplyEnabled,
       source_writeback: false,
     },
   })
@@ -551,7 +690,7 @@ export async function runWorkerOnce(
     },
   })
 
-  const completion = await resolveConnectorJobCompletion(job, rpc)
+  const completion = await resolveConnectorJobCompletion(job, config, rpc)
   const completeArgs: CompleteConnectorJobArgs = {
     p_job_id: job.id,
     p_worker_id: config.workerId,

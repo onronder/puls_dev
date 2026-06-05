@@ -100,6 +100,15 @@ PR15.8 production guardrails:
 - `railway.toml` keeps `numReplicas = 1`, `overlapSeconds = 0`, and `drainingSeconds = 30` until PR16 batch lock and idempotency are proven.
 - The service handles `SIGTERM` and `SIGINT` by stopping the worker loop before the process drains.
 
+PR16.3 create-only worker apply:
+
+- Keep `numReplicas = 1`.
+- Set `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=true` only after the PR16.3 migration is pushed and smoke-tested.
+- Add `import_apply` to `PULS_CONNECTOR_WORKER_JOB_TYPES` only with the explicit PR16.3 flag:
+  `noop_health,connector_runtime_preflight,import_apply`.
+- The worker still does not call provider APIs, read credentials, write back to ERP/source systems, or expose raw payloads.
+- `import_apply` execution is limited to `execute_connector_create_only_apply_job`; other apply contracts are rejected by SQL before the job can be queued.
+
 Production smoke:
 
 1. Open Railway deployment logs and confirm `erp-connector worker loop enabled listening on :$PORT`.

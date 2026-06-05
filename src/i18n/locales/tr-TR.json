@@ -1020,6 +1020,9 @@
       "applyChangeSet": {
         "generated": "Change-set ve risk kanıtı üretildi. Kanonik veri yazılmadı."
       },
+      "createOnlyApplyJob": {
+        "queued": "Create-only apply job güvenli worker kuyruğuna alındı."
+      },
       "runtimePreflight": {
         "queued": "Runtime ön kontrol job'ı güvenli kuyruğa alındı. Worker sonucu activity içinde görünecek."
       }
@@ -1038,6 +1041,7 @@
       "applyReviewBlocked": "İnsan incelemesi yalnızca temiz bir import önizlemesi hazırlandıktan sonra talep edilebilir.",
       "applyApprovalBlocked": "Admin onayı için önce temiz önizleme ve insan incelemesi kaydı gerekir.",
       "applyChangeSetBlocked": "Change-set üretimi için temiz ve önizlenmiş dry-run batch gerekir.",
+      "createOnlyApplyBlocked": "Create-only apply için temiz change-set, admin onayı ve açık worker gate gerekir.",
       "runtimePreflightBlocked": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
     },
     "sections": {
@@ -1629,6 +1633,15 @@
         "import_apply_approval_recorded": {
           "title": "Admin onayı audit kaydı olarak işlendi"
         },
+        "import_apply_change_set_generated": {
+          "title": "Change-set kanıtı üretildi"
+        },
+        "import_apply_create_only_queued": {
+          "title": "Create-only apply job kuyruğa alındı"
+        },
+        "import_apply_create_only_completed": {
+          "title": "Create-only apply tamamlandı"
+        },
         "connector_job_succeeded": {
           "title": "Connector job tamamlandı"
         },
@@ -1685,6 +1698,11 @@
           "partial": "İnceleme niyeti açık hazırlık engelleriyle kaydedildi; apply kapalı kalır.",
           "failed": "İnsan incelemesi talebi kaydedilemedi; apply aksiyonu açılmadı."
         },
+        "importApplyExecution": {
+          "success": "Worker create-only reference kayıtlarını kanonik modele yazdı ve object event audit oluşturdu.",
+          "pending": "Create-only apply job güvenli worker kuyruğunda bekliyor.",
+          "failed": "Create-only apply güvenli hata sınıfıyla durdu; ham payload veya credential gösterilmez."
+        },
         "connectorJob": {
           "queued": "İş kuyruğa alındı; worker uygun olduğunda ele alınır.",
           "running": "İş worker tarafından güvenli lease altında çalışıyor.",
@@ -1739,6 +1757,13 @@
         "review_activity": "Kaydı incele ve bir sonraki güvenli kurulum adımına geç.",
         "hold_for_apply_design": "Gelecekteki apply tasarımı, onay ve rollback kapıları için bekle.",
         "hold_for_apply_execution_design": "Apply çalıştırma tasarımı, batch kilidi ve rollback planı tamamlanana kadar bekle.",
+        "review_create_only_change_set": "Create-only change-set kanıtını incele.",
+        "queue_create_only_worker_apply": "Create-only apply job'ını güvenli worker kuyruğuna al.",
+        "enqueue_create_only_apply_after_review": "İnceleme ve onaydan sonra create-only apply job'ını kuyruğa al.",
+        "resolve_change_set_blockers": "Change-set bloklarını kapat ve önizlemeyi gerekirse yenile.",
+        "wait_for_create_only_worker_apply": "Create-only worker apply sonucunu bekle.",
+        "review_created_canonical_records": "Oluşturulan kanonik kayıtları ve object event audit kayıtlarını incele.",
+        "review_create_only_apply_result": "Create-only apply sonucunu ve object event audit kayıtlarını incele.",
         "worker_contract_ready": "Worker sözleşmesi hazır; provider-specific runtime ayrı geliştirilir.",
         "wait_for_provider_runtime_implementation": "Bu job tipi için provider runtime implementasyonu beklenir.",
         "wait_for_retry_window": "Planlanan retry zamanı beklenir.",
@@ -1780,6 +1805,12 @@
         "partial": "Change-set riskleri blokeli olarak kaydedildi.",
         "pending": "İnsan incelemesi talebi oluşturuldu.",
         "failed": "İnsan incelemesi talebi kaydedilemedi."
+      },
+      "importApplyExecution": {
+        "success": "Create-only apply worker tarafından tamamlandı.",
+        "partial": "Create-only apply uyarılı kaydedildi.",
+        "pending": "Create-only apply job kuyruğa alındı.",
+        "failed": "Create-only apply güvenli hata ile durdu."
       }
     },
     "status": {
@@ -2029,16 +2060,18 @@
     },
     "applyExecutionContract": {
       "executionDisabled": "Execution kapalı",
+      "createOnlyWorkerReady": "Worker create-only hazır",
       "status": {
         "not_available": "Execution sözleşmesi hazır değil",
         "needs_approval": "Onay ve kanıt bekleniyor",
-        "contract_ready": "Sözleşme hazır, execution kapalı",
+        "contract_ready": "Execution sözleşmesi hazır",
         "blocked": "Execution sözleşmesi blokeli"
       },
       "descriptions": {
         "not_available": "Kaynak, dry-run batch ve önizleme kanıtı olmadan apply execution sözleşmesi değerlendirilemez.",
         "needs_approval": "Preview kanıtı, insan incelemesi ve admin onayı tamamlanmadan future apply execution tasarlanmış sayılamaz.",
         "contract_ready": "Batch, checksum ve admin audit kanıtı mevcut. Yine de execution job, batch lock, rollback ve bildirim sınırları açılmadığı için canlı uygulama kapalıdır.",
+        "create_only_worker_ready": "Batch, change-set, admin onayı ve worker gate hazır. Bu aksiyon yalnızca create-only reference kayıtlarını worker kuyruğuna alır.",
         "blocked": "Önizleme hatası, checksum eksiği veya kapalı güvenlik sınırları varken execution sözleşmesi ilerletilemez."
       },
       "metrics": {
@@ -2049,7 +2082,9 @@
       },
       "values": {
         "futureJob": "Gelecek background job",
+        "workerCreateOnlyJob": "Worker create-only job",
         "closed": "Kapalı",
+        "enabled": "Etkin",
         "disabled": "Devre dışı",
         "dryRunOnly": "Sadece dry-run batch",
         "notDryRun": "Dry-run değil",
@@ -2061,14 +2096,28 @@
         "rpcExposed": "Authenticated RPC açık",
         "importApplyClosed": "import_apply kapalı",
         "importApplyOpen": "import_apply açık",
+        "importApplyUnsafe": "import_apply gate tutarsız",
+        "createOnlyWorkerOpen": "Create-only worker gate açık",
         "objectAndFieldAudit": "Object event + field diff",
         "auditPolicyMissing": "Audit policy eksik",
         "ninetyDayHotRetention": "90 gün sıcak retention",
         "retentionPolicyMissing": "Retention policy eksik",
         "lockClosed": "Batch lock henüz açılmadı",
+        "batchLockReady": "Tekil job ve batch lock açık",
         "rollbackClosed": "Rollback planı kapalı",
+        "createOnlyCompensationReady": "Create-only compensating action hazır",
         "notificationClosed": "Bildirim akışı kapalı",
-        "executionClosed": "Ürün apply execution açmıyor"
+        "activityAuditReady": "Activity ve object event audit açık",
+        "executionClosed": "Ürün apply execution açmıyor",
+        "createOnlyExecutionReady": "Worker kuyruğu create-only için hazır"
+      },
+      "actions": {
+        "enqueueCreateOnly": {
+          "label": "Create-only apply kuyruğa al",
+          "queuing": "Kuyruğa alınıyor",
+          "blocked": "Apply kapıları bekleniyor",
+          "adminRequired": "Admin yetkisi gerekir"
+        }
       },
       "controls": {
         "dry_run_only": {

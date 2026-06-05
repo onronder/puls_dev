@@ -558,17 +558,17 @@ export type ConnectorApplyExecutionContract = {
   statusLabelKey: string
   descriptionKey: string
   contractVersion: ConnectorApplySafetyContract['contractVersion']
-  executionEnabled: false
-  canonicalWriteEnabled: false
-  sourceWritebackEnabled: false
-  credentialReadbackEnabled: false
-  applyRpcExposed: false
-  browserDirectApplyEnabled: false
-  authenticatedApplyRpcExposed: false
-  workerImportApplyEnqueueEnabled: false
-  workerImportApplyClaimEnabled: false
-  safeToExecute: false
-  executorMode: 'future_background_job'
+  executionEnabled: boolean
+  canonicalWriteEnabled: boolean
+  sourceWritebackEnabled: boolean
+  credentialReadbackEnabled: boolean
+  applyRpcExposed: boolean
+  browserDirectApplyEnabled: boolean
+  authenticatedApplyRpcExposed: boolean
+  workerImportApplyEnqueueEnabled: boolean
+  workerImportApplyClaimEnabled: boolean
+  safeToExecute: boolean
+  executorMode: 'future_background_job' | 'worker_create_only_job'
   batchId: string | null
   sourceChecksum: string | null
   sourceNamespaceCode: string | null
@@ -601,15 +601,15 @@ export type ConnectorApplyAuditTier =
   | 'archive_summary'
 
 export type ConnectorApplySafetyContract = {
-  contractVersion: 'pr16.1-apply-safety-contract-v1'
-  browserDirectApplyEnabled: false
-  authenticatedApplyRpcExposed: false
-  workerImportApplyEnqueueEnabled: false
-  workerImportApplyClaimEnabled: false
-  executionEnabled: false
-  canonicalWriteEnabled: false
-  sourceWritebackEnabled: false
-  credentialReadbackEnabled: false
+  contractVersion: string
+  browserDirectApplyEnabled: boolean
+  authenticatedApplyRpcExposed: boolean
+  workerImportApplyEnqueueEnabled: boolean
+  workerImportApplyClaimEnabled: boolean
+  executionEnabled: boolean
+  canonicalWriteEnabled: boolean
+  sourceWritebackEnabled: boolean
+  credentialReadbackEnabled: boolean
   policyStates: ConnectorApplySafetyPolicyState[]
   coveredOperations: ConnectorApplyOperation[]
   auditTiers: ConnectorApplyAuditTier[]
@@ -617,7 +617,7 @@ export type ConnectorApplySafetyContract = {
   fieldDiffHotRetentionDays: number
   rollbackSnapshotHotRetentionDays: number
   objectEventRetentionMonths: number
-  purgeArchiveRequired: true
+  purgeArchiveRequired: boolean
   safeErrorCode: string
   nextActionKey: string
 }
@@ -691,6 +691,7 @@ export type ConnectorSyncLog = {
     | 'credential_handoff'
     | 'import_preview'
     | 'import_apply_review'
+    | 'import_apply_execution'
     | 'sync_batch'
 }
 
@@ -701,6 +702,7 @@ export type ConnectorActivityEventKind =
   | 'credential_reference'
   | 'import_preview'
   | 'import_apply_review'
+  | 'import_apply_execution'
   | 'connector_job'
   | 'sync_batch'
 
@@ -1067,6 +1069,15 @@ type ConnectorApplyChangeSetRow = {
   created_at?: string | null
 }
 
+type ConnectorCreateOnlyApplyJobRow = {
+  job_id?: string | null
+  status?: ConnectorRuntimeJobStatus | null
+  change_set_id?: string | null
+  import_batch_id?: string | null
+  create_count?: number | null
+  next_action_key?: string | null
+}
+
 type ConnectorCredentialEventRow = {
   id?: string | null
   tenant_id?: string | null
@@ -1210,6 +1221,16 @@ export type RequestConnectorApplyChangeSetResult = {
   safeToApply: false
 }
 
+export type RequestConnectorCreateOnlyApplyJobResult = {
+  connectionId: string
+  batchId: string
+  changeSetId: string
+  jobId: string | null
+  status: ConnectorRuntimeJobStatus
+  nextActionKey: string
+  safeToApply: false
+}
+
 export type RequestConnectorRuntimePreflightResult = {
   connectionId: string
   jobId: string | null
@@ -1230,6 +1251,7 @@ export type ConnectorSetupErrorMapping = {
     | 'apply_review_blocked'
     | 'apply_approval_blocked'
     | 'apply_change_set_blocked'
+    | 'create_only_apply_blocked'
     | 'runtime_preflight_blocked'
     | 'permission_denied'
     | 'domain_owned'
@@ -1666,6 +1688,12 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
         toastKey: 'erp.errors.applyChangeSetBlocked',
       }
     }
+    if (error.code.startsWith('PULS_CONNECTOR_CREATE_ONLY_')) {
+      return {
+        code: 'create_only_apply_blocked',
+        toastKey: 'erp.errors.createOnlyApplyBlocked',
+      }
+    }
     if (
       error.code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
       error.code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
@@ -1703,6 +1731,8 @@ function fromConnectorRpcError(
         ? 'erp.errors.importPreviewBlocked'
         : code.startsWith('PULS_CONNECTOR_APPLY_CHANGE_SET_')
           ? 'erp.errors.applyChangeSetBlocked'
+          : code.startsWith('PULS_CONNECTOR_CREATE_ONLY_')
+            ? 'erp.errors.createOnlyApplyBlocked'
           : code === 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED' ||
               code === 'PULS_CONNECTOR_JOB_CREDENTIAL_NOT_VERIFIED'
             ? 'erp.errors.runtimePreflightBlocked'
@@ -2802,15 +2832,15 @@ function buildConnectorApplySafetyContract(
   row: ConnectorApplySafetyContractRow | null,
 ): ConnectorApplySafetyContract {
   return {
-    contractVersion: 'pr16.1-apply-safety-contract-v1',
-    browserDirectApplyEnabled: false,
-    authenticatedApplyRpcExposed: false,
-    workerImportApplyEnqueueEnabled: false,
-    workerImportApplyClaimEnabled: false,
-    executionEnabled: false,
-    canonicalWriteEnabled: false,
-    sourceWritebackEnabled: false,
-    credentialReadbackEnabled: false,
+    contractVersion: row?.contract_version ?? 'pr16.1-apply-safety-contract-v1',
+    browserDirectApplyEnabled: row?.browser_direct_apply_enabled === true,
+    authenticatedApplyRpcExposed: row?.authenticated_apply_rpc_exposed === true,
+    workerImportApplyEnqueueEnabled: row?.worker_import_apply_enqueue_enabled === true,
+    workerImportApplyClaimEnabled: row?.worker_import_apply_claim_enabled === true,
+    executionEnabled: row?.execution_enabled === true,
+    canonicalWriteEnabled: row?.canonical_write_enabled === true,
+    sourceWritebackEnabled: row?.source_writeback_enabled === true,
+    credentialReadbackEnabled: row?.credential_readback_enabled === true,
     policyStates:
       row?.policy_states && row.policy_states.length > 0
         ? row.policy_states
@@ -2836,7 +2866,7 @@ function buildConnectorApplySafetyContract(
     fieldDiffHotRetentionDays: row?.field_diff_hot_retention_days ?? 90,
     rollbackSnapshotHotRetentionDays: row?.rollback_snapshot_hot_retention_days ?? 90,
     objectEventRetentionMonths: row?.object_event_retention_months ?? 24,
-    purgeArchiveRequired: true,
+    purgeArchiveRequired: row?.purge_archive_required !== false,
     safeErrorCode: row?.safe_error_code ?? 'apply_execution_closed_pr16_1',
     nextActionKey: row?.next_action_key ?? 'implement_create_only_apply_change_set',
   }
@@ -2848,18 +2878,51 @@ function buildConnectorApplyExecutionContract({
   applyApprovalPolicy,
   controlledApplyPlan,
   applySafetyContract,
+  applyChangeSet,
 }: {
   connectorState: ConnectorLifecycleState
   importPreview: ConnectorImportPreview
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
   controlledApplyPlan: ConnectorControlledApplyPlan
   applySafetyContract: ConnectorApplySafetyContract
+  applyChangeSet: ConnectorApplyChangeSet
 }): ConnectorApplyExecutionContract {
   const batch = importPreview.batch
   const previewReady = Boolean(batch?.id && importPreview.status === 'preview_ready')
   const approvalRecorded = applyApprovalPolicy.status === 'approval_recorded'
   const hasChecksum = Boolean(batch?.sourceChecksum)
   const hasRowErrors = importPreview.summary.errorCount > 0
+  const changeSetSummary = applyChangeSet.summary
+  const changeSetReady =
+    Boolean(applyChangeSet.id) &&
+    applyChangeSet.status === 'ready_for_create_only_review' &&
+    changeSetSummary.rowCount > 0 &&
+    changeSetSummary.createCount === changeSetSummary.rowCount &&
+    changeSetSummary.updateCount === 0 &&
+    changeSetSummary.skipCount === 0 &&
+    changeSetSummary.blockedCount === 0 &&
+    changeSetSummary.staleCount === 0 &&
+    changeSetSummary.destructiveCount === 0 &&
+    changeSetSummary.sourceConflictCount === 0 &&
+    changeSetSummary.guardedUpdateCount === 0 &&
+    changeSetSummary.noChangeCount === 0
+  const workerCreateOnlyOpen =
+    applySafetyContract.contractVersion === 'pr16.3-create-only-worker-apply-v1' &&
+    applySafetyContract.executionEnabled &&
+    applySafetyContract.canonicalWriteEnabled &&
+    applySafetyContract.workerImportApplyEnqueueEnabled &&
+    applySafetyContract.workerImportApplyClaimEnabled &&
+    !applySafetyContract.browserDirectApplyEnabled &&
+    !applySafetyContract.authenticatedApplyRpcExposed &&
+    !applySafetyContract.sourceWritebackEnabled &&
+    !applySafetyContract.credentialReadbackEnabled
+  const safeToExecute =
+    previewReady &&
+    approvalRecorded &&
+    hasChecksum &&
+    !hasRowErrors &&
+    changeSetReady &&
+    workerCreateOnlyOpen
 
   const status: ConnectorApplyExecutionContractStatus =
     connectorState !== 'connector_selected' || !batch?.id
@@ -2872,6 +2935,8 @@ function buildConnectorApplyExecutionContract({
         : !previewReady || !approvalRecorded
           ? 'needs_approval'
           : 'contract_ready'
+  const readiness: ConnectorReadinessStatus =
+    safeToExecute ? 'ready' : status === 'blocked' ? 'blocked' : 'partial'
 
   const control = (
     id: ConnectorApplyExecutionControlId,
@@ -2916,14 +2981,18 @@ function buildConnectorApplyExecutionContract({
     ),
     control(
       'worker_apply_gate',
-      applySafetyContract.workerImportApplyEnqueueEnabled ||
-        applySafetyContract.workerImportApplyClaimEnabled
-        ? 'blocked'
-        : 'ready',
-      applySafetyContract.workerImportApplyEnqueueEnabled ||
-        applySafetyContract.workerImportApplyClaimEnabled
-        ? 'erp.applyExecutionContract.values.importApplyOpen'
-        : 'erp.applyExecutionContract.values.importApplyClosed',
+      workerCreateOnlyOpen
+        ? 'ready'
+        : applySafetyContract.workerImportApplyEnqueueEnabled ||
+            applySafetyContract.workerImportApplyClaimEnabled
+          ? 'blocked'
+          : 'ready',
+      workerCreateOnlyOpen
+        ? 'erp.applyExecutionContract.values.createOnlyWorkerOpen'
+        : applySafetyContract.workerImportApplyEnqueueEnabled ||
+              applySafetyContract.workerImportApplyClaimEnabled
+          ? 'erp.applyExecutionContract.values.importApplyUnsafe'
+          : 'erp.applyExecutionContract.values.importApplyClosed',
     ),
     control(
       'crud_audit_policy',
@@ -2949,29 +3018,57 @@ function buildConnectorApplyExecutionContract({
         ? 'erp.applyExecutionContract.values.ninetyDayHotRetention'
         : 'erp.applyExecutionContract.values.retentionPolicyMissing',
     ),
-    control('batch_lock', 'blocked', 'erp.applyExecutionContract.values.lockClosed'),
-    control('rollback_plan', 'blocked', 'erp.applyExecutionContract.values.rollbackClosed'),
-    control('notification_plan', 'blocked', 'erp.applyExecutionContract.values.notificationClosed'),
-    control('execution_boundary', 'blocked', 'erp.applyExecutionContract.values.executionClosed'),
+    control(
+      'batch_lock',
+      workerCreateOnlyOpen ? 'ready' : 'blocked',
+      workerCreateOnlyOpen
+        ? 'erp.applyExecutionContract.values.batchLockReady'
+        : 'erp.applyExecutionContract.values.lockClosed',
+    ),
+    control(
+      'rollback_plan',
+      workerCreateOnlyOpen ? 'partial' : 'blocked',
+      workerCreateOnlyOpen
+        ? 'erp.applyExecutionContract.values.createOnlyCompensationReady'
+        : 'erp.applyExecutionContract.values.rollbackClosed',
+    ),
+    control(
+      'notification_plan',
+      workerCreateOnlyOpen ? 'partial' : 'blocked',
+      workerCreateOnlyOpen
+        ? 'erp.applyExecutionContract.values.activityAuditReady'
+        : 'erp.applyExecutionContract.values.notificationClosed',
+    ),
+    control(
+      'execution_boundary',
+      safeToExecute ? 'ready' : 'blocked',
+      safeToExecute
+        ? 'erp.applyExecutionContract.values.createOnlyExecutionReady'
+        : 'erp.applyExecutionContract.values.executionClosed',
+    ),
   ]
 
   return {
     status,
-    readiness: status === 'blocked' ? 'blocked' : 'partial',
+    readiness,
     statusLabelKey: `erp.applyExecutionContract.status.${status}`,
-    descriptionKey: `erp.applyExecutionContract.descriptions.${status}`,
+    descriptionKey: safeToExecute
+      ? 'erp.applyExecutionContract.descriptions.create_only_worker_ready'
+      : `erp.applyExecutionContract.descriptions.${status}`,
     contractVersion: applySafetyContract.contractVersion,
-    executionEnabled: false,
-    canonicalWriteEnabled: false,
+    executionEnabled: safeToExecute,
+    canonicalWriteEnabled: safeToExecute,
     sourceWritebackEnabled: false,
     credentialReadbackEnabled: false,
-    applyRpcExposed: false,
-    browserDirectApplyEnabled: false,
-    authenticatedApplyRpcExposed: false,
-    workerImportApplyEnqueueEnabled: false,
-    workerImportApplyClaimEnabled: false,
-    safeToExecute: false,
-    executorMode: 'future_background_job',
+    applyRpcExposed:
+      applySafetyContract.browserDirectApplyEnabled ||
+      applySafetyContract.authenticatedApplyRpcExposed,
+    browserDirectApplyEnabled: applySafetyContract.browserDirectApplyEnabled,
+    authenticatedApplyRpcExposed: applySafetyContract.authenticatedApplyRpcExposed,
+    workerImportApplyEnqueueEnabled: applySafetyContract.workerImportApplyEnqueueEnabled,
+    workerImportApplyClaimEnabled: applySafetyContract.workerImportApplyClaimEnabled,
+    safeToExecute,
+    executorMode: safeToExecute ? 'worker_create_only_job' : 'future_background_job',
     batchId: batch?.id ?? null,
     sourceChecksum: batch?.sourceChecksum ?? null,
     sourceNamespaceCode: batch?.sourceNamespaceCode ?? null,
@@ -3091,6 +3188,7 @@ function mapActivityKind(syncType: string | null | undefined): ConnectorActivity
   if (syncType === 'credential_handoff') return 'credential_handoff'
   if (syncType === 'import_preview') return 'import_preview'
   if (syncType === 'import_apply_review') return 'import_apply_review'
+  if (syncType === 'import_apply_execution') return 'import_apply_execution'
   return 'sync_batch'
 }
 
@@ -3130,6 +3228,12 @@ function mapActivitySummaryKey(row: ErpSyncBatchRow): string {
     return 'erp.activityTimeline.summaries.importApplyReview.partial'
   }
 
+  if (row.sync_type === 'import_apply_execution') {
+    if (row.status === 'failed') return 'erp.activityTimeline.summaries.importApplyExecution.failed'
+    if (row.status === 'success') return 'erp.activityTimeline.summaries.importApplyExecution.success'
+    return 'erp.activityTimeline.summaries.importApplyExecution.pending'
+  }
+
   if (row.sync_type === 'setup_preflight') {
     if (row.status === 'success') return 'erp.activityTimeline.summaries.setupPreflight.success'
     if (row.status === 'failed') return 'erp.activityTimeline.summaries.setupPreflight.failed'
@@ -3155,6 +3259,9 @@ function mapActivityNextActionKey(row: ErpSyncBatchRow): string {
   }
   if (row.sync_type === 'import_apply_review') {
     return 'erp.activityTimeline.nextActions.hold_for_apply_design'
+  }
+  if (row.sync_type === 'import_apply_execution') {
+    return 'erp.activityTimeline.nextActions.review_create_only_apply_result'
   }
   if (row.sync_type === 'import_preview') {
     return row.status === 'success'
@@ -3242,7 +3349,7 @@ function buildActivityDetails(row: ErpSyncBatchRow): ConnectorActivityDetail[] {
     ]
   }
 
-  if (row.sync_type === 'import_apply_review') {
+  if (row.sync_type === 'import_apply_review' || row.sync_type === 'import_apply_execution') {
     return [
       {
         labelKey: 'erp.activityTimeline.details.recordsSeen',
@@ -3668,6 +3775,12 @@ function mapSyncLogMessageKey(row: ErpSyncBatchRow): string | undefined {
     if (row.status === 'partial_success') return 'erp.syncLogMessages.importApplyReview.partial'
     if (row.status === 'failed') return 'erp.syncLogMessages.importApplyReview.failed'
     return 'erp.syncLogMessages.importApplyReview.pending'
+  }
+  if (row.sync_type === 'import_apply_execution') {
+    if (row.status === 'success') return 'erp.syncLogMessages.importApplyExecution.success'
+    if (row.status === 'partial_success') return 'erp.syncLogMessages.importApplyExecution.partial'
+    if (row.status === 'failed') return 'erp.syncLogMessages.importApplyExecution.failed'
+    return 'erp.syncLogMessages.importApplyExecution.pending'
   }
   if (row.sync_type !== 'setup_preflight') return undefined
   if (row.status === 'success') return 'erp.syncLogMessages.setupPreflight.success'
@@ -4410,6 +4523,7 @@ function buildOverview({
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
     controlledApplyPlan,
     applySafetyContract: resolvedApplySafetyContract,
+    applyChangeSet: resolvedApplyChangeSet,
   })
   const runtimeQueue = buildConnectorRuntimeQueue({
     connectorState,
@@ -5016,7 +5130,9 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
                 ? 'import_preview'
                 : row.sync_type === 'import_apply_review'
                   ? 'import_apply_review'
-                  : 'sync_batch',
+                  : row.sync_type === 'import_apply_execution'
+                    ? 'import_apply_execution'
+                    : 'sync_batch',
     })),
     activityTimeline: [
       ...jobEvents.map((row, index) => buildConnectorJobActivityEvent(row, index)),
@@ -6045,6 +6161,145 @@ export async function recordConnectorApplyApproval(
     batchId: batch.id,
     status: 'approval_recorded',
     approvalRecordedAt: now,
+    safeToApply: false,
+  }
+}
+
+export async function requestConnectorCreateOnlyApplyJob(
+  userId: string,
+): Promise<RequestConnectorCreateOnlyApplyJobResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector create-only apply requires tenant context',
+      source: 'adapter',
+      operation: 'requestConnectorCreateOnlyApplyJob',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector create-only apply requires admin permission',
+      source: 'adapter',
+      operation: 'requestConnectorCreateOnlyApplyJob',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.importPreview.batch
+  const changeSetId = overview.applyChangeSet.id
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector create-only apply requires a selected source',
+      source: 'adapter',
+      operation: 'requestConnectorCreateOnlyApplyJob',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector create-only apply requires a preview batch',
+      source: 'adapter',
+      operation: 'requestConnectorCreateOnlyApplyJob',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (!changeSetId || !overview.applyExecutionContract.safeToExecute) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_CREATE_ONLY_APPLY_BLOCKED',
+      message: 'Connector create-only worker apply is blocked by the current safety contract',
+      source: 'adapter',
+      operation: 'requestConnectorCreateOnlyApplyJob',
+      i18nKey: 'erp.errors.createOnlyApplyBlocked',
+    })
+  }
+
+  const queued = await pulsIntegration().rpc('enqueue_connector_create_only_apply_job', {
+    p_change_set_id: changeSetId,
+  })
+
+  if (queued.error) {
+    throw fromConnectorRpcError(queued.error, 'requestConnectorCreateOnlyApplyJob')
+  }
+
+  const row = ((queued.data ?? []) as ConnectorCreateOnlyApplyJobRow[])[0] ?? null
+  const jobId = row?.job_id ?? null
+  if (!jobId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_CREATE_ONLY_APPLY_BLOCKED',
+      message: 'Connector create-only apply queue RPC returned no job evidence',
+      source: 'adapter',
+      operation: 'requestConnectorCreateOnlyApplyJob',
+      i18nKey: 'erp.errors.createOnlyApplyBlocked',
+    })
+  }
+
+  const now = new Date().toISOString()
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_apply_review',
+      event_key: 'import_apply_create_only_queued',
+      actor_employee_id: ctx.employeeId,
+      status: 'pending',
+      started_at: now,
+      records_seen: overview.applyChangeSet.summary.rowCount,
+      records_inserted: overview.applyChangeSet.summary.createCount,
+      records_updated: 0,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        job_id: jobId,
+        change_set_id: changeSetId,
+        import_batch_id: batch.id,
+        contract_version: overview.applyExecutionContract.contractVersion,
+        source_namespace_code: batch.sourceNamespaceCode,
+        row_count: overview.applyChangeSet.summary.rowCount,
+        create_count: overview.applyChangeSet.summary.createCount,
+        update_count: 0,
+        skip_count: 0,
+        blocked_count: 0,
+        worker_queue: true,
+        safe_to_apply: false,
+        apply_execution_open: true,
+        canonical_write_open: true,
+        browser_direct_apply_open: false,
+        authenticated_apply_rpc_open: false,
+        source_writeback_open: false,
+        credential_readback_open: false,
+        field_value_readback: false,
+        raw_payload_readback: false,
+      },
+      next_action_key: row?.next_action_key ?? 'wait_for_create_only_worker_apply',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'requestConnectorCreateOnlyApplyJob',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch.id,
+    changeSetId,
+    jobId,
+    status: row?.status ?? 'queued',
+    nextActionKey: row?.next_action_key ?? 'wait_for_create_only_worker_apply',
     safeToApply: false,
   }
 }

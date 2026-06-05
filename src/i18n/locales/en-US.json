@@ -1020,6 +1020,9 @@
       "applyChangeSet": {
         "generated": "Change-set and risk evidence were generated. No canonical data was written."
       },
+      "createOnlyApplyJob": {
+        "queued": "Create-only apply job was queued for the safe worker."
+      },
       "runtimePreflight": {
         "queued": "Runtime preflight job was safely queued. The worker result will appear in activity."
       }
@@ -1038,6 +1041,7 @@
       "applyReviewBlocked": "Human review can be requested only after a clean import preview is available.",
       "applyApprovalBlocked": "Admin approval requires a clean preview and a recorded human review first.",
       "applyChangeSetBlocked": "Change-set generation requires a clean previewed dry-run batch.",
+      "createOnlyApplyBlocked": "Create-only apply requires a clean change-set, admin approval, and an open worker gate.",
       "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
     "sections": {
@@ -1629,6 +1633,15 @@
         "import_apply_approval_recorded": {
           "title": "Admin approval recorded as audit"
         },
+        "import_apply_change_set_generated": {
+          "title": "Change-set evidence generated"
+        },
+        "import_apply_create_only_queued": {
+          "title": "Create-only apply job queued"
+        },
+        "import_apply_create_only_completed": {
+          "title": "Create-only apply completed"
+        },
         "connector_job_succeeded": {
           "title": "Connector job completed"
         },
@@ -1685,6 +1698,11 @@
           "partial": "Review intent was recorded with open readiness blockers; apply remains closed.",
           "failed": "Human review request could not be recorded; no apply action was opened."
         },
+        "importApplyExecution": {
+          "success": "The worker wrote create-only reference records to the canonical model and created object event audit.",
+          "pending": "The create-only apply job is waiting in the safe worker queue.",
+          "failed": "Create-only apply stopped with a safe failure class; raw payloads and credentials are not shown."
+        },
         "connectorJob": {
           "queued": "The job is queued and will be picked up when an eligible worker is available.",
           "running": "The job is running under a safe worker lease.",
@@ -1739,6 +1757,13 @@
         "review_activity": "Review the record and move to the next safe setup step.",
         "hold_for_apply_design": "Hold for future apply design, approval, and rollback gates.",
         "hold_for_apply_execution_design": "Hold until apply execution design, batch lock, and rollback plan are complete.",
+        "review_create_only_change_set": "Review the create-only change-set evidence.",
+        "queue_create_only_worker_apply": "Queue the create-only apply job for the safe worker.",
+        "enqueue_create_only_apply_after_review": "Queue the create-only apply job after review and approval.",
+        "resolve_change_set_blockers": "Resolve change-set blockers and rerun preview if needed.",
+        "wait_for_create_only_worker_apply": "Wait for the create-only worker apply result.",
+        "review_created_canonical_records": "Review the created canonical records and object event audit records.",
+        "review_create_only_apply_result": "Review the create-only apply result and object event audit records.",
         "worker_contract_ready": "Worker contract is ready; provider-specific runtime is implemented separately.",
         "wait_for_provider_runtime_implementation": "Wait for provider runtime implementation for this job type.",
         "wait_for_retry_window": "Wait for the scheduled retry window.",
@@ -1780,6 +1805,12 @@
         "partial": "Change-set risks were recorded as blocked.",
         "pending": "Human review request was created.",
         "failed": "Human review request could not be recorded."
+      },
+      "importApplyExecution": {
+        "success": "Create-only apply was completed by the worker.",
+        "partial": "Create-only apply was recorded with warnings.",
+        "pending": "Create-only apply job was queued.",
+        "failed": "Create-only apply stopped with a safe error."
       }
     },
     "status": {
@@ -2029,16 +2060,18 @@
     },
     "applyExecutionContract": {
       "executionDisabled": "Execution closed",
+      "createOnlyWorkerReady": "Worker create-only ready",
       "status": {
         "not_available": "Execution contract not ready",
         "needs_approval": "Approval and evidence pending",
-        "contract_ready": "Contract ready, execution closed",
+        "contract_ready": "Execution contract ready",
         "blocked": "Execution contract blocked"
       },
       "descriptions": {
         "not_available": "The apply execution contract cannot be evaluated until a source, dry-run batch, and preview evidence exist.",
         "needs_approval": "Future apply execution is not contract-ready until preview evidence, human review, and admin approval are complete.",
         "contract_ready": "Batch, checksum, and admin audit evidence are present. Live apply remains closed until execution job, batch lock, rollback, and notification boundaries open.",
+        "create_only_worker_ready": "Batch, change-set, admin approval, and worker gate are ready. This action queues only create-only reference records for the worker.",
         "blocked": "Execution contract cannot move forward while preview errors, missing checksum, or closed safety boundaries remain."
       },
       "metrics": {
@@ -2049,7 +2082,9 @@
       },
       "values": {
         "futureJob": "Future background job",
+        "workerCreateOnlyJob": "Worker create-only job",
         "closed": "Closed",
+        "enabled": "Enabled",
         "disabled": "Disabled",
         "dryRunOnly": "Dry-run batch only",
         "notDryRun": "Not dry-run",
@@ -2061,14 +2096,28 @@
         "rpcExposed": "Authenticated RPC exposed",
         "importApplyClosed": "import_apply closed",
         "importApplyOpen": "import_apply open",
+        "importApplyUnsafe": "import_apply gate inconsistent",
+        "createOnlyWorkerOpen": "Create-only worker gate open",
         "objectAndFieldAudit": "Object event + field diff",
         "auditPolicyMissing": "Audit policy missing",
         "ninetyDayHotRetention": "90-day hot retention",
         "retentionPolicyMissing": "Retention policy missing",
         "lockClosed": "Batch lock not open",
+        "batchLockReady": "Single job and batch lock open",
         "rollbackClosed": "Rollback plan closed",
+        "createOnlyCompensationReady": "Create-only compensating action ready",
         "notificationClosed": "Notification flow closed",
-        "executionClosed": "Product does not open apply execution"
+        "activityAuditReady": "Activity and object event audit open",
+        "executionClosed": "Product does not open apply execution",
+        "createOnlyExecutionReady": "Worker queue ready for create-only"
+      },
+      "actions": {
+        "enqueueCreateOnly": {
+          "label": "Queue create-only apply",
+          "queuing": "Queueing",
+          "blocked": "Apply gates pending",
+          "adminRequired": "Admin permission required"
+        }
       },
       "controls": {
         "dry_run_only": {
