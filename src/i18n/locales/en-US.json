@@ -1971,6 +1971,14 @@
         "checksumMissing": "Checksum missing",
         "approvalRecorded": "Admin approval in audit trail",
         "approvalMissing": "Admin approval pending",
+        "serviceRoleOnly": "Service-role only",
+        "rpcExposed": "Authenticated RPC exposed",
+        "importApplyClosed": "import_apply closed",
+        "importApplyOpen": "import_apply open",
+        "objectAndFieldAudit": "Object event + field diff",
+        "auditPolicyMissing": "Audit policy missing",
+        "ninetyDayHotRetention": "90-day hot retention",
+        "retentionPolicyMissing": "Retention policy missing",
         "lockClosed": "Batch lock not open",
         "rollbackClosed": "Rollback plan closed",
         "notificationClosed": "Notification flow closed",
@@ -1988,6 +1996,22 @@
         "admin_approval": {
           "label": "Admin approval",
           "description": "Admin audit approval must be visible before future apply execution can open."
+        },
+        "direct_rpc_permission": {
+          "label": "Direct apply RPC",
+          "description": "Browser and authenticated users cannot execute the legacy apply_import_batch RPC."
+        },
+        "worker_apply_gate": {
+          "label": "Worker apply gate",
+          "description": "import_apply jobs cannot be queued or claimed until PR16 create-only gates exist."
+        },
+        "crud_audit_policy": {
+          "label": "CRUD audit policy",
+          "description": "Every canonical mutation requires object event audit; updates require field diff policy."
+        },
+        "retention_policy": {
+          "label": "Retention policy",
+          "description": "Field diff and rollback snapshot hot retention defaults to 90 days."
         },
         "batch_lock": {
           "label": "Batch lock",

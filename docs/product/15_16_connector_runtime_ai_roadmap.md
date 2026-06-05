@@ -313,6 +313,8 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Ürün değeri:** PULS veri yazmaya başlamadan önce yanlış Excel, eski dosya, hatalı mapping veya accidental overwrite senaryolarını ürün politikasıyla sınırlar.
 
+**Implementation status:** PR16.1 closes the direct apply surface, makes `apply_import_batch(UUID, TEXT)` service-role only, rejects `import_apply` connector jobs until create-only gates exist, and exposes an AI-safe apply safety contract on `/erp`. Canonical writes, Canias API import, ERP/source writeback, rollback execution, and AI autonomous apply remain closed.
+
 **Kapsam:**
 
 - Existing `apply_import_batch` direct kullanım yüzeyinin yeniden değerlendirilmesi
