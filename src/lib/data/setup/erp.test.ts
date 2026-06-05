@@ -819,6 +819,21 @@ describe('fetchErpOverviewWithMeta', () => {
       'dry_run_only',
       'apply_execution_closed',
     ])
+    expect(result.data.applySafetyContract).toMatchObject({
+      contractVersion: 'pr16.1-apply-safety-contract-v1',
+      authenticatedApplyRpcExposed: false,
+      workerImportApplyEnqueueEnabled: false,
+      workerImportApplyClaimEnabled: false,
+      fieldDiffHotRetentionDays: 90,
+      rollbackSnapshotHotRetentionDays: 90,
+      purgeArchiveRequired: true,
+    })
+    expect(result.data.applySafetyContract.auditTiers).toEqual([
+      'object_event',
+      'field_diff',
+      'rollback_snapshot',
+      'archive_summary',
+    ])
     expect(result.data.controlledApplyPlan).toMatchObject({
       status: 'needs_review',
       executionOpen: false,
@@ -845,6 +860,7 @@ describe('fetchErpOverviewWithMeta', () => {
       result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'rollback_strategy'),
     ).toMatchObject({ status: 'blocked' })
     expect(JSON.stringify(result.data.applyReadiness)).not.toContain('apply_import_batch')
+    expect(JSON.stringify(result.data.applySafetyContract)).not.toContain('apply_import_batch')
     expect(JSON.stringify(result.data.controlledApplyPlan)).not.toContain('apply_import_batch')
     expect(JSON.stringify(result.data.controlledApplyPlan)).not.toContain('credentials_ref')
   })
@@ -926,12 +942,15 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.applyExecutionContract).toMatchObject({
       status: 'needs_approval',
       readiness: 'partial',
-      contractVersion: 'pr14.20-closed-apply-contract-v1',
+      contractVersion: 'pr16.1-apply-safety-contract-v1',
       executionEnabled: false,
       canonicalWriteEnabled: false,
       sourceWritebackEnabled: false,
       credentialReadbackEnabled: false,
       applyRpcExposed: false,
+      authenticatedApplyRpcExposed: false,
+      workerImportApplyEnqueueEnabled: false,
+      workerImportApplyClaimEnabled: false,
       safeToExecute: false,
       executorMode: 'future_background_job',
       batchId: 'batch-import-preview',
@@ -939,10 +958,28 @@ describe('fetchErpOverviewWithMeta', () => {
       sourceNamespaceCode: 'CANIAS',
     })
     expect(
-      result.data.applyExecutionContract.controls.find((control) => control.id === 'admin_approval'),
+      result.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'admin_approval',
+      ),
     ).toMatchObject({
       status: 'partial',
       valueKey: 'erp.applyExecutionContract.values.approvalMissing',
+    })
+    expect(
+      result.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'direct_rpc_permission',
+      ),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.applyExecutionContract.values.serviceRoleOnly',
+    })
+    expect(
+      result.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'worker_apply_gate',
+      ),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.applyExecutionContract.values.importApplyClosed',
     })
     expect(
       result.data.applyExecutionContract.controls.find(
@@ -1061,6 +1098,10 @@ describe('fetchErpOverviewWithMeta', () => {
       sourceWritebackEnabled: false,
       credentialReadbackEnabled: false,
       applyRpcExposed: false,
+      browserDirectApplyEnabled: false,
+      authenticatedApplyRpcExposed: false,
+      workerImportApplyEnqueueEnabled: false,
+      workerImportApplyClaimEnabled: false,
       safeToExecute: false,
       executorMode: 'future_background_job',
       batchId: 'batch-import-preview',
@@ -1068,13 +1109,17 @@ describe('fetchErpOverviewWithMeta', () => {
       sourceNamespaceCode: 'CANIAS',
     })
     expect(
-      result.data.applyExecutionContract.controls.find((control) => control.id === 'admin_approval'),
+      result.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'admin_approval',
+      ),
     ).toMatchObject({
       status: 'ready',
       valueKey: 'erp.applyExecutionContract.values.approvalRecorded',
     })
     expect(
-      result.data.applyExecutionContract.controls.find((control) => control.id === 'idempotency_key'),
+      result.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'idempotency_key',
+      ),
     ).toMatchObject({
       status: 'ready',
       valueKey: 'erp.applyExecutionContract.values.checksumReady',
@@ -1082,6 +1127,14 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(
       result.data.applyExecutionContract.controls.find((control) => control.id === 'batch_lock'),
     ).toMatchObject({ status: 'blocked' })
+    expect(
+      result.data.applyExecutionContract.controls.find(
+        (control) => control.id === 'retention_policy',
+      ),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.applyExecutionContract.values.ninetyDayHotRetention',
+    })
     expect(
       result.data.controlledApplyPlan.gates.find((gate) => gate.id === 'approval_policy'),
     ).toMatchObject({
@@ -1135,6 +1188,9 @@ describe('fetchErpOverviewWithMeta', () => {
       sourceWritebackEnabled: false,
       credentialReadbackEnabled: false,
       applyRpcExposed: false,
+      authenticatedApplyRpcExposed: false,
+      workerImportApplyEnqueueEnabled: false,
+      workerImportApplyClaimEnabled: false,
       safeToExecute: false,
       batchId: null,
       sourceChecksum: null,
@@ -1735,9 +1791,9 @@ describe('fetchErpOverviewWithMeta', () => {
       code: 'PULS_CONNECTOR_RUNTIME_PREFLIGHT_CREDENTIAL_NOT_VERIFIED',
       i18nKey: 'erp.errors.runtimePreflightBlocked',
     })
-    expect(capture.rpcCalls?.some((call) => call.fn === 'request_connector_runtime_preflight')).toBe(
-      false,
-    )
+    expect(
+      capture.rpcCalls?.some((call) => call.fn === 'request_connector_runtime_preflight'),
+    ).toBe(false)
   })
 
   it('runs connector import preview as validate plus diff without applying records', async () => {
@@ -1803,6 +1859,7 @@ describe('fetchErpOverviewWithMeta', () => {
       'list_connector_job_events',
       'list_connector_credential_events',
       'list_connector_import_preview_records',
+      'list_connector_apply_safety_contracts',
       'validate_import_batch',
       'preview_import_diff',
     ])
@@ -1884,6 +1941,7 @@ describe('fetchErpOverviewWithMeta', () => {
       'list_connector_job_events',
       'list_connector_credential_events',
       'list_connector_import_preview_records',
+      'list_connector_apply_safety_contracts',
       'validate_import_batch',
     ])
     expect(capture.rpcCalls?.some((call) => call.fn === 'preview_import_diff')).toBe(false)

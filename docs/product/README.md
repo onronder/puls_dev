@@ -528,6 +528,16 @@ The audit model is business-object first: every canonical insert, update, soft-d
 | [16_controlled_data_movement_safety_model.md](./16_controlled_data_movement_safety_model.md) | PR16 overwrite, rollback, change-set, CRUD audit retention, worker execution, and AI evidence safety model |
 | [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md) | Updated PR16 delivery order from apply safety contract through AI operational recommendations |
 
+## PR16.1 apply safety contract and permission hardening
+
+PR16.1 implements the first closed execution boundary for controlled data movement. It makes the legacy `apply_import_batch(UUID, TEXT)` RPC service-role only, rejects `import_apply` connector jobs while create-only gates are not implemented, and exposes a safe `/erp` apply contract covering CRUD audit tiers and 90-day hot retention for field diffs and rollback snapshots. It does not apply imports or write canonical data.
+
+| Document / artifact                                                                                                                                                    | Purpose                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [16_1_apply_safety_contract_permission_hardening.md](./16_1_apply_safety_contract_permission_hardening.md)                                                             | PR16.1 apply permission boundary, closed worker apply gate, audit-retention evidence, and PR16.2 handoff |
+| [`supabase/migrations/20260605100000_puls_integration_apply_safety_contract.sql`](../../supabase/migrations/20260605100000_puls_integration_apply_safety_contract.sql) | Service-role-only apply RPC, closed `import_apply` job trigger, and apply safety contract RPC            |
+| [`scripts/verify-16-1-apply-safety-contract.sh`](../../scripts/verify-16-1-apply-safety-contract.sh)                                                                   | PR16.1 verify gate                                                                                       |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
