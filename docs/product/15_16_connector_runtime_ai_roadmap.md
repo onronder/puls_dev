@@ -516,6 +516,8 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Ürün değeri:** Hatalı import durumunda PULS sadece "geçmiş olsun" demez; güvenli geri alma veya telafi batch'i üretir.
 
+**Implementation status:** PR16.5 starts with guarded-update rollback preview only: immutable hash-only rollback preview ledgers, admin/service-role preview generation, authenticated-safe preview listing, current-state drift blockers, and `/erp` review visibility. Rollback execution, compensating preview/execution, ERP/source writeback, provider API calls, credential readback, raw payload readback, snapshot payload readback, field value readback, browser direct apply, authenticated direct rollback, and AI autonomous execution remain closed.
+
 **Kapsam:**
 
 - Apply sonucu için recovery plan metadata

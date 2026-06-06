@@ -1089,6 +1089,8 @@
       "guardedUpdateRecoveryDescription": "Apply sonrası object event, field diff ve rollback snapshot kanıtlarının PR16.5 rollback preview için hazır olup olmadığını gösterir.",
       "guardedUpdateRecoveryRunbook": "Guarded update recovery runbook",
       "guardedUpdateRecoveryRunbookDescription": "PR16.5 rollback preview açılmadan önce güvenli aksiyon, kanıt boşluğu ve compensating review kararını gösterir.",
+      "guardedUpdateRollbackPreview": "Guarded update rollback preview",
+      "guardedUpdateRollbackPreviewDescription": "Applied guarded update için hash-only rollback preview, blocker ve current-state drift durumunu gösterir.",
       "controlledApply": "Kontrollü uygulama tasarımı",
       "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
@@ -2297,6 +2299,75 @@
         "prepare_pr16_5_preview_gate": {
           "label": "PR16.5 preview kapısını hazırla"
         }
+      }
+    },
+    "guardedUpdateRollbackPreview": {
+      "previewOpen": "Preview açık",
+      "executionClosed": "Execution kapalı",
+      "nextAction": "Preview aksiyonu: {{value}}",
+      "empty": "Rollback preview item henüz yok.",
+      "boundaryNote": "Bu bölüm yalnızca hash-only rollback preview kanıtını gösterir; rollback veya compensating update çalıştırmaz, snapshot payload veya önce/sonra değerlerini göstermez.",
+      "status": {
+        "not_available": "Rollback preview gerekmiyor",
+        "needs_generation": "Preview üretimi bekleniyor",
+        "ready_for_rollback_review": "Rollback preview hazır",
+        "blocked": "Rollback preview blokeli"
+      },
+      "descriptions": {
+        "not_available": "Mevcut change-set içinde rollback preview gerektiren applied guarded update yok.",
+        "needs_generation": "Recovery runbook hazır; admin/service-role rollback preview üretimi bekleniyor.",
+        "ready_for_rollback_review": "Rollback preview item'ları kanıt, snapshot ve current-state guard ile review için hazır.",
+        "blocked": "Rollback preview current-state drift veya eksik kanıt nedeniyle execution'a ilerleyemez."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada rollback preview aksiyonu yok."
+        },
+        "generate_preview": {
+          "label": "Preview üret",
+          "description": "Admin/service-role preview RPC'si hash-only rollback preview kanıtını üretebilir."
+        },
+        "review_preview": {
+          "label": "Preview incele",
+          "description": "Rollback execution hâlâ kapalı; preview yalnızca review ve sonraki approval adımı içindir."
+        },
+        "resolve_blockers": {
+          "label": "Blocker çöz",
+          "description": "Current-state drift veya eksik kanıt çözülmeden rollback execution açılamaz."
+        }
+      },
+      "metrics": {
+        "rows": "Rollback satırı",
+        "blockers": "Blocker",
+        "evidence": "Kanıt",
+        "approval": "Onay"
+      },
+      "values": {
+        "yes": "Evet",
+        "no": "Hayır",
+        "rollbackRows": "Hazır / toplam",
+        "driftDetected": "Drift var",
+        "noDrift": "Drift yok",
+        "diffSnapshot": "Field diff / snapshot",
+        "required": "Gerekli",
+        "notRequired": "Gerekli değil",
+        "operatorReviewRequired": "Operator review gerekli",
+        "noAction": "Aksiyon yok",
+        "noFields": "Alan yok",
+        "currentMatch": "Current state eşleşiyor",
+        "currentMismatch": "Current state drift",
+        "noBlockers": "Blocker yok"
+      },
+      "columns": {
+        "target": "Hedef",
+        "status": "Durum",
+        "evidence": "Kanıt",
+        "blockers": "Blocker"
+      },
+      "itemStatus": {
+        "ready": "Hazır",
+        "blocked": "Blokeli"
       }
     },
     "applyExecutionContract": {

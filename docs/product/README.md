@@ -602,6 +602,16 @@ PR16.4.4 turns recovery readiness into an operator-facing safe runbook before PR
 | [`supabase/migrations/20260606120000_puls_integration_guarded_update_recovery_runbook.sql`](../../supabase/migrations/20260606120000_puls_integration_guarded_update_recovery_runbook.sql) | Read-only guarded update recovery runbook RPC and PR16.4.4 apply safety contract posture             |
 | [`scripts/verify-16-4-4-guarded-update-recovery-runbook.sh`](../../scripts/verify-16-4-4-guarded-update-recovery-runbook.sh)                                                               | PR16.4.4 verify gate                                                                                 |
 
+## PR16.5 guarded update rollback preview
+
+PR16.5 opens rollback preview generation for applied guarded updates without opening rollback execution. It creates immutable hash-only preview ledgers, classifies current-state drift and evidence gaps, and exposes safe preview summaries in `/erp` while keeping compensating execution, ERP/source writeback, credential/readback, provider calls, browser direct apply, and AI autonomous execution closed.
+
+| Document / artifact                                                                                                                                                          | Purpose                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [16_5_guarded_update_rollback_preview.md](./16_5_guarded_update_rollback_preview.md)                                                                                         | PR16.5 guarded update rollback preview scope, safety contract, and execution handoff             |
+| [`supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql`](../../supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql) | Immutable rollback preview ledgers plus generate/list RPCs; no rollback execution or value readback |
+| [`scripts/verify-16-5-guarded-update-rollback-preview.sh`](../../scripts/verify-16-5-guarded-update-rollback-preview.sh)                                                     | PR16.5 verify gate                                                                               |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
