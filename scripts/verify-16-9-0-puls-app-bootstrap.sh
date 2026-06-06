@@ -42,6 +42,9 @@ for needle in \
   "PR16.9.0 puls_app Bootstrap And Exposure Smoke" \
   "pr16.9.0-puls-app-bootstrap-v1" \
   "Remote Operator Requirement" \
+  "PGRST106" \
+  "supabase stop" \
+  "supabase start" \
   "app_schema_exists = true" \
   "notification_tables_exist = false" \
   "anon_exec = false" \

@@ -166,6 +166,13 @@ Required steps:
 9. Verify unauthorized/public access is closed.
 10. Record smoke SQL in the PR verify script.
 
+Important distinction:
+
+- `NOTIFY pgrst, 'reload schema'` refreshes object metadata for schemas PostgREST already exposes.
+- It does not add a schema that is absent from the exposed schema configuration.
+- Local `supabase/config.toml` schema changes require restarting the local Supabase stack before REST-profile smoke.
+- Remote Supabase requires the project API exposed schema setting to include `puls_app`.
+
 Stop condition:
 
 - If `puls_app` RPCs are not visible or return schema-cache/profile errors, do not proceed to notification model work.

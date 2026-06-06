@@ -35,6 +35,24 @@ Before remote API smoke for PR16.9.0, the Supabase project API exposed schema li
 
 Local development is aligned by `supabase/config.toml`. Remote development must be checked in Supabase project settings or equivalent project configuration. If RPCs exist in SQL but are not visible through the API, treat it as schema exposure or PostgREST cache drift before debugging product code.
 
+`NOTIFY pgrst, 'reload schema'` refreshes PostgREST's schema cache, but it does not add a schema that is missing from the exposed schema configuration. After changing `supabase/config.toml`, restart the local Supabase stack so the REST service reads the new exposed schema list:
+
+```bash
+supabase stop
+supabase start
+```
+
+Expected local failure before the restart:
+
+- `PGRST106`
+- message says `Invalid schema: puls_app`
+- hint lists exposed schemas without `puls_app`
+
+Expected result after restart:
+
+- `puls_app` appears in the exposed schema list
+- the service-role REST profile smoke returns `200`
+
 ## Smoke SQL
 
 ### Schema And RPC Existence
@@ -135,13 +153,21 @@ git diff --check
 supabase db push --dry-run
 ```
 
+For local REST-profile smoke after pulling the config change:
+
+```bash
+supabase db reset
+supabase stop
+supabase start
+```
+
 After remote migration:
 
 ```sql
 notify pgrst, 'reload schema';
 ```
 
-Then run the smoke SQL above.
+Then run the smoke SQL above. If the API still rejects `puls_app`, verify the exposed schema setting before changing product code.
 
 ## Handoff To PR16.9.1
 
