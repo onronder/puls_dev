@@ -1894,6 +1894,164 @@ function ErpPage() {
               </div>
             </section>
 
+            <section id="erp-guarded-update-recovery-runbook" className="mt-8 scroll-mt-6">
+              <SectionHeader
+                title={t('erp.sections.guardedUpdateRecoveryRunbook')}
+                description={t('erp.sections.guardedUpdateRecoveryRunbookDescription')}
+              />
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                        {t(data.guardedUpdateRecoveryRunbook.statusLabelKey)}
+                      </h2>
+                      <StatusPill tone={readinessTone(data.guardedUpdateRecoveryRunbook.readiness)}>
+                        {t(`erp.readinessStatus.${data.guardedUpdateRecoveryRunbook.readiness}`)}
+                      </StatusPill>
+                      <StatusPill tone="neutral">
+                        {t('erp.guardedUpdateRecoveryRunbook.previewClosed')}
+                      </StatusPill>
+                      <StatusPill tone="neutral">
+                        {t('erp.guardedUpdateRecoveryRunbook.executionClosed')}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                      {t(data.guardedUpdateRecoveryRunbook.descriptionKey)}
+                    </p>
+                    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                      {t(data.guardedUpdateRecoveryRunbook.actionDescriptionKey)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-xs text-[var(--color-text-muted)] lg:max-w-sm">
+                    {t('erp.guardedUpdateRecoveryRunbook.nextAction', {
+                      value:
+                        data.guardedUpdateRecoveryRunbook.nextActionKey ??
+                        t('erp.guardedUpdateRecoveryRunbook.values.noAction'),
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecoveryRunbook.metrics.candidate')}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecoveryRunbook.rollbackPreviewCandidate
+                        ? t('erp.guardedUpdateRecoveryRunbook.values.yes')
+                        : t('erp.guardedUpdateRecoveryRunbook.values.no')}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecoveryRunbook.values.previewStillClosed')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecoveryRunbook.metrics.blockers')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecoveryRunbook.blockerCodes.length}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                      {data.guardedUpdateRecoveryRunbook.blockerCodes.join(', ') ||
+                        t('erp.guardedUpdateRecoveryRunbook.values.noBlockers')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecoveryRunbook.metrics.evidence')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecoveryRunbook.summary.objectEventCount}/
+                      {data.guardedUpdateRecoveryRunbook.summary.fieldDiffCount}/
+                      {data.guardedUpdateRecoveryRunbook.summary.rollbackReadyCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecoveryRunbook.values.eventDiffSnapshot')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecoveryRunbook.metrics.approval')}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecoveryRunbook.approvalRequired
+                        ? t('erp.guardedUpdateRecoveryRunbook.values.required')
+                        : t('erp.guardedUpdateRecoveryRunbook.values.notRequired')}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecoveryRunbook.values.operatorReviewRequired')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                  <div className="grid gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] md:grid-cols-[1fr_120px_120px_1fr]">
+                    <span>{t('erp.guardedUpdateRecoveryRunbook.columns.step')}</span>
+                    <span>{t('erp.guardedUpdateRecoveryRunbook.columns.status')}</span>
+                    <span>{t('erp.guardedUpdateRecoveryRunbook.columns.evidence')}</span>
+                    <span>{t('erp.guardedUpdateRecoveryRunbook.columns.nextAction')}</span>
+                  </div>
+                  <ul className="divide-y divide-[var(--color-border)]">
+                    {data.guardedUpdateRecoveryRunbook.safeSteps.length > 0 ? (
+                      data.guardedUpdateRecoveryRunbook.safeSteps.map((step) => (
+                        <li
+                          key={step.stepKey}
+                          className="grid gap-2 px-4 py-3 md:grid-cols-[1fr_120px_120px_1fr] md:items-center"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                              {t(step.labelKey)}
+                            </p>
+                            {step.blockerCode ? (
+                              <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                                {step.blockerCode}
+                              </p>
+                            ) : null}
+                          </div>
+                          <div>
+                            <StatusPill
+                              tone={
+                                step.stepStatus === 'verified' || step.stepStatus === 'candidate'
+                                  ? 'success'
+                                  : step.stepStatus === 'blocked'
+                                    ? 'danger'
+                                    : 'neutral'
+                              }
+                            >
+                              {t(step.statusLabelKey)}
+                            </StatusPill>
+                          </div>
+                          <div className="font-mono text-sm text-[var(--color-text-muted)]">
+                            {step.evidenceCount}/{step.requiredCount}
+                          </div>
+                          <div className="truncate text-xs text-[var(--color-text-muted)]">
+                            {step.nextActionKey ??
+                              t('erp.guardedUpdateRecoveryRunbook.values.noAction')}
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRecoveryRunbook.empty')}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="mt-4 flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3">
+                  <Info
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                    aria-hidden
+                  />
+                  <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+                    {t('erp.guardedUpdateRecoveryRunbook.boundaryNote')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
             <section id="erp-controlled-apply" className="mt-8 scroll-mt-6">
               <SectionHeader
                 title={t('erp.sections.controlledApply')}

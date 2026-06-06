@@ -1087,6 +1087,8 @@
       "guardedUpdateEvidenceDescription": "Guarded update satırları için hash-only field diff ve rollback snapshot kanıtı üretir. Güncelleme çalıştırmaz veya değerleri göstermez.",
       "guardedUpdateRecovery": "Guarded update recovery hazırlığı",
       "guardedUpdateRecoveryDescription": "Apply sonrası object event, field diff ve rollback snapshot kanıtlarının PR16.5 rollback preview için hazır olup olmadığını gösterir.",
+      "guardedUpdateRecoveryRunbook": "Guarded update recovery runbook",
+      "guardedUpdateRecoveryRunbookDescription": "PR16.5 rollback preview açılmadan önce güvenli aksiyon, kanıt boşluğu ve compensating review kararını gösterir.",
       "controlledApply": "Kontrollü uygulama tasarımı",
       "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
@@ -2209,6 +2211,92 @@
         "target": "Hedef",
         "evidence": "Kanıt",
         "boundary": "Sınır"
+      }
+    },
+    "guardedUpdateRecoveryRunbook": {
+      "previewClosed": "Rollback preview kapalı",
+      "executionClosed": "Execution kapalı",
+      "nextAction": "Runbook aksiyonu: {{value}}",
+      "empty": "Recovery runbook adımı henüz yok.",
+      "boundaryNote": "Bu bölüm yalnızca operator runbook ve eligibility kanıtını gösterir; rollback preview üretmez, rollback veya compensating update çalıştırmaz, snapshot payload veya önce/sonra değerlerini göstermez.",
+      "status": {
+        "not_available": "Runbook gerekmiyor",
+        "needs_apply": "Apply bekleniyor",
+        "ready_for_rollback_preview": "Rollback preview adayı",
+        "evidence_gap": "Kanıt boşluğu var",
+        "compensating_review_required": "Compensating review gerekli"
+      },
+      "descriptions": {
+        "not_available": "Mevcut change-set içinde recovery runbook gerektiren guarded update yok.",
+        "needs_apply": "Runbook yalnızca worker apply tamamlandıktan sonra değerlendirilebilir.",
+        "ready_for_rollback_preview": "Object event, field diff, snapshot ve sıcak retention kanıtları PR16.5 rollback preview adaylığı için hazır.",
+        "evidence_gap": "Object event, field diff veya snapshot kanıtları tamamlanmadan rollback preview tasarlanamaz.",
+        "compensating_review_required": "Sıcak snapshot penceresi geçtiği için rollback preview yerine compensating review runbook hazırlanmalı."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada recovery runbook aksiyonu yok."
+        },
+        "wait_for_apply": {
+          "label": "Apply bekle",
+          "description": "Worker apply tamamlanmadan rollback preview adaylığı değerlendirilemez."
+        },
+        "prepare_rollback_preview": {
+          "label": "Rollback preview hazırla",
+          "description": "PR16.5 yalnızca preview generation açtığında bu adaylık kullanılabilir; bu PR preview üretmez."
+        },
+        "repair_evidence_gap": {
+          "label": "Kanıt boşluğunu düzelt",
+          "description": "Eksik object event, field diff veya snapshot kanıtları tamamlanmadan ilerleme yok."
+        },
+        "prepare_compensating_review": {
+          "label": "Compensating review hazırla",
+          "description": "Rollback snapshot sıcak penceresi geçti; manuel veya compensating review hazırlanmalı."
+        }
+      },
+      "metrics": {
+        "candidate": "Preview adayı",
+        "blockers": "Blocker",
+        "evidence": "Kanıt",
+        "approval": "Onay"
+      },
+      "values": {
+        "yes": "Evet",
+        "no": "Hayır",
+        "previewStillClosed": "Preview üretimi kapalı",
+        "noBlockers": "Blocker yok",
+        "eventDiffSnapshot": "Event / diff / snapshot",
+        "required": "Gerekli",
+        "notRequired": "Gerekli değil",
+        "operatorReviewRequired": "Operator review gerekli",
+        "noAction": "Aksiyon yok"
+      },
+      "columns": {
+        "step": "Adım",
+        "status": "Durum",
+        "evidence": "Kanıt",
+        "nextAction": "Sonraki aksiyon"
+      },
+      "stepStatus": {
+        "pending": "Bekliyor",
+        "verified": "Doğrulandı",
+        "blocked": "Blokeli",
+        "candidate": "Aday"
+      },
+      "steps": {
+        "verify_original_apply_event": {
+          "label": "Apply object event doğrula"
+        },
+        "verify_hash_only_field_diffs": {
+          "label": "Hash-only field diff doğrula"
+        },
+        "verify_rollback_snapshot_window": {
+          "label": "Rollback snapshot penceresini doğrula"
+        },
+        "prepare_pr16_5_preview_gate": {
+          "label": "PR16.5 preview kapısını hazırla"
+        }
       }
     },
     "applyExecutionContract": {

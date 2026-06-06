@@ -544,6 +544,72 @@ export type ConnectorGuardedUpdateRecoveryReadiness = {
   sampleEvents: ConnectorGuardedUpdateRecoveryEventSummary[]
 }
 
+export type ConnectorGuardedUpdateRecoveryRunbookStatus =
+  | 'not_available'
+  | 'needs_apply'
+  | 'ready_for_rollback_preview'
+  | 'evidence_gap'
+  | 'compensating_review_required'
+
+export type ConnectorGuardedUpdateRecoveryRunbookAction =
+  | 'none'
+  | 'wait_for_apply'
+  | 'prepare_rollback_preview'
+  | 'repair_evidence_gap'
+  | 'prepare_compensating_review'
+
+export type ConnectorGuardedUpdateRecoveryRunbookStepStatus =
+  | 'pending'
+  | 'verified'
+  | 'blocked'
+  | 'candidate'
+
+export type ConnectorGuardedUpdateRecoveryRunbookStep = {
+  stepKey: string
+  stepStatus: ConnectorGuardedUpdateRecoveryRunbookStepStatus
+  evidenceCount: number
+  requiredCount: number
+  blockerCode: string | null
+  nextActionKey: string | null
+  labelKey: string
+  statusLabelKey: string
+}
+
+export type ConnectorGuardedUpdateRecoveryRunbook = {
+  changeSetId: string | null
+  status: ConnectorGuardedUpdateRecoveryRunbookStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  recommendedAction: ConnectorGuardedUpdateRecoveryRunbookAction
+  actionLabelKey: string
+  actionDescriptionKey: string
+  rollbackPreviewCandidate: boolean
+  rollbackPreviewEnabled: false
+  rollbackExecutionEnabled: false
+  compensatingExecutionEnabled: false
+  sourceWritebackEnabled: false
+  credentialReadbackEnabled: false
+  valueReadbackEnabled: false
+  operatorReviewRequired: boolean
+  approvalRequired: boolean
+  batchId: string | null
+  appliedAt: string | null
+  hotRetentionExpiresAt: string | null
+  purgeAfterAt: string | null
+  blockerCodes: string[]
+  nextActionKey: string | null
+  summary: {
+    updateCount: number
+    objectEventCount: number
+    fieldDiffCount: number
+    rollbackSnapshotCount: number
+    rollbackReadyCount: number
+    staleRecheckVerifiedCount: number
+  }
+  safeSteps: ConnectorGuardedUpdateRecoveryRunbookStep[]
+}
+
 export type ConnectorApplyReadinessStatus =
   | 'not_available'
   | 'needs_preview'
@@ -1019,6 +1085,7 @@ export type ErpOverview = {
   applyChangeSet: ConnectorApplyChangeSet
   guardedUpdateEvidence: ConnectorGuardedUpdateEvidence
   guardedUpdateRecovery: ConnectorGuardedUpdateRecoveryReadiness
+  guardedUpdateRecoveryRunbook: ConnectorGuardedUpdateRecoveryRunbook
   applySafetyContract: ConnectorApplySafetyContract
   controlledApplyPlan: ConnectorControlledApplyPlan
   applyExecutionContract: ConnectorApplyExecutionContract
@@ -1259,6 +1326,49 @@ type ConnectorGuardedUpdateRecoveryReadinessRow = {
   purge_archive_required?: boolean | null
   next_action_key?: string | null
   sample_events?: unknown
+  created_at?: string | null
+}
+
+type ConnectorGuardedUpdateRecoveryRunbookRow = {
+  change_set_id?: string | null
+  tenant_id?: string | null
+  connection_id?: string | null
+  source_namespace_id?: string | null
+  import_batch_id?: string | null
+  status?:
+    | 'needs_apply'
+    | 'ready_for_rollback_preview'
+    | 'evidence_gap'
+    | 'compensating_review_required'
+    | null
+  recommended_action?:
+    | 'wait_for_apply'
+    | 'prepare_rollback_preview'
+    | 'repair_evidence_gap'
+    | 'prepare_compensating_review'
+    | null
+  readiness_status?: ConnectorReadinessStatus | null
+  applied_at?: string | null
+  update_count?: number | null
+  object_event_count?: number | null
+  field_diff_count?: number | null
+  rollback_snapshot_count?: number | null
+  rollback_ready_count?: number | null
+  stale_recheck_verified_count?: number | null
+  blocker_codes?: unknown
+  operator_review_required?: boolean | null
+  approval_required?: boolean | null
+  rollback_preview_candidate?: boolean | null
+  rollback_preview_enabled?: boolean | null
+  rollback_execution_enabled?: boolean | null
+  compensating_execution_enabled?: boolean | null
+  source_writeback_enabled?: boolean | null
+  credential_readback_enabled?: boolean | null
+  value_readback_enabled?: boolean | null
+  hot_retention_expires_at?: string | null
+  purge_after_at?: string | null
+  next_action_key?: string | null
+  safe_steps?: unknown
   created_at?: string | null
 }
 
@@ -2682,6 +2792,45 @@ function normalizeGuardedUpdateRecoveryEvents(
     }))
 }
 
+function normalizeGuardedUpdateRecoveryRunbookSteps(
+  value: unknown,
+): ConnectorGuardedUpdateRecoveryRunbookStep[] {
+  if (!Array.isArray(value)) return []
+
+  const allowedStatuses = new Set<ConnectorGuardedUpdateRecoveryRunbookStepStatus>([
+    'pending',
+    'verified',
+    'blocked',
+    'candidate',
+  ])
+
+  return value
+    .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+    .map((item, index) => {
+      const stepKey =
+        typeof item.step_key === 'string' && item.step_key.trim()
+          ? item.step_key
+          : `step_${index + 1}`
+      const rawStatus = item.step_status
+      const stepStatus =
+        typeof rawStatus === 'string' &&
+        allowedStatuses.has(rawStatus as ConnectorGuardedUpdateRecoveryRunbookStepStatus)
+          ? (rawStatus as ConnectorGuardedUpdateRecoveryRunbookStepStatus)
+          : 'pending'
+
+      return {
+        stepKey,
+        stepStatus,
+        evidenceCount: Number(item.evidence_count ?? 0),
+        requiredCount: Number(item.required_count ?? 0),
+        blockerCode: typeof item.blocker_code === 'string' ? item.blocker_code : null,
+        nextActionKey: typeof item.next_action_key === 'string' ? item.next_action_key : null,
+        labelKey: `erp.guardedUpdateRecoveryRunbook.steps.${stepKey}.label`,
+        statusLabelKey: `erp.guardedUpdateRecoveryRunbook.stepStatus.${stepStatus}`,
+      }
+    })
+}
+
 function emptyConnectorApplyChangeSet(
   connectorState: ConnectorLifecycleState,
   importPreview: ConnectorImportPreview,
@@ -2954,6 +3103,93 @@ function buildConnectorGuardedUpdateRecoveryReadiness({
       recoveryWindowHotRetentionDays: Number(row?.recovery_window_hot_retention_days ?? 90),
     },
     sampleEvents: normalizeGuardedUpdateRecoveryEvents(row?.sample_events),
+  }
+}
+
+function buildConnectorGuardedUpdateRecoveryRunbook({
+  connectorState,
+  applyChangeSet,
+  recovery,
+  row,
+}: {
+  connectorState: ConnectorLifecycleState
+  applyChangeSet: ConnectorApplyChangeSet
+  recovery: ConnectorGuardedUpdateRecoveryReadiness
+  row: ConnectorGuardedUpdateRecoveryRunbookRow | null
+}): ConnectorGuardedUpdateRecoveryRunbook {
+  const hasGuardedUpdates = applyChangeSet.summary.guardedUpdateCount > 0
+  const rowStatus = row?.status ?? null
+  const status: ConnectorGuardedUpdateRecoveryRunbookStatus =
+    connectorState !== 'connector_selected' || !applyChangeSet.id || !hasGuardedUpdates
+      ? 'not_available'
+      : rowStatus === 'ready_for_rollback_preview' ||
+          rowStatus === 'evidence_gap' ||
+          rowStatus === 'compensating_review_required' ||
+          rowStatus === 'needs_apply'
+        ? rowStatus
+        : recovery.status === 'recovery_ready'
+          ? 'ready_for_rollback_preview'
+          : recovery.status === 'hot_retention_expired'
+            ? 'compensating_review_required'
+            : recovery.status === 'needs_apply'
+              ? 'needs_apply'
+              : 'evidence_gap'
+
+  const readiness: ConnectorReadinessStatus =
+    status === 'ready_for_rollback_preview'
+      ? 'ready'
+      : status === 'evidence_gap' || status === 'compensating_review_required'
+        ? 'blocked'
+        : 'partial'
+  const recommendedAction: ConnectorGuardedUpdateRecoveryRunbookAction =
+    status === 'ready_for_rollback_preview'
+      ? 'prepare_rollback_preview'
+      : status === 'evidence_gap'
+        ? 'repair_evidence_gap'
+        : status === 'compensating_review_required'
+          ? 'prepare_compensating_review'
+          : status === 'needs_apply'
+            ? 'wait_for_apply'
+            : 'none'
+
+  return {
+    changeSetId: row?.change_set_id ?? applyChangeSet.id,
+    status,
+    readiness,
+    statusLabelKey: `erp.guardedUpdateRecoveryRunbook.status.${status}`,
+    descriptionKey: `erp.guardedUpdateRecoveryRunbook.descriptions.${status}`,
+    recommendedAction,
+    actionLabelKey: `erp.guardedUpdateRecoveryRunbook.actions.${recommendedAction}.label`,
+    actionDescriptionKey: `erp.guardedUpdateRecoveryRunbook.actions.${recommendedAction}.description`,
+    rollbackPreviewCandidate:
+      row?.rollback_preview_candidate === true || status === 'ready_for_rollback_preview',
+    rollbackPreviewEnabled: false,
+    rollbackExecutionEnabled: false,
+    compensatingExecutionEnabled: false,
+    sourceWritebackEnabled: false,
+    credentialReadbackEnabled: false,
+    valueReadbackEnabled: false,
+    operatorReviewRequired: row?.operator_review_required !== false && status !== 'not_available',
+    approvalRequired: row?.approval_required !== false && status !== 'not_available',
+    batchId: row?.import_batch_id ?? recovery.batchId,
+    appliedAt: row?.applied_at ?? recovery.appliedAt,
+    hotRetentionExpiresAt: row?.hot_retention_expires_at ?? recovery.hotRetentionExpiresAt,
+    purgeAfterAt: row?.purge_after_at ?? recovery.purgeAfterAt,
+    blockerCodes: normalizeStringArray(row?.blocker_codes),
+    nextActionKey: row?.next_action_key ?? recovery.nextActionKey,
+    summary: {
+      updateCount: Number(row?.update_count ?? recovery.summary.updateCount),
+      objectEventCount: Number(row?.object_event_count ?? recovery.summary.objectEventCount),
+      fieldDiffCount: Number(row?.field_diff_count ?? recovery.summary.fieldDiffCount),
+      rollbackSnapshotCount: Number(
+        row?.rollback_snapshot_count ?? recovery.summary.rollbackSnapshotCount,
+      ),
+      rollbackReadyCount: Number(row?.rollback_ready_count ?? recovery.summary.rollbackReadyCount),
+      staleRecheckVerifiedCount: Number(
+        row?.stale_recheck_verified_count ?? recovery.summary.staleRecheckVerifiedCount,
+      ),
+    },
+    safeSteps: normalizeGuardedUpdateRecoveryRunbookSteps(row?.safe_steps),
   }
 }
 
@@ -3406,11 +3642,13 @@ function buildConnectorApplyExecutionContract({
     workerApplyBoundaryOpen &&
     (applySafetyContract.contractVersion === 'pr16.3-create-only-worker-apply-v1' ||
       applySafetyContract.contractVersion === 'pr16.4.2-guarded-update-worker-apply-v1' ||
-      applySafetyContract.contractVersion === 'pr16.4.3-guarded-update-recovery-readiness-v1')
+      applySafetyContract.contractVersion === 'pr16.4.3-guarded-update-recovery-readiness-v1' ||
+      applySafetyContract.contractVersion === 'pr16.4.4-guarded-update-recovery-runbook-v1')
   const workerGuardedUpdateOpen =
     workerApplyBoundaryOpen &&
     (applySafetyContract.contractVersion === 'pr16.4.2-guarded-update-worker-apply-v1' ||
-      applySafetyContract.contractVersion === 'pr16.4.3-guarded-update-recovery-readiness-v1')
+      applySafetyContract.contractVersion === 'pr16.4.3-guarded-update-recovery-readiness-v1' ||
+      applySafetyContract.contractVersion === 'pr16.4.4-guarded-update-recovery-runbook-v1')
   const createOnlySafeToExecute =
     previewReady &&
     approvalRecorded &&
@@ -4915,6 +5153,7 @@ function buildOverview({
   applyChangeSet,
   guardedUpdateEvidence,
   guardedUpdateRecovery,
+  guardedUpdateRecoveryRunbook,
   applySafetyContract,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
@@ -4951,6 +5190,7 @@ function buildOverview({
   applyChangeSet?: ConnectorApplyChangeSet
   guardedUpdateEvidence?: ConnectorGuardedUpdateEvidence
   guardedUpdateRecovery?: ConnectorGuardedUpdateRecoveryReadiness
+  guardedUpdateRecoveryRunbook?: ConnectorGuardedUpdateRecoveryRunbook
   applySafetyContract?: ConnectorApplySafetyContract
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
@@ -5047,6 +5287,14 @@ function buildOverview({
       applyChangeSet: resolvedApplyChangeSet,
       row: null,
     })
+  const resolvedGuardedUpdateRecoveryRunbook =
+    guardedUpdateRecoveryRunbook ??
+    buildConnectorGuardedUpdateRecoveryRunbook({
+      connectorState,
+      applyChangeSet: resolvedApplyChangeSet,
+      recovery: resolvedGuardedUpdateRecovery,
+      row: null,
+    })
   const controlledApplyPlan = buildConnectorControlledApplyPlan({
     connectorState,
     importPreview: resolvedImportPreview,
@@ -5125,6 +5373,7 @@ function buildOverview({
     applyChangeSet: resolvedApplyChangeSet,
     guardedUpdateEvidence: resolvedGuardedUpdateEvidence,
     guardedUpdateRecovery: resolvedGuardedUpdateRecovery,
+    guardedUpdateRecoveryRunbook: resolvedGuardedUpdateRecoveryRunbook,
     applySafetyContract: resolvedApplySafetyContract,
     controlledApplyPlan,
     applyExecutionContract,
@@ -5519,6 +5768,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   let applyChangeSetRow: ConnectorApplyChangeSetRow | null = null
   let guardedUpdateEvidenceRow: ConnectorGuardedUpdateEvidenceRow | null = null
   let guardedUpdateRecoveryRow: ConnectorGuardedUpdateRecoveryReadinessRow | null = null
+  let guardedUpdateRecoveryRunbookRow: ConnectorGuardedUpdateRecoveryRunbookRow | null = null
 
   if (connectorNamespaceIds.length > 0) {
     const importBatchRow = await pulsIntegration()
@@ -5623,6 +5873,22 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
                 []) as ConnectorGuardedUpdateRecoveryReadinessRow[]
             )[0] ?? null
         }
+
+        const guardedUpdateRecoveryRunbookResult = await pulsIntegration().rpc(
+          'list_connector_guarded_update_recovery_runbooks',
+          {
+            p_change_set_id: applyChangeSetRow.id,
+            p_limit: 8,
+          },
+        )
+
+        if (!guardedUpdateRecoveryRunbookResult.error) {
+          guardedUpdateRecoveryRunbookRow =
+            (
+              (guardedUpdateRecoveryRunbookResult.data ??
+                []) as ConnectorGuardedUpdateRecoveryRunbookRow[]
+            )[0] ?? null
+        }
       }
     }
   }
@@ -5672,6 +5938,12 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     connectorState: connection ? 'connector_selected' : 'no_connector',
     applyChangeSet,
     row: guardedUpdateRecoveryRow,
+  })
+  const guardedUpdateRecoveryRunbook = buildConnectorGuardedUpdateRecoveryRunbook({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    applyChangeSet,
+    recovery: guardedUpdateRecovery,
+    row: guardedUpdateRecoveryRunbookRow,
   })
 
   return buildOverview({
@@ -5732,6 +6004,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     applyChangeSet,
     guardedUpdateEvidence,
     guardedUpdateRecovery,
+    guardedUpdateRecoveryRunbook,
     applySafetyContract,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
