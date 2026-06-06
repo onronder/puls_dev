@@ -647,34 +647,44 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Rollback her satır için `rollback` object event üretir.
 - Aynı worker job idempotent, farklı job duplicate rollback yapamaz.
 
-### PR16.9 - Notification Center Foundation
+### PR16.9 - App-Wide Notification Center Foundation
 
-**Ürün değeri:** Admin ve ilgili roller önemli connector olaylarını ekran aramadan takip eder.
+**Ürün değeri:** Admin ve ilgili roller önemli uygulama olaylarını ekran aramadan takip eder. `/erp` ilk producer ve ilk görünür yüzeydir; Notification Center app-wide bir PULS yeteneği olarak tasarlanır.
+
+**Planning contract:** [`16_9_app_wide_notification_center_strategy.md`](./16_9_app_wide_notification_center_strategy.md)
+
+**Implementation status:** PR16.9.0 implements only the `puls_app` schema bootstrap and exposure smoke. Notification ledgers, producer mapping, UI, realtime, and delivery remain closed until later PR16.9 sub-phases.
 
 **Kapsam:**
 
-- Notification entity/model
-- Connector job tamamlandı, hata aldı, approval bekliyor, credential eksik, import tamamlandı event'leri
+- `puls_app` app experience schema bootstrap ve exposure smoke
+- App-wide notification entity/model
+- Connector runtime ilk producer mapping'i
+- Connector job tamamlandı, hata aldı, approval bekliyor, credential eksik, import/rollback tamamlandı event'leri
 - Riskli update blocked, stale preview, rollback required event'leri
 - Role-based notification visibility
-- Read/unread state
-- `/dashboard`, `/erp` ve ileride AI Coach bağlantısı
+- Per-employee read/unread/dismiss state
+- Production-grade reusable Notification Center UI, ilk entegrasyon `/erp`
+- Optional private realtime enhancement with polling/refetch fallback
 
 **Kapsam dışı:**
 
 - Email/push delivery
 - External notification provider
 - AI autonomous notification action
+- Realtime-only correctness path
 
 **AI-ready çıktı:**
 
-- AI Coach notification event'lerini context olarak kullanabilir ve "öncelikli aksiyonlar" üretebilir.
+- AI Coach notification event'lerini safe context olarak kullanabilir ve "öncelikli aksiyonlar" üretebilir.
 
 **Doğrulama:**
 
+- `puls_app` expose/cache smoke lokal ve remote geçer.
 - Notification cross-tenant okunamaz.
 - Secret/raw payload notification içinde yoktur.
 - Role visibility doğru çalışır.
+- Read/unread/dismiss UI state DB ledger ile tutarlıdır.
 
 ### PR16.10 - Canias Runtime Spike On Generic Connector Foundation
 

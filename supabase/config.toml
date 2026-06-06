@@ -7,6 +7,7 @@ schemas = [
   "graphql_public",
   "puls_audit",
   "puls_calc",
+  "puls_app",
   "puls_core",
   "puls_integration",
   "puls_performance",
