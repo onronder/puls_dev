@@ -1731,6 +1731,169 @@ function ErpPage() {
               </div>
             </section>
 
+            <section id="erp-guarded-update-recovery" className="mt-8 scroll-mt-6">
+              <SectionHeader
+                title={t('erp.sections.guardedUpdateRecovery')}
+                description={t('erp.sections.guardedUpdateRecoveryDescription')}
+              />
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                        {t(data.guardedUpdateRecovery.statusLabelKey)}
+                      </h2>
+                      <StatusPill tone={readinessTone(data.guardedUpdateRecovery.readiness)}>
+                        {t(`erp.readinessStatus.${data.guardedUpdateRecovery.readiness}`)}
+                      </StatusPill>
+                      <StatusPill tone="neutral">
+                        {t('erp.guardedUpdateRecovery.rollbackExecutionClosed')}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                      {t(data.guardedUpdateRecovery.descriptionKey)}
+                    </p>
+                    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                      {t(data.guardedUpdateRecovery.actionDescriptionKey)}
+                    </p>
+                    {data.guardedUpdateRecovery.appliedAt ? (
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRecovery.appliedAt', {
+                          value: formatDateTime(
+                            data.guardedUpdateRecovery.appliedAt,
+                            i18n.language,
+                            t('erp.credentialBoundary.notRecorded'),
+                          ),
+                        })}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-xs text-[var(--color-text-muted)] lg:max-w-sm">
+                    {t('erp.guardedUpdateRecovery.nextAction', {
+                      value:
+                        data.guardedUpdateRecovery.nextActionKey ??
+                        t('erp.guardedUpdateRecovery.values.noAction'),
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.metrics.updates')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecovery.summary.updateCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.values.appliedRows')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.metrics.objectEvents')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecovery.summary.objectEventCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.values.auditLinked')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.metrics.rollbackReady')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecovery.summary.rollbackReadyCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.values.snapshotWindow')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.metrics.retention')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRecovery.summary.recoveryWindowHotRetentionDays}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRecovery.values.days')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                  <div className="grid gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] md:grid-cols-[72px_1fr_1fr_160px]">
+                    <span>{t('erp.guardedUpdateRecovery.columns.row')}</span>
+                    <span>{t('erp.guardedUpdateRecovery.columns.target')}</span>
+                    <span>{t('erp.guardedUpdateRecovery.columns.evidence')}</span>
+                    <span className="md:text-right">
+                      {t('erp.guardedUpdateRecovery.columns.boundary')}
+                    </span>
+                  </div>
+                  <ul className="divide-y divide-[var(--color-border)]">
+                    {data.guardedUpdateRecovery.sampleEvents.length > 0 ? (
+                      data.guardedUpdateRecovery.sampleEvents.map((event) => (
+                        <li
+                          key={event.id}
+                          className="grid gap-2 px-4 py-3 md:grid-cols-[72px_1fr_1fr_160px] md:items-center"
+                        >
+                          <div className="font-mono text-sm text-[var(--color-text-muted)]">
+                            #{event.rowNumber}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-sm font-semibold text-[var(--color-text-primary)]">
+                              {event.entityType}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                              {event.targetTable} · {event.externalId}
+                            </p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-[var(--color-text-secondary)]">
+                              {event.safeFieldNames.join(', ') ||
+                                t('erp.guardedUpdateRecovery.values.noFields')}
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                              {t('erp.guardedUpdateRecovery.values.diffAndSnapshot', {
+                                diff: event.fieldDiffCount,
+                                snapshot: event.rollbackSnapshotRequired
+                                  ? t('erp.guardedUpdateRecovery.values.yes')
+                                  : t('erp.guardedUpdateRecovery.values.no'),
+                              })}
+                            </p>
+                          </div>
+                          <div className="md:justify-self-end">
+                            <StatusPill tone={event.canonicalWrite ? 'success' : 'neutral'}>
+                              {event.canonicalWrite
+                                ? t('erp.guardedUpdateRecovery.values.canonicalWrite')
+                                : t('erp.guardedUpdateRecovery.values.noWrite')}
+                            </StatusPill>
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRecovery.empty')}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="mt-4 flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3">
+                  <Info
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                    aria-hidden
+                  />
+                  <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+                    {t('erp.guardedUpdateRecovery.boundaryNote')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
             <section id="erp-controlled-apply" className="mt-8 scroll-mt-6">
               <SectionHeader
                 title={t('erp.sections.controlledApply')}

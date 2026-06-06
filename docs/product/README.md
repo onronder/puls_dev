@@ -582,6 +582,16 @@ PR16.4.2 opens a narrow worker-only guarded update path for admin-approved refer
 | [`supabase/migrations/20260606100000_puls_integration_guarded_update_worker_apply.sql`](../../supabase/migrations/20260606100000_puls_integration_guarded_update_worker_apply.sql) | Worker-only guarded update queue/execution RPCs, object event update audit, and `import_apply` trigger guard |
 | [`scripts/verify-16-4-2-guarded-update-worker-apply.sh`](../../scripts/verify-16-4-2-guarded-update-worker-apply.sh)                                                               | PR16.4.2 verify gate                                                                                         |
 
+## PR16.4.3 guarded update recovery readiness
+
+PR16.4.3 adds the post-apply recovery readiness layer before PR16.5 rollback preview. It verifies applied guarded updates against object events, hash-only field diffs, service-role rollback snapshots, hot retention, and purge/archive posture while keeping rollback execution, compensating updates, ERP/source writeback, credential/readback, provider calls, browser direct apply, and AI autonomous apply closed.
+
+| Document / artifact                                                                                                                                                                            | Purpose                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [16_4_3_guarded_update_recovery_readiness.md](./16_4_3_guarded_update_recovery_readiness.md)                                                                                                   | PR16.4.3 guarded update recovery readiness scope, safety contract, and PR16.5 rollback-preview handoff |
+| [`supabase/migrations/20260606110000_puls_integration_guarded_update_recovery_readiness.sql`](../../supabase/migrations/20260606110000_puls_integration_guarded_update_recovery_readiness.sql) | Read-only guarded update recovery readiness RPC and PR16.4.3 apply safety contract posture             |
+| [`scripts/verify-16-4-3-guarded-update-recovery-readiness.sh`](../../scripts/verify-16-4-3-guarded-update-recovery-readiness.sh)                                                               | PR16.4.3 verify gate                                                                                   |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

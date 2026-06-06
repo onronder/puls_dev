@@ -1085,6 +1085,8 @@
       "applyChangeSetDescription": "Generates immutable decision evidence for the previewed batch, showing which rows would create, which rows are blocked, and which audit/retention boundary applies.",
       "guardedUpdateEvidence": "Guarded update evidence",
       "guardedUpdateEvidenceDescription": "Generates hash-only field diffs and rollback snapshot evidence for guarded update rows. It does not execute updates or expose values.",
+      "guardedUpdateRecovery": "Guarded update recovery readiness",
+      "guardedUpdateRecoveryDescription": "Shows whether post-apply object events, field diffs, and rollback snapshot evidence are ready for PR16.5 rollback preview.",
       "controlledApply": "Controlled apply design",
       "controlledApplyDescription": "Shows the approval, lock, rollback, notification, and audit gates that must exist before canonical writes can open."
     },
@@ -2135,6 +2137,78 @@
         "safe": "Safe",
         "sensitive": "Sensitive",
         "destructive_equivalent": "Destructive"
+      }
+    },
+    "guardedUpdateRecovery": {
+      "rollbackExecutionClosed": "Rollback execution closed",
+      "appliedAt": "Applied at: {{value}}",
+      "nextAction": "Next safe action: {{value}}",
+      "empty": "No guarded update object event has been recorded yet.",
+      "boundaryNote": "This section shows post-apply recovery readiness; it does not execute rollback or compensating updates, expose snapshot payloads or before/after values, call providers, read credentials, or write back to ERP.",
+      "status": {
+        "not_available": "Recovery evidence not needed",
+        "needs_apply": "Apply pending",
+        "recovery_ready": "Recovery readiness ready",
+        "object_event_incomplete": "Object event incomplete",
+        "field_diff_incomplete": "Field diff incomplete",
+        "rollback_snapshot_incomplete": "Snapshot incomplete",
+        "hot_retention_expired": "Hot retention expired"
+      },
+      "descriptions": {
+        "not_available": "There is no applied guarded update in the current change-set.",
+        "needs_apply": "Guarded update recovery readiness can be evaluated after apply completes.",
+        "recovery_ready": "Object event, hash-only field diff, rollback snapshot, and hot retention evidence are ready for PR16.5 rollback preview.",
+        "object_event_incomplete": "The expected object event audit count for the apply result is incomplete.",
+        "field_diff_incomplete": "Not every applied guarded update row has hash-only field diff evidence.",
+        "rollback_snapshot_incomplete": "Not every applied guarded update row has rollback snapshot evidence.",
+        "hot_retention_expired": "The rollback snapshot hot-retention window has expired; prepare a compensating review runbook instead of rollback preview."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no recovery readiness action at this stage."
+        },
+        "wait_for_apply": {
+          "label": "Wait for apply",
+          "description": "Recovery evidence will be read again after worker apply completes."
+        },
+        "review_recovery": {
+          "label": "Review recovery evidence",
+          "description": "Audit and snapshot evidence are ready for PR16.5 rollback preview design."
+        },
+        "review_gap": {
+          "label": "Review evidence gap",
+          "description": "Rollback preview remains closed until object event, field diff, and rollback snapshot counts are complete."
+        },
+        "prepare_compensating_review": {
+          "label": "Prepare compensating review",
+          "description": "The hot snapshot window has expired; rollback should move to a manual or compensating review process."
+        }
+      },
+      "metrics": {
+        "updates": "Updates",
+        "objectEvents": "Object events",
+        "rollbackReady": "Rollback ready",
+        "retention": "Hot retention"
+      },
+      "values": {
+        "appliedRows": "Applied rows",
+        "auditLinked": "Audit linked to worker job",
+        "snapshotWindow": "Hot snapshot window",
+        "days": "Days",
+        "noAction": "No action",
+        "noFields": "No fields",
+        "diffAndSnapshot": "{{diff}} field diff · Snapshot: {{snapshot}}",
+        "canonicalWrite": "Canonical write",
+        "noWrite": "No write",
+        "yes": "Yes",
+        "no": "No"
+      },
+      "columns": {
+        "row": "Row",
+        "target": "Target",
+        "evidence": "Evidence",
+        "boundary": "Boundary"
       }
     },
     "applyExecutionContract": {
