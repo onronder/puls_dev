@@ -632,6 +632,16 @@ PR16.7 records an immutable worker-readiness handoff after rollback approval wit
 | [`supabase/migrations/20260606150000_puls_integration_guarded_update_rollback_worker_readiness.sql`](../../supabase/migrations/20260606150000_puls_integration_guarded_update_rollback_worker_readiness.sql) | Immutable rollback worker readiness ledger plus generate/list RPCs; no rollback enqueue or execution |
 | [`scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh`](../../scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh)                                   | PR16.7 verify gate                                                                                   |
 
+## PR16.8 guarded update rollback worker apply
+
+PR16.8 opens service-role worker-only rollback execution for approved guarded updates. It queues rollback from PR16.7 readiness, rechecks checksum/current-state/snapshot retention before write, restores only safe reference-dimension `name` values, emits rollback object events, and keeps browser direct rollback, source writeback, provider calls, credential readback, raw payload readback, snapshot payload readback, and field value readback closed.
+
+| Document / artifact                                                                                                                                                          | Purpose                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| [16_8_guarded_update_rollback_worker_apply.md](./16_8_guarded_update_rollback_worker_apply.md)                                                                               | PR16.8 rollback worker apply scope, safety contract, execution rules, and PR16.9 handoff                  |
+| [`supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql`](../../supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql) | Worker-only guarded-update rollback enqueue/execution RPCs plus rollback object event audit support       |
+| [`scripts/verify-16-8-guarded-update-rollback-worker-apply.sh`](../../scripts/verify-16-8-guarded-update-rollback-worker-apply.sh)                                           | PR16.8 verify gate                                                                                         |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

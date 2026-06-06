@@ -152,6 +152,27 @@ export type ConnectorGuardedUpdateApplyResult = {
   next_action_key: string | null
 }
 
+export type ConnectorGuardedUpdateRollbackApplyResult = {
+  rollback_worker_readiness_id: string
+  rollback_approval_id: string
+  rollback_preview_id: string
+  change_set_id: string
+  import_batch_id: string
+  status: string
+  row_count: number
+  rollback_count: number
+  field_diff_count: number
+  rollback_snapshot_count: number
+  object_event_count: number
+  execution_enabled: boolean
+  canonical_write_enabled: boolean
+  rollback_execution_enabled: boolean
+  source_writeback_enabled: boolean
+  credential_readback_enabled: boolean
+  provider_api_calls_enabled: boolean
+  next_action_key: string | null
+}
+
 type CompleteConnectorJobArgs = {
   p_job_id: string
   p_worker_id: string
@@ -186,6 +207,8 @@ const DEFAULT_RUNTIME_VERSION = '0.2.0-worker-skeleton'
 const WORKER_CONTRACT_VERSION = 'pr15.2-worker-skeleton-v1'
 const CREATE_ONLY_APPLY_CONTRACT_VERSION = 'pr16.3-create-only-worker-apply-v1'
 const GUARDED_UPDATE_APPLY_CONTRACT_VERSION = 'pr16.4.2-guarded-update-worker-apply-v1'
+const GUARDED_UPDATE_ROLLBACK_APPLY_CONTRACT_VERSION =
+  'pr16.8-guarded-update-rollback-worker-apply-v1'
 const SUPABASE_RPC_SCHEMA = 'puls_integration'
 
 export class ConnectorWorkerRpcError extends Error {
@@ -709,6 +732,140 @@ export function buildGuardedUpdateApplyFailureCompletion(
   }
 }
 
+export function buildGuardedUpdateRollbackApplyCompletionFromResult(
+  result: ConnectorGuardedUpdateRollbackApplyResult | null,
+): ConnectorJobCompletion {
+  if (!result || result.status !== 'applied_guarded_update_rollback') {
+    const observation = buildSafeWorkerFailureObservation(
+      'guarded_update_rollback_apply_result_missing',
+      'review_guarded_update_rollback_apply_result',
+    )
+
+    return {
+      p_status: 'failed',
+      p_safe_error_code: 'guarded_update_rollback_apply_result_missing',
+      p_safe_error_context: {
+        worker_contract: WORKER_CONTRACT_VERSION,
+        apply_contract: GUARDED_UPDATE_ROLLBACK_APPLY_CONTRACT_VERSION,
+        apply_mode: 'guarded_update_rollback',
+        failure_class: observation.failureClass,
+        operator_severity: observation.operatorSeverity,
+        operator_review_required: observation.operatorReviewRequired,
+        retry_after_seconds: observation.retryAfterSeconds,
+        external_call: false,
+        credential_read: false,
+        credential_readback: false,
+        credential_readback_enabled: false,
+        canonical_write: false,
+        canonical_write_enabled: false,
+        rollback_execution: false,
+        rollback_execution_enabled: false,
+        source_writeback: false,
+        source_writeback_enabled: false,
+        provider_api_calls: false,
+        provider_api_calls_enabled: false,
+        raw_payload_readback: false,
+        field_value_readback: false,
+        snapshot_payload_readback: false,
+        compensating_execution: false,
+        compensating_execution_enabled: false,
+      },
+      p_next_action_key: 'review_guarded_update_rollback_apply_result',
+    }
+  }
+
+  return {
+    p_status: 'succeeded',
+    p_safe_error_code: null,
+    p_safe_error_context: {
+      worker_contract: WORKER_CONTRACT_VERSION,
+      apply_contract: GUARDED_UPDATE_ROLLBACK_APPLY_CONTRACT_VERSION,
+      apply_mode: 'guarded_update_rollback',
+      rollback_worker_readiness_id: result.rollback_worker_readiness_id,
+      rollback_approval_id: result.rollback_approval_id,
+      rollback_preview_id: result.rollback_preview_id,
+      change_set_id: result.change_set_id,
+      import_batch_id: result.import_batch_id,
+      row_count: Number(result.row_count ?? 0),
+      rollback_count: Number(result.rollback_count ?? 0),
+      field_diff_count: Number(result.field_diff_count ?? 0),
+      rollback_snapshot_count: Number(result.rollback_snapshot_count ?? 0),
+      object_event_count: Number(result.object_event_count ?? 0),
+      execution_enabled: result.execution_enabled === true,
+      canonical_write: result.canonical_write_enabled === true,
+      canonical_write_enabled: result.canonical_write_enabled === true,
+      rollback_execution: result.rollback_execution_enabled === true,
+      rollback_execution_enabled: result.rollback_execution_enabled === true,
+      source_writeback: false,
+      source_writeback_enabled: false,
+      credential_read: false,
+      credential_readback: false,
+      credential_readback_enabled: false,
+      provider_api_calls: false,
+      provider_api_calls_enabled: false,
+      external_call: false,
+      raw_payload_readback: false,
+      field_value_readback: false,
+      snapshot_payload_readback: false,
+      compensating_execution: false,
+      compensating_execution_enabled: false,
+    },
+    p_next_action_key: result.next_action_key ?? 'review_guarded_update_rollback_object_events',
+  }
+}
+
+export function buildGuardedUpdateRollbackApplyFailureCompletion(
+  job: ClaimedConnectorJob,
+  error: ConnectorWorkerRpcError,
+): ConnectorJobCompletion {
+  const observation = buildSafeWorkerFailureObservation(
+    error.code,
+    'review_guarded_update_rollback_apply_failure',
+  )
+
+  return {
+    p_status: 'failed',
+    p_safe_error_code: error.code,
+    p_safe_error_context: {
+      worker_contract: WORKER_CONTRACT_VERSION,
+      apply_contract: GUARDED_UPDATE_ROLLBACK_APPLY_CONTRACT_VERSION,
+      apply_mode: 'guarded_update_rollback',
+      job_type: job.job_type,
+      failure_class: observation.failureClass,
+      operator_severity: observation.operatorSeverity,
+      operator_review_required: observation.operatorReviewRequired,
+      retry_after_seconds: observation.retryAfterSeconds,
+      external_call: false,
+      credential_read: false,
+      credential_readback: false,
+      credential_readback_enabled: false,
+      canonical_write: false,
+      canonical_write_enabled: false,
+      rollback_execution: false,
+      rollback_execution_enabled: false,
+      source_writeback: false,
+      source_writeback_enabled: false,
+      provider_api_calls: false,
+      provider_api_calls_enabled: false,
+      raw_payload_readback: false,
+      field_value_readback: false,
+      snapshot_payload_readback: false,
+      compensating_execution: false,
+      compensating_execution_enabled: false,
+    },
+    p_next_action_key: 'review_guarded_update_rollback_apply_failure',
+  }
+}
+
+function isGuardedUpdateRollbackApplyJob(job: ClaimedConnectorJob) {
+  const safeContext = job.safe_error_context ?? {}
+  return (
+    safeContext.apply_mode === 'guarded_update_rollback' ||
+    safeContext.contract_version === GUARDED_UPDATE_ROLLBACK_APPLY_CONTRACT_VERSION ||
+    job.domain === 'import_apply_guarded_update_rollback'
+  )
+}
+
 function isGuardedUpdateApplyJob(job: ClaimedConnectorJob) {
   const safeContext = job.safe_error_context ?? {}
   return (
@@ -725,6 +882,26 @@ async function resolveConnectorJobCompletion(
 ): Promise<ConnectorJobCompletion> {
   if (job.job_type === 'import_apply') {
     if (!config.importApplyEnabled) return buildConnectorJobCompletion(job)
+
+    if (isGuardedUpdateRollbackApplyJob(job)) {
+      try {
+        const rows = await rpc<ConnectorGuardedUpdateRollbackApplyResult[]>(
+          'execute_connector_guarded_update_rollback_apply_job',
+          {
+            p_job_id: job.id,
+            p_worker_id: config.workerId,
+          },
+        )
+
+        return buildGuardedUpdateRollbackApplyCompletionFromResult(rows[0] ?? null)
+      } catch (error) {
+        if (error instanceof ConnectorWorkerRpcError) {
+          return buildGuardedUpdateRollbackApplyFailureCompletion(job, error)
+        }
+
+        throw error
+      }
+    }
 
     if (isGuardedUpdateApplyJob(job)) {
       try {

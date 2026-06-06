@@ -1035,6 +1035,9 @@
       "guardedUpdateRollbackWorkerReadiness": {
         "generated": "Rollback worker readiness was recorded. Rollback job enqueue and execution remain closed."
       },
+      "guardedUpdateRollbackApplyJob": {
+        "queued": "Guarded update rollback job was queued for the safe worker."
+      },
       "runtimePreflight": {
         "queued": "Runtime preflight job was safely queued. The worker result will appear in activity."
       }
@@ -1058,6 +1061,7 @@
       "guardedUpdateApplyBlocked": "Guarded update apply requires evidence, rollback snapshots, admin approval, and an open worker gate.",
       "rollbackApprovalBlocked": "Rollback approval requires a ready rollback preview with no blockers or current-state drift.",
       "rollbackWorkerReadinessBlocked": "Rollback worker readiness requires approval, matching current state, original apply events, and active rollback snapshots.",
+      "rollbackApplyBlocked": "Rollback apply requires worker readiness, matching current state, original apply events, and active rollback snapshots.",
       "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
     "sections": {
@@ -1101,6 +1105,8 @@
       "guardedUpdateRollbackPreviewDescription": "Shows hash-only rollback preview, blockers, and current-state drift for an applied guarded update.",
       "guardedUpdateRollbackWorkerReadiness": "Guarded update rollback worker readiness",
       "guardedUpdateRollbackWorkerReadinessDescription": "Shows whether rollback approval, checksum, current-state, original apply event, and retention evidence are ready for the future rollback worker.",
+      "guardedUpdateRollbackWorkerApply": "Guarded update rollback worker apply",
+      "guardedUpdateRollbackWorkerApplyDescription": "Queues the service-role rollback worker after readiness is proven; browser direct rollback, source writeback, provider calls, and payload readback stay closed.",
       "controlledApply": "Controlled apply design",
       "controlledApplyDescription": "Shows the approval, lock, rollback, notification, and audit gates that must exist before canonical writes can open."
     },
@@ -2493,6 +2499,36 @@
         "blocked": "Blocked"
       },
       "empty": "No rollback worker readiness rows yet."
+    },
+    "guardedUpdateRollbackWorkerApply": {
+      "queueing": "Queueing rollback worker",
+      "adminRequired": "Admin rollback queue required",
+      "description": "The worker restores only safe reference names from checksum-bound snapshots and rechecks current state immediately before writing.",
+      "status": {
+        "ready": "Rollback worker queue ready",
+        "waiting": "Rollback worker queue waiting"
+      },
+      "descriptions": {
+        "ready": "Readiness is recorded. You can queue the service-role worker job; the job will perform the rollback only after lease, checksum, snapshot, and current-state rechecks pass.",
+        "waiting": "Rollback worker apply stays unavailable until approval and worker-readiness evidence are complete."
+      },
+      "actions": {
+        "queue": "Queue rollback worker",
+        "wait": "Waiting for readiness"
+      },
+      "metrics": {
+        "rows": "Rollback rows",
+        "currentState": "Current-state checks",
+        "snapshots": "Snapshots",
+        "next": "Next gate"
+      },
+      "values": {
+        "workerReady": "Worker handoff ready",
+        "workerWaiting": "Worker handoff pending",
+        "workerOnly": "Worker only",
+        "sourceClosed": "Source writeback closed",
+        "noAction": "No action"
+      }
     },
     "applyExecutionContract": {
       "executionDisabled": "Execution closed",

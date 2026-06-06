@@ -613,7 +613,41 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Drift, missing object event veya expired snapshot readiness üretmez.
 - Readiness kaydı rollback job enqueue veya execution açmaz.
 
-### PR16.8 - Notification Center Foundation
+### PR16.8 - Guarded Update Rollback Worker Apply
+
+**Ürün değeri:** Onaylanmış guarded update rollback artık sadece kanıt seviyesinde kalmaz; service-role worker, checksum ve current-state tekrar kontrollerinden sonra güvenli referans adlarını geri alabilir.
+
+**Implementation status:** PR16.8 opens a worker-only rollback enqueue/execution path from PR16.7 readiness. It restores only safe reference-dimension `name` fields from hash-verified rollback snapshots, emits rollback object events linked to the original apply event, and keeps browser direct rollback, source writeback, provider API calls, credential readback, raw payload readback, snapshot payload readback, field value readback, and compensating execution closed.
+
+**Kapsam:**
+
+- `enqueue_connector_guarded_update_rollback_apply_job` admin/service-role queue RPC
+- `execute_connector_guarded_update_rollback_apply_job` service-role worker execution RPC
+- PR16.7 readiness, approval, preview, checksum, original apply event, field diff, snapshot, retention ve current-state recheck gate
+- Reference-dimension `name` restore helper
+- Rollback object events linked to readiness, approval, preview, original apply event and worker job
+- ERP connector worker routing for `import_apply_guarded_update_rollback`
+- `/erp` rollback worker queue action
+
+**Kapsam dışı:**
+
+- Employee rollback
+- Destructive rollback
+- Compensating execution
+- ERP/source writeback
+- Provider API calls
+- Browser direct canonical rollback
+- Raw snapshot/value UI
+
+**Doğrulama:**
+
+- Non-service-role execution reddedilir.
+- Readiness/checksum/current-state/snapshot retention mismatch rollback kuyruğunu veya execution'ı açmaz.
+- Worker lease sahibi olmayan job execute edilemez.
+- Rollback her satır için `rollback` object event üretir.
+- Aynı worker job idempotent, farklı job duplicate rollback yapamaz.
+
+### PR16.9 - Notification Center Foundation
 
 **Ürün değeri:** Admin ve ilgili roller önemli connector olaylarını ekran aramadan takip eder.
 
@@ -642,7 +676,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Secret/raw payload notification içinde yoktur.
 - Role visibility doğru çalışır.
 
-### PR16.9 - Canias Runtime Spike On Generic Connector Foundation
+### PR16.10 - Canias Runtime Spike On Generic Connector Foundation
 
 **Ürün değeri:** Canias artık sadece metadata/demo profili olmaktan çıkar; generic PULS runtime omurgası üzerinde ilk ERP API connector denemesi başlar.
 
@@ -673,7 +707,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Provider-specific code generic connector contract dışına taşmaz.
 - Raw provider payload UI/AI/Sentry içinde görünmez.
 
-### PR16.8 - AI Operational Recommendations
+### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.
 

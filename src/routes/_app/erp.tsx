@@ -40,6 +40,7 @@ import {
   mapConnectorSetupError,
   recordConnectorApplyApproval,
   recordConnectorGuardedUpdateRollbackApproval,
+  requestConnectorGuardedUpdateRollbackApplyJob,
   requestConnectorGuardedUpdateRollbackWorkerReadiness,
   requestConnectorApplyChangeSet,
   requestConnectorGuardedUpdateEvidence,
@@ -409,6 +410,25 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestRollbackApplyJobMutation = useMutation({
+    mutationFn: () => requestConnectorGuardedUpdateRollbackApplyJob(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.guardedUpdateRollbackApplyJob.queued'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      showWorkbenchTab('activity', 'erp-runtime-queue')
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_runtime',
+        operation: 'requestConnectorGuardedUpdateRollbackApplyJob',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
   const requestCreateOnlyApplyJobMutation = useMutation({
     mutationFn: () => requestConnectorCreateOnlyApplyJob(user!.id),
     onSuccess: () => {
@@ -484,6 +504,8 @@ function ErpPage() {
     data?.guardedUpdateRollbackApproval.requestable === true && canManageConnectors
   const canRequestRollbackWorkerReadiness =
     data?.guardedUpdateRollbackWorkerReadiness.requestable === true && canManageConnectors
+  const canRequestRollbackApplyJob =
+    data?.guardedUpdateRollbackWorkerReadiness.workerHandoffReady === true && canManageConnectors
   const canRequestCreateOnlyApplyJob =
     data?.applyExecutionContract.safeToExecute === true &&
     data.applyExecutionContract.executorMode === 'worker_create_only_job' &&
@@ -496,6 +518,7 @@ function ErpPage() {
     canRequestCreateOnlyApplyJob || canRequestGuardedUpdateApplyJob
   const requestApplyExecutionPending =
     requestCreateOnlyApplyJobMutation.isPending || requestGuardedUpdateApplyJobMutation.isPending
+  const requestRollbackApplyPending = requestRollbackApplyJobMutation.isPending
   const runtimePreflightCredentialReady = data?.credentialBoundary.status === 'ready'
   const runtimePreflightWorkerReady =
     data?.runtimeQueue.worker.supportedJobTypes.includes('connector_runtime_preflight') === true &&
@@ -2541,6 +2564,116 @@ function ErpPage() {
                       </li>
                     )}
                   </ul>
+                </div>
+              </div>
+            </section>
+
+            <section id="erp-guarded-update-rollback-worker-apply" className="mt-8 scroll-mt-6">
+              <SectionHeader
+                title={t('erp.sections.guardedUpdateRollbackWorkerApply')}
+                description={t('erp.sections.guardedUpdateRollbackWorkerApplyDescription')}
+              />
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                        <RefreshCw className="h-5 w-5" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                            {data.guardedUpdateRollbackWorkerReadiness.workerHandoffReady
+                              ? t('erp.guardedUpdateRollbackWorkerApply.status.ready')
+                              : t('erp.guardedUpdateRollbackWorkerApply.status.waiting')}
+                          </h2>
+                          <StatusPill
+                            tone={
+                              data.guardedUpdateRollbackWorkerReadiness.workerHandoffReady
+                                ? 'success'
+                                : 'neutral'
+                            }
+                          >
+                            {data.guardedUpdateRollbackWorkerReadiness.workerHandoffReady
+                              ? t('erp.guardedUpdateRollbackWorkerApply.values.workerReady')
+                              : t('erp.guardedUpdateRollbackWorkerApply.values.workerWaiting')}
+                          </StatusPill>
+                          <StatusPill tone="success">
+                            {t('erp.guardedUpdateRollbackWorkerApply.values.workerOnly')}
+                          </StatusPill>
+                          <StatusPill tone="neutral">
+                            {t('erp.guardedUpdateRollbackWorkerApply.values.sourceClosed')}
+                          </StatusPill>
+                        </div>
+                        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                          {data.guardedUpdateRollbackWorkerReadiness.workerHandoffReady
+                            ? t('erp.guardedUpdateRollbackWorkerApply.descriptions.ready')
+                            : t('erp.guardedUpdateRollbackWorkerApply.descriptions.waiting')}
+                        </p>
+                        <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                          {t('erp.guardedUpdateRollbackWorkerApply.description')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full lg:w-auto"
+                    disabled={!canRequestRollbackApplyJob || requestRollbackApplyPending}
+                    onClick={() => void requestRollbackApplyJobMutation.mutateAsync()}
+                  >
+                    <RefreshCw
+                      className={cn('h-4 w-4', requestRollbackApplyPending ? 'animate-spin' : null)}
+                    />
+                    {canRequestRollbackApplyJob
+                      ? requestRollbackApplyPending
+                        ? t('erp.guardedUpdateRollbackWorkerApply.queueing')
+                        : t('erp.guardedUpdateRollbackWorkerApply.actions.queue')
+                      : !canManageConnectors &&
+                          data.guardedUpdateRollbackWorkerReadiness.workerHandoffReady
+                        ? t('erp.guardedUpdateRollbackWorkerApply.adminRequired')
+                        : t('erp.guardedUpdateRollbackWorkerApply.actions.wait')}
+                  </Button>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerApply.metrics.rows')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.rollbackCount}/
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.rowCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerApply.metrics.currentState')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.currentStateVerifiedCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerApply.metrics.snapshots')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.rollbackSnapshotCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerApply.metrics.next')}
+                    </p>
+                    <p className="mt-2 truncate text-xs font-medium text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.workerHandoffReady
+                        ? 'wait_for_guarded_update_rollback_worker_apply'
+                        : (data.guardedUpdateRollbackWorkerReadiness.nextActionKey ??
+                          t('erp.guardedUpdateRollbackWorkerApply.values.noAction'))}
+                    </p>
+                  </div>
                 </div>
               </div>
             </section>
