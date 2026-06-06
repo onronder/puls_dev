@@ -39,6 +39,7 @@ import {
   fetchErpOverviewWithMeta,
   mapConnectorSetupError,
   recordConnectorApplyApproval,
+  recordConnectorGuardedUpdateRollbackApproval,
   requestConnectorApplyChangeSet,
   requestConnectorGuardedUpdateEvidence,
   requestConnectorGuardedUpdateApplyJob,
@@ -369,6 +370,25 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const recordRollbackApprovalMutation = useMutation({
+    mutationFn: () => recordConnectorGuardedUpdateRollbackApproval(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.guardedUpdateRollbackApproval.approvalRecorded'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      showWorkbenchTab('previewApply', 'erp-guarded-update-rollback-approval')
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'recordConnectorGuardedUpdateRollbackApproval',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
   const requestCreateOnlyApplyJobMutation = useMutation({
     mutationFn: () => requestConnectorCreateOnlyApplyJob(user!.id),
     onSuccess: () => {
@@ -440,6 +460,8 @@ function ErpPage() {
     data?.guardedUpdateEvidence.requestable === true && canManageConnectors
   const canRecordApplyApproval =
     data?.applyApprovalPolicy.requestable === true && canManageConnectors
+  const canRecordRollbackApproval =
+    data?.guardedUpdateRollbackApproval.requestable === true && canManageConnectors
   const canRequestCreateOnlyApplyJob =
     data?.applyExecutionContract.safeToExecute === true &&
     data.applyExecutionContract.executorMode === 'worker_create_only_job' &&
@@ -2206,6 +2228,113 @@ function ErpPage() {
                   <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
                     {t('erp.guardedUpdateRollbackPreview.boundaryNote')}
                   </p>
+                </div>
+
+                <div
+                  id="erp-guarded-update-rollback-approval"
+                  className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-4"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                        <ShieldCheck className="h-5 w-5" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                            {t(data.guardedUpdateRollbackApproval.statusLabelKey)}
+                          </h3>
+                          <StatusPill
+                            tone={readinessTone(data.guardedUpdateRollbackApproval.readiness)}
+                          >
+                            {t(`erp.readinessStatus.${data.guardedUpdateRollbackApproval.readiness}`)}
+                          </StatusPill>
+                          <StatusPill tone="neutral">
+                            {t('erp.guardedUpdateRollbackApproval.executionClosed')}
+                          </StatusPill>
+                        </div>
+                        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                          {t(data.guardedUpdateRollbackApproval.descriptionKey)}
+                        </p>
+                        <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                          {t(data.guardedUpdateRollbackApproval.actionDescriptionKey)}
+                        </p>
+                        {data.guardedUpdateRollbackApproval.approvedAt ? (
+                          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                            {t('erp.guardedUpdateRollbackApproval.approvedAt', {
+                              value: formatDateTime(
+                                data.guardedUpdateRollbackApproval.approvedAt,
+                                i18n.language,
+                                t('erp.credentialBoundary.notRecorded'),
+                              ),
+                            })}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="touch-target w-full lg:w-auto"
+                      disabled={
+                        !canRecordRollbackApproval || recordRollbackApprovalMutation.isPending
+                      }
+                      onClick={() => void recordRollbackApprovalMutation.mutateAsync()}
+                    >
+                      <ShieldCheck
+                        className={cn(
+                          'h-4 w-4',
+                          recordRollbackApprovalMutation.isPending ? 'animate-pulse' : null,
+                        )}
+                      />
+                      {canRecordRollbackApproval
+                        ? recordRollbackApprovalMutation.isPending
+                          ? t('erp.guardedUpdateRollbackApproval.recording')
+                          : t(data.guardedUpdateRollbackApproval.actionLabelKey)
+                        : !canManageConnectors &&
+                            data.guardedUpdateRollbackApproval.action === 'record_admin_approval'
+                          ? t('erp.guardedUpdateRollbackApproval.adminRequired')
+                          : t(data.guardedUpdateRollbackApproval.actionLabelKey)}
+                    </Button>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRollbackApproval.metrics.rows')}
+                      </p>
+                      <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                        {data.guardedUpdateRollbackApproval.summary.rollbackCount}/
+                        {data.guardedUpdateRollbackApproval.summary.rowCount}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRollbackApproval.metrics.blockers')}
+                      </p>
+                      <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                        {data.guardedUpdateRollbackApproval.summary.blockedCount}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRollbackApproval.metrics.evidence')}
+                      </p>
+                      <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                        {data.guardedUpdateRollbackApproval.summary.fieldDiffCount}/
+                        {data.guardedUpdateRollbackApproval.summary.rollbackSnapshotCount}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRollbackApproval.metrics.next')}
+                      </p>
+                      <p className="mt-2 truncate text-xs font-medium text-[var(--color-text-primary)]">
+                        {data.guardedUpdateRollbackApproval.nextActionKey ??
+                          t('erp.guardedUpdateRollbackApproval.values.noAction')}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

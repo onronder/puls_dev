@@ -680,6 +680,55 @@ export type ConnectorGuardedUpdateRollbackPreview = {
   sampleItems: ConnectorGuardedUpdateRollbackPreviewItem[]
 }
 
+export type ConnectorGuardedUpdateRollbackApprovalStatus =
+  | 'not_available'
+  | 'needs_preview'
+  | 'needs_approval'
+  | 'approval_recorded'
+  | 'blocked'
+
+export type ConnectorGuardedUpdateRollbackApprovalAction =
+  | 'none'
+  | 'generate_preview_first'
+  | 'record_admin_approval'
+  | 'approval_recorded'
+  | 'resolve_blockers'
+
+export type ConnectorGuardedUpdateRollbackApproval = {
+  rollbackApprovalId: string | null
+  rollbackPreviewId: string | null
+  changeSetId: string | null
+  status: ConnectorGuardedUpdateRollbackApprovalStatus
+  readiness: ConnectorReadinessStatus
+  statusLabelKey: string
+  descriptionKey: string
+  action: ConnectorGuardedUpdateRollbackApprovalAction
+  actionLabelKey: string
+  actionDescriptionKey: string
+  requestable: boolean
+  rollbackApprovalEnabled: boolean
+  rollbackExecutionEnabled: false
+  compensatingExecutionEnabled: false
+  sourceWritebackEnabled: false
+  credentialReadbackEnabled: false
+  valueReadbackEnabled: false
+  approvalRequired: boolean
+  operatorReviewRequired: boolean
+  batchId: string | null
+  rollbackPreviewChecksum: string | null
+  approvedAt: string | null
+  approvedByEmployeeId: string | null
+  nextActionKey: string | null
+  summary: {
+    rowCount: number
+    rollbackCount: number
+    blockedCount: number
+    staleBlockedCount: number
+    fieldDiffCount: number
+    rollbackSnapshotCount: number
+  }
+}
+
 export type ConnectorApplyReadinessStatus =
   | 'not_available'
   | 'needs_preview'
@@ -1157,6 +1206,7 @@ export type ErpOverview = {
   guardedUpdateRecovery: ConnectorGuardedUpdateRecoveryReadiness
   guardedUpdateRecoveryRunbook: ConnectorGuardedUpdateRecoveryRunbook
   guardedUpdateRollbackPreview: ConnectorGuardedUpdateRollbackPreview
+  guardedUpdateRollbackApproval: ConnectorGuardedUpdateRollbackApproval
   applySafetyContract: ConnectorApplySafetyContract
   controlledApplyPlan: ConnectorControlledApplyPlan
   applyExecutionContract: ConnectorApplyExecutionContract
@@ -1472,6 +1522,37 @@ type ConnectorGuardedUpdateRollbackPreviewRow = {
   created_at?: string | null
 }
 
+type ConnectorGuardedUpdateRollbackApprovalRow = {
+  rollback_approval_id?: string | null
+  rollback_preview_id?: string | null
+  change_set_id?: string | null
+  tenant_id?: string | null
+  connection_id?: string | null
+  source_namespace_id?: string | null
+  import_batch_id?: string | null
+  approval_status?: 'approval_recorded' | null
+  approval_policy?: 'admin_only' | null
+  rollback_preview_checksum?: string | null
+  row_count?: number | null
+  rollback_count?: number | null
+  blocked_count?: number | null
+  stale_blocked_count?: number | null
+  field_diff_count?: number | null
+  rollback_snapshot_count?: number | null
+  rollback_approval_enabled?: boolean | null
+  rollback_execution_enabled?: boolean | null
+  compensating_execution_enabled?: boolean | null
+  source_writeback_enabled?: boolean | null
+  credential_readback_enabled?: boolean | null
+  value_readback_enabled?: boolean | null
+  approval_required?: boolean | null
+  operator_review_required?: boolean | null
+  next_action_key?: string | null
+  approved_by_employee_id?: string | null
+  approved_at?: string | null
+  safe_summary?: Record<string, unknown> | null
+}
+
 type ConnectorCreateOnlyApplyJobRow = {
   job_id?: string | null
   status?: ConnectorRuntimeJobStatus | null
@@ -1665,6 +1746,18 @@ export type RequestConnectorGuardedUpdateApplyJobResult = {
   safeToApply: false
 }
 
+export type RecordConnectorGuardedUpdateRollbackApprovalResult = {
+  connectionId: string
+  batchId: string
+  changeSetId: string
+  rollbackPreviewId: string
+  rollbackApprovalId: string | null
+  status: ConnectorGuardedUpdateRollbackApprovalStatus
+  approvedAt: string | null
+  nextActionKey: string | null
+  safeToRollback: false
+}
+
 export type RequestConnectorRuntimePreflightResult = {
   connectionId: string
   jobId: string | null
@@ -1687,6 +1780,7 @@ export type ConnectorSetupErrorMapping = {
     | 'apply_change_set_blocked'
     | 'create_only_apply_blocked'
     | 'guarded_update_apply_blocked'
+    | 'rollback_approval_blocked'
     | 'runtime_preflight_blocked'
     | 'permission_denied'
     | 'domain_owned'
@@ -2127,6 +2221,12 @@ export function mapConnectorSetupError(error: unknown): ConnectorSetupErrorMappi
       return {
         code: 'create_only_apply_blocked',
         toastKey: 'erp.errors.createOnlyApplyBlocked',
+      }
+    }
+    if (error.code.startsWith('PULS_CONNECTOR_ROLLBACK_APPROVAL_')) {
+      return {
+        code: 'rollback_approval_blocked',
+        toastKey: 'erp.errors.rollbackApprovalBlocked',
       }
     }
     if (error.code.startsWith('PULS_CONNECTOR_GUARDED_UPDATE_')) {
@@ -3409,6 +3509,97 @@ function buildConnectorGuardedUpdateRollbackPreview({
   }
 }
 
+function buildConnectorGuardedUpdateRollbackApproval({
+  connectorState,
+  rollbackPreview,
+  row,
+}: {
+  connectorState: ConnectorLifecycleState
+  rollbackPreview: ConnectorGuardedUpdateRollbackPreview
+  row: ConnectorGuardedUpdateRollbackApprovalRow | null
+}): ConnectorGuardedUpdateRollbackApproval {
+  const previewReady =
+    connectorState === 'connector_selected' &&
+    rollbackPreview.status === 'ready_for_rollback_review' &&
+    rollbackPreview.rollbackPreviewId != null &&
+    rollbackPreview.summary.rollbackCount === rollbackPreview.summary.rowCount &&
+    rollbackPreview.summary.blockedCount === 0 &&
+    rollbackPreview.summary.staleBlockedCount === 0 &&
+    rollbackPreview.summary.fieldDiffCount > 0 &&
+    rollbackPreview.summary.rollbackSnapshotCount >= rollbackPreview.summary.rowCount &&
+    rollbackPreview.rollbackExecutionEnabled === false &&
+    rollbackPreview.compensatingExecutionEnabled === false &&
+    rollbackPreview.sourceWritebackEnabled === false &&
+    rollbackPreview.credentialReadbackEnabled === false &&
+    rollbackPreview.valueReadbackEnabled === false
+  const approvalRecorded = row?.approval_status === 'approval_recorded'
+  const status: ConnectorGuardedUpdateRollbackApprovalStatus =
+    connectorState !== 'connector_selected'
+      ? 'not_available'
+      : approvalRecorded
+        ? 'approval_recorded'
+        : rollbackPreview.status === 'not_available' || rollbackPreview.status === 'needs_generation'
+          ? 'needs_preview'
+          : previewReady
+            ? 'needs_approval'
+            : 'blocked'
+  const readiness: ConnectorReadinessStatus =
+    status === 'approval_recorded' ? 'ready' : status === 'blocked' ? 'blocked' : 'partial'
+  const action: ConnectorGuardedUpdateRollbackApprovalAction =
+    status === 'approval_recorded'
+      ? 'approval_recorded'
+      : status === 'needs_preview'
+        ? 'generate_preview_first'
+        : status === 'needs_approval'
+          ? 'record_admin_approval'
+          : status === 'blocked'
+            ? 'resolve_blockers'
+            : 'none'
+
+  return {
+    rollbackApprovalId: row?.rollback_approval_id ?? null,
+    rollbackPreviewId: row?.rollback_preview_id ?? rollbackPreview.rollbackPreviewId,
+    changeSetId: row?.change_set_id ?? rollbackPreview.changeSetId,
+    status,
+    readiness,
+    statusLabelKey: `erp.guardedUpdateRollbackApproval.status.${status}`,
+    descriptionKey: `erp.guardedUpdateRollbackApproval.descriptions.${status}`,
+    action,
+    actionLabelKey: `erp.guardedUpdateRollbackApproval.actions.${action}.label`,
+    actionDescriptionKey: `erp.guardedUpdateRollbackApproval.actions.${action}.description`,
+    requestable: status === 'needs_approval',
+    rollbackApprovalEnabled: previewReady || approvalRecorded,
+    rollbackExecutionEnabled: false,
+    compensatingExecutionEnabled: false,
+    sourceWritebackEnabled: false,
+    credentialReadbackEnabled: false,
+    valueReadbackEnabled: false,
+    approvalRequired: row?.approval_required !== false && status !== 'not_available',
+    operatorReviewRequired: row?.operator_review_required !== false && status !== 'not_available',
+    batchId: row?.import_batch_id ?? rollbackPreview.batchId,
+    rollbackPreviewChecksum: row?.rollback_preview_checksum ?? null,
+    approvedAt: row?.approved_at ?? null,
+    approvedByEmployeeId: row?.approved_by_employee_id ?? null,
+    nextActionKey:
+      row?.next_action_key ??
+      (status === 'needs_approval'
+        ? 'record_guarded_update_rollback_approval'
+        : rollbackPreview.nextActionKey),
+    summary: {
+      rowCount: Number(row?.row_count ?? rollbackPreview.summary.rowCount),
+      rollbackCount: Number(row?.rollback_count ?? rollbackPreview.summary.rollbackCount),
+      blockedCount: Number(row?.blocked_count ?? rollbackPreview.summary.blockedCount),
+      staleBlockedCount: Number(
+        row?.stale_blocked_count ?? rollbackPreview.summary.staleBlockedCount,
+      ),
+      fieldDiffCount: Number(row?.field_diff_count ?? rollbackPreview.summary.fieldDiffCount),
+      rollbackSnapshotCount: Number(
+        row?.rollback_snapshot_count ?? rollbackPreview.summary.rollbackSnapshotCount,
+      ),
+    },
+  }
+}
+
 function eventIsAtOrAfter(value: string | null | undefined, baseline: string | null | undefined) {
   if (!value || !baseline) return false
   const eventTime = Date.parse(value)
@@ -3860,13 +4051,15 @@ function buildConnectorApplyExecutionContract({
       applySafetyContract.contractVersion === 'pr16.4.2-guarded-update-worker-apply-v1' ||
       applySafetyContract.contractVersion === 'pr16.4.3-guarded-update-recovery-readiness-v1' ||
       applySafetyContract.contractVersion === 'pr16.4.4-guarded-update-recovery-runbook-v1' ||
-      applySafetyContract.contractVersion === 'pr16.5-guarded-update-rollback-preview-v1')
+      applySafetyContract.contractVersion === 'pr16.5-guarded-update-rollback-preview-v1' ||
+      applySafetyContract.contractVersion === 'pr16.6-guarded-update-rollback-approval-v1')
   const workerGuardedUpdateOpen =
     workerApplyBoundaryOpen &&
     (applySafetyContract.contractVersion === 'pr16.4.2-guarded-update-worker-apply-v1' ||
       applySafetyContract.contractVersion === 'pr16.4.3-guarded-update-recovery-readiness-v1' ||
       applySafetyContract.contractVersion === 'pr16.4.4-guarded-update-recovery-runbook-v1' ||
-      applySafetyContract.contractVersion === 'pr16.5-guarded-update-rollback-preview-v1')
+      applySafetyContract.contractVersion === 'pr16.5-guarded-update-rollback-preview-v1' ||
+      applySafetyContract.contractVersion === 'pr16.6-guarded-update-rollback-approval-v1')
   const createOnlySafeToExecute =
     previewReady &&
     approvalRecorded &&
@@ -5373,6 +5566,7 @@ function buildOverview({
   guardedUpdateRecovery,
   guardedUpdateRecoveryRunbook,
   guardedUpdateRollbackPreview,
+  guardedUpdateRollbackApproval,
   applySafetyContract,
   credentialHandoffStatus,
   credentialHandoffRequestedAt,
@@ -5411,6 +5605,7 @@ function buildOverview({
   guardedUpdateRecovery?: ConnectorGuardedUpdateRecoveryReadiness
   guardedUpdateRecoveryRunbook?: ConnectorGuardedUpdateRecoveryRunbook
   guardedUpdateRollbackPreview?: ConnectorGuardedUpdateRollbackPreview
+  guardedUpdateRollbackApproval?: ConnectorGuardedUpdateRollbackApproval
   applySafetyContract?: ConnectorApplySafetyContract
   credentialHandoffStatus?: ConnectorCredentialHandoffStatus | null
   credentialHandoffRequestedAt?: string | null
@@ -5523,6 +5718,13 @@ function buildOverview({
       runbook: resolvedGuardedUpdateRecoveryRunbook,
       row: null,
     })
+  const resolvedGuardedUpdateRollbackApproval =
+    guardedUpdateRollbackApproval ??
+    buildConnectorGuardedUpdateRollbackApproval({
+      connectorState,
+      rollbackPreview: resolvedGuardedUpdateRollbackPreview,
+      row: null,
+    })
   const controlledApplyPlan = buildConnectorControlledApplyPlan({
     connectorState,
     importPreview: resolvedImportPreview,
@@ -5603,6 +5805,7 @@ function buildOverview({
     guardedUpdateRecovery: resolvedGuardedUpdateRecovery,
     guardedUpdateRecoveryRunbook: resolvedGuardedUpdateRecoveryRunbook,
     guardedUpdateRollbackPreview: resolvedGuardedUpdateRollbackPreview,
+    guardedUpdateRollbackApproval: resolvedGuardedUpdateRollbackApproval,
     applySafetyContract: resolvedApplySafetyContract,
     controlledApplyPlan,
     applyExecutionContract,
@@ -5999,6 +6202,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
   let guardedUpdateRecoveryRow: ConnectorGuardedUpdateRecoveryReadinessRow | null = null
   let guardedUpdateRecoveryRunbookRow: ConnectorGuardedUpdateRecoveryRunbookRow | null = null
   let guardedUpdateRollbackPreviewRow: ConnectorGuardedUpdateRollbackPreviewRow | null = null
+  let guardedUpdateRollbackApprovalRow: ConnectorGuardedUpdateRollbackApprovalRow | null = null
 
   if (connectorNamespaceIds.length > 0) {
     const importBatchRow = await pulsIntegration()
@@ -6135,6 +6339,22 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
                 []) as ConnectorGuardedUpdateRollbackPreviewRow[]
             )[0] ?? null
         }
+
+        const guardedUpdateRollbackApprovalResult = await pulsIntegration().rpc(
+          'list_connector_guarded_update_rollback_approvals',
+          {
+            p_change_set_id: applyChangeSetRow.id,
+            p_limit: 8,
+          },
+        )
+
+        if (!guardedUpdateRollbackApprovalResult.error) {
+          guardedUpdateRollbackApprovalRow =
+            (
+              (guardedUpdateRollbackApprovalResult.data ??
+                []) as ConnectorGuardedUpdateRollbackApprovalRow[]
+            )[0] ?? null
+        }
       }
     }
   }
@@ -6197,6 +6417,11 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     runbook: guardedUpdateRecoveryRunbook,
     row: guardedUpdateRollbackPreviewRow,
   })
+  const guardedUpdateRollbackApproval = buildConnectorGuardedUpdateRollbackApproval({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    rollbackPreview: guardedUpdateRollbackPreview,
+    row: guardedUpdateRollbackApprovalRow,
+  })
 
   return buildOverview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
@@ -6258,6 +6483,7 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     guardedUpdateRecovery,
     guardedUpdateRecoveryRunbook,
     guardedUpdateRollbackPreview,
+    guardedUpdateRollbackApproval,
     applySafetyContract,
     credentialHandoffStatus: connection?.credential_handoff_status ?? null,
     credentialHandoffRequestedAt: connection?.credential_handoff_requested_at ?? null,
@@ -7414,6 +7640,146 @@ export async function recordConnectorApplyApproval(
     status: 'approval_recorded',
     approvalRecordedAt: now,
     safeToApply: false,
+  }
+}
+
+export async function recordConnectorGuardedUpdateRollbackApproval(
+  userId: string,
+): Promise<RecordConnectorGuardedUpdateRollbackApprovalResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'Connector rollback approval requires tenant context',
+      source: 'adapter',
+      operation: 'recordConnectorGuardedUpdateRollbackApproval',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'Connector rollback approval requires admin permission',
+      source: 'adapter',
+      operation: 'recordConnectorGuardedUpdateRollbackApproval',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+
+  const overview = await fetchRealErpOverview(userId)
+  const connectionId = overview.provider.id
+  const batch = overview.guardedUpdateRollbackPreview.batchId
+  const changeSetId = overview.guardedUpdateRollbackPreview.changeSetId
+  const rollbackPreviewId = overview.guardedUpdateRollbackPreview.rollbackPreviewId
+  if (!connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_SOURCE_REQUIRED',
+      message: 'Connector rollback approval requires a selected source',
+      source: 'adapter',
+      operation: 'recordConnectorGuardedUpdateRollbackApproval',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (!batch) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_IMPORT_BATCH_REQUIRED',
+      message: 'Connector rollback approval requires an applied batch',
+      source: 'adapter',
+      operation: 'recordConnectorGuardedUpdateRollbackApproval',
+      i18nKey: 'erp.errors.importBatchMissing',
+    })
+  }
+  if (!changeSetId || !rollbackPreviewId || !overview.guardedUpdateRollbackApproval.requestable) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ROLLBACK_APPROVAL_BLOCKED',
+      message: 'Connector rollback approval is blocked until rollback preview is ready',
+      source: 'adapter',
+      operation: 'recordConnectorGuardedUpdateRollbackApproval',
+      i18nKey: 'erp.errors.rollbackApprovalBlocked',
+    })
+  }
+
+  const recorded = await pulsIntegration().rpc(
+    'record_connector_guarded_update_rollback_approval',
+    {
+      p_rollback_preview_id: rollbackPreviewId,
+    },
+  )
+
+  if (recorded.error) {
+    throw fromConnectorRpcError(recorded.error, 'recordConnectorGuardedUpdateRollbackApproval')
+  }
+
+  const row = ((recorded.data ?? []) as ConnectorGuardedUpdateRollbackApprovalRow[])[0] ?? null
+  const now = new Date().toISOString()
+  const write = await pulsIntegration()
+    .from('erp_sync_batches')
+    .insert({
+      tenant_id: ctx.tenantId,
+      connection_id: connectionId,
+      sync_type: 'import_apply_review',
+      event_key: 'import_apply_rollback_approval_recorded',
+      actor_employee_id: ctx.employeeId,
+      status: 'success',
+      started_at: now,
+      finished_at: now,
+      records_seen: overview.guardedUpdateRollbackPreview.summary.rowCount,
+      records_inserted: 0,
+      records_updated: overview.guardedUpdateRollbackPreview.summary.rollbackCount,
+      records_failed: 0,
+      error_summary: null,
+      safe_error_code: null,
+      safe_error_context: {
+        contract_version: 'pr16.6-guarded-update-rollback-approval-v1',
+        rollback_approval_id: row?.rollback_approval_id ?? null,
+        rollback_preview_id: rollbackPreviewId,
+        change_set_id: changeSetId,
+        import_batch_id: batch,
+        rollback_preview_checksum: row?.rollback_preview_checksum ?? null,
+        row_count: overview.guardedUpdateRollbackPreview.summary.rowCount,
+        rollback_count: overview.guardedUpdateRollbackPreview.summary.rollbackCount,
+        blocked_count: overview.guardedUpdateRollbackPreview.summary.blockedCount,
+        stale_blocked_count: overview.guardedUpdateRollbackPreview.summary.staleBlockedCount,
+        field_diff_count: overview.guardedUpdateRollbackPreview.summary.fieldDiffCount,
+        rollback_snapshot_count: overview.guardedUpdateRollbackPreview.summary.rollbackSnapshotCount,
+        approval_policy: 'admin_only',
+        approval_recorded: true,
+        approver_role: ctx.personaRole,
+        safe_to_rollback: false,
+        rollback_approval_enabled: true,
+        rollback_execution_open: false,
+        compensating_execution_open: false,
+        source_writeback_open: false,
+        credential_readback_open: false,
+        provider_api_calls: false,
+        field_value_readback: false,
+        raw_payload_readback: false,
+        snapshot_payload_readback: false,
+      },
+      next_action_key: row?.next_action_key ?? 'prepare_guarded_update_rollback_worker_pr16_7',
+    })
+    .select('id')
+    .single()
+
+  if (write.error) {
+    throw fromSupabaseError(
+      write.error,
+      'recordConnectorGuardedUpdateRollbackApproval',
+      'puls_integration',
+      'erp_sync_batches',
+    )
+  }
+
+  return {
+    connectionId,
+    batchId: batch,
+    changeSetId,
+    rollbackPreviewId,
+    rollbackApprovalId: row?.rollback_approval_id ?? null,
+    status: row?.approval_status === 'approval_recorded' ? 'approval_recorded' : 'needs_approval',
+    approvedAt: row?.approved_at ?? now,
+    nextActionKey: row?.next_action_key ?? 'prepare_guarded_update_rollback_worker_pr16_7',
+    safeToRollback: false,
   }
 }
 

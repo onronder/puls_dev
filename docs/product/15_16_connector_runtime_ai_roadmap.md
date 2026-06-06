@@ -552,7 +552,37 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Current state drift varsa rollback blocked olur.
 - Rollback audit trail links original apply event, rollback preview, approval, worker job, and final result.
 
-### PR16.6 - Notification Center Foundation
+### PR16.6 - Guarded Update Rollback Approval
+
+**Ürün değeri:** Hatalı guarded update apply sonrası rollback çalıştırmadan önce admin, tam olarak hangi hash-only preview'i onayladığını kayıt altına alır.
+
+**Implementation status:** PR16.6 records checksum-bound guarded-update rollback approval in an immutable service-role table, exposes authenticated-safe approval summaries in `/erp`, and keeps rollback execution, rollback job enqueue, compensating execution, ERP/source writeback, provider API calls, credential readback, raw payload readback, snapshot payload readback, field value readback, browser direct rollback, and AI autonomous execution closed.
+
+**Kapsam:**
+
+- `connector_apply_rollback_approvals` immutable approval ledger
+- `record_connector_guarded_update_rollback_approval` admin/service-role RPC
+- `list_connector_guarded_update_rollback_approvals` safe read model
+- Preview checksum binding
+- Blocker, drift, evidence, snapshot availability, and retention gate checks
+- `/erp` rollback approval gate visibility
+
+**Kapsam dışı:**
+
+- Rollback worker execution
+- Rollback job enqueue
+- Compensating execution
+- ERP/source writeback
+- Raw rollback payload UI
+
+**Doğrulama:**
+
+- Blocked preview approval kaydedemez.
+- Drift veya expired snapshot approval kaydedemez.
+- Approval checksum immutable preview checksum'a bağlıdır.
+- Approval kaydı rollback execution açmaz.
+
+### PR16.7 - Notification Center Foundation
 
 **Ürün değeri:** Admin ve ilgili roller önemli connector olaylarını ekran aramadan takip eder.
 
