@@ -1085,6 +1085,8 @@
       "applyChangeSetDescription": "Önizlenen batch için immutable karar kanıtı üretir; hangi satırın yaratılacağını, hangisinin blokeli olduğunu ve hangi audit/retention sınırına girdiğini gösterir.",
       "guardedUpdateEvidence": "Guarded update kanıtı",
       "guardedUpdateEvidenceDescription": "Guarded update satırları için hash-only field diff ve rollback snapshot kanıtı üretir. Güncelleme çalıştırmaz veya değerleri göstermez.",
+      "guardedUpdateRecovery": "Guarded update recovery hazırlığı",
+      "guardedUpdateRecoveryDescription": "Apply sonrası object event, field diff ve rollback snapshot kanıtlarının PR16.5 rollback preview için hazır olup olmadığını gösterir.",
       "controlledApply": "Kontrollü uygulama tasarımı",
       "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
@@ -2135,6 +2137,78 @@
         "safe": "Güvenli",
         "sensitive": "Hassas",
         "destructive_equivalent": "Destructive"
+      }
+    },
+    "guardedUpdateRecovery": {
+      "rollbackExecutionClosed": "Rollback execution kapalı",
+      "appliedAt": "Apply zamanı: {{value}}",
+      "nextAction": "Sıradaki güvenli aksiyon: {{value}}",
+      "empty": "Guarded update object event kaydı henüz yok.",
+      "boundaryNote": "Bu bölüm apply sonrası recovery hazırlığını gösterir; rollback veya compensating update çalıştırmaz, snapshot payload veya önce/sonra değerlerini göstermez, provider çağırmaz, credential okumaz veya ERP'ye geri yazmaz.",
+      "status": {
+        "not_available": "Recovery kanıtı gerekmiyor",
+        "needs_apply": "Apply bekleniyor",
+        "recovery_ready": "Recovery hazırlığı hazır",
+        "object_event_incomplete": "Object event eksik",
+        "field_diff_incomplete": "Field diff eksik",
+        "rollback_snapshot_incomplete": "Snapshot eksik",
+        "hot_retention_expired": "Sıcak retention süresi geçti"
+      },
+      "descriptions": {
+        "not_available": "Mevcut change-set içinde apply edilmiş guarded update yok.",
+        "needs_apply": "Guarded update recovery hazırlığı apply tamamlandıktan sonra değerlendirilebilir.",
+        "recovery_ready": "Object event, hash-only field diff, rollback snapshot ve hot retention kanıtı PR16.5 rollback preview için hazır.",
+        "object_event_incomplete": "Apply sonucu için beklenen object event audit sayısı tamamlanmadı.",
+        "field_diff_incomplete": "Apply edilen guarded update satırlarının tamamı için hash-only field diff kanıtı yok.",
+        "rollback_snapshot_incomplete": "Apply edilen guarded update satırlarının tamamı için rollback snapshot kanıtı yok.",
+        "hot_retention_expired": "Rollback snapshot sıcak retention penceresi geçmiş; rollback preview yerine compensating review runbook hazırlanmalı."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada recovery readiness aksiyonu yok."
+        },
+        "wait_for_apply": {
+          "label": "Apply bekle",
+          "description": "Worker apply tamamlandıktan sonra recovery kanıtı tekrar okunur."
+        },
+        "review_recovery": {
+          "label": "Recovery kanıtını incele",
+          "description": "PR16.5 rollback preview tasarımı için audit ve snapshot kanıtları hazır."
+        },
+        "review_gap": {
+          "label": "Kanıt boşluğunu incele",
+          "description": "Object event, field diff veya rollback snapshot sayıları tamamlanmadan rollback preview açılmaz."
+        },
+        "prepare_compensating_review": {
+          "label": "Compensating review hazırla",
+          "description": "Sıcak snapshot penceresi geçmiş; rollback yerine manuel/compensating review süreci gerekir."
+        }
+      },
+      "metrics": {
+        "updates": "Update",
+        "objectEvents": "Object event",
+        "rollbackReady": "Rollback hazır",
+        "retention": "Sıcak retention"
+      },
+      "values": {
+        "appliedRows": "Apply edilmiş satır",
+        "auditLinked": "Worker job'a bağlı audit",
+        "snapshotWindow": "Sıcak snapshot penceresi",
+        "days": "Gün",
+        "noAction": "Aksiyon yok",
+        "noFields": "Alan yok",
+        "diffAndSnapshot": "{{diff}} field diff · Snapshot: {{snapshot}}",
+        "canonicalWrite": "Kanonik yazım",
+        "noWrite": "Yazım yok",
+        "yes": "Evet",
+        "no": "Hayır"
+      },
+      "columns": {
+        "row": "Satır",
+        "target": "Hedef",
+        "evidence": "Kanıt",
+        "boundary": "Sınır"
       }
     },
     "applyExecutionContract": {

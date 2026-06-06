@@ -2069,6 +2069,258 @@ describe('fetchErpOverviewWithMeta', () => {
     ).toBe(false)
   })
 
+  it('exposes guarded update recovery readiness without rollback execution or value readback', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { rpcCalls: [] }
+    setupSeededMocks(
+      {
+        erp_sync_batches: {
+          data: [
+            {
+              id: 'approval-event',
+              created_at: '2026-06-05T14:03:00.000Z',
+              status: 'success',
+              sync_type: 'import_apply_review',
+              event_key: 'import_apply_approval_recorded',
+              actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              safe_error_code: null,
+              safe_error_context: { approval_recorded: true, safe_to_apply: false },
+              next_action_key: 'enqueue_guarded_update_apply_after_review',
+              records_seen: 1,
+              records_inserted: 0,
+              records_updated: 1,
+              records_failed: 0,
+            },
+            {
+              id: 'review-event',
+              created_at: '2026-06-05T14:02:00.000Z',
+              status: 'success',
+              sync_type: 'import_apply_review',
+              event_key: 'import_apply_review_requested',
+              actor_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              safe_error_code: null,
+              safe_error_context: {
+                safe_to_apply: false,
+                human_review_recorded: true,
+              },
+              next_action_key: 'hold_for_apply_design',
+              records_seen: 1,
+              records_inserted: 0,
+              records_updated: 1,
+              records_failed: 0,
+            },
+          ],
+        },
+        import_batches: {
+          data: [
+            {
+              id: 'batch-guarded-update-applied',
+              source_namespace_id: 'namespace-1',
+              status: 'previewed',
+              mode: 'dry_run',
+              source_checksum: 'pr16_4_3_guarded_update_recovery_v1',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-05T13:00:00.000Z',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              created_at: '2026-06-05T12:59:00.000Z',
+              updated_at: '2026-06-05T13:01:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:list_connector_apply_safety_contracts': {
+          data: [
+            {
+              contract_version: 'pr16.4.3-guarded-update-recovery-readiness-v1',
+              browser_direct_apply_enabled: false,
+              authenticated_apply_rpc_exposed: false,
+              worker_import_apply_enqueue_enabled: true,
+              worker_import_apply_claim_enabled: true,
+              execution_enabled: true,
+              canonical_write_enabled: true,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              audit_tiers: ['object_event', 'field_diff', 'rollback_snapshot', 'archive_summary'],
+              field_diff_hot_retention_days: 90,
+              rollback_snapshot_hot_retention_days: 90,
+              object_event_retention_months: 24,
+              purge_archive_required: true,
+              safe_error_code: 'guarded_update_recovery_readiness_open',
+              next_action_key: 'review_guarded_update_recovery_readiness',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_apply_change_set_summaries': {
+          data: [
+            {
+              id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              status: 'blocked',
+              source_checksum: 'pr16_4_3_guarded_update_recovery_v1',
+              change_set_checksum: 'safe-guarded-update-recovery-change-set-hash',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              blocked_count: 1,
+              stale_count: 0,
+              destructive_count: 0,
+              source_conflict_count: 0,
+              guarded_update_count: 1,
+              no_change_count: 0,
+              approval_required: true,
+              sample_items: [],
+              created_at: '2026-06-05T13:02:00.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_guarded_update_evidence': {
+          data: [
+            {
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              status: 'evidence_ready',
+              guarded_update_count: 1,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              stale_blocked_count: 0,
+              execution_enabled: false,
+              canonical_write_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              hot_retention_days: 90,
+              next_action_key: 'review_guarded_update_evidence',
+              sample_field_diffs: [],
+              created_at: '2026-06-05T13:02:30.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_guarded_update_recovery_readiness': {
+          data: [
+            {
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              status: 'recovery_ready',
+              applied_at: '2026-06-05T14:10:00.000Z',
+              update_count: 1,
+              object_event_count: 1,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              rollback_ready_count: 1,
+              stale_recheck_verified_count: 1,
+              rollback_execution_enabled: false,
+              compensating_preview_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              recovery_window_hot_retention_days: 90,
+              hot_retention_expires_at: '2026-09-03T14:10:00.000Z',
+              purge_after_at: '2028-06-05T14:10:00.000Z',
+              purge_archive_required: true,
+              next_action_key: 'prepare_rollback_preview_pr16_5',
+              sample_events: [
+                {
+                  id: 'object-event-1',
+                  row_number: 1,
+                  operation: 'update',
+                  entity_type: 'department',
+                  external_id: 'DEPT-1',
+                  target_table: 'departments',
+                  canonical_id: 'department-1',
+                  connector_job_id: 'job-1',
+                  created_by_worker_id: 'railway-erp-connector-production-1',
+                  created_at: '2026-06-05T14:10:00.000Z',
+                  safe_field_names: ['name'],
+                  field_diff_count: 1,
+                  rollback_snapshot_required: true,
+                  canonical_write: true,
+                  source_writeback: false,
+                  provider_api_calls: false,
+                  credential_readback: false,
+                  field_value_readback: false,
+                  raw_payload_readback: false,
+                  rollback_execution: false,
+                },
+              ],
+              created_at: '2026-06-05T14:10:00.000Z',
+            },
+          ],
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const overview = await fetchErpOverviewWithMeta('user-1')
+
+    expect(overview.data.applySafetyContract).toMatchObject({
+      contractVersion: 'pr16.4.3-guarded-update-recovery-readiness-v1',
+      executionEnabled: true,
+      canonicalWriteEnabled: true,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      safeErrorCode: 'guarded_update_recovery_readiness_open',
+      nextActionKey: 'review_guarded_update_recovery_readiness',
+    })
+    expect(overview.data.applyExecutionContract).toMatchObject({
+      safeToExecute: true,
+      executorMode: 'worker_guarded_update_job',
+    })
+    expect(overview.data.guardedUpdateRecovery).toMatchObject({
+      changeSetId: 'change-set-guarded-update-applied',
+      status: 'recovery_ready',
+      readiness: 'ready',
+      rollbackExecutionEnabled: false,
+      compensatingPreviewEnabled: false,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      valueReadbackEnabled: false,
+      batchId: 'batch-guarded-update-applied',
+      nextActionKey: 'prepare_rollback_preview_pr16_5',
+      summary: {
+        updateCount: 1,
+        objectEventCount: 1,
+        fieldDiffCount: 1,
+        rollbackSnapshotCount: 1,
+        rollbackReadyCount: 1,
+        staleRecheckVerifiedCount: 1,
+        recoveryWindowHotRetentionDays: 90,
+      },
+    })
+    expect(overview.data.guardedUpdateRecovery.sampleEvents[0]).toMatchObject({
+      operation: 'update',
+      safeFieldNames: ['name'],
+      fieldDiffCount: 1,
+      rollbackSnapshotRequired: true,
+      canonicalWrite: true,
+      sourceWriteback: false,
+      providerApiCalls: false,
+      credentialReadback: false,
+      fieldValueReadback: false,
+      rawPayloadReadback: false,
+      rollbackExecution: false,
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'list_connector_guarded_update_recovery_readiness',
+      args: { p_change_set_id: 'change-set-guarded-update-applied', p_limit: 8 },
+    })
+    expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('snapshot_payload')
+    expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('before_value')
+    expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('after_value')
+    expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('credentials_ref')
+  })
+
   it('returns real empty when tenant is missing and demo mode is off', async () => {
     demoEnabled.mockReturnValue(false)
     resolveTenant.mockResolvedValue(mockTenantContextWithoutTenant())
