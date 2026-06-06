@@ -653,7 +653,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Planning contract:** [`16_9_app_wide_notification_center_strategy.md`](./16_9_app_wide_notification_center_strategy.md)
 
-**Implementation status:** PR16.9.0 implements only the `puls_app` schema bootstrap and exposure smoke. Notification ledgers, producer mapping, UI, realtime, and delivery remain closed until later PR16.9 sub-phases.
+**Implementation status:** PR16.9.0 implements only the `puls_app` schema bootstrap and exposure smoke. PR16.9.0x hardens two pre-existing puls_integration lint errors before PR16.9.1. Notification ledgers, producer mapping, UI, realtime, and delivery remain closed until later PR16.9 sub-phases.
 
 **Kapsam:**
 
@@ -685,6 +685,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Secret/raw payload notification içinde yoktur.
 - Role visibility doğru çalışır.
 - Read/unread/dismiss UI state DB ledger ile tutarlıdır.
+- PR16.9.1 should start only after local and linked backend lint pass.
 
 ### PR16.10 - Canias Runtime Spike On Generic Connector Foundation
 

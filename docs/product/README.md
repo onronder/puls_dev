@@ -660,6 +660,16 @@ PR16.9.0 opens only the `puls_app` application schema and a minimal smoke RPC so
 | [`supabase/migrations/20260606170000_puls_app_notification_center_bootstrap.sql`](../../supabase/migrations/20260606170000_puls_app_notification_center_bootstrap.sql) | `puls_app` schema bootstrap plus safe authenticated/service-role smoke RPC                    |
 | [`scripts/verify-16-9-0-puls-app-bootstrap.sh`](../../scripts/verify-16-9-0-puls-app-bootstrap.sh)                                             | PR16.9.0 verify gate                                                                         |
 
+## PR16.9.0x backend lint hardening
+
+PR16.9.0x fixes two pre-existing `puls_integration` lint errors before PR16.9.1 notification ledger work starts. It keeps PR16.9.0 `puls_app` bootstrap unchanged and does not open Notification Center tables, realtime, delivery, UI, or producer mapping.
+
+| Document / artifact                                                                                                                                    | Purpose                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| [16_9_0x_backend_lint_hardening.md](./16_9_0x_backend_lint_hardening.md)                                                                               | PR16.9.0x scope, Supabase exposure posture, fixed lint errors, and PR16.9.1 handoff         |
+| [`supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql`](../../supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql) | Runtime preflight enum casts plus lint-safe apply change-set typed plan                     |
+| [`scripts/verify-16-9-0x-backend-lint-hardening.sh`](../../scripts/verify-16-9-0x-backend-lint-hardening.sh)                                             | PR16.9.0x verify gate                                                                       |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
