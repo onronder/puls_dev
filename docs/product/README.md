@@ -680,6 +680,16 @@ PR16.9.1 adds the durable app-wide Notification Center ledger in `puls_app`, inc
 | [`supabase/migrations/20260606180000_puls_app_notification_ledger.sql`](../../supabase/migrations/20260606180000_puls_app_notification_ledger.sql)       | App-wide notification ledger tables, RPC boundary, grants, and bootstrap status contract update   |
 | [`scripts/verify-16-9-1-durable-notification-ledger.sh`](../../scripts/verify-16-9-1-durable-notification-ledger.sh)                                     | PR16.9.1 verify gate                                                                              |
 
+## PR16.9.2 connector notification producers
+
+PR16.9.2 maps selected connector/runtime evidence into the app-wide Notification Center ledger through a service-role-only producer refresh RPC. It reuses `emit_app_notification`, keeps direct authenticated table writes closed, and leaves UI, realtime, preferences, and external delivery for later PR16.9 sub-phases.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_9_2_connector_notification_producers.md](./16_9_2_connector_notification_producers.md)                                                               | PR16.9.2 scope, source-event mapping, safety contract, smoke SQL, and PR16.9.3 handoff                    |
+| [`supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql`](../../supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql) | Service-role connector notification refresh RPC and bootstrap status producer mapping update              |
+| [`scripts/verify-16-9-2-connector-notification-producers.sh`](../../scripts/verify-16-9-2-connector-notification-producers.sh)                           | PR16.9.2 verify gate                                                                                      |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
