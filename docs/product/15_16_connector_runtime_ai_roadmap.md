@@ -653,7 +653,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Planning contract:** [`16_9_app_wide_notification_center_strategy.md`](./16_9_app_wide_notification_center_strategy.md)
 
-**Implementation status:** PR16.9.0 implements only the `puls_app` schema bootstrap and exposure smoke. PR16.9.0x hardens two pre-existing puls_integration lint errors before PR16.9.1. Notification ledgers, producer mapping, UI, realtime, and delivery remain closed until later PR16.9 sub-phases.
+**Implementation status:** PR16.9.0 implements the `puls_app` schema bootstrap and exposure smoke. PR16.9.0x hardens two pre-existing `puls_integration` lint errors. PR16.9.1 implements the durable app-wide notification ledger and authenticated RPC boundary; producer mapping, UI, realtime, and delivery remain closed until later PR16.9 sub-phases.
 
 **Kapsam:**
 
