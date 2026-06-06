@@ -118,6 +118,15 @@ PR16.4.2 guarded update worker apply:
   - `apply_mode=guarded_update` and `pr16.4.2-guarded-update-worker-apply-v1` goes to `execute_connector_guarded_update_apply_job`.
 - Guarded update execution still does not call provider APIs, read credentials, write back to ERP/source systems, expose raw payloads, expose field values, or execute rollback.
 
+PR16.8 guarded update rollback worker apply:
+
+- No new Railway job type is required.
+- Keep `PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED=true` and `PULS_CONNECTOR_WORKER_JOB_TYPES=noop_health,connector_runtime_preflight,import_apply`.
+- The worker routes queued `import_apply` rollback jobs by safe context:
+  - `apply_mode=guarded_update_rollback` and `pr16.8-guarded-update-rollback-worker-apply-v1` goes to `execute_connector_guarded_update_rollback_apply_job`.
+- Rollback execution is service-role worker-only, readiness-bound, approval-bound, checksum-bound, and limited to safe reference `name` restores.
+- Rollback execution still does not call provider APIs, read credentials, write back to ERP/source systems, expose raw payloads, expose snapshot payloads, expose field values, or execute compensating actions.
+
 Production smoke:
 
 1. Open Railway deployment logs and confirm `erp-connector worker loop enabled listening on :$PORT`.

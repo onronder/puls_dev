@@ -11,6 +11,7 @@ import {
   recordConnectorGuardedUpdateRollbackApproval,
   requestConnectorApplyChangeSet,
   requestConnectorCreateOnlyApplyJob,
+  requestConnectorGuardedUpdateRollbackApplyJob,
   requestConnectorGuardedUpdateRollbackWorkerReadiness,
   requestConnectorGuardedUpdateApplyJob,
   requestConnectorApplyReview,
@@ -4396,6 +4397,244 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(capture)).not.toContain('after_value')
     expect(JSON.stringify(capture)).not.toContain('"raw_payload":')
     expect(JSON.stringify(capture)).not.toContain('credentials_ref')
+  })
+
+  it('queues guarded update rollback apply only after worker readiness handoff is ready', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    demoEnabled.mockReturnValue(false)
+    const capture: ClientCapture = { inserts: [], rpcCalls: [] }
+    setupSeededMocks(
+      {
+        import_batches: {
+          data: [
+            {
+              id: 'batch-guarded-update-applied',
+              source_namespace_id: 'namespace-1',
+              status: 'applied',
+              mode: 'dry_run',
+              source_checksum: 'guarded-update-checksum',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              error_count: 0,
+              violation_count: 0,
+              validated_at: '2026-06-05T13:00:00.000Z',
+              previewed_at: '2026-06-05T13:01:00.000Z',
+              applied_at: '2026-06-05T14:00:00.000Z',
+              created_at: '2026-06-05T12:59:00.000Z',
+              updated_at: '2026-06-05T14:00:00.000Z',
+            },
+          ],
+        },
+        'rpc:list_connector_import_preview_records': { data: [] },
+        'rpc:list_connector_apply_change_set_summaries': {
+          data: [
+            {
+              id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              status: 'blocked',
+              source_checksum: 'guarded-update-checksum',
+              change_set_checksum: 'change-set-checksum',
+              row_count: 1,
+              create_count: 0,
+              update_count: 1,
+              skip_count: 0,
+              blocked_count: 1,
+              stale_count: 0,
+              destructive_count: 0,
+              source_conflict_count: 0,
+              guarded_update_count: 1,
+              no_change_count: 0,
+              approval_required: true,
+              created_at: '2026-06-05T13:02:00.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_guarded_update_rollback_previews': {
+          data: [
+            {
+              rollback_preview_id: 'rollback-preview-1',
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              status: 'ready_for_rollback_review',
+              preview_kind: 'rollback',
+              rollback_preview_checksum: 'safe-rollback-preview-hash',
+              row_count: 1,
+              rollback_count: 1,
+              blocked_count: 0,
+              stale_blocked_count: 0,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              rollback_preview_enabled: true,
+              rollback_execution_enabled: false,
+              compensating_execution_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              approval_required: true,
+              operator_review_required: true,
+              next_action_key: 'review_rollback_preview_before_execution',
+              sample_items: [],
+              created_at: '2026-06-05T14:20:00.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_guarded_update_rollback_approvals': {
+          data: [
+            {
+              rollback_approval_id: 'rollback-approval-1',
+              rollback_preview_id: 'rollback-preview-1',
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              approval_status: 'approval_recorded',
+              approval_policy: 'admin_only',
+              rollback_preview_checksum: 'safe-rollback-preview-hash',
+              row_count: 1,
+              rollback_count: 1,
+              blocked_count: 0,
+              stale_blocked_count: 0,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              rollback_approval_enabled: true,
+              rollback_execution_enabled: false,
+              compensating_execution_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              approval_required: true,
+              operator_review_required: true,
+              next_action_key: 'prepare_guarded_update_rollback_worker_pr16_7',
+              approved_by_employee_id: 'a0000006-0006-4006-8006-000000000001',
+              approved_at: '2026-06-05T14:25:00.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:list_connector_guarded_update_rollback_worker_readiness': {
+          data: [
+            {
+              rollback_worker_readiness_id: 'rollback-worker-readiness-1',
+              rollback_approval_id: 'rollback-approval-1',
+              rollback_preview_id: 'rollback-preview-1',
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              readiness_status: 'ready_for_worker_handoff',
+              readiness_policy: 'approval_checksum_current_state_retention',
+              worker_contract: 'pr16.7-rollback-worker-readiness-v1',
+              expected_job_type: 'import_apply',
+              expected_job_domain: 'import_apply_guarded_update_rollback',
+              rollback_preview_checksum: 'safe-rollback-preview-hash',
+              row_count: 1,
+              rollback_count: 1,
+              blocker_count: 0,
+              stale_blocked_count: 0,
+              drift_blocked_count: 0,
+              expired_snapshot_count: 0,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              original_apply_event_count: 1,
+              current_state_verified_count: 1,
+              retention_verified_count: 1,
+              approval_verified: true,
+              approval_checksum_verified: true,
+              worker_handoff_ready: true,
+              rollback_job_enqueue_enabled: false,
+              rollback_execution_enabled: false,
+              canonical_write_enabled: false,
+              compensating_execution_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              provider_api_calls_enabled: false,
+              approval_required: true,
+              operator_review_required: true,
+              next_action_key: 'implement_guarded_update_rollback_worker_pr16_8',
+              sample_items: [],
+              created_at: '2026-06-05T14:30:00.000Z',
+            },
+          ],
+          error: null,
+        },
+        'rpc:enqueue_connector_guarded_update_rollback_apply_job': {
+          data: [
+            {
+              job_id: 'rollback-job-1',
+              status: 'queued',
+              rollback_worker_readiness_id: 'rollback-worker-readiness-1',
+              rollback_approval_id: 'rollback-approval-1',
+              rollback_preview_id: 'rollback-preview-1',
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              rollback_count: 1,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              next_action_key: 'wait_for_guarded_update_rollback_worker_apply',
+            },
+          ],
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const result = await requestConnectorGuardedUpdateRollbackApplyJob('user-1')
+
+    expect(result).toEqual({
+      connectionId: 'connection-1',
+      batchId: 'batch-guarded-update-applied',
+      changeSetId: 'change-set-guarded-update-applied',
+      rollbackPreviewId: 'rollback-preview-1',
+      rollbackApprovalId: 'rollback-approval-1',
+      rollbackWorkerReadinessId: 'rollback-worker-readiness-1',
+      jobId: 'rollback-job-1',
+      status: 'queued',
+      nextActionKey: 'wait_for_guarded_update_rollback_worker_apply',
+      safeToRollback: false,
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'enqueue_connector_guarded_update_rollback_apply_job',
+      args: { p_rollback_worker_readiness_id: 'rollback-worker-readiness-1' },
+    })
+    expect(capture.rpcCalls?.some((call) => call.fn.includes('execute'))).toBe(false)
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_sync_batches',
+      payload: expect.objectContaining({
+        sync_type: 'import_apply_review',
+        event_key: 'import_apply_guarded_update_rollback_queued',
+        status: 'pending',
+        safe_error_context: expect.objectContaining({
+          job_id: 'rollback-job-1',
+          contract_version: 'pr16.8-guarded-update-rollback-worker-apply-v1',
+          rollback_worker_readiness_id: 'rollback-worker-readiness-1',
+          rollback_approval_id: 'rollback-approval-1',
+          rollback_preview_id: 'rollback-preview-1',
+          rollback_preview_checksum: 'safe-rollback-preview-hash',
+          worker_queue: true,
+          safe_to_rollback: false,
+          rollback_job_enqueue_open: true,
+          rollback_execution_open: true,
+          canonical_write_open: true,
+          browser_direct_apply_open: false,
+          authenticated_apply_rpc_open: false,
+          compensating_execution_open: false,
+          source_writeback_open: false,
+          credential_readback_open: false,
+          provider_api_calls: false,
+          field_value_readback: false,
+          raw_payload_readback: false,
+          snapshot_payload_readback: false,
+        }),
+        next_action_key: 'wait_for_guarded_update_rollback_worker_apply',
+      }),
+    })
+    expect(JSON.stringify(capture)).not.toContain('apply_import_batch')
+    expect(JSON.stringify(capture)).not.toContain('credentials_ref')
+    expect(JSON.stringify(capture)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(capture)).not.toContain('"snapshot_payload":')
+    expect(JSON.stringify(capture)).not.toContain('provider_response')
   })
 
   it('rejects connector apply approval before review is recorded', async () => {

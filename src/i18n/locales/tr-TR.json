@@ -1035,6 +1035,9 @@
       "guardedUpdateRollbackWorkerReadiness": {
         "generated": "Rollback worker hazırlığı kaydedildi. Rollback job kuyruğu ve execution kapalı kalır."
       },
+      "guardedUpdateRollbackApplyJob": {
+        "queued": "Guarded update rollback job güvenli worker kuyruğuna alındı."
+      },
       "runtimePreflight": {
         "queued": "Runtime ön kontrol job'ı güvenli kuyruğa alındı. Worker sonucu activity içinde görünecek."
       }
@@ -1058,6 +1061,7 @@
       "guardedUpdateApplyBlocked": "Guarded update apply için kanıt, rollback snapshot, admin onayı ve açık worker gate gerekir.",
       "rollbackApprovalBlocked": "Rollback onayı için blocker ve current-state drift içermeyen hazır rollback preview gerekir.",
       "rollbackWorkerReadinessBlocked": "Rollback worker hazırlığı için onay, eşleşen current-state, original apply event ve aktif rollback snapshot gerekir.",
+      "rollbackApplyBlocked": "Rollback apply için worker readiness, eşleşen current-state, original apply event ve aktif rollback snapshot gerekir.",
       "runtimePreflightBlocked": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
     },
     "sections": {
@@ -1101,6 +1105,8 @@
       "guardedUpdateRollbackPreviewDescription": "Applied guarded update için hash-only rollback preview, blocker ve current-state drift durumunu gösterir.",
       "guardedUpdateRollbackWorkerReadiness": "Guarded update rollback worker hazırlığı",
       "guardedUpdateRollbackWorkerReadinessDescription": "Rollback onayı, checksum, current-state, original apply event ve retention kanıtının gelecekteki rollback worker için hazır olup olmadığını gösterir.",
+      "guardedUpdateRollbackWorkerApply": "Guarded update rollback worker apply",
+      "guardedUpdateRollbackWorkerApplyDescription": "Readiness kanıtlandıktan sonra service-role rollback worker kuyruğunu açar; browser direct rollback, source writeback, provider call ve payload readback kapalı kalır.",
       "controlledApply": "Kontrollü uygulama tasarımı",
       "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
@@ -2493,6 +2499,36 @@
         "blocked": "Blokeli"
       },
       "empty": "Henüz rollback worker hazırlık satırı yok."
+    },
+    "guardedUpdateRollbackWorkerApply": {
+      "queueing": "Rollback worker kuyruğa alınıyor",
+      "adminRequired": "Admin rollback kuyruğu gerekir",
+      "description": "Worker yalnızca checksum'a bağlı snapshot'lardan güvenli referans adlarını geri yükler ve yazmadan hemen önce current-state'i tekrar kontrol eder.",
+      "status": {
+        "ready": "Rollback worker kuyruğu hazır",
+        "waiting": "Rollback worker kuyruğu beklemede"
+      },
+      "descriptions": {
+        "ready": "Readiness kaydedildi. Service-role worker job kuyruğa alınabilir; job rollback'i yalnızca lease, checksum, snapshot ve current-state tekrar kontrolleri geçerse yapar.",
+        "waiting": "Onay ve worker-readiness kanıtı tamamlanana kadar rollback worker apply kullanılamaz."
+      },
+      "actions": {
+        "queue": "Rollback worker kuyruğa al",
+        "wait": "Readiness bekleniyor"
+      },
+      "metrics": {
+        "rows": "Rollback satırı",
+        "currentState": "Current-state kontrolü",
+        "snapshots": "Snapshot",
+        "next": "Sonraki kapı"
+      },
+      "values": {
+        "workerReady": "Worker handoff hazır",
+        "workerWaiting": "Worker handoff bekliyor",
+        "workerOnly": "Sadece worker",
+        "sourceClosed": "Source writeback kapalı",
+        "noAction": "Aksiyon yok"
+      }
     },
     "applyExecutionContract": {
       "executionDisabled": "Execution kapalı",

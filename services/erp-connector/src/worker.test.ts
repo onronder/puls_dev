@@ -8,6 +8,8 @@ import {
   buildCreateOnlyApplyFailureCompletion,
   buildGuardedUpdateApplyCompletionFromResult,
   buildGuardedUpdateApplyFailureCompletion,
+  buildGuardedUpdateRollbackApplyCompletionFromResult,
+  buildGuardedUpdateRollbackApplyFailureCompletion,
   buildHealthPayload,
   buildRuntimePreflightCompletionFromContext,
   ConnectorWorkerRpcError,
@@ -458,6 +460,108 @@ describe('erp-connector worker job handling', () => {
     expect(serialized).not.toContain('provider_response')
   })
 
+  it('routes guarded update rollback import_apply jobs through the PR16.8 worker RPC', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_JOB_TYPES: 'import_apply',
+      PULS_CONNECTOR_WORKER_ID: 'worker-a',
+    })
+    const calls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
+      calls.push({ fn, args })
+      if (fn === 'claim_next_connector_job') {
+        return [
+          noopJob({
+            id: 'rollback-job-1',
+            job_type: 'import_apply',
+            domain: 'import_apply_guarded_update_rollback',
+            safe_error_context: {
+              contract_version: 'pr16.8-guarded-update-rollback-worker-apply-v1',
+              apply_mode: 'guarded_update_rollback',
+            },
+          }),
+        ] as T
+      }
+      if (fn === 'execute_connector_guarded_update_rollback_apply_job') {
+        return [
+          {
+            rollback_worker_readiness_id: 'readiness-1',
+            rollback_approval_id: 'approval-1',
+            rollback_preview_id: 'preview-1',
+            change_set_id: 'change-set-1',
+            import_batch_id: 'batch-1',
+            status: 'applied_guarded_update_rollback',
+            row_count: 1,
+            rollback_count: 1,
+            field_diff_count: 1,
+            rollback_snapshot_count: 1,
+            object_event_count: 1,
+            execution_enabled: true,
+            canonical_write_enabled: true,
+            rollback_execution_enabled: true,
+            source_writeback_enabled: false,
+            credential_readback_enabled: false,
+            provider_api_calls_enabled: false,
+            next_action_key: 'review_guarded_update_rollback_object_events',
+          },
+        ] as T
+      }
+      if (fn === 'complete_connector_job') return 'rollback-job-1' as T
+      if (fn === 'upsert_connector_worker_heartbeat') return 'worker-a' as T
+      if (fn === 'heartbeat_connector_job') return 'rollback-job-1' as T
+      return [] as T
+    }
+
+    const result = await runWorkerOnce(config, rpc)
+
+    expect(result).toEqual({ claimed: true, jobId: 'rollback-job-1', status: 'succeeded' })
+    expect(calls.some((call) => call.fn === 'execute_connector_create_only_apply_job')).toBe(false)
+    expect(calls.some((call) => call.fn === 'execute_connector_guarded_update_apply_job')).toBe(
+      false,
+    )
+    expect(
+      calls.find((call) => call.fn === 'execute_connector_guarded_update_rollback_apply_job')
+        ?.args,
+    ).toMatchObject({
+      p_job_id: 'rollback-job-1',
+      p_worker_id: 'worker-a',
+    })
+    expect(calls.find((call) => call.fn === 'complete_connector_job')?.args).toMatchObject({
+      p_job_id: 'rollback-job-1',
+      p_status: 'succeeded',
+      p_safe_error_code: null,
+      p_next_action_key: 'review_guarded_update_rollback_object_events',
+      p_safe_error_context: expect.objectContaining({
+        apply_contract: 'pr16.8-guarded-update-rollback-worker-apply-v1',
+        apply_mode: 'guarded_update_rollback',
+        rollback_worker_readiness_id: 'readiness-1',
+        rollback_approval_id: 'approval-1',
+        rollback_preview_id: 'preview-1',
+        rollback_count: 1,
+        field_diff_count: 1,
+        rollback_snapshot_count: 1,
+        canonical_write: true,
+        rollback_execution: true,
+        source_writeback: false,
+        credential_readback: false,
+        provider_api_calls: false,
+        raw_payload_readback: false,
+        field_value_readback: false,
+        snapshot_payload_readback: false,
+        compensating_execution: false,
+      }),
+    })
+
+    const serialized = JSON.stringify(calls)
+    expect(serialized).not.toContain('service-role-secret-value')
+    expect(serialized).not.toContain('"raw_payload":')
+    expect(serialized).not.toContain('"snapshot_payload":')
+    expect(serialized).not.toContain('provider_response')
+  })
+
   it('fails import_apply safely when the create-only RPC rejects the job', async () => {
     const failure = buildCreateOnlyApplyFailureCompletion(
       noopJob({ job_type: 'import_apply' }),
@@ -510,6 +614,42 @@ describe('erp-connector worker job handling', () => {
     expect(JSON.stringify(failure)).not.toContain('credentials_ref')
   })
 
+  it('fails guarded update rollback import_apply safely when the PR16.8 RPC rejects the job', () => {
+    const failure = buildGuardedUpdateRollbackApplyFailureCompletion(
+      noopJob({
+        job_type: 'import_apply',
+        domain: 'import_apply_guarded_update_rollback',
+        safe_error_context: {
+          contract_version: 'pr16.8-guarded-update-rollback-worker-apply-v1',
+          apply_mode: 'guarded_update_rollback',
+        },
+      }),
+      new ConnectorWorkerRpcError(400, 'puls_connector_rollback_worker_stale_target'),
+    )
+
+    expect(failure).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'puls_connector_rollback_worker_stale_target',
+      p_next_action_key: 'review_guarded_update_rollback_apply_failure',
+      p_safe_error_context: expect.objectContaining({
+        apply_contract: 'pr16.8-guarded-update-rollback-worker-apply-v1',
+        apply_mode: 'guarded_update_rollback',
+        canonical_write: false,
+        rollback_execution: false,
+        source_writeback: false,
+        credential_readback: false,
+        provider_api_calls: false,
+        raw_payload_readback: false,
+        field_value_readback: false,
+        snapshot_payload_readback: false,
+        compensating_execution: false,
+      }),
+    })
+    expect(JSON.stringify(failure)).not.toContain('"raw_payload":')
+    expect(JSON.stringify(failure)).not.toContain('snapshot_payload"')
+    expect(JSON.stringify(failure)).not.toContain('credentials_ref')
+  })
+
   it('does not mark create-only apply successful when the RPC result is missing', () => {
     expect(buildCreateOnlyApplyCompletionFromResult(null)).toMatchObject({
       p_status: 'failed',
@@ -529,6 +669,20 @@ describe('erp-connector worker job handling', () => {
       p_safe_error_context: expect.objectContaining({
         canonical_write: false,
         rollback_execution: false,
+      }),
+    })
+  })
+
+  it('does not mark guarded update rollback apply successful when the RPC result is missing', () => {
+    expect(buildGuardedUpdateRollbackApplyCompletionFromResult(null)).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'guarded_update_rollback_apply_result_missing',
+      p_next_action_key: 'review_guarded_update_rollback_apply_result',
+      p_safe_error_context: expect.objectContaining({
+        canonical_write: false,
+        rollback_execution: false,
+        source_writeback: false,
+        snapshot_payload_readback: false,
       }),
     })
   })
