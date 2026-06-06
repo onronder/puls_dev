@@ -21,6 +21,7 @@ DOC="$(file_at_ref docs/product/16_5_guarded_update_rollback_preview.md)"
 ROADMAP="$(file_at_ref docs/product/15_16_connector_runtime_ai_roadmap.md)"
 README="$(file_at_ref docs/product/README.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql)"
+MIGRATION_FIX="$(file_at_ref supabase/migrations/20260606131000_puls_integration_rollback_preview_generation_disambiguation.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
 ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
@@ -66,6 +67,20 @@ for needle in \
 done
 
 for needle in \
+  "PR16.5 rollback preview generation ambiguity fix" \
+  "generate_connector_guarded_update_rollback_preview" \
+  "#variable_conflict use_column" \
+  "pr16.5-guarded-update-rollback-preview-v1" \
+  "current_state_drift" \
+  "field_diff_missing" \
+  "PULS_CONNECTOR_ROLLBACK_PREVIEW_ITEM_COUNT_MISMATCH"; do
+  if ! grep -Fq "$needle" <<< "$MIGRATION_FIX"; then
+    echo "FAIL: PR16.5 hotfix migration missing needle: $needle" >&2
+    exit 1
+  fi
+done
+
+for needle in \
   "CHECK (rollback_execution_enabled IS FALSE)" \
   "CHECK (compensating_execution_enabled IS FALSE)" \
   "CHECK (source_writeback_enabled IS FALSE)" \
@@ -103,7 +118,7 @@ for forbidden in \
   "snapshot_payload\"" \
   "before_value\"" \
   "after_value\""; do
-  if grep -Fq "$forbidden" <<< "$MIGRATION$ERP_ADAPTER$ERP_ROUTE"; then
+  if grep -Fq "$forbidden" <<< "$MIGRATION$MIGRATION_FIX$ERP_ADAPTER$ERP_ROUTE"; then
     echo "FAIL: PR16.5 contains forbidden needle: $forbidden" >&2
     exit 1
   fi
@@ -199,6 +214,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       docs/product/README.md) ;;
       scripts/verify-16-5-guarded-update-rollback-preview.sh) ;;
       supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql) ;;
+      supabase/migrations/20260606131000_puls_integration_rollback_preview_generation_disambiguation.sql) ;;
       src/i18n/locales/en-US.json) ;;
       src/i18n/locales/tr-TR.json) ;;
       src/lib/data/index.ts) ;;
