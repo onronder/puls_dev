@@ -642,6 +642,24 @@ PR16.8 opens service-role worker-only rollback execution for approved guarded up
 | [`supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql`](../../supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql) | Worker-only guarded-update rollback enqueue/execution RPCs plus rollback object event audit support       |
 | [`scripts/verify-16-8-guarded-update-rollback-worker-apply.sh`](../../scripts/verify-16-8-guarded-update-rollback-worker-apply.sh)                                           | PR16.8 verify gate                                                                                         |
 
+## PR16.9 app-wide notification center strategy
+
+PR16.9 plans Notification Center as an app-wide PULS capability instead of an `/erp`-only feature. `/erp` remains the first producer and first visible surface, while `puls_app` owns the durable notification ledger, visibility rules, read state, and optional realtime delivery posture.
+
+| Document / artifact                                                                        | Purpose                                                                                                      |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| [16_9_app_wide_notification_center_strategy.md](./16_9_app_wide_notification_center_strategy.md) | PR16.9 follow-up contract for `puls_app`, schema exposure risk controls, sub-phases, UI strategy, and smoke discipline |
+
+## PR16.9.0 puls_app bootstrap
+
+PR16.9.0 opens only the `puls_app` application schema and a minimal smoke RPC so Supabase/PostgREST exposure can be verified before durable notification ledgers or UI are added. Notification tables, realtime, external delivery, and producer mapping remain closed.
+
+| Document / artifact                                                                                                                          | Purpose                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [16_9_0_puls_app_bootstrap.md](./16_9_0_puls_app_bootstrap.md)                                                                               | PR16.9.0 scope, safety contract, remote exposure requirement, smoke SQL, and PR16.9.1 handoff |
+| [`supabase/migrations/20260606170000_puls_app_notification_center_bootstrap.sql`](../../supabase/migrations/20260606170000_puls_app_notification_center_bootstrap.sql) | `puls_app` schema bootstrap plus safe authenticated/service-role smoke RPC                    |
+| [`scripts/verify-16-9-0-puls-app-bootstrap.sh`](../../scripts/verify-16-9-0-puls-app-bootstrap.sh)                                             | PR16.9.0 verify gate                                                                         |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
