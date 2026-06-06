@@ -40,6 +40,7 @@ import {
   mapConnectorSetupError,
   recordConnectorApplyApproval,
   recordConnectorGuardedUpdateRollbackApproval,
+  requestConnectorGuardedUpdateRollbackWorkerReadiness,
   requestConnectorApplyChangeSet,
   requestConnectorGuardedUpdateEvidence,
   requestConnectorGuardedUpdateApplyJob,
@@ -389,6 +390,25 @@ function ErpPage() {
       toast.error(t(mapped.toastKey))
     },
   })
+  const requestRollbackWorkerReadinessMutation = useMutation({
+    mutationFn: () => requestConnectorGuardedUpdateRollbackWorkerReadiness(user!.id),
+    onSuccess: () => {
+      toast.success(t('erp.toast.guardedUpdateRollbackWorkerReadiness.generated'))
+      void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
+      showWorkbenchTab('previewApply', 'erp-guarded-update-rollback-worker-readiness')
+    },
+    onError: (error) => {
+      const mapped = mapConnectorSetupError(error)
+      captureAppError(error, {
+        area: 'connector_setup',
+        operation: 'requestConnectorGuardedUpdateRollbackWorkerReadiness',
+        providerId: data?.provider.code,
+        route: '/erp',
+      })
+      toast.error(t(mapped.toastKey))
+    },
+  })
   const requestCreateOnlyApplyJobMutation = useMutation({
     mutationFn: () => requestConnectorCreateOnlyApplyJob(user!.id),
     onSuccess: () => {
@@ -462,6 +482,8 @@ function ErpPage() {
     data?.applyApprovalPolicy.requestable === true && canManageConnectors
   const canRecordRollbackApproval =
     data?.guardedUpdateRollbackApproval.requestable === true && canManageConnectors
+  const canRequestRollbackWorkerReadiness =
+    data?.guardedUpdateRollbackWorkerReadiness.requestable === true && canManageConnectors
   const canRequestCreateOnlyApplyJob =
     data?.applyExecutionContract.safeToExecute === true &&
     data.applyExecutionContract.executorMode === 'worker_create_only_job' &&
@@ -2335,6 +2357,190 @@ function ErpPage() {
                       </p>
                     </div>
                   </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="erp-guarded-update-rollback-worker-readiness" className="mt-8 scroll-mt-6">
+              <SectionHeader
+                title={t('erp.sections.guardedUpdateRollbackWorkerReadiness')}
+                description={t('erp.sections.guardedUpdateRollbackWorkerReadinessDescription')}
+              />
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                        <ClipboardCheck className="h-5 w-5" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                            {t(data.guardedUpdateRollbackWorkerReadiness.statusLabelKey)}
+                          </h2>
+                          <StatusPill
+                            tone={readinessTone(
+                              data.guardedUpdateRollbackWorkerReadiness.readiness,
+                            )}
+                          >
+                            {t(
+                              `erp.readinessStatus.${data.guardedUpdateRollbackWorkerReadiness.readiness}`,
+                            )}
+                          </StatusPill>
+                          <StatusPill tone="neutral">
+                            {t('erp.guardedUpdateRollbackWorkerReadiness.rollbackJobClosed')}
+                          </StatusPill>
+                          <StatusPill tone="neutral">
+                            {t('erp.guardedUpdateRollbackWorkerReadiness.executionClosed')}
+                          </StatusPill>
+                        </div>
+                        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                          {t(data.guardedUpdateRollbackWorkerReadiness.descriptionKey)}
+                        </p>
+                        <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                          {t(data.guardedUpdateRollbackWorkerReadiness.actionDescriptionKey)}
+                        </p>
+                        {data.guardedUpdateRollbackWorkerReadiness.createdAt ? (
+                          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                            {t('erp.guardedUpdateRollbackWorkerReadiness.createdAt', {
+                              value: formatDateTime(
+                                data.guardedUpdateRollbackWorkerReadiness.createdAt,
+                                i18n.language,
+                                t('erp.credentialBoundary.notRecorded'),
+                              ),
+                            })}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full lg:w-auto"
+                    disabled={
+                      !canRequestRollbackWorkerReadiness ||
+                      requestRollbackWorkerReadinessMutation.isPending
+                    }
+                    onClick={() => void requestRollbackWorkerReadinessMutation.mutateAsync()}
+                  >
+                    <ClipboardCheck
+                      className={cn(
+                        'h-4 w-4',
+                        requestRollbackWorkerReadinessMutation.isPending ? 'animate-pulse' : null,
+                      )}
+                    />
+                    {canRequestRollbackWorkerReadiness
+                      ? requestRollbackWorkerReadinessMutation.isPending
+                        ? t('erp.guardedUpdateRollbackWorkerReadiness.generating')
+                        : t(data.guardedUpdateRollbackWorkerReadiness.actionLabelKey)
+                      : !canManageConnectors &&
+                          data.guardedUpdateRollbackWorkerReadiness.action === 'generate_readiness'
+                        ? t('erp.guardedUpdateRollbackWorkerReadiness.adminRequired')
+                        : t(data.guardedUpdateRollbackWorkerReadiness.actionLabelKey)}
+                  </Button>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerReadiness.metrics.rows')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.rollbackCount}/
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.rowCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerReadiness.metrics.currentState')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.currentStateVerifiedCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerReadiness.metrics.evidence')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.fieldDiffCount}/
+                      {data.guardedUpdateRollbackWorkerReadiness.summary.rollbackSnapshotCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackWorkerReadiness.metrics.next')}
+                    </p>
+                    <p className="mt-2 truncate text-xs font-medium text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackWorkerReadiness.nextActionKey ??
+                        t('erp.guardedUpdateRollbackWorkerReadiness.values.noAction')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                  <div className="grid gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] md:grid-cols-[72px_1fr_1fr_150px]">
+                    <span>{t('erp.guardedUpdateRollbackWorkerReadiness.columns.row')}</span>
+                    <span>{t('erp.guardedUpdateRollbackWorkerReadiness.columns.target')}</span>
+                    <span>{t('erp.guardedUpdateRollbackWorkerReadiness.columns.evidence')}</span>
+                    <span className="md:text-right">
+                      {t('erp.guardedUpdateRollbackWorkerReadiness.columns.boundary')}
+                    </span>
+                  </div>
+                  <ul className="divide-y divide-[var(--color-border)]">
+                    {data.guardedUpdateRollbackWorkerReadiness.sampleItems.length > 0 ? (
+                      data.guardedUpdateRollbackWorkerReadiness.sampleItems.map((item) => (
+                        <li
+                          key={`${item.rowNumber}-${item.externalId}`}
+                          className="grid gap-2 px-4 py-3 md:grid-cols-[72px_1fr_1fr_150px] md:items-center"
+                        >
+                          <div className="font-mono text-sm text-[var(--color-text-muted)]">
+                            #{item.rowNumber}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-sm font-semibold text-[var(--color-text-primary)]">
+                              {item.entityType}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                              {item.targetTable} · {item.externalId}
+                            </p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-[var(--color-text-secondary)]">
+                              {item.rollbackFieldNames.join(', ') ||
+                                t('erp.guardedUpdateRollbackWorkerReadiness.values.noFields')}
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                              {t('erp.guardedUpdateRollbackWorkerReadiness.values.itemEvidence', {
+                                event: item.originalApplyEventCount,
+                                diff: item.fieldDiffCount,
+                              })}
+                            </p>
+                          </div>
+                          <div className="md:justify-self-end">
+                            <StatusPill
+                              tone={
+                                item.currentStateMatchesApply &&
+                                item.rollbackSnapshotAvailable &&
+                                !item.rollbackExecution
+                                  ? 'success'
+                                  : 'danger'
+                              }
+                            >
+                              {item.currentStateMatchesApply && item.rollbackSnapshotAvailable
+                                ? t('erp.guardedUpdateRollbackWorkerReadiness.values.ready')
+                                : t('erp.guardedUpdateRollbackWorkerReadiness.values.blocked')}
+                            </StatusPill>
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRollbackWorkerReadiness.empty')}
+                      </li>
+                    )}
+                  </ul>
                 </div>
               </div>
             </section>
