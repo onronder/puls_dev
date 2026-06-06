@@ -1032,6 +1032,9 @@
       "guardedUpdateRollbackApproval": {
         "approvalRecorded": "Rollback approval was recorded. Rollback execution remains closed."
       },
+      "guardedUpdateRollbackWorkerReadiness": {
+        "generated": "Rollback worker readiness was recorded. Rollback job enqueue and execution remain closed."
+      },
       "runtimePreflight": {
         "queued": "Runtime preflight job was safely queued. The worker result will appear in activity."
       }
@@ -1054,6 +1057,7 @@
       "createOnlyApplyBlocked": "Create-only apply requires a clean change-set, admin approval, and an open worker gate.",
       "guardedUpdateApplyBlocked": "Guarded update apply requires evidence, rollback snapshots, admin approval, and an open worker gate.",
       "rollbackApprovalBlocked": "Rollback approval requires a ready rollback preview with no blockers or current-state drift.",
+      "rollbackWorkerReadinessBlocked": "Rollback worker readiness requires approval, matching current state, original apply events, and active rollback snapshots.",
       "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
     "sections": {
@@ -1095,6 +1099,8 @@
       "guardedUpdateRecoveryRunbookDescription": "Shows the safe action, evidence gap, and compensating-review decision before PR16.5 rollback preview opens.",
       "guardedUpdateRollbackPreview": "Guarded update rollback preview",
       "guardedUpdateRollbackPreviewDescription": "Shows hash-only rollback preview, blockers, and current-state drift for an applied guarded update.",
+      "guardedUpdateRollbackWorkerReadiness": "Guarded update rollback worker readiness",
+      "guardedUpdateRollbackWorkerReadinessDescription": "Shows whether rollback approval, checksum, current-state, original apply event, and retention evidence are ready for the future rollback worker.",
       "controlledApply": "Controlled apply design",
       "controlledApplyDescription": "Shows the approval, lock, rollback, notification, and audit gates that must exist before canonical writes can open."
     },
@@ -2424,6 +2430,69 @@
       "values": {
         "noAction": "No action"
       }
+    },
+    "guardedUpdateRollbackWorkerReadiness": {
+      "generating": "Generating worker readiness",
+      "adminRequired": "Admin readiness check required",
+      "rollbackJobClosed": "Rollback job closed",
+      "executionClosed": "Execution closed",
+      "createdAt": "Worker readiness recorded at: {{value}}",
+      "status": {
+        "not_available": "Rollback worker readiness not needed",
+        "needs_approval": "Rollback approval required",
+        "needs_generation": "Rollback worker readiness required",
+        "ready_for_worker_handoff": "Rollback worker handoff ready",
+        "blocked": "Rollback worker readiness blocked"
+      },
+      "descriptions": {
+        "not_available": "There is no approved rollback preview that needs worker readiness for the current source.",
+        "needs_approval": "Record rollback approval before creating the worker readiness handoff.",
+        "needs_generation": "Approval is recorded. Generate a final readiness handoff that rechecks checksum, current state, original apply event, and retention evidence.",
+        "ready_for_worker_handoff": "Rollback worker readiness is recorded. Rollback job enqueue and execution remain closed until the next PR.",
+        "blocked": "Rollback worker readiness cannot be recorded while drift, missing object events, or expired snapshots remain."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no rollback worker readiness action at this stage."
+        },
+        "record_approval_first": {
+          "label": "Record approval first",
+          "description": "Worker readiness requires immutable rollback approval."
+        },
+        "generate_readiness": {
+          "label": "Generate readiness",
+          "description": "Record checksum-bound readiness without enqueueing or executing rollback."
+        },
+        "review_readiness": {
+          "label": "Readiness recorded",
+          "description": "Worker handoff evidence is ready; execution remains closed."
+        },
+        "resolve_blockers": {
+          "label": "Resolve blockers",
+          "description": "Current-state drift, missing events, or expired snapshots must be resolved first."
+        }
+      },
+      "metrics": {
+        "rows": "Rollback rows",
+        "currentState": "Current-state checks",
+        "evidence": "Evidence",
+        "next": "Next gate"
+      },
+      "columns": {
+        "row": "Row",
+        "target": "Target",
+        "evidence": "Evidence",
+        "boundary": "Boundary"
+      },
+      "values": {
+        "noAction": "No action",
+        "noFields": "No rollback fields",
+        "itemEvidence": "Apply events {{event}} · diffs {{diff}}",
+        "ready": "Ready",
+        "blocked": "Blocked"
+      },
+      "empty": "No rollback worker readiness rows yet."
     },
     "applyExecutionContract": {
       "executionDisabled": "Execution closed",

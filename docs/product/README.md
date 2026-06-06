@@ -622,6 +622,16 @@ PR16.6 records checksum-bound admin approval for a ready rollback preview withou
 | [`supabase/migrations/20260606140000_puls_integration_guarded_update_rollback_approval.sql`](../../supabase/migrations/20260606140000_puls_integration_guarded_update_rollback_approval.sql) | Immutable rollback approval ledger plus record/list RPCs; no rollback execution or value readback |
 | [`scripts/verify-16-6-guarded-update-rollback-approval.sh`](../../scripts/verify-16-6-guarded-update-rollback-approval.sh)                                                   | PR16.6 verify gate                                                                               |
 
+## PR16.7 guarded update rollback worker readiness
+
+PR16.7 records an immutable worker-readiness handoff after rollback approval without enqueueing rollback jobs or opening rollback execution. It proves approval checksum, current-state hash, original apply event, field diff, rollback snapshot, and retention-window readiness while keeping canonical rollback writes, source writeback, credential/readback, provider calls, browser direct rollback, and AI autonomous execution closed.
+
+| Document / artifact                                                                                                                                                          | Purpose                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [16_7_guarded_update_rollback_worker_readiness.md](./16_7_guarded_update_rollback_worker_readiness.md)                                                                       | PR16.7 guarded update rollback worker readiness scope, safety contract, and execution handoff        |
+| [`supabase/migrations/20260606150000_puls_integration_guarded_update_rollback_worker_readiness.sql`](../../supabase/migrations/20260606150000_puls_integration_guarded_update_rollback_worker_readiness.sql) | Immutable rollback worker readiness ledger plus generate/list RPCs; no rollback enqueue or execution |
+| [`scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh`](../../scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh)                                   | PR16.7 verify gate                                                                                   |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

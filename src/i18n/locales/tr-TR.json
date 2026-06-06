@@ -1032,6 +1032,9 @@
       "guardedUpdateRollbackApproval": {
         "approvalRecorded": "Rollback onayı kaydedildi. Rollback execution kapalı kalır."
       },
+      "guardedUpdateRollbackWorkerReadiness": {
+        "generated": "Rollback worker hazırlığı kaydedildi. Rollback job kuyruğu ve execution kapalı kalır."
+      },
       "runtimePreflight": {
         "queued": "Runtime ön kontrol job'ı güvenli kuyruğa alındı. Worker sonucu activity içinde görünecek."
       }
@@ -1054,6 +1057,7 @@
       "createOnlyApplyBlocked": "Create-only apply için temiz change-set, admin onayı ve açık worker gate gerekir.",
       "guardedUpdateApplyBlocked": "Guarded update apply için kanıt, rollback snapshot, admin onayı ve açık worker gate gerekir.",
       "rollbackApprovalBlocked": "Rollback onayı için blocker ve current-state drift içermeyen hazır rollback preview gerekir.",
+      "rollbackWorkerReadinessBlocked": "Rollback worker hazırlığı için onay, eşleşen current-state, original apply event ve aktif rollback snapshot gerekir.",
       "runtimePreflightBlocked": "Runtime ön kontrol için güvenli referans doğrulanmış olmalı."
     },
     "sections": {
@@ -1095,6 +1099,8 @@
       "guardedUpdateRecoveryRunbookDescription": "PR16.5 rollback preview açılmadan önce güvenli aksiyon, kanıt boşluğu ve compensating review kararını gösterir.",
       "guardedUpdateRollbackPreview": "Guarded update rollback preview",
       "guardedUpdateRollbackPreviewDescription": "Applied guarded update için hash-only rollback preview, blocker ve current-state drift durumunu gösterir.",
+      "guardedUpdateRollbackWorkerReadiness": "Guarded update rollback worker hazırlığı",
+      "guardedUpdateRollbackWorkerReadinessDescription": "Rollback onayı, checksum, current-state, original apply event ve retention kanıtının gelecekteki rollback worker için hazır olup olmadığını gösterir.",
       "controlledApply": "Kontrollü uygulama tasarımı",
       "controlledApplyDescription": "Kanonik yazım açılmadan önce tamamlanması gereken onay, kilit, geri alma, bildirim ve denetim kapılarını gösterir."
     },
@@ -2424,6 +2430,69 @@
       "values": {
         "noAction": "Aksiyon yok"
       }
+    },
+    "guardedUpdateRollbackWorkerReadiness": {
+      "generating": "Worker hazırlığı üretiliyor",
+      "adminRequired": "Admin readiness kontrolü gerekir",
+      "rollbackJobClosed": "Rollback job kapalı",
+      "executionClosed": "Execution kapalı",
+      "createdAt": "Worker hazırlığı zamanı: {{value}}",
+      "status": {
+        "not_available": "Rollback worker hazırlığı gerekmiyor",
+        "needs_approval": "Rollback onayı gerekli",
+        "needs_generation": "Rollback worker hazırlığı gerekli",
+        "ready_for_worker_handoff": "Rollback worker handoff hazır",
+        "blocked": "Rollback worker hazırlığı blokeli"
+      },
+      "descriptions": {
+        "not_available": "Mevcut kaynak için worker hazırlığı gerektiren onaylı rollback preview yok.",
+        "needs_approval": "Worker hazırlığı oluşturmadan önce rollback onayını kaydet.",
+        "needs_generation": "Onay kaydedildi. Checksum, current-state, original apply event ve retention kanıtını tekrar kontrol eden son handoff kaydını üret.",
+        "ready_for_worker_handoff": "Rollback worker hazırlığı kaydedildi. Rollback job kuyruğu ve execution sonraki PR'a kadar kapalı kalır.",
+        "blocked": "Drift, eksik object event veya süresi dolmuş snapshot varken rollback worker hazırlığı kaydedilemez."
+      },
+      "actions": {
+        "none": {
+          "label": "Aksiyon yok",
+          "description": "Bu aşamada rollback worker hazırlık aksiyonu yok."
+        },
+        "record_approval_first": {
+          "label": "Önce onay kaydet",
+          "description": "Worker hazırlığı için immutable rollback onayı gerekir."
+        },
+        "generate_readiness": {
+          "label": "Hazırlığı üret",
+          "description": "Rollback kuyruğu veya execution açmadan checksum'a bağlı readiness kaydı oluştur."
+        },
+        "review_readiness": {
+          "label": "Hazırlık kaydedildi",
+          "description": "Worker handoff kanıtı hazır; execution kapalı kalır."
+        },
+        "resolve_blockers": {
+          "label": "Blocker çöz",
+          "description": "Current-state drift, eksik event veya süresi dolmuş snapshot önce çözülmelidir."
+        }
+      },
+      "metrics": {
+        "rows": "Rollback satırı",
+        "currentState": "Current-state kontrolü",
+        "evidence": "Kanıt",
+        "next": "Sonraki kapı"
+      },
+      "columns": {
+        "row": "Satır",
+        "target": "Hedef",
+        "evidence": "Kanıt",
+        "boundary": "Sınır"
+      },
+      "values": {
+        "noAction": "Aksiyon yok",
+        "noFields": "Rollback alanı yok",
+        "itemEvidence": "Apply event {{event}} · diff {{diff}}",
+        "ready": "Hazır",
+        "blocked": "Blokeli"
+      },
+      "empty": "Henüz rollback worker hazırlık satırı yok."
     },
     "applyExecutionContract": {
       "executionDisabled": "Execution kapalı",

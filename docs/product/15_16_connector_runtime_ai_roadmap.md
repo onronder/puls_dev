@@ -582,7 +582,38 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Approval checksum immutable preview checksum'a bağlıdır.
 - Approval kaydı rollback execution açmaz.
 
-### PR16.7 - Notification Center Foundation
+### PR16.7 - Guarded Update Rollback Worker Readiness
+
+**Ürün değeri:** Rollback approval sonrası rollback worker'a geçmeden önce approval, checksum, current-state, original apply event ve retention kanıtı tek immutable handoff kaydıyla doğrulanır.
+
+**Implementation status:** PR16.7 records checksum-bound guarded-update rollback worker readiness in an immutable service-role table, exposes authenticated-safe readiness summaries in `/erp`, and keeps rollback job enqueue, rollback execution, canonical rollback writes, compensating execution, ERP/source writeback, provider API calls, credential readback, raw payload readback, snapshot payload readback, field value readback, browser direct rollback, and AI autonomous execution closed.
+
+**Kapsam:**
+
+- `connector_apply_rollback_worker_readiness` immutable readiness ledger
+- `generate_connector_guarded_update_rollback_worker_readiness` admin/service-role RPC
+- `list_connector_guarded_update_rollback_worker_readiness` safe read model
+- Approval checksum binding
+- Current-state recheck
+- Original apply object event, field diff, rollback snapshot, and retention gate checks
+- `/erp` rollback worker readiness gate visibility
+
+**Kapsam dışı:**
+
+- Rollback worker execution
+- Rollback job enqueue
+- Compensating execution
+- ERP/source writeback
+- Raw rollback payload UI
+
+**Doğrulama:**
+
+- Approval yoksa readiness üretilemez.
+- Checksum mismatch readiness üretmez.
+- Drift, missing object event veya expired snapshot readiness üretmez.
+- Readiness kaydı rollback job enqueue veya execution açmaz.
+
+### PR16.8 - Notification Center Foundation
 
 **Ürün değeri:** Admin ve ilgili roller önemli connector olaylarını ekran aramadan takip eder.
 
@@ -611,7 +642,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Secret/raw payload notification içinde yoktur.
 - Role visibility doğru çalışır.
 
-### PR16.7 - Canias Runtime Spike On Generic Connector Foundation
+### PR16.9 - Canias Runtime Spike On Generic Connector Foundation
 
 **Ürün değeri:** Canias artık sadece metadata/demo profili olmaktan çıkar; generic PULS runtime omurgası üzerinde ilk ERP API connector denemesi başlar.
 
