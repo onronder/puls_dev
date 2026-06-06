@@ -670,6 +670,16 @@ PR16.9.0x fixes two pre-existing `puls_integration` lint errors before PR16.9.1 
 | [`supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql`](../../supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql) | Runtime preflight enum casts plus lint-safe apply change-set typed plan                     |
 | [`scripts/verify-16-9-0x-backend-lint-hardening.sh`](../../scripts/verify-16-9-0x-backend-lint-hardening.sh)                                             | PR16.9.0x verify gate                                                                       |
 
+## PR16.9.1 durable notification ledger
+
+PR16.9.1 adds the durable app-wide Notification Center ledger in `puls_app`, including safe service-role emission, authenticated list/summary/read/dismiss RPCs, tenant/role visibility checks, and per-employee read state. Producer mapping, UI, realtime, and external delivery remain closed for later PR16.9 sub-phases.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [16_9_1_durable_notification_ledger.md](./16_9_1_durable_notification_ledger.md)                                                                         | PR16.9.1 scope, safety contract, smoke SQL, and PR16.9.2 handoff                                 |
+| [`supabase/migrations/20260606180000_puls_app_notification_ledger.sql`](../../supabase/migrations/20260606180000_puls_app_notification_ledger.sql)       | App-wide notification ledger tables, RPC boundary, grants, and bootstrap status contract update   |
+| [`scripts/verify-16-9-1-durable-notification-ledger.sh`](../../scripts/verify-16-9-1-durable-notification-ledger.sh)                                     | PR16.9.1 verify gate                                                                              |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
