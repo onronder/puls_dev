@@ -1089,6 +1089,8 @@
       "guardedUpdateRecoveryDescription": "Shows whether post-apply object events, field diffs, and rollback snapshot evidence are ready for PR16.5 rollback preview.",
       "guardedUpdateRecoveryRunbook": "Guarded update recovery runbook",
       "guardedUpdateRecoveryRunbookDescription": "Shows the safe action, evidence gap, and compensating-review decision before PR16.5 rollback preview opens.",
+      "guardedUpdateRollbackPreview": "Guarded update rollback preview",
+      "guardedUpdateRollbackPreviewDescription": "Shows hash-only rollback preview, blockers, and current-state drift for an applied guarded update.",
       "controlledApply": "Controlled apply design",
       "controlledApplyDescription": "Shows the approval, lock, rollback, notification, and audit gates that must exist before canonical writes can open."
     },
@@ -2297,6 +2299,75 @@
         "prepare_pr16_5_preview_gate": {
           "label": "Prepare PR16.5 preview gate"
         }
+      }
+    },
+    "guardedUpdateRollbackPreview": {
+      "previewOpen": "Preview open",
+      "executionClosed": "Execution closed",
+      "nextAction": "Preview action: {{value}}",
+      "empty": "No rollback preview item is available yet.",
+      "boundaryNote": "This section shows only hash-only rollback preview evidence; it does not execute rollback or compensating updates, or expose snapshot payloads or before/after values.",
+      "status": {
+        "not_available": "Rollback preview not needed",
+        "needs_generation": "Preview generation pending",
+        "ready_for_rollback_review": "Rollback preview ready",
+        "blocked": "Rollback preview blocked"
+      },
+      "descriptions": {
+        "not_available": "There is no applied guarded update in the current change-set that needs rollback preview.",
+        "needs_generation": "The recovery runbook is ready; admin/service-role rollback preview generation is pending.",
+        "ready_for_rollback_review": "Rollback preview items are ready for review with evidence, snapshots, and current-state guards.",
+        "blocked": "Rollback preview cannot proceed toward execution because of current-state drift or missing evidence."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no rollback preview action at this stage."
+        },
+        "generate_preview": {
+          "label": "Generate preview",
+          "description": "The admin/service-role preview RPC can generate hash-only rollback preview evidence."
+        },
+        "review_preview": {
+          "label": "Review preview",
+          "description": "Rollback execution is still closed; the preview is only for review and the next approval step."
+        },
+        "resolve_blockers": {
+          "label": "Resolve blockers",
+          "description": "Current-state drift or missing evidence must be resolved before rollback execution can open."
+        }
+      },
+      "metrics": {
+        "rows": "Rollback rows",
+        "blockers": "Blockers",
+        "evidence": "Evidence",
+        "approval": "Approval"
+      },
+      "values": {
+        "yes": "Yes",
+        "no": "No",
+        "rollbackRows": "Ready / total",
+        "driftDetected": "Drift detected",
+        "noDrift": "No drift",
+        "diffSnapshot": "Field diff / snapshot",
+        "required": "Required",
+        "notRequired": "Not required",
+        "operatorReviewRequired": "Operator review required",
+        "noAction": "No action",
+        "noFields": "No fields",
+        "currentMatch": "Current state matches",
+        "currentMismatch": "Current state drift",
+        "noBlockers": "No blockers"
+      },
+      "columns": {
+        "target": "Target",
+        "status": "Status",
+        "evidence": "Evidence",
+        "blockers": "Blockers"
+      },
+      "itemStatus": {
+        "ready": "Ready",
+        "blocked": "Blocked"
       }
     },
     "applyExecutionContract": {

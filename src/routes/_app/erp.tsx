@@ -2052,6 +2052,164 @@ function ErpPage() {
               </div>
             </section>
 
+            <section id="erp-guarded-update-rollback-preview" className="mt-8 scroll-mt-6">
+              <SectionHeader
+                title={t('erp.sections.guardedUpdateRollbackPreview')}
+                description={t('erp.sections.guardedUpdateRollbackPreviewDescription')}
+              />
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                        {t(data.guardedUpdateRollbackPreview.statusLabelKey)}
+                      </h2>
+                      <StatusPill tone={readinessTone(data.guardedUpdateRollbackPreview.readiness)}>
+                        {t(`erp.readinessStatus.${data.guardedUpdateRollbackPreview.readiness}`)}
+                      </StatusPill>
+                      <StatusPill tone="success">
+                        {t('erp.guardedUpdateRollbackPreview.previewOpen')}
+                      </StatusPill>
+                      <StatusPill tone="neutral">
+                        {t('erp.guardedUpdateRollbackPreview.executionClosed')}
+                      </StatusPill>
+                    </div>
+                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
+                      {t(data.guardedUpdateRollbackPreview.descriptionKey)}
+                    </p>
+                    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                      {t(data.guardedUpdateRollbackPreview.actionDescriptionKey)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-xs text-[var(--color-text-muted)] lg:max-w-sm">
+                    {t('erp.guardedUpdateRollbackPreview.nextAction', {
+                      value:
+                        data.guardedUpdateRollbackPreview.nextActionKey ??
+                        t('erp.guardedUpdateRollbackPreview.values.noAction'),
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackPreview.metrics.rows')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackPreview.summary.rollbackCount}/
+                      {data.guardedUpdateRollbackPreview.summary.rowCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackPreview.values.rollbackRows')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackPreview.metrics.blockers')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackPreview.summary.blockedCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {data.guardedUpdateRollbackPreview.summary.staleBlockedCount > 0
+                        ? t('erp.guardedUpdateRollbackPreview.values.driftDetected')
+                        : t('erp.guardedUpdateRollbackPreview.values.noDrift')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackPreview.metrics.evidence')}
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackPreview.summary.fieldDiffCount}/
+                      {data.guardedUpdateRollbackPreview.summary.rollbackSnapshotCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackPreview.values.diffSnapshot')}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackPreview.metrics.approval')}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {data.guardedUpdateRollbackPreview.approvalRequired
+                        ? t('erp.guardedUpdateRollbackPreview.values.required')
+                        : t('erp.guardedUpdateRollbackPreview.values.notRequired')}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {t('erp.guardedUpdateRollbackPreview.values.operatorReviewRequired')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                  <div className="grid gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] md:grid-cols-[1fr_120px_140px_1fr]">
+                    <span>{t('erp.guardedUpdateRollbackPreview.columns.target')}</span>
+                    <span>{t('erp.guardedUpdateRollbackPreview.columns.status')}</span>
+                    <span>{t('erp.guardedUpdateRollbackPreview.columns.evidence')}</span>
+                    <span>{t('erp.guardedUpdateRollbackPreview.columns.blockers')}</span>
+                  </div>
+                  <ul className="divide-y divide-[var(--color-border)]">
+                    {data.guardedUpdateRollbackPreview.sampleItems.length > 0 ? (
+                      data.guardedUpdateRollbackPreview.sampleItems.map((item) => (
+                        <li
+                          key={item.id}
+                          className="grid gap-2 px-4 py-3 md:grid-cols-[1fr_120px_140px_1fr] md:items-center"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                              {item.entityType} · {item.externalId}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                              {item.targetTable} · {item.rollbackFieldNames.join(', ') ||
+                                t('erp.guardedUpdateRollbackPreview.values.noFields')}
+                            </p>
+                          </div>
+                          <div>
+                            <StatusPill tone={item.itemStatus === 'ready' ? 'success' : 'danger'}>
+                              {t(`erp.guardedUpdateRollbackPreview.itemStatus.${item.itemStatus}`)}
+                            </StatusPill>
+                          </div>
+                          <div className="text-xs text-[var(--color-text-muted)]">
+                            <p className="font-mono">
+                              {item.fieldDiffCount}/
+                              {item.rollbackSnapshotAvailable
+                                ? t('erp.guardedUpdateRollbackPreview.values.yes')
+                                : t('erp.guardedUpdateRollbackPreview.values.no')}
+                            </p>
+                            <p className="mt-1">
+                              {item.currentStateMatchesApply
+                                ? t('erp.guardedUpdateRollbackPreview.values.currentMatch')
+                                : t('erp.guardedUpdateRollbackPreview.values.currentMismatch')}
+                            </p>
+                          </div>
+                          <div className="truncate text-xs text-[var(--color-text-muted)]">
+                            {item.blockerCodes.join(', ') ||
+                              t('erp.guardedUpdateRollbackPreview.values.noBlockers')}
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-4 text-sm text-[var(--color-text-muted)]">
+                        {t('erp.guardedUpdateRollbackPreview.empty')}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="mt-4 flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3">
+                  <Info
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary)]"
+                    aria-hidden
+                  />
+                  <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+                    {t('erp.guardedUpdateRollbackPreview.boundaryNote')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
             <section id="erp-controlled-apply" className="mt-8 scroll-mt-6">
               <SectionHeader
                 title={t('erp.sections.controlledApply')}

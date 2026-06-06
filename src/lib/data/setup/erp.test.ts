@@ -2136,7 +2136,7 @@ describe('fetchErpOverviewWithMeta', () => {
         'rpc:list_connector_apply_safety_contracts': {
           data: [
             {
-              contract_version: 'pr16.4.4-guarded-update-recovery-runbook-v1',
+              contract_version: 'pr16.5-guarded-update-rollback-preview-v1',
               browser_direct_apply_enabled: false,
               authenticated_apply_rpc_exposed: false,
               worker_import_apply_enqueue_enabled: true,
@@ -2150,8 +2150,8 @@ describe('fetchErpOverviewWithMeta', () => {
               rollback_snapshot_hot_retention_days: 90,
               object_event_retention_months: 24,
               purge_archive_required: true,
-              safe_error_code: 'guarded_update_recovery_runbook_open',
-              next_action_key: 'review_guarded_update_recovery_runbook',
+              safe_error_code: 'guarded_update_rollback_preview_open',
+              next_action_key: 'review_guarded_update_rollback_preview',
             },
           ],
           error: null,
@@ -2324,6 +2324,62 @@ describe('fetchErpOverviewWithMeta', () => {
           ],
           error: null,
         },
+        'rpc:list_connector_guarded_update_rollback_previews': {
+          data: [
+            {
+              rollback_preview_id: 'rollback-preview-1',
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              status: 'ready_for_rollback_review',
+              preview_kind: 'rollback',
+              rollback_preview_checksum: 'safe-rollback-preview-hash',
+              row_count: 1,
+              rollback_count: 1,
+              blocked_count: 0,
+              stale_blocked_count: 0,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              rollback_preview_enabled: true,
+              rollback_execution_enabled: false,
+              compensating_execution_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              approval_required: true,
+              operator_review_required: true,
+              next_action_key: 'review_rollback_preview_before_execution',
+              sample_items: [
+                {
+                  id: 'rollback-preview-item-1',
+                  row_number: 1,
+                  entity_type: 'department',
+                  external_id: 'DEPT-1',
+                  target_table: 'departments',
+                  canonical_id: 'department-1',
+                  operation: 'rollback',
+                  item_status: 'ready',
+                  risk_class: 'rollback_preview_required',
+                  blocker_codes: [],
+                  safe_field_names: ['name'],
+                  rollback_field_names: ['name'],
+                  field_diff_count: 1,
+                  rollback_snapshot_available: true,
+                  snapshot_state: 'available',
+                  snapshot_hash_available: true,
+                  expected_post_apply_hash_available: true,
+                  current_hash_available: true,
+                  current_state_matches_apply: true,
+                  stale_blocked: false,
+                  retention_bucket: 'rollback_snapshot',
+                  hot_retention_expires_at: '2026-09-03T14:10:00.000Z',
+                  purge_after_at: '2028-06-05T14:10:00.000Z',
+                },
+              ],
+              created_at: '2026-06-05T14:20:00.000Z',
+            },
+          ],
+          error: null,
+        },
       },
       capture,
     )
@@ -2331,13 +2387,13 @@ describe('fetchErpOverviewWithMeta', () => {
     const overview = await fetchErpOverviewWithMeta('user-1')
 
     expect(overview.data.applySafetyContract).toMatchObject({
-      contractVersion: 'pr16.4.4-guarded-update-recovery-runbook-v1',
+      contractVersion: 'pr16.5-guarded-update-rollback-preview-v1',
       executionEnabled: true,
       canonicalWriteEnabled: true,
       sourceWritebackEnabled: false,
       credentialReadbackEnabled: false,
-      safeErrorCode: 'guarded_update_recovery_runbook_open',
-      nextActionKey: 'review_guarded_update_recovery_runbook',
+      safeErrorCode: 'guarded_update_rollback_preview_open',
+      nextActionKey: 'review_guarded_update_rollback_preview',
     })
     expect(overview.data.applyExecutionContract).toMatchObject({
       safeToExecute: true,
@@ -2416,6 +2472,48 @@ describe('fetchErpOverviewWithMeta', () => {
       fn: 'list_connector_guarded_update_recovery_runbooks',
       args: { p_change_set_id: 'change-set-guarded-update-applied', p_limit: 8 },
     })
+    expect(overview.data.guardedUpdateRollbackPreview).toMatchObject({
+      rollbackPreviewId: 'rollback-preview-1',
+      changeSetId: 'change-set-guarded-update-applied',
+      status: 'ready_for_rollback_review',
+      readiness: 'ready',
+      action: 'review_preview',
+      rollbackPreviewEnabled: true,
+      rollbackExecutionEnabled: false,
+      compensatingExecutionEnabled: false,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      valueReadbackEnabled: false,
+      approvalRequired: true,
+      operatorReviewRequired: true,
+      nextActionKey: 'review_rollback_preview_before_execution',
+      summary: {
+        rowCount: 1,
+        rollbackCount: 1,
+        blockedCount: 0,
+        staleBlockedCount: 0,
+        fieldDiffCount: 1,
+        rollbackSnapshotCount: 1,
+      },
+    })
+    expect(overview.data.guardedUpdateRollbackPreview.sampleItems[0]).toMatchObject({
+      operation: 'rollback',
+      itemStatus: 'ready',
+      riskClass: 'rollback_preview_required',
+      blockerCodes: [],
+      rollbackFieldNames: ['name'],
+      fieldDiffCount: 1,
+      rollbackSnapshotAvailable: true,
+      snapshotHashAvailable: true,
+      expectedPostApplyHashAvailable: true,
+      currentHashAvailable: true,
+      currentStateMatchesApply: true,
+      staleBlocked: false,
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'list_connector_guarded_update_rollback_previews',
+      args: { p_change_set_id: 'change-set-guarded-update-applied', p_limit: 8 },
+    })
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('snapshot_payload')
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('before_value')
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('after_value')
@@ -2430,6 +2528,21 @@ describe('fetchErpOverviewWithMeta', () => {
       '"raw_payload":',
     )
     expect(JSON.stringify(overview.data.guardedUpdateRecoveryRunbook)).not.toContain(
+      'credentials_ref',
+    )
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
+      'snapshot_payload',
+    )
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
+      'before_value',
+    )
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
+      'after_value',
+    )
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
+      '"raw_payload":',
+    )
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
       'credentials_ref',
     )
   })
