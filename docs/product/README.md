@@ -592,6 +592,16 @@ PR16.4.3 adds the post-apply recovery readiness layer before PR16.5 rollback pre
 | [`supabase/migrations/20260606110000_puls_integration_guarded_update_recovery_readiness.sql`](../../supabase/migrations/20260606110000_puls_integration_guarded_update_recovery_readiness.sql) | Read-only guarded update recovery readiness RPC and PR16.4.3 apply safety contract posture             |
 | [`scripts/verify-16-4-3-guarded-update-recovery-readiness.sh`](../../scripts/verify-16-4-3-guarded-update-recovery-readiness.sh)                                                               | PR16.4.3 verify gate                                                                                   |
 
+## PR16.4.4 guarded update recovery runbook
+
+PR16.4.4 turns recovery readiness into an operator-facing safe runbook before PR16.5 rollback preview. It classifies rollback-preview candidacy, evidence gaps, and compensating-review handoff while keeping rollback preview, rollback execution, compensating execution, ERP/source writeback, credential/readback, provider calls, browser direct apply, and AI autonomous apply closed.
+
+| Document / artifact                                                                                                                                                                        | Purpose                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| [16_4_4_guarded_update_recovery_runbook.md](./16_4_4_guarded_update_recovery_runbook.md)                                                                                                   | PR16.4.4 guarded update recovery runbook scope, safety contract, and PR16.5 rollback-preview handoff |
+| [`supabase/migrations/20260606120000_puls_integration_guarded_update_recovery_runbook.sql`](../../supabase/migrations/20260606120000_puls_integration_guarded_update_recovery_runbook.sql) | Read-only guarded update recovery runbook RPC and PR16.4.4 apply safety contract posture             |
+| [`scripts/verify-16-4-4-guarded-update-recovery-runbook.sh`](../../scripts/verify-16-4-4-guarded-update-recovery-runbook.sh)                                                               | PR16.4.4 verify gate                                                                                 |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

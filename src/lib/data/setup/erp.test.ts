@@ -2136,7 +2136,7 @@ describe('fetchErpOverviewWithMeta', () => {
         'rpc:list_connector_apply_safety_contracts': {
           data: [
             {
-              contract_version: 'pr16.4.3-guarded-update-recovery-readiness-v1',
+              contract_version: 'pr16.4.4-guarded-update-recovery-runbook-v1',
               browser_direct_apply_enabled: false,
               authenticated_apply_rpc_exposed: false,
               worker_import_apply_enqueue_enabled: true,
@@ -2150,8 +2150,8 @@ describe('fetchErpOverviewWithMeta', () => {
               rollback_snapshot_hot_retention_days: 90,
               object_event_retention_months: 24,
               purge_archive_required: true,
-              safe_error_code: 'guarded_update_recovery_readiness_open',
-              next_action_key: 'review_guarded_update_recovery_readiness',
+              safe_error_code: 'guarded_update_recovery_runbook_open',
+              next_action_key: 'review_guarded_update_recovery_runbook',
             },
           ],
           error: null,
@@ -2257,6 +2257,73 @@ describe('fetchErpOverviewWithMeta', () => {
           ],
           error: null,
         },
+        'rpc:list_connector_guarded_update_recovery_runbooks': {
+          data: [
+            {
+              change_set_id: 'change-set-guarded-update-applied',
+              import_batch_id: 'batch-guarded-update-applied',
+              status: 'ready_for_rollback_preview',
+              recommended_action: 'prepare_rollback_preview',
+              readiness_status: 'ready',
+              applied_at: '2026-06-05T14:10:00.000Z',
+              update_count: 1,
+              object_event_count: 1,
+              field_diff_count: 1,
+              rollback_snapshot_count: 1,
+              rollback_ready_count: 1,
+              stale_recheck_verified_count: 1,
+              blocker_codes: [],
+              operator_review_required: true,
+              approval_required: true,
+              rollback_preview_candidate: true,
+              rollback_preview_enabled: false,
+              rollback_execution_enabled: false,
+              compensating_execution_enabled: false,
+              source_writeback_enabled: false,
+              credential_readback_enabled: false,
+              value_readback_enabled: false,
+              hot_retention_expires_at: '2026-09-03T14:10:00.000Z',
+              purge_after_at: '2028-06-05T14:10:00.000Z',
+              next_action_key: 'prepare_rollback_preview_pr16_5',
+              safe_steps: [
+                {
+                  step_key: 'verify_original_apply_event',
+                  step_status: 'verified',
+                  evidence_count: 1,
+                  required_count: 1,
+                  blocker_code: null,
+                  next_action_key: null,
+                },
+                {
+                  step_key: 'verify_hash_only_field_diffs',
+                  step_status: 'verified',
+                  evidence_count: 1,
+                  required_count: 1,
+                  blocker_code: null,
+                  next_action_key: null,
+                },
+                {
+                  step_key: 'verify_rollback_snapshot_window',
+                  step_status: 'verified',
+                  evidence_count: 1,
+                  required_count: 1,
+                  blocker_code: null,
+                  next_action_key: null,
+                },
+                {
+                  step_key: 'prepare_pr16_5_preview_gate',
+                  step_status: 'candidate',
+                  evidence_count: 1,
+                  required_count: 1,
+                  blocker_code: null,
+                  next_action_key: 'prepare_rollback_preview_pr16_5',
+                },
+              ],
+              created_at: '2026-06-05T14:10:00.000Z',
+            },
+          ],
+          error: null,
+        },
       },
       capture,
     )
@@ -2264,13 +2331,13 @@ describe('fetchErpOverviewWithMeta', () => {
     const overview = await fetchErpOverviewWithMeta('user-1')
 
     expect(overview.data.applySafetyContract).toMatchObject({
-      contractVersion: 'pr16.4.3-guarded-update-recovery-readiness-v1',
+      contractVersion: 'pr16.4.4-guarded-update-recovery-runbook-v1',
       executionEnabled: true,
       canonicalWriteEnabled: true,
       sourceWritebackEnabled: false,
       credentialReadbackEnabled: false,
-      safeErrorCode: 'guarded_update_recovery_readiness_open',
-      nextActionKey: 'review_guarded_update_recovery_readiness',
+      safeErrorCode: 'guarded_update_recovery_runbook_open',
+      nextActionKey: 'review_guarded_update_recovery_runbook',
     })
     expect(overview.data.applyExecutionContract).toMatchObject({
       safeToExecute: true,
@@ -2314,11 +2381,57 @@ describe('fetchErpOverviewWithMeta', () => {
       fn: 'list_connector_guarded_update_recovery_readiness',
       args: { p_change_set_id: 'change-set-guarded-update-applied', p_limit: 8 },
     })
+    expect(overview.data.guardedUpdateRecoveryRunbook).toMatchObject({
+      changeSetId: 'change-set-guarded-update-applied',
+      status: 'ready_for_rollback_preview',
+      readiness: 'ready',
+      recommendedAction: 'prepare_rollback_preview',
+      rollbackPreviewCandidate: true,
+      rollbackPreviewEnabled: false,
+      rollbackExecutionEnabled: false,
+      compensatingExecutionEnabled: false,
+      sourceWritebackEnabled: false,
+      credentialReadbackEnabled: false,
+      valueReadbackEnabled: false,
+      operatorReviewRequired: true,
+      approvalRequired: true,
+      blockerCodes: [],
+      nextActionKey: 'prepare_rollback_preview_pr16_5',
+      summary: {
+        updateCount: 1,
+        objectEventCount: 1,
+        fieldDiffCount: 1,
+        rollbackSnapshotCount: 1,
+        rollbackReadyCount: 1,
+        staleRecheckVerifiedCount: 1,
+      },
+    })
+    expect(overview.data.guardedUpdateRecoveryRunbook.safeSteps).toHaveLength(4)
+    expect(overview.data.guardedUpdateRecoveryRunbook.safeSteps[3]).toMatchObject({
+      stepKey: 'prepare_pr16_5_preview_gate',
+      stepStatus: 'candidate',
+      nextActionKey: 'prepare_rollback_preview_pr16_5',
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'list_connector_guarded_update_recovery_runbooks',
+      args: { p_change_set_id: 'change-set-guarded-update-applied', p_limit: 8 },
+    })
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('snapshot_payload')
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('before_value')
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('after_value')
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('"raw_payload":')
     expect(JSON.stringify(overview.data.guardedUpdateRecovery)).not.toContain('credentials_ref')
+    expect(JSON.stringify(overview.data.guardedUpdateRecoveryRunbook)).not.toContain(
+      'snapshot_payload',
+    )
+    expect(JSON.stringify(overview.data.guardedUpdateRecoveryRunbook)).not.toContain('before_value')
+    expect(JSON.stringify(overview.data.guardedUpdateRecoveryRunbook)).not.toContain('after_value')
+    expect(JSON.stringify(overview.data.guardedUpdateRecoveryRunbook)).not.toContain(
+      '"raw_payload":',
+    )
+    expect(JSON.stringify(overview.data.guardedUpdateRecoveryRunbook)).not.toContain(
+      'credentials_ref',
+    )
   })
 
   it('returns real empty when tenant is missing and demo mode is off', async () => {
