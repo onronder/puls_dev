@@ -612,6 +612,16 @@ PR16.5 opens rollback preview generation for applied guarded updates without ope
 | [`supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql`](../../supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql) | Immutable rollback preview ledgers plus generate/list RPCs; no rollback execution or value readback |
 | [`scripts/verify-16-5-guarded-update-rollback-preview.sh`](../../scripts/verify-16-5-guarded-update-rollback-preview.sh)                                                     | PR16.5 verify gate                                                                               |
 
+## PR16.6 guarded update rollback approval
+
+PR16.6 records checksum-bound admin approval for a ready rollback preview without opening rollback execution. It adds an immutable approval ledger, admin/service-role approval RPC, safe read model, and `/erp` approval gate while keeping rollback job enqueue, rollback execution, compensating execution, ERP/source writeback, credential/readback, provider calls, browser direct rollback, and AI autonomous execution closed.
+
+| Document / artifact                                                                                                                                                          | Purpose                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [16_6_guarded_update_rollback_approval.md](./16_6_guarded_update_rollback_approval.md)                                                                                       | PR16.6 guarded update rollback approval scope, safety contract, and worker-execution handoff     |
+| [`supabase/migrations/20260606140000_puls_integration_guarded_update_rollback_approval.sql`](../../supabase/migrations/20260606140000_puls_integration_guarded_update_rollback_approval.sql) | Immutable rollback approval ledger plus record/list RPCs; no rollback execution or value readback |
+| [`scripts/verify-16-6-guarded-update-rollback-approval.sh`](../../scripts/verify-16-6-guarded-update-rollback-approval.sh)                                                   | PR16.6 verify gate                                                                               |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

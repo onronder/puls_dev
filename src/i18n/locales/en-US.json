@@ -1029,6 +1029,9 @@
       "guardedUpdateApplyJob": {
         "queued": "Guarded update apply job was queued for the safe worker."
       },
+      "guardedUpdateRollbackApproval": {
+        "approvalRecorded": "Rollback approval was recorded. Rollback execution remains closed."
+      },
       "runtimePreflight": {
         "queued": "Runtime preflight job was safely queued. The worker result will appear in activity."
       }
@@ -1050,6 +1053,7 @@
       "guardedUpdateEvidenceBlocked": "Guarded update evidence requires a guarded update change-set with no stale, destructive, or source-conflict blockers.",
       "createOnlyApplyBlocked": "Create-only apply requires a clean change-set, admin approval, and an open worker gate.",
       "guardedUpdateApplyBlocked": "Guarded update apply requires evidence, rollback snapshots, admin approval, and an open worker gate.",
+      "rollbackApprovalBlocked": "Rollback approval requires a ready rollback preview with no blockers or current-state drift.",
       "runtimePreflightBlocked": "Runtime preflight requires a verified secure reference."
     },
     "sections": {
@@ -2368,6 +2372,57 @@
       "itemStatus": {
         "ready": "Ready",
         "blocked": "Blocked"
+      }
+    },
+    "guardedUpdateRollbackApproval": {
+      "recording": "Recording rollback approval",
+      "adminRequired": "Admin approval required",
+      "executionClosed": "Execution closed",
+      "approvedAt": "Rollback approval recorded at: {{value}}",
+      "status": {
+        "not_available": "Rollback approval not needed",
+        "needs_preview": "Rollback preview required",
+        "needs_approval": "Rollback approval required",
+        "approval_recorded": "Rollback approval recorded",
+        "blocked": "Rollback approval blocked"
+      },
+      "descriptions": {
+        "not_available": "There is no rollback preview that needs approval for the current source.",
+        "needs_preview": "Generate a hash-only rollback preview before recording approval.",
+        "needs_approval": "The rollback preview is ready and can be approved as a checksum-bound audit record. This does not execute rollback.",
+        "approval_recorded": "Rollback approval is recorded against the preview checksum. Worker rollback execution remains closed until the next PR.",
+        "blocked": "Rollback approval cannot be recorded while blockers, drift, or missing rollback evidence remain."
+      },
+      "actions": {
+        "none": {
+          "label": "No action",
+          "description": "There is no rollback approval action at this stage."
+        },
+        "generate_preview_first": {
+          "label": "Generate preview first",
+          "description": "Approval requires an immutable rollback preview."
+        },
+        "record_admin_approval": {
+          "label": "Record rollback approval",
+          "description": "Save admin approval for this rollback preview checksum without opening execution."
+        },
+        "approval_recorded": {
+          "label": "Approval recorded",
+          "description": "Rollback approval is recorded; execution remains closed."
+        },
+        "resolve_blockers": {
+          "label": "Resolve blockers",
+          "description": "Current-state drift, missing evidence, or expired snapshots must be resolved first."
+        }
+      },
+      "metrics": {
+        "rows": "Rollback rows",
+        "blockers": "Blockers",
+        "evidence": "Evidence",
+        "next": "Next gate"
+      },
+      "values": {
+        "noAction": "No action"
       }
     },
     "applyExecutionContract": {
