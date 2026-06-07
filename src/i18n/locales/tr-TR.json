@@ -1067,6 +1067,28 @@
         "description": "ERP veya dış sisteme yazma ayrı onay ve güvenlik sınırı gerektirir."
       }
     },
+    "journey": {
+      "title": "Bağlantı kurulumu",
+      "description": "Önce kaynağı seç, sonra kapsamı, alanları, güvenli erişimi ve önizlemeyi sırayla tamamla. Teknik kanıtları yalnızca ihtiyaç olduğunda aç.",
+      "labels": {
+        "source": "Kaynak",
+        "score": "Hazırlık",
+        "nextAction": "Sıradaki adım"
+      },
+      "actions": {
+        "requestSecureAccess": "Güvenli erişimi başlat",
+        "openFields": "Alanları ve kapsamı aç",
+        "openPreview": "Önizlemeye git",
+        "openSetup": "Kurulum detayına git",
+        "openDetails": "Teknik detayları aç",
+        "showDetails": "Detayları göster",
+        "hideDetails": "Detayları gizle"
+      },
+      "technicalDetails": {
+        "title": "Teknik detaylar ve denetim kanıtları",
+        "description": "Kurulum, alanlar, kontroller, credential, preview/apply ve activity kayıtlarını görmek için aç."
+      }
+    },
     "accessReadiness": {
       "title": "Erişim hazırlığı",
       "description": "Canlı API açılmadan önce müşteri, güvenli erişim ve offline önizleme hazırlığını tek yerde gösterir.",
