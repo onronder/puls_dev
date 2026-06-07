@@ -2,13 +2,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   appNotificationRealtimeTopic,
+  clearAppNotificationPreference,
   dismissAppNotification,
   fetchAppNotificationPage,
+  fetchAppNotificationPreferences,
+  fetchAppNotificationScenarioContracts,
   fetchAppNotificationSummary,
   mapAppNotificationRealtimeSignal,
   markAllAppNotificationsRead,
   markAppNotificationRead,
   subscribeToAppNotificationSignals,
+  upsertAppNotificationPreference,
 } from '#/lib/data/app/notifications'
 
 vi.mock('#/lib/data/client', () => ({
@@ -80,10 +84,12 @@ describe('app notification data adapter', () => {
             notification_ledger_enabled: true,
             notification_realtime_enabled: true,
             external_delivery_enabled: false,
-            next_action_key: 'plan_notification_preferences_pr16_9_5',
+            next_action_key: 'validate_notification_scenarios_pr16_9_5',
             safe_summary: {
               notification_center_ui_enabled: true,
               notification_realtime_enabled: true,
+              notification_preferences_enabled: true,
+              notification_scenario_contracts_enabled: true,
               notification_polling_fallback_enabled: true,
             },
           },
@@ -105,6 +111,140 @@ describe('app notification data adapter', () => {
     expect(client.rpc).toHaveBeenCalledWith('get_app_notification_summary', {
       p_source_domain: null,
     })
+  })
+
+  it('maps notification preferences and calls preference RPCs with scoped parameters', async () => {
+    const client = rpcClient({
+      list_app_notification_preferences: {
+        data: [
+          {
+            preference_id: 'preference-1',
+            tenant_id: 'tenant-1',
+            employee_id: 'employee-1',
+            source_domain: 'connector_runtime',
+            source_event_key: 'connector_job_failed',
+            inbox_enabled: false,
+            minimum_severity: 'warning',
+            muted_until: '2026-06-07T11:00:00Z',
+            action_required_only: true,
+            created_at: '2026-06-07T10:00:00Z',
+            updated_at: '2026-06-07T10:01:00Z',
+          },
+        ],
+      },
+      upsert_app_notification_preference: {
+        data: [
+          {
+            preference_id: 'preference-1',
+            tenant_id: 'tenant-1',
+            employee_id: 'employee-1',
+            source_domain: 'connector_runtime',
+            source_event_key: 'connector_job_failed',
+            inbox_enabled: true,
+            minimum_severity: 'error',
+            muted_until: null,
+            action_required_only: false,
+            created_at: '2026-06-07T10:00:00Z',
+            updated_at: '2026-06-07T10:02:00Z',
+          },
+        ],
+      },
+      clear_app_notification_preference: {
+        data: [
+          {
+            deleted_count: 1,
+            source_domain: 'connector_runtime',
+            source_event_key: 'connector_job_failed',
+          },
+        ],
+      },
+    })
+    appClient.mockReturnValue(client as never)
+
+    await expect(fetchAppNotificationPreferences('connector_runtime')).resolves.toEqual([
+      expect.objectContaining({
+        preferenceId: 'preference-1',
+        sourceDomain: 'connector_runtime',
+        sourceEventKey: 'connector_job_failed',
+        inboxEnabled: false,
+        minimumSeverity: 'warning',
+        actionRequiredOnly: true,
+      }),
+    ])
+
+    await expect(
+      upsertAppNotificationPreference({
+        sourceDomain: 'connector_runtime',
+        sourceEventKey: 'connector_job_failed',
+        inboxEnabled: true,
+        minimumSeverity: 'error',
+      }),
+    ).resolves.toMatchObject({
+      sourceDomain: 'connector_runtime',
+      sourceEventKey: 'connector_job_failed',
+      inboxEnabled: true,
+      minimumSeverity: 'error',
+    })
+
+    await expect(
+      clearAppNotificationPreference('connector_runtime', 'connector_job_failed'),
+    ).resolves.toEqual({
+      deletedCount: 1,
+      sourceDomain: 'connector_runtime',
+      sourceEventKey: 'connector_job_failed',
+    })
+
+    expect(client.rpc).toHaveBeenCalledWith('list_app_notification_preferences', {
+      p_source_domain: 'connector_runtime',
+    })
+    expect(client.rpc).toHaveBeenCalledWith('upsert_app_notification_preference', {
+      p_source_domain: 'connector_runtime',
+      p_source_event_key: 'connector_job_failed',
+      p_inbox_enabled: true,
+      p_minimum_severity: 'error',
+      p_muted_until: null,
+      p_action_required_only: false,
+    })
+    expect(client.rpc).toHaveBeenCalledWith('clear_app_notification_preference', {
+      p_source_domain: 'connector_runtime',
+      p_source_event_key: 'connector_job_failed',
+    })
+  })
+
+  it('maps scenario contracts for smoke coverage', async () => {
+    const client = rpcClient({
+      list_app_notification_scenario_contracts: {
+        data: [
+          {
+            scenario_key: 'realtime_hint',
+            scenario_status: 'ready',
+            source_domain: 'all',
+            expected_behavior: 'Realtime broadcasts contain minimal hints.',
+            tested_by: 'broadcast_app_notification_hint',
+            notification_ledger_enabled: true,
+            notification_preferences_enabled: true,
+            notification_realtime_enabled: true,
+            external_delivery_enabled: false,
+            safe_summary: {
+              contract_version: 'pr16.9.5-notification-scenario-coverage-v1',
+              raw_payload_readback: false,
+            },
+          },
+        ],
+      },
+    })
+    appClient.mockReturnValue(client as never)
+
+    await expect(fetchAppNotificationScenarioContracts()).resolves.toEqual([
+      expect.objectContaining({
+        scenarioKey: 'realtime_hint',
+        scenarioStatus: 'ready',
+        notificationPreferencesEnabled: true,
+        notificationRealtimeEnabled: true,
+        externalDeliveryEnabled: false,
+      }),
+    ])
+    expect(client.rpc).toHaveBeenCalledWith('list_app_notification_scenario_contracts')
   })
 
   it('maps a cursor page and keeps the cursor from the RPC boundary', async () => {

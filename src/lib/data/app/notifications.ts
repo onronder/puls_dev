@@ -88,6 +88,48 @@ export type NotificationReadState = {
   isDismissed: boolean
 }
 
+export type AppNotificationPreference = {
+  preferenceId: string
+  tenantId: string
+  employeeId: string
+  sourceDomain: string
+  sourceEventKey: string
+  inboxEnabled: boolean
+  minimumSeverity: AppNotificationSeverity
+  mutedUntil: string | null
+  actionRequiredOnly: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type AppNotificationPreferenceInput = {
+  sourceDomain?: string
+  sourceEventKey?: string
+  inboxEnabled?: boolean
+  minimumSeverity?: AppNotificationSeverity
+  mutedUntil?: string | null
+  actionRequiredOnly?: boolean
+}
+
+export type ClearAppNotificationPreferenceResult = {
+  deletedCount: number
+  sourceDomain: string
+  sourceEventKey: string
+}
+
+export type AppNotificationScenarioContract = {
+  scenarioKey: string
+  scenarioStatus: string
+  sourceDomain: string
+  expectedBehavior: string
+  testedBy: string
+  notificationLedgerEnabled: boolean
+  notificationPreferencesEnabled: boolean
+  notificationRealtimeEnabled: boolean
+  externalDeliveryEnabled: boolean
+  safeSummary: Record<string, unknown>
+}
+
 export type MarkAllNotificationsReadResult = {
   markedCount: number
   unreadRemainingCount: number
@@ -154,6 +196,39 @@ type MarkAllNotificationsReadRow = {
   marked_count?: number | null
   unread_remaining_count?: number | null
   read_at: string
+}
+
+type NotificationPreferenceRow = {
+  preference_id: string
+  tenant_id: string
+  employee_id: string
+  source_domain: string
+  source_event_key: string
+  inbox_enabled?: boolean | null
+  minimum_severity: AppNotificationSeverity
+  muted_until?: string | null
+  action_required_only?: boolean | null
+  created_at: string
+  updated_at: string
+}
+
+type ClearNotificationPreferenceRow = {
+  deleted_count?: number | null
+  source_domain: string
+  source_event_key: string
+}
+
+type NotificationScenarioContractRow = {
+  scenario_key: string
+  scenario_status: string
+  source_domain: string
+  expected_behavior: string
+  tested_by: string
+  notification_ledger_enabled?: boolean | null
+  notification_preferences_enabled?: boolean | null
+  notification_realtime_enabled?: boolean | null
+  external_delivery_enabled?: boolean | null
+  safe_summary?: Record<string, unknown> | null
 }
 
 const APP_NOTIFICATION_REALTIME_EVENT = 'app_notification_hint'
@@ -362,6 +437,37 @@ function mapReadState(row: NotificationReadStateRow): NotificationReadState {
   }
 }
 
+function mapPreference(row: NotificationPreferenceRow): AppNotificationPreference {
+  return {
+    preferenceId: row.preference_id,
+    tenantId: row.tenant_id,
+    employeeId: row.employee_id,
+    sourceDomain: row.source_domain,
+    sourceEventKey: row.source_event_key,
+    inboxEnabled: row.inbox_enabled ?? true,
+    minimumSeverity: row.minimum_severity,
+    mutedUntil: row.muted_until ?? null,
+    actionRequiredOnly: row.action_required_only ?? false,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function mapScenarioContract(row: NotificationScenarioContractRow): AppNotificationScenarioContract {
+  return {
+    scenarioKey: row.scenario_key,
+    scenarioStatus: row.scenario_status,
+    sourceDomain: row.source_domain,
+    expectedBehavior: row.expected_behavior,
+    testedBy: row.tested_by,
+    notificationLedgerEnabled: row.notification_ledger_enabled ?? false,
+    notificationPreferencesEnabled: row.notification_preferences_enabled ?? false,
+    notificationRealtimeEnabled: row.notification_realtime_enabled ?? false,
+    externalDeliveryEnabled: row.external_delivery_enabled ?? false,
+    safeSummary: row.safe_summary ?? {},
+  }
+}
+
 function firstRpcRow<T>(data: unknown): T | null {
   if (Array.isArray(data)) {
     return (data[0] as T | undefined) ?? null
@@ -466,4 +572,100 @@ export async function markAllAppNotificationsRead(): Promise<MarkAllNotification
     unreadRemainingCount: row.unread_remaining_count ?? 0,
     readAt: row.read_at,
   }
+}
+
+export async function fetchAppNotificationPreferences(
+  sourceDomain: string | null = null,
+): Promise<AppNotificationPreference[]> {
+  const { data, error } = await pulsApp().rpc('list_app_notification_preferences', {
+    p_source_domain: sourceDomain,
+  })
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'fetchAppNotificationPreferences',
+      'puls_app',
+      'app_notification_preferences',
+    )
+  }
+
+  return ((data ?? []) as NotificationPreferenceRow[]).map(mapPreference)
+}
+
+export async function upsertAppNotificationPreference({
+  sourceDomain = 'all',
+  sourceEventKey = 'all',
+  inboxEnabled = true,
+  minimumSeverity = 'info',
+  mutedUntil = null,
+  actionRequiredOnly = false,
+}: AppNotificationPreferenceInput = {}): Promise<AppNotificationPreference> {
+  const { data, error } = await pulsApp().rpc('upsert_app_notification_preference', {
+    p_source_domain: sourceDomain,
+    p_source_event_key: sourceEventKey,
+    p_inbox_enabled: inboxEnabled,
+    p_minimum_severity: minimumSeverity,
+    p_muted_until: mutedUntil,
+    p_action_required_only: actionRequiredOnly,
+  })
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'upsertAppNotificationPreference',
+      'puls_app',
+      'app_notification_preferences',
+    )
+  }
+
+  const row = firstRpcRow<NotificationPreferenceRow>(data)
+  if (!row) throw adapterError('upsertAppNotificationPreference', 'empty_rpc_result')
+
+  return mapPreference(row)
+}
+
+export async function clearAppNotificationPreference(
+  sourceDomain = 'all',
+  sourceEventKey = 'all',
+): Promise<ClearAppNotificationPreferenceResult> {
+  const { data, error } = await pulsApp().rpc('clear_app_notification_preference', {
+    p_source_domain: sourceDomain,
+    p_source_event_key: sourceEventKey,
+  })
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'clearAppNotificationPreference',
+      'puls_app',
+      'app_notification_preferences',
+    )
+  }
+
+  const row = firstRpcRow<ClearNotificationPreferenceRow>(data)
+  if (!row) throw adapterError('clearAppNotificationPreference', 'empty_rpc_result')
+
+  return {
+    deletedCount: row.deleted_count ?? 0,
+    sourceDomain: row.source_domain,
+    sourceEventKey: row.source_event_key,
+  }
+}
+
+export async function fetchAppNotificationScenarioContracts(): Promise<
+  AppNotificationScenarioContract[]
+> {
+  const { data, error } = await pulsApp().rpc('list_app_notification_scenario_contracts')
+
+  if (error) {
+    throw fromSupabaseError(
+      error,
+      'fetchAppNotificationScenarioContracts',
+      'puls_app',
+      'app_notifications',
+    )
+  }
+
+  return ((data ?? []) as NotificationScenarioContractRow[]).map(mapScenarioContract)
 }
