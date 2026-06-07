@@ -134,7 +134,8 @@ for needle in \
   "tab: z.enum" \
   "focus: z.string().regex" \
   "Route.useSearch" \
-  "document.getElementById(routeSearch.focus)?.scrollIntoView"; do
+  "const focus = routeSearch.focus" \
+  "document.getElementById(focus)?.scrollIntoView"; do
   if ! grep -Fq "$needle" <<< "$ERP_ROUTE"; then
     echo "FAIL: ERP route missing deep-link needle: $needle" >&2
     exit 1
