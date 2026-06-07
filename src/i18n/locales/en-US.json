@@ -4225,6 +4225,7 @@
       "accountNoTenant": "The user must be linked to a company workspace first.",
       "tenantReady": "This session is operating inside a company workspace.",
       "tenantMissing": "Admin settings cannot open until a company workspace is resolved.",
+      "notificationsReady": "In-app notification preferences are managed from the Notifications panel; email and mobile delivery remain closed.",
       "notificationsPending": "In-app notification preferences are managed from the Notifications panel; email and mobile delivery remain closed.",
       "notificationsNoTenant": "Notification scope is resolved after the company workspace is linked.",
       "localeReady": "Language and timezone match the current operating scope.",
