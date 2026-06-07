@@ -746,6 +746,17 @@ PR16.9.7 makes the existing in-app notification preference RPC contract visible 
 | [`src/components/notifications/AppNotificationCenter.tsx`](../../src/components/notifications/AppNotificationCenter.tsx)                                  | Global notification sheet with source-scoped preference UI                                                    |
 | [`scripts/verify-16-9-7-notification-preferences-ui.sh`](../../scripts/verify-16-9-7-notification-preferences-ui.sh)                                     | PR16.9.7 verify gate                                                                                        |
 
+## PR16.9.7x settings notification status hotfix
+
+PR16.9.7x aligns `/ayarlar` with the PR16.9.7 Notification Center preference UI. Tenant-scoped users now see `Bildirim tercihleri` as ready/enabled because in-app preferences are active in the Notification Center; no-tenant sessions remain locked, and external delivery stays closed.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [16_9_7x_settings_notification_status_hotfix.md](./16_9_7x_settings_notification_status_hotfix.md)                                                       | Settings status alignment, safety notes, and browser smoke expectations                                      |
+| [`src/lib/data/settings/overview.ts`](../../src/lib/data/settings/overview.ts)                                                                            | Settings hub adapter state for notification preferences                                                       |
+| [`src/lib/data/settings/overview.test.ts`](../../src/lib/data/settings/overview.test.ts)                                                                  | Regression coverage for tenant-ready and no-tenant locked notification states                                |
+| [`scripts/verify-16-9-7x-settings-notification-status-hotfix.sh`](../../scripts/verify-16-9-7x-settings-notification-status-hotfix.sh)                   | PR16.9.7x verify gate                                                                                       |
+
 ## PR16.10.0 connector access readiness
 
 PR16.10.0 turns the ERP connector surface into a provider-independent access readiness module before any live customer API work begins. Canias, Logo, CSV/Excel, and custom API sources share the same readiness vocabulary: selected source, method, metadata, secure reference, customer/API access, and offline preview path. Provider calls, credential value readback, and source writeback remain closed.

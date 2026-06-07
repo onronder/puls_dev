@@ -4310,6 +4310,7 @@
       "accountNoTenant": "Önce kullanıcı bir şirket alanına bağlanmalı.",
       "tenantReady": "Bu oturum bir şirket alanı içinde çalışıyor.",
       "tenantMissing": "Şirket alanı bulunmadan yönetici ayarları açılamaz.",
+      "notificationsReady": "Uygulama içi bildirim tercihleri Bildirimler panelinden yönetilir; e-posta ve mobil teslimat kapalıdır.",
       "notificationsPending": "Uygulama içi bildirim tercihleri Bildirimler panelinden yönetilir; e-posta ve mobil teslimat kapalıdır.",
       "notificationsNoTenant": "Bildirim kapsamı şirket alanı bağlandıktan sonra belirlenir.",
       "localeReady": "Dil ve saat bölgesi uygulamanın mevcut çalışma kapsamıyla uyumlu.",
