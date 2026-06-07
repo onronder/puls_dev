@@ -1,9 +1,26 @@
 import { pulsApp } from '#/lib/data/client'
 import { adapterError, fromSupabaseError } from '#/lib/data/errors'
+import { supabase } from '#/lib/supabase'
 
 export type NotificationCenterFilter = 'all' | 'unread' | 'action_required'
 
 export type AppNotificationSeverity = 'info' | 'success' | 'warning' | 'error' | 'critical'
+
+export type AppNotificationRealtimeStatus = 'disabled' | 'connecting' | 'connected' | 'fallback'
+
+export type AppNotificationRealtimeSignal = {
+  notificationId: string | null
+  sourceDomain: string | null
+  sourceEventKey: string | null
+  severity: AppNotificationSeverity | null
+  occurredAt: string | null
+  countHint: number | null
+}
+
+export type AppNotificationSignalSubscription = {
+  topic: string | null
+  unsubscribe: () => void
+}
 
 export type AppNotificationCursor = {
   priority: number
@@ -137,6 +154,152 @@ type MarkAllNotificationsReadRow = {
   marked_count?: number | null
   unread_remaining_count?: number | null
   read_at: string
+}
+
+const APP_NOTIFICATION_REALTIME_EVENT = 'app_notification_hint'
+
+const appNotificationSignalAllowedKeys = new Set([
+  'notification_id',
+  'source_domain',
+  'source_event_key',
+  'severity',
+  'occurred_at',
+  'count_hint',
+])
+
+const appNotificationSignalBlockedKeys = [
+  'safe_summary',
+  'payload',
+  'raw_payload',
+  'provider_response',
+  'credential',
+  'credential_value',
+  'before_value',
+  'after_value',
+  'field_value',
+  'snapshot_payload',
+]
+
+function stringOrNull(value: unknown) {
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+function severityOrNull(value: unknown): AppNotificationSeverity | null {
+  if (
+    value === 'info' ||
+    value === 'success' ||
+    value === 'warning' ||
+    value === 'error' ||
+    value === 'critical'
+  ) {
+    return value
+  }
+
+  return null
+}
+
+function countHintOrNull(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+export function appNotificationRealtimeTopic(tenantId: string): string {
+  return `puls_app:notification-center:tenant:${tenantId}`
+}
+
+export function mapAppNotificationRealtimeSignal(
+  broadcastPayload: unknown,
+): AppNotificationRealtimeSignal | null {
+  if (!isRecord(broadcastPayload) || !isRecord(broadcastPayload.payload)) {
+    return null
+  }
+
+  const payload = broadcastPayload.payload
+  const keys = Object.keys(payload)
+
+  if (
+    keys.some((key) => !appNotificationSignalAllowedKeys.has(key)) ||
+    appNotificationSignalBlockedKeys.some((key) => key in payload)
+  ) {
+    return null
+  }
+
+  return {
+    notificationId: stringOrNull(payload.notification_id),
+    sourceDomain: stringOrNull(payload.source_domain),
+    sourceEventKey: stringOrNull(payload.source_event_key),
+    severity: severityOrNull(payload.severity),
+    occurredAt: stringOrNull(payload.occurred_at),
+    countHint: countHintOrNull(payload.count_hint),
+  }
+}
+
+export function subscribeToAppNotificationSignals({
+  tenantId,
+  enabled,
+  onSignal,
+  onStatusChange,
+}: {
+  tenantId: string | null
+  enabled: boolean
+  onSignal: (signal: AppNotificationRealtimeSignal) => void
+  onStatusChange?: (status: AppNotificationRealtimeStatus) => void
+}): AppNotificationSignalSubscription {
+  if (!enabled || !tenantId) {
+    onStatusChange?.('disabled')
+    return {
+      topic: null,
+      unsubscribe: () => {},
+    }
+  }
+
+  const topic = appNotificationRealtimeTopic(tenantId)
+  let active = true
+
+  onStatusChange?.('connecting')
+
+  void supabase.realtime.setAuth().catch(() => {
+    if (active) onStatusChange?.('fallback')
+  })
+
+  const channel = supabase
+    .channel(topic, {
+      config: {
+        private: true,
+        broadcast: { self: false, ack: false },
+      },
+    })
+    .on('broadcast', { event: APP_NOTIFICATION_REALTIME_EVENT }, (payload) => {
+      const signal = mapAppNotificationRealtimeSignal(payload)
+      if (signal) onSignal(signal)
+    })
+
+  channel.subscribe((status) => {
+    if (!active) return
+
+    if (status === 'SUBSCRIBED') {
+      onStatusChange?.('connected')
+      return
+    }
+
+    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+      onStatusChange?.('fallback')
+      return
+    }
+
+    onStatusChange?.('connecting')
+  })
+
+  return {
+    topic,
+    unsubscribe: () => {
+      active = false
+      void supabase.removeChannel(channel)
+    },
+  }
 }
 
 function mapSummary(row: NotificationSummaryRow | null): AppNotificationSummary {

@@ -108,7 +108,13 @@
       "received": "Geldiği zaman",
       "read": "Okundu",
       "unread": "Okunmadı",
-      "actionRequired": "Aksiyon gerekli"
+      "actionRequired": "Aksiyon gerekli",
+      "realtime": {
+        "connected": "Canlı güncellemeler açık",
+        "connecting": "Canlı güncelleme bağlanıyor",
+        "fallback": "Canlı güncelleme yok, otomatik yenileniyor",
+        "polling": "Otomatik yenileniyor"
+      }
     },
     "severity": {
       "info": "Bilgi",

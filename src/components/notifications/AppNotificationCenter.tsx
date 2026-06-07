@@ -11,11 +11,12 @@ import {
   Info,
   Loader2,
   MailOpen,
+  Radio,
   RefreshCw,
   Trash2,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -35,8 +36,10 @@ import {
   fetchAppNotificationSummary,
   markAllAppNotificationsRead,
   markAppNotificationRead,
+  subscribeToAppNotificationSignals,
   type AppNotification,
   type AppNotificationCursor,
+  type AppNotificationRealtimeStatus,
   type AppNotificationSeverity,
   type NotificationCenterFilter,
 } from '#/lib/data'
@@ -260,7 +263,9 @@ function NotificationDetail({
       field,
       value: notification.safeSummary[field],
     }))
-    .filter((row) => row.value !== undefined && row.value !== null && formatSafeValue(row.value) !== '')
+    .filter(
+      (row) => row.value !== undefined && row.value !== null && formatSafeValue(row.value) !== '',
+    )
     .slice(0, 10)
 
   return (
@@ -323,7 +328,9 @@ function NotificationDetail({
           <div>
             <dt className="text-[var(--color-text-muted)]">{t('notifications.center.status')}</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {notification.isRead ? t('notifications.center.read') : t('notifications.center.unread')}
+              {notification.isRead
+                ? t('notifications.center.read')
+                : t('notifications.center.unread')}
             </dd>
           </div>
           <div>
@@ -341,7 +348,10 @@ function NotificationDetail({
           {summaryRows.length ? (
             <dl className="mt-2 divide-y divide-[var(--color-border)] rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)]">
               {summaryRows.map((row) => (
-                <div key={row.field} className="grid gap-1 px-3 py-2 text-xs sm:grid-cols-[150px_1fr]">
+                <div
+                  key={row.field}
+                  className="grid gap-1 px-3 py-2 text-xs sm:grid-cols-[150px_1fr]"
+                >
                   <dt className="font-medium text-[var(--color-text-muted)]">
                     {t(`notifications.safeSummary.${row.field}`, row.field)}
                   </dt>
@@ -371,7 +381,11 @@ function NotificationDetail({
           onClick={() => onDismiss(notification.notificationId)}
           disabled={dismissing}
         >
-          {dismissing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          {dismissing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
           {t('notifications.center.dismiss')}
         </Button>
       </div>
@@ -386,11 +400,12 @@ export function AppNotificationCenter() {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState<NotificationCenterFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [realtimeStatus, setRealtimeStatus] = useState<AppNotificationRealtimeStatus>('disabled')
 
   const summaryQuery = useQuery({
     queryKey: ['app-notifications', 'summary'],
     queryFn: fetchAppNotificationSummary,
-    refetchInterval: 60_000,
+    refetchInterval: (query) => (query.state.data?.notificationRealtimeEnabled ? 60_000 : 30_000),
     staleTime: 30_000,
   })
 
@@ -419,6 +434,13 @@ export function AppNotificationCenter() {
   const actionRequiredCount = summary?.actionRequiredCount ?? 0
   const criticalCount = summary?.criticalCount ?? 0
 
+  const invalidateNotifications = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['app-notifications', 'summary'] }),
+      queryClient.invalidateQueries({ queryKey: ['app-notifications', 'page'] }),
+    ])
+  }, [queryClient])
+
   useEffect(() => {
     if (!open) setSelectedId(null)
   }, [open])
@@ -427,12 +449,16 @@ export function AppNotificationCenter() {
     setSelectedId(null)
   }, [filter])
 
-  const invalidateNotifications = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['app-notifications', 'summary'] }),
-      queryClient.invalidateQueries({ queryKey: ['app-notifications', 'page'] }),
-    ])
-  }
+  useEffect(() => {
+    const subscription = subscribeToAppNotificationSignals({
+      tenantId: summary?.tenantId ?? null,
+      enabled: summary?.notificationRealtimeEnabled ?? false,
+      onSignal: () => void invalidateNotifications(),
+      onStatusChange: setRealtimeStatus,
+    })
+
+    return subscription.unsubscribe
+  }, [invalidateNotifications, summary?.notificationRealtimeEnabled, summary?.tenantId])
 
   const markReadMutation = useMutation({
     mutationFn: markAppNotificationRead,
@@ -477,6 +503,19 @@ export function AppNotificationCenter() {
   const handleRefresh = () => {
     void invalidateNotifications()
   }
+
+  const realtimeLabelKey = summary?.notificationRealtimeEnabled
+    ? realtimeStatus === 'connected'
+      ? 'notifications.center.realtime.connected'
+      : realtimeStatus === 'connecting'
+        ? 'notifications.center.realtime.connecting'
+        : 'notifications.center.realtime.fallback'
+    : 'notifications.center.realtime.polling'
+
+  const realtimeTone =
+    summary?.notificationRealtimeEnabled && realtimeStatus === 'connected'
+      ? 'text-[var(--color-success)]'
+      : 'text-[var(--color-text-muted)]'
 
   const badgeTone =
     unreadCount > 0 && criticalCount > 0
@@ -595,6 +634,15 @@ export function AppNotificationCenter() {
                       )}
                     />
                   </Button>
+                </div>
+
+                <div className={cn('mt-2 flex items-center gap-2 text-xs', realtimeTone)}>
+                  {summary?.notificationRealtimeEnabled && realtimeStatus === 'connected' ? (
+                    <Radio className="h-3.5 w-3.5" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  <span>{t(realtimeLabelKey)}</span>
                 </div>
               </div>
 

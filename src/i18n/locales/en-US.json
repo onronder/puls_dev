@@ -108,7 +108,13 @@
       "received": "Received",
       "read": "Read",
       "unread": "Unread",
-      "actionRequired": "Action required"
+      "actionRequired": "Action required",
+      "realtime": {
+        "connected": "Live updates on",
+        "connecting": "Connecting live updates",
+        "fallback": "Live updates unavailable, auto-refreshing",
+        "polling": "Auto-refreshing"
+      }
     },
     "severity": {
       "info": "Info",

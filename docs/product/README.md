@@ -700,6 +700,16 @@ PR16.9.3 adds the first production-grade app-wide Notification Center UI. It ren
 | [`supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql`](../../supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql) | Cursor-paged notification RPC and bootstrap status UI readiness update                                    |
 | [`scripts/verify-16-9-3-notification-center-ui.sh`](../../scripts/verify-16-9-3-notification-center-ui.sh)                                               | PR16.9.3 verify gate                                                                                      |
 
+## PR16.9.4 notification realtime fallback
+
+PR16.9.4 adds optional private realtime notification hints for the app-wide Notification Center. It keeps RPC reads and polling as the correctness path, sends only minimal tenant-scoped broadcast hints, and leaves preferences plus external delivery closed.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_9_4_notification_realtime_fallback.md](./16_9_4_notification_realtime_fallback.md)                                                                   | PR16.9.4 realtime safety contract, tenant policy smoke, minimal payload checks, and PR16.9.5 handoff      |
+| [`supabase/migrations/20260607110000_puls_app_notification_realtime_fallback.sql`](../../supabase/migrations/20260607110000_puls_app_notification_realtime_fallback.sql) | Private tenant realtime topic helper, broadcast hint trigger, realtime policy, and bootstrap status update |
+| [`scripts/verify-16-9-4-notification-realtime-fallback.sh`](../../scripts/verify-16-9-4-notification-realtime-fallback.sh)                               | PR16.9.4 verify gate                                                                                      |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
