@@ -72,7 +72,10 @@ type ErpWorkbenchTab = (typeof ERP_WORKBENCH_TABS)[number]
 
 const erpSearchSchema = z.object({
   tab: z.enum(ERP_WORKBENCH_TABS).optional(),
-  focus: z.string().regex(/^erp-[a-z0-9-]+$/).optional(),
+  focus: z
+    .string()
+    .regex(/^erp-[a-z0-9-]+$/)
+    .optional(),
 })
 
 export const Route = createFileRoute('/_app/erp')({
@@ -567,6 +570,30 @@ function ErpPage() {
   const selectedProviderCanStart = selectedProvider?.setupAvailable === true
   const pageTitle = data && hasNoConnector ? t('erp.noConnector.title') : t('erp.title')
   const pageSubtitle = data && hasNoConnector ? t('erp.noConnector.subtitle') : t('erp.subtitle')
+  const accessNextAction = data?.accessReadiness.nextActionKey
+  const accessAction =
+    accessNextAction === 'erp.accessReadiness.nextActions.request_secure_reference' &&
+    canRequestCredentialHandoff
+      ? {
+          label: t('erp.accessReadiness.actions.requestSecureReference'),
+          icon: ShieldCheck,
+          onClick: () => setCredentialSheetOpen(true),
+        }
+      : accessNextAction === 'erp.accessReadiness.nextActions.complete_metadata'
+        ? {
+            label: t('erp.accessReadiness.actions.reviewMetadata'),
+            icon: Database,
+            onClick: () => showWorkbenchTab('fields', 'erp-mapping-discovery'),
+          }
+        : accessNextAction === 'erp.accessReadiness.nextActions.prepare_preview' &&
+            canRunImportPreview
+          ? {
+              label: t('erp.accessReadiness.actions.openPreview'),
+              icon: SearchCheck,
+              onClick: () => showWorkbenchTab('previewApply', 'erp-import-preview'),
+            }
+          : null
+  const AccessActionIcon = accessAction?.icon
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -674,6 +701,83 @@ function ErpPage() {
             icon={Database}
           />
         </div>
+      ) : null}
+
+      {data && hasSelectedConnector ? (
+        <section id="erp-access-readiness" className="mt-8 scroll-mt-6">
+          <SectionHeader
+            title={t('erp.accessReadiness.title')}
+            description={t('erp.accessReadiness.description')}
+          />
+          <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                  <ClipboardCheck className="h-5 w-5" aria-hidden />
+                </span>
+                <StatusPill tone={readinessTone(data.accessReadiness.status)}>
+                  {t(`erp.readinessStatus.${data.accessReadiness.status}`)}
+                </StatusPill>
+              </div>
+              <h2 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
+                {t(data.accessReadiness.titleKey)}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                {t(data.accessReadiness.summaryKey)}
+              </p>
+              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.accessReadiness.score')}
+                  </span>
+                  <span className="font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.accessReadiness.score}%
+                  </span>
+                </div>
+                <Progress className="mt-2 h-1.5" value={data.accessReadiness.score} />
+              </div>
+              <div className="mt-4 space-y-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                <p>{t(data.accessReadiness.nextActionKey)}</p>
+                <p>{t('erp.accessReadiness.boundaryNote')}</p>
+              </div>
+              {accessAction ? (
+                <Button
+                  type="button"
+                  className="touch-target mt-4 w-full sm:w-auto"
+                  onClick={accessAction.onClick}
+                >
+                  {AccessActionIcon ? <AccessActionIcon className="h-4 w-4" /> : null}
+                  {accessAction.label}
+                </Button>
+              ) : null}
+            </div>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {data.accessReadiness.requirements.map((requirement) => (
+                <li
+                  key={requirement.id}
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(requirement.labelKey)}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                        {t(requirement.descriptionKey)}
+                      </p>
+                    </div>
+                    <StatusPill tone={readinessTone(requirement.status)}>
+                      {t(`erp.readinessStatus.${requirement.status}`)}
+                    </StatusPill>
+                  </div>
+                  <p className="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
+                    {t(requirement.valueKey)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
       ) : null}
 
       {data && hasNoConnector ? (
@@ -2264,7 +2368,8 @@ function ErpPage() {
                               {item.entityType} · {item.externalId}
                             </p>
                             <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
-                              {item.targetTable} · {item.rollbackFieldNames.join(', ') ||
+                              {item.targetTable} ·{' '}
+                              {item.rollbackFieldNames.join(', ') ||
                                 t('erp.guardedUpdateRollbackPreview.values.noFields')}
                             </p>
                           </div>
@@ -2327,7 +2432,9 @@ function ErpPage() {
                           <StatusPill
                             tone={readinessTone(data.guardedUpdateRollbackApproval.readiness)}
                           >
-                            {t(`erp.readinessStatus.${data.guardedUpdateRollbackApproval.readiness}`)}
+                            {t(
+                              `erp.readinessStatus.${data.guardedUpdateRollbackApproval.readiness}`,
+                            )}
                           </StatusPill>
                           <StatusPill tone="neutral">
                             {t('erp.guardedUpdateRollbackApproval.executionClosed')}

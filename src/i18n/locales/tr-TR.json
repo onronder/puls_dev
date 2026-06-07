@@ -1067,6 +1067,91 @@
         "description": "ERP veya dış sisteme yazma ayrı onay ve güvenlik sınırı gerektirir."
       }
     },
+    "accessReadiness": {
+      "title": "Erişim hazırlığı",
+      "description": "Canlı API açılmadan önce müşteri, güvenli erişim ve offline önizleme hazırlığını tek yerde gösterir.",
+      "score": "Hazırlık skoru",
+      "boundaryNote": "Bu bölüm provider çağrısı yapmaz, credential değeri okumaz, source writeback açmaz ve sadece güvenli durum kanıtlarını gösterir.",
+      "status": {
+        "ready": {
+          "title": "Erişim hazırlığı tamam",
+          "summary": "Bu kaynak güvenli referans, metadata ve önizleme yolu açısından hazır görünüyor; canlı API hâlâ ayrı onay gerektirir."
+        },
+        "partial": {
+          "title": "API dışı hazırlık ilerliyor",
+          "summary": "Kaynak seçimi ve kurulum kanıtları var; müşteri/API erişim bilgileri veya offline önizleme adımı tamamlanmalı."
+        },
+        "blocked": {
+          "title": "Erişim hazırlığı başlamadı",
+          "summary": "Önce kaynak seçimi ve güvenli bağlantı kapsamı netleşmeli."
+        }
+      },
+      "requirements": {
+        "source_selected": {
+          "label": "Kaynak seçimi",
+          "description": "Şirket için hangi connector kaynağının yönetileceği belli olmalı."
+        },
+        "connection_method": {
+          "label": "Bağlantı yöntemi",
+          "description": "API, dosya veya manuel aktarım yöntemi açıkça seçilmeli."
+        },
+        "metadata_contract": {
+          "label": "Metadata sözleşmesi",
+          "description": "Alan eşleştirme ve kaynak kapsamı PULS veri modeline bağlanmalı."
+        },
+        "secure_access_reference": {
+          "label": "Güvenli erişim referansı",
+          "description": "Secret değeri gösterilmeden yalnızca güvenli referans durumu takip edilmeli."
+        },
+        "customer_api_access": {
+          "label": "Müşteri/API erişimi",
+          "description": "Canlı API için müşteri tarafı erişim, ağ ve yetki bilgileri hazır olmalı."
+        },
+        "offline_preview_path": {
+          "label": "API'siz önizleme yolu",
+          "description": "Canlı API beklenirken dry-run import veya dosya önizleme yolu çalışabilir olmalı."
+        }
+      },
+      "values": {
+        "sourceSelected": "Kaynak seçildi",
+        "sourceMissing": "Kaynak seçimi bekliyor",
+        "methodMissing": "Yöntem bekliyor",
+        "metadataReady": "Alan ve kapsam hazır",
+        "metadataPartial": "Metadata kısmi",
+        "metadataMissing": "Metadata bekliyor",
+        "credentialReady": "Güvenli referans hazır",
+        "credentialPartial": "Referans süreci devam ediyor",
+        "credentialMissing": "Güvenli referans bekliyor",
+        "liveApiNotRequired": "Canlı API gerekmez",
+        "customerApiPartial": "Müşteri erişimi kısmi",
+        "customerApiMissing": "Müşteri/API bilgisi bekliyor",
+        "previewReady": "Dry-run önizleme hazır",
+        "previewPartial": "Önizleme yolu hazırlanabilir",
+        "previewMissing": "Önizleme yolu bekliyor",
+        "methods": {
+          "rest_api": "REST API",
+          "soap": "SOAP API",
+          "webhook": "Webhook",
+          "manual_import": "Manuel import",
+          "file_drop": "Dosya aktarımı",
+          "custom_api": "Özel API"
+        }
+      },
+      "nextActions": {
+        "select_source": "Önce şirket için kullanılacak connector kaynağını seç.",
+        "confirm_method": "Bağlantı yöntemini müşteri gerçekliğiyle netleştir.",
+        "complete_metadata": "Alan eşleştirme ve kaynak kapsamı kanıtlarını tamamla.",
+        "request_secure_reference": "Secret değeri toplamadan güvenli erişim referansı talep et.",
+        "request_customer_api_access": "Müşteriden API erişim yöntemi, ağ şartı ve test yetkisi bilgilerini iste.",
+        "prepare_preview": "Canlı API beklenirken dry-run önizleme yolunu hazırla.",
+        "review_readiness": "Erişim hazırlığı tamam; canlı runtime açılması ayrı PR ve onay gerektirir."
+      },
+      "actions": {
+        "requestSecureReference": "Güvenli erişim talep et",
+        "reviewMetadata": "Metadata'yı incele",
+        "openPreview": "Önizleme adımına git"
+      }
+    },
     "actions": {
       "mapFields": "Alanları eşleştir",
       "reviewMapping": "Alan sözleşmesini incele",

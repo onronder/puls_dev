@@ -1067,6 +1067,91 @@
         "description": "Writing to ERP or external systems requires a separate approval and safety boundary."
       }
     },
+    "accessReadiness": {
+      "title": "Access readiness",
+      "description": "Shows customer access, secure reference, and offline preview readiness before live API access opens.",
+      "score": "Readiness score",
+      "boundaryNote": "This section does not call providers, read credential values, open source writeback, or expose anything beyond safe status evidence.",
+      "status": {
+        "ready": {
+          "title": "Access readiness complete",
+          "summary": "This source looks ready for secure reference, metadata, and preview path; live API runtime still requires separate approval."
+        },
+        "partial": {
+          "title": "Non-API readiness is in progress",
+          "summary": "Source selection and setup evidence exist; customer/API access details or the offline preview step still need completion."
+        },
+        "blocked": {
+          "title": "Access readiness has not started",
+          "summary": "Select a source and clarify the safe connection scope first."
+        }
+      },
+      "requirements": {
+        "source_selected": {
+          "label": "Source selection",
+          "description": "The connector source managed for this company must be clear."
+        },
+        "connection_method": {
+          "label": "Connection method",
+          "description": "API, file, or manual transfer method must be explicitly selected."
+        },
+        "metadata_contract": {
+          "label": "Metadata contract",
+          "description": "Field mapping and source scope must be connected to the PULS data model."
+        },
+        "secure_access_reference": {
+          "label": "Secure access reference",
+          "description": "Only secure reference status is tracked without showing secret values."
+        },
+        "customer_api_access": {
+          "label": "Customer/API access",
+          "description": "Live API requires customer-side access, network, and permission details."
+        },
+        "offline_preview_path": {
+          "label": "Offline preview path",
+          "description": "Dry-run import or file preview should work while live API access is pending."
+        }
+      },
+      "values": {
+        "sourceSelected": "Source selected",
+        "sourceMissing": "Source selection pending",
+        "methodMissing": "Method pending",
+        "metadataReady": "Fields and scope ready",
+        "metadataPartial": "Metadata partial",
+        "metadataMissing": "Metadata pending",
+        "credentialReady": "Secure reference ready",
+        "credentialPartial": "Reference process in progress",
+        "credentialMissing": "Secure reference pending",
+        "liveApiNotRequired": "Live API not required",
+        "customerApiPartial": "Customer access partial",
+        "customerApiMissing": "Customer/API details pending",
+        "previewReady": "Dry-run preview ready",
+        "previewPartial": "Preview path can be prepared",
+        "previewMissing": "Preview path pending",
+        "methods": {
+          "rest_api": "REST API",
+          "soap": "SOAP API",
+          "webhook": "Webhook",
+          "manual_import": "Manual import",
+          "file_drop": "File transfer",
+          "custom_api": "Custom API"
+        }
+      },
+      "nextActions": {
+        "select_source": "Select the connector source for this company first.",
+        "confirm_method": "Confirm the connection method against the customer reality.",
+        "complete_metadata": "Complete field mapping and source scope evidence.",
+        "request_secure_reference": "Request a secure access reference without collecting secret values.",
+        "request_customer_api_access": "Ask the customer for API access method, network requirements, and test permission details.",
+        "prepare_preview": "Prepare the dry-run preview path while live API access is pending.",
+        "review_readiness": "Access readiness is complete; live runtime still requires a separate PR and approval."
+      },
+      "actions": {
+        "requestSecureReference": "Request secure access",
+        "reviewMetadata": "Review metadata",
+        "openPreview": "Go to preview step"
+      }
+    },
     "actions": {
       "mapFields": "Map fields",
       "reviewMapping": "Review field contract",
