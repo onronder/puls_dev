@@ -688,6 +688,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - PR16.9.2 connector producer refresh is service-role only and idempotent.
 - PR16.9.3 notification center UI uses `puls_app` RPCs explicitly, supports detail pane review before navigation, and passes responsive desktop/mobile smoke.
 - PR16.9.4 adds optional private realtime notification hints with polling/refetch fallback; realtime is not the correctness path.
+- PR16.9.4x aligns the summary RPC realtime flag with the bootstrap contract after live UI smoke showed polling-only status.
 - External delivery should start only after Notification Center inbox, producer, UI, and private realtime fallback smoke pass.
 
 ### PR16.10 - Canias Runtime Spike On Generic Connector Foundation

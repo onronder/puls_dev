@@ -78,10 +78,14 @@ describe('app notification data adapter', () => {
             critical_count: 1,
             latest_occurred_at: '2026-06-07T10:00:00Z',
             notification_ledger_enabled: true,
-            notification_realtime_enabled: false,
+            notification_realtime_enabled: true,
             external_delivery_enabled: false,
-            next_action_key: 'add_notification_realtime_pr16_9_4',
-            safe_summary: { notification_center_ui_enabled: true },
+            next_action_key: 'plan_notification_preferences_pr16_9_5',
+            safe_summary: {
+              notification_center_ui_enabled: true,
+              notification_realtime_enabled: true,
+              notification_polling_fallback_enabled: true,
+            },
           },
         ],
       },
@@ -95,7 +99,7 @@ describe('app notification data adapter', () => {
       unreadCount: 3,
       criticalCount: 1,
       notificationLedgerEnabled: true,
-      notificationRealtimeEnabled: false,
+      notificationRealtimeEnabled: true,
       externalDeliveryEnabled: false,
     })
     expect(client.rpc).toHaveBeenCalledWith('get_app_notification_summary', {
