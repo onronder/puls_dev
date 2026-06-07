@@ -1,5 +1,5 @@
 import { pulsApp } from '#/lib/data/client'
-import { fromSupabaseError } from '#/lib/data/errors'
+import { adapterError, fromSupabaseError } from '#/lib/data/errors'
 
 export type NotificationCenterFilter = 'all' | 'unread' | 'action_required'
 
@@ -199,16 +199,24 @@ function mapReadState(row: NotificationReadStateRow): NotificationReadState {
   }
 }
 
+function firstRpcRow<T>(data: unknown): T | null {
+  if (Array.isArray(data)) {
+    return (data[0] as T | undefined) ?? null
+  }
+
+  return (data as T | null) ?? null
+}
+
 export async function fetchAppNotificationSummary(): Promise<AppNotificationSummary> {
-  const { data, error } = await pulsApp()
-    .rpc('get_app_notification_summary', { p_source_domain: null })
-    .maybeSingle()
+  const { data, error } = await pulsApp().rpc('get_app_notification_summary', {
+    p_source_domain: null,
+  })
 
   if (error) {
     throw fromSupabaseError(error, 'fetchAppNotificationSummary', 'puls_app', 'app_notifications')
   }
 
-  return mapSummary(data as NotificationSummaryRow | null)
+  return mapSummary(firstRpcRow<NotificationSummaryRow>(data))
 }
 
 export async function fetchAppNotificationPage({
@@ -242,35 +250,41 @@ export async function fetchAppNotificationPage({
 export async function markAppNotificationRead(
   notificationId: string,
 ): Promise<NotificationReadState> {
-  const { data, error } = await pulsApp()
-    .rpc('mark_app_notification_read', { p_notification_id: notificationId })
-    .maybeSingle()
+  const { data, error } = await pulsApp().rpc('mark_app_notification_read', {
+    p_notification_id: notificationId,
+  })
 
   if (error) {
     throw fromSupabaseError(error, 'markAppNotificationRead', 'puls_app', 'app_notification_reads')
   }
 
-  return mapReadState(data as NotificationReadStateRow)
+  const row = firstRpcRow<NotificationReadStateRow>(data)
+  if (!row) throw adapterError('markAppNotificationRead', 'empty_rpc_result')
+
+  return mapReadState(row)
 }
 
 export async function dismissAppNotification(
   notificationId: string,
 ): Promise<NotificationReadState> {
-  const { data, error } = await pulsApp()
-    .rpc('dismiss_app_notification', { p_notification_id: notificationId })
-    .maybeSingle()
+  const { data, error } = await pulsApp().rpc('dismiss_app_notification', {
+    p_notification_id: notificationId,
+  })
 
   if (error) {
     throw fromSupabaseError(error, 'dismissAppNotification', 'puls_app', 'app_notification_reads')
   }
 
-  return mapReadState(data as NotificationReadStateRow)
+  const row = firstRpcRow<NotificationReadStateRow>(data)
+  if (!row) throw adapterError('dismissAppNotification', 'empty_rpc_result')
+
+  return mapReadState(row)
 }
 
 export async function markAllAppNotificationsRead(): Promise<MarkAllNotificationsReadResult> {
-  const { data, error } = await pulsApp()
-    .rpc('mark_all_app_notifications_read', { p_source_domain: null })
-    .maybeSingle()
+  const { data, error } = await pulsApp().rpc('mark_all_app_notifications_read', {
+    p_source_domain: null,
+  })
 
   if (error) {
     throw fromSupabaseError(
@@ -281,7 +295,9 @@ export async function markAllAppNotificationsRead(): Promise<MarkAllNotification
     )
   }
 
-  const row = data as MarkAllNotificationsReadRow
+  const row = firstRpcRow<MarkAllNotificationsReadRow>(data)
+  if (!row) throw adapterError('markAllAppNotificationsRead', 'empty_rpc_result')
+
   return {
     markedCount: row.marked_count ?? 0,
     unreadRemainingCount: row.unread_remaining_count ?? 0,

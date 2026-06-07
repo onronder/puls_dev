@@ -26,10 +26,9 @@ function rpcClient(resultByName: Record<string, RpcResult>) {
     rpc: vi.fn((name: string) => {
       const result = resultByName[name] ?? { data: null, error: null }
       return {
-        maybeSingle: vi.fn(async () => ({
-          data: Array.isArray(result.data) ? result.data[0] : (result.data ?? null),
-          error: result.error ?? null,
-        })),
+        maybeSingle: vi.fn(() => {
+          throw new Error('notification RPC adapters must not request singular rows')
+        }),
         then(onFulfilled: (value: RpcResult) => unknown, onRejected?: (reason: unknown) => unknown) {
           return Promise.resolve({
             data: result.data ?? null,
@@ -49,22 +48,24 @@ describe('app notification data adapter', () => {
   it('maps the summary RPC into camelCase UI state', async () => {
     const client = rpcClient({
       get_app_notification_summary: {
-        data: {
-          tenant_id: 'tenant-1',
-          employee_id: 'employee-1',
-          visible_count: 7,
-          unread_count: 3,
-          dismissed_count: 1,
-          action_required_count: 2,
-          warning_count: 1,
-          critical_count: 1,
-          latest_occurred_at: '2026-06-07T10:00:00Z',
-          notification_ledger_enabled: true,
-          notification_realtime_enabled: false,
-          external_delivery_enabled: false,
-          next_action_key: 'add_notification_realtime_pr16_9_4',
-          safe_summary: { notification_center_ui_enabled: true },
-        },
+        data: [
+          {
+            tenant_id: 'tenant-1',
+            employee_id: 'employee-1',
+            visible_count: 7,
+            unread_count: 3,
+            dismissed_count: 1,
+            action_required_count: 2,
+            warning_count: 1,
+            critical_count: 1,
+            latest_occurred_at: '2026-06-07T10:00:00Z',
+            notification_ledger_enabled: true,
+            notification_realtime_enabled: false,
+            external_delivery_enabled: false,
+            next_action_key: 'add_notification_realtime_pr16_9_4',
+            safe_summary: { notification_center_ui_enabled: true },
+          },
+        ],
       },
     })
     appClient.mockReturnValue(client as never)
@@ -152,31 +153,37 @@ describe('app notification data adapter', () => {
   it('calls read-state RPCs with notification scoped parameters', async () => {
     const client = rpcClient({
       mark_app_notification_read: {
-        data: {
-          notification_id: 'notification-1',
-          employee_id: 'employee-1',
-          read_at: '2026-06-07T10:00:00Z',
-          dismissed_at: null,
-          is_read: true,
-          is_dismissed: false,
-        },
+        data: [
+          {
+            notification_id: 'notification-1',
+            employee_id: 'employee-1',
+            read_at: '2026-06-07T10:00:00Z',
+            dismissed_at: null,
+            is_read: true,
+            is_dismissed: false,
+          },
+        ],
       },
       dismiss_app_notification: {
-        data: {
-          notification_id: 'notification-1',
-          employee_id: 'employee-1',
-          read_at: '2026-06-07T10:00:00Z',
-          dismissed_at: '2026-06-07T10:01:00Z',
-          is_read: true,
-          is_dismissed: true,
-        },
+        data: [
+          {
+            notification_id: 'notification-1',
+            employee_id: 'employee-1',
+            read_at: '2026-06-07T10:00:00Z',
+            dismissed_at: '2026-06-07T10:01:00Z',
+            is_read: true,
+            is_dismissed: true,
+          },
+        ],
       },
       mark_all_app_notifications_read: {
-        data: {
-          marked_count: 3,
-          unread_remaining_count: 0,
-          read_at: '2026-06-07T10:00:00Z',
-        },
+        data: [
+          {
+            marked_count: 3,
+            unread_remaining_count: 0,
+            read_at: '2026-06-07T10:00:00Z',
+          },
+        ],
       },
     })
     appClient.mockReturnValue(client as never)
