@@ -736,6 +736,32 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Provider calls, credential value readback ve source writeback kapalı kalır.
 - No database migration is required.
 
+### PR16.10.1 - Connector Source Catalog
+
+**Ürün değeri:** Kaynak seçimi artık provider listesi gibi görünmez; Canias, Logo, CSV/Excel ve custom API aynı catalog alanlarıyla değerlendirilir.
+
+**Kapsam:**
+
+- Connector source type
+- Transfer method
+- Setup availability
+- Recommended use
+- No-connector source cards, selection preview ve setup draft sheet içinde catalog görünürlüğü
+
+**Kapsam dışı:**
+
+- Provider API call
+- Credential readback
+- Source/ERP writeback
+- Runtime connector execution
+- Database migration
+
+**Doğrulama:**
+
+- `/erp` source cards category/method gösterir.
+- Seçim preview’i availability ve recommended use gösterir.
+- Draft sheet catalog bilgilerini tekrarlar.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

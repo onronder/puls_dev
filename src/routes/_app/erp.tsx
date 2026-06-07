@@ -836,6 +836,24 @@ function ErpPage() {
                         <p className="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
                           {t(option.readinessLabelKey)}
                         </p>
+                        <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                          <div className="min-w-0">
+                            <dt className="text-[var(--color-text-muted)]">
+                              {t('erp.providerCatalog.labels.category')}
+                            </dt>
+                            <dd className="truncate font-medium text-[var(--color-text-primary)]">
+                              {t(option.categoryKey)}
+                            </dd>
+                          </div>
+                          <div className="min-w-0">
+                            <dt className="text-[var(--color-text-muted)]">
+                              {t('erp.providerCatalog.labels.method')}
+                            </dt>
+                            <dd className="truncate font-medium text-[var(--color-text-primary)]">
+                              {t(option.transferMethodKey)}
+                            </dd>
+                          </div>
+                        </dl>
                       </div>
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-3">
@@ -876,6 +894,29 @@ function ErpPage() {
                     {t('erp.providerPreview.requirements')}
                   </p>
                   <ul className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+                    <li className="py-3">
+                      <dl className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                            {t('erp.providerCatalog.labels.method')}
+                          </dt>
+                          <dd className="mt-1 text-sm text-[var(--color-text-primary)]">
+                            {t(selectedProvider.transferMethodKey)}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                            {t('erp.providerCatalog.labels.availability')}
+                          </dt>
+                          <dd className="mt-1 text-sm text-[var(--color-text-primary)]">
+                            {t(selectedProvider.availabilityKey)}
+                          </dd>
+                        </div>
+                      </dl>
+                      <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                        {t(selectedProvider.recommendedUseKey)}
+                      </p>
+                    </li>
                     {selectedProvider.requirements.map((requirement) => (
                       <li key={requirement.id} className="py-3">
                         <div className="flex items-start justify-between gap-3">
@@ -1009,6 +1050,24 @@ function ErpPage() {
                           ? t('erp.draftSheet.persistedSetupHint')
                           : t('erp.draftSheet.futureProviderHint')}
                       </p>
+                      <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
+                        <div>
+                          <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                            {t('erp.providerCatalog.labels.category')}
+                          </dt>
+                          <dd className="mt-1 text-[var(--color-text-primary)]">
+                            {t(selectedProvider.categoryKey)}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                            {t('erp.providerCatalog.labels.availability')}
+                          </dt>
+                          <dd className="mt-1 text-[var(--color-text-primary)]">
+                            {t(selectedProvider.availabilityKey)}
+                          </dd>
+                        </div>
+                      </dl>
                     </div>
                     <StatusPill tone={readinessTone(selectedProvider.status)}>
                       {t(`erp.readinessStatus.${selectedProvider.status}`)}
