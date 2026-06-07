@@ -791,6 +791,32 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Handoff modeli mevcut safe setup evidence üzerinden üretilir.
 - No-connector state shareable customer package gibi görünmez.
 
+### PR16.10.3 - Connector Go-Live Gap Plan
+
+**Ürün değeri:** Gerçek API bilgileri gelmeden önce kapatılabilecek eksikler ürün içinde sıralı aksiyon planına dönüşür; `/erp` teknik not defteri gibi değil, canlıya hazırlık çalışma alanı gibi davranır.
+
+**Kapsam:**
+
+- Source/method, data ownership, field contract, secure access, preview validation ve customer review gap modeli
+- Her gap için owner, safe evidence ve next action
+- Selected connector ekranında go-live score, customer pilot readiness ve ordered gap plan görünürlüğü
+- Canias, Logo, CSV/Excel ve custom API için ortak vocabulary
+
+**Kapsam dışı:**
+
+- Provider API call
+- Credential readback
+- Source/ERP writeback
+- Runtime connector execution
+- Database migration
+- Raw payload veya provider response readback
+
+**Doğrulama:**
+
+- `/erp` selected-connector state go-live gap plan gösterir.
+- Plan mevcut safe setup evidence üzerinden üretilir.
+- No-connector state customer pilot ready gibi görünmez.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

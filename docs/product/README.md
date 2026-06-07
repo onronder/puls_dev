@@ -790,6 +790,17 @@ PR16.10.2 turns the selected `/erp` connector into a customer-facing access pack
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` selected connector customer access package UI                                                      |
 | [`scripts/verify-16-10-2-connector-customer-handoff-checklist.sh`](../../scripts/verify-16-10-2-connector-customer-handoff-checklist.sh) | PR16.10.2 verify gate                                                                                    |
 
+## PR16.10.3 connector go-live gap plan
+
+PR16.10.3 turns the selected `/erp` connector into an actionable go-live gap plan for work that can be completed before real customer API details arrive. It shows source/method, data ownership, field contract, secure access, preview validation, and customer confirmation gaps with owner, evidence, and next action copy while live provider calls, credential readback, writeback, and runtime execution remain closed.
+
+| Document / artifact                                                                                                                   | Purpose                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_10_3_connector_go_live_gap_plan.md](./16_10_3_connector_go_live_gap_plan.md)                                                       | PR16.10.3 product contract, go-live gap plan, safety boundary, and verification                           |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Connector go-live gap plan model derived from safe setup evidence                                         |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` selected connector go-live gap plan UI                                                             |
+| [`scripts/verify-16-10-3-connector-go-live-gap-plan.sh`](../../scripts/verify-16-10-3-connector-go-live-gap-plan.sh)                   | PR16.10.3 verify gate                                                                                    |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

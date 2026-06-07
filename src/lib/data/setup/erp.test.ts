@@ -373,6 +373,28 @@ describe('fetchErpOverviewWithMeta', () => {
       status: 'partial',
       valueKey: 'erp.customerHandoff.values.secureAccessPartial',
     })
+    expect(result.data.goLivePlan).toMatchObject({
+      status: 'partial',
+      score: 83,
+      liveProviderCallsEnabled: false,
+      credentialReadbackEnabled: false,
+      sourceWritebackEnabled: false,
+      canStartCustomerPilot: true,
+      nextActionKey: 'erp.goLivePlan.nextActions.request_secure_access',
+    })
+    expect(result.data.goLivePlan.gaps.map((gap) => gap.id)).toEqual([
+      'source_and_method',
+      'data_ownership',
+      'field_contract',
+      'secure_access',
+      'preview_validation',
+      'customer_review',
+    ])
+    expect(result.data.goLivePlan.gaps.find((gap) => gap.id === 'secure_access')).toMatchObject({
+      owner: 'customer',
+      status: 'partial',
+      evidenceKey: 'erp.goLivePlan.evidence.secureAccessPartial',
+    })
     expect(result.data.lifecycle).toMatchObject({
       stage: 'credential',
       status: 'partial',
@@ -2906,6 +2928,13 @@ describe('fetchErpOverviewWithMeta', () => {
       nextActionKey: 'erp.customerHandoff.nextActions.select_source',
     })
     expect(result.data.customerHandoff.items.every((row) => row.status === 'blocked')).toBe(true)
+    expect(result.data.goLivePlan).toMatchObject({
+      status: 'blocked',
+      score: 0,
+      canStartCustomerPilot: false,
+      nextActionKey: 'erp.goLivePlan.nextActions.select_source',
+    })
+    expect(result.data.goLivePlan.gaps.every((gap) => gap.status === 'blocked')).toBe(true)
     expect(result.data.accessReadiness.requirements.every((row) => row.status === 'blocked')).toBe(
       true,
     )
@@ -3102,6 +3131,10 @@ describe('fetchErpOverviewWithMeta', () => {
     ).toMatchObject({
       status: 'ready',
       valueKey: 'erp.customerHandoff.values.secureAccessReady',
+    })
+    expect(result.data.goLivePlan.gaps.find((gap) => gap.id === 'secure_access')).toMatchObject({
+      status: 'ready',
+      evidenceKey: 'erp.goLivePlan.evidence.secureAccessReady',
     })
     expect(
       result.data.capabilities.find((capability) => capability.id === 'transfer_method'),

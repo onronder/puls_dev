@@ -392,6 +392,39 @@ export type ConnectorCustomerHandoff = {
   items: ConnectorCustomerHandoffItem[]
 }
 
+export type ConnectorGoLiveGapId =
+  | 'source_and_method'
+  | 'data_ownership'
+  | 'field_contract'
+  | 'secure_access'
+  | 'preview_validation'
+  | 'customer_review'
+
+export type ConnectorGoLiveGapOwner = 'puls_team' | 'customer' | 'joint'
+
+export type ConnectorGoLiveGap = {
+  id: ConnectorGoLiveGapId
+  owner: ConnectorGoLiveGapOwner
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+  actionKey: string
+  evidenceKey: string
+}
+
+export type ConnectorGoLivePlan = {
+  status: ConnectorReadinessStatus
+  score: number
+  titleKey: string
+  summaryKey: string
+  nextActionKey: string
+  canStartCustomerPilot: boolean
+  liveProviderCallsEnabled: false
+  credentialReadbackEnabled: false
+  sourceWritebackEnabled: false
+  gaps: ConnectorGoLiveGap[]
+}
+
 export type ConnectorApplyChangeSetStatus =
   | 'not_available'
   | 'needs_preview'
@@ -1350,6 +1383,7 @@ export type ErpOverview = {
   credentialHandoff: ConnectorCredentialHandoff
   accessReadiness: ConnectorAccessReadiness
   customerHandoff: ConnectorCustomerHandoff
+  goLivePlan: ConnectorGoLivePlan
   importPreview: ConnectorImportPreview
   applyReadiness: ConnectorApplyReadiness
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
@@ -3323,6 +3357,166 @@ function buildConnectorCustomerHandoff({
     sourceWritebackEnabled: false,
     shareableWithCustomer: hasConnection && items.every((item) => item.status !== 'blocked'),
     items,
+  }
+}
+
+function goLiveGap(
+  id: ConnectorGoLiveGapId,
+  owner: ConnectorGoLiveGapOwner,
+  status: ConnectorReadinessStatus,
+  actionKey: string,
+  evidenceKey: string,
+): ConnectorGoLiveGap {
+  return {
+    id,
+    owner,
+    labelKey: `erp.goLivePlan.gaps.${id}.label`,
+    descriptionKey: `erp.goLivePlan.gaps.${id}.description`,
+    status,
+    actionKey,
+    evidenceKey,
+  }
+}
+
+function deriveGoLiveNextAction(
+  connectorState: ConnectorLifecycleState,
+  gaps: ConnectorGoLiveGap[],
+): string {
+  if (connectorState !== 'connector_selected') return 'erp.goLivePlan.nextActions.select_source'
+  const firstBlocked = gaps.find((gap) => gap.status === 'blocked')
+  if (firstBlocked) return firstBlocked.actionKey
+  const firstPartial = gaps.find((gap) => gap.status === 'partial')
+  return firstPartial?.actionKey ?? 'erp.goLivePlan.nextActions.review_plan'
+}
+
+function buildConnectorGoLivePlan({
+  connectorState,
+  connectionMethod,
+  credentialBoundary,
+  credentialHandoff,
+  customerHandoff,
+  importPreview,
+  mappedFields,
+  totalFields,
+  namespaceCount,
+  ownedDomainCount,
+}: {
+  connectorState: ConnectorLifecycleState
+  connectionMethod?: string | null
+  credentialBoundary: ConnectorCredentialBoundary
+  credentialHandoff: ConnectorCredentialHandoff
+  customerHandoff: ConnectorCustomerHandoff
+  importPreview: ConnectorImportPreview
+  mappedFields: number
+  totalFields: number
+  namespaceCount: number
+  ownedDomainCount: number
+}): ConnectorGoLivePlan {
+  const hasConnection = connectorState === 'connector_selected'
+  const methodKnown = Boolean(connectionMethod)
+  const ownershipReady = hasConnection && namespaceCount > 0 && ownedDomainCount > 0
+  const ownershipPartial = hasConnection && (namespaceCount > 0 || ownedDomainCount > 0)
+  const fieldContractReady = hasConnection && totalFields > 0 && mappedFields >= totalFields
+  const fieldContractPartial = hasConnection && mappedFields > 0
+  const secureAccessReady = credentialBoundary.status === 'ready'
+  const secureAccessPartial =
+    credentialBoundary.status === 'partial' ||
+    credentialHandoff.status === 'requested' ||
+    credentialHandoff.status === 'reference_pending' ||
+    credentialHandoff.status === 'ready_for_verification'
+  const previewReady = importPreview.status === 'preview_ready'
+  const previewPartial =
+    importPreview.status === 'no_batch' ||
+    importPreview.status === 'ready_to_preview' ||
+    importPreview.action === 'run_dry_run_preview'
+  const packageShareable = customerHandoff.shareableWithCustomer
+  const packagePartial = hasConnection && customerHandoff.items.some((item) => item.status !== 'blocked')
+
+  const gaps = [
+    goLiveGap(
+      'source_and_method',
+      'joint',
+      hasConnection && methodKnown ? 'ready' : hasConnection ? 'partial' : 'blocked',
+      'erp.goLivePlan.nextActions.confirm_source_method',
+      hasConnection && methodKnown
+        ? 'erp.goLivePlan.evidence.sourceMethodReady'
+        : hasConnection
+          ? 'erp.goLivePlan.evidence.sourceMethodPartial'
+          : 'erp.goLivePlan.evidence.sourceMethodMissing',
+    ),
+    goLiveGap(
+      'data_ownership',
+      'puls_team',
+      ownershipReady ? 'ready' : ownershipPartial ? 'partial' : 'blocked',
+      'erp.goLivePlan.nextActions.complete_data_ownership',
+      ownershipReady
+        ? 'erp.goLivePlan.evidence.ownershipReady'
+        : ownershipPartial
+          ? 'erp.goLivePlan.evidence.ownershipPartial'
+          : 'erp.goLivePlan.evidence.ownershipMissing',
+    ),
+    goLiveGap(
+      'field_contract',
+      'puls_team',
+      fieldContractReady ? 'ready' : fieldContractPartial ? 'partial' : 'blocked',
+      'erp.goLivePlan.nextActions.complete_field_contract',
+      fieldContractReady
+        ? 'erp.goLivePlan.evidence.fieldContractReady'
+        : fieldContractPartial
+          ? 'erp.goLivePlan.evidence.fieldContractPartial'
+          : 'erp.goLivePlan.evidence.fieldContractMissing',
+    ),
+    goLiveGap(
+      'secure_access',
+      'customer',
+      secureAccessReady ? 'ready' : secureAccessPartial ? 'partial' : 'blocked',
+      'erp.goLivePlan.nextActions.request_secure_access',
+      secureAccessReady
+        ? 'erp.goLivePlan.evidence.secureAccessReady'
+        : secureAccessPartial
+          ? 'erp.goLivePlan.evidence.secureAccessPartial'
+          : 'erp.goLivePlan.evidence.secureAccessMissing',
+    ),
+    goLiveGap(
+      'preview_validation',
+      'puls_team',
+      previewReady ? 'ready' : previewPartial ? 'partial' : 'blocked',
+      'erp.goLivePlan.nextActions.prepare_preview',
+      previewReady
+        ? 'erp.goLivePlan.evidence.previewReady'
+        : previewPartial
+          ? 'erp.goLivePlan.evidence.previewPartial'
+          : 'erp.goLivePlan.evidence.previewMissing',
+    ),
+    goLiveGap(
+      'customer_review',
+      'joint',
+      packageShareable ? 'ready' : packagePartial ? 'partial' : 'blocked',
+      'erp.goLivePlan.nextActions.review_customer_package',
+      packageShareable
+        ? 'erp.goLivePlan.evidence.customerReviewReady'
+        : packagePartial
+          ? 'erp.goLivePlan.evidence.customerReviewPartial'
+          : 'erp.goLivePlan.evidence.customerReviewMissing',
+    ),
+  ]
+
+  const status = summarizeAccessStatus(connectorState, gaps)
+  const score = Math.round(
+    gaps.reduce((total, gap) => total + scoreAccessRequirement(gap.status), 0) / gaps.length,
+  )
+
+  return {
+    status,
+    score,
+    titleKey: `erp.goLivePlan.status.${status}.title`,
+    summaryKey: `erp.goLivePlan.status.${status}.summary`,
+    nextActionKey: deriveGoLiveNextAction(connectorState, gaps),
+    canStartCustomerPilot: hasConnection && gaps.every((gap) => gap.status !== 'blocked'),
+    liveProviderCallsEnabled: false,
+    credentialReadbackEnabled: false,
+    sourceWritebackEnabled: false,
+    gaps,
   }
 }
 
@@ -6421,6 +6615,18 @@ function buildOverview({
     namespaceCount: namespaces.length,
     ownedDomainCount: ownedDomains.length,
   })
+  const goLivePlan = buildConnectorGoLivePlan({
+    connectorState,
+    connectionMethod: currentConnection?.connection_method,
+    credentialBoundary,
+    credentialHandoff,
+    customerHandoff,
+    importPreview: resolvedImportPreview,
+    mappedFields,
+    totalFields,
+    namespaceCount: namespaces.length,
+    ownedDomainCount: ownedDomains.length,
+  })
   const resolvedApplyReadiness =
     applyReadiness ??
     buildConnectorApplyReadiness({
@@ -6558,6 +6764,7 @@ function buildOverview({
     credentialHandoff,
     accessReadiness,
     customerHandoff,
+    goLivePlan,
     importPreview: resolvedImportPreview,
     applyReadiness: resolvedApplyReadiness,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
