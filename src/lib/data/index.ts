@@ -20,15 +20,21 @@ export {
 
 export {
   dismissAppNotification,
+  appNotificationRealtimeTopic,
   fetchAppNotificationPage,
   fetchAppNotificationSummary,
+  mapAppNotificationRealtimeSignal,
   markAllAppNotificationsRead,
   markAppNotificationRead,
+  subscribeToAppNotificationSignals,
   type AppNotification,
   type AppNotificationCursor,
   type AppNotificationPage,
+  type AppNotificationRealtimeSignal,
+  type AppNotificationRealtimeStatus,
   type AppNotificationSeverity,
   type AppNotificationSummary,
+  type AppNotificationSignalSubscription,
   type NotificationCenterFilter,
   type NotificationReadState,
 } from '#/lib/data/app/notifications'

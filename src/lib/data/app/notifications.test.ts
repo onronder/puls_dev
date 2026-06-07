@@ -1,20 +1,35 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  appNotificationRealtimeTopic,
   dismissAppNotification,
   fetchAppNotificationPage,
   fetchAppNotificationSummary,
+  mapAppNotificationRealtimeSignal,
   markAllAppNotificationsRead,
   markAppNotificationRead,
+  subscribeToAppNotificationSignals,
 } from '#/lib/data/app/notifications'
 
 vi.mock('#/lib/data/client', () => ({
   pulsApp: vi.fn(),
 }))
 
+vi.mock('#/lib/supabase', () => ({
+  supabase: {
+    realtime: {
+      setAuth: vi.fn(() => Promise.resolve()),
+    },
+    channel: vi.fn(),
+    removeChannel: vi.fn(() => Promise.resolve('ok')),
+  },
+}))
+
 import { pulsApp } from '#/lib/data/client'
+import { supabase } from '#/lib/supabase'
 
 const appClient = vi.mocked(pulsApp)
+const realtimeClient = vi.mocked(supabase)
 
 type RpcResult = {
   data?: unknown
@@ -29,7 +44,10 @@ function rpcClient(resultByName: Record<string, RpcResult>) {
         maybeSingle: vi.fn(() => {
           throw new Error('notification RPC adapters must not request singular rows')
         }),
-        then(onFulfilled: (value: RpcResult) => unknown, onRejected?: (reason: unknown) => unknown) {
+        then(
+          onFulfilled: (value: RpcResult) => unknown,
+          onRejected?: (reason: unknown) => unknown,
+        ) {
           return Promise.resolve({
             data: result.data ?? null,
             error: result.error ?? null,
@@ -210,5 +228,111 @@ describe('app notification data adapter', () => {
     expect(client.rpc).toHaveBeenCalledWith('mark_all_app_notifications_read', {
       p_source_domain: null,
     })
+  })
+
+  it('maps only minimal realtime broadcast hints', () => {
+    expect(appNotificationRealtimeTopic('tenant-1')).toBe(
+      'puls_app:notification-center:tenant:tenant-1',
+    )
+
+    expect(
+      mapAppNotificationRealtimeSignal({
+        payload: {
+          notification_id: 'notification-1',
+          source_domain: 'connector_runtime',
+          source_event_key: 'connector_job_failed',
+          severity: 'error',
+          occurred_at: '2026-06-07T10:00:00Z',
+          count_hint: 1,
+        },
+      }),
+    ).toEqual({
+      notificationId: 'notification-1',
+      sourceDomain: 'connector_runtime',
+      sourceEventKey: 'connector_job_failed',
+      severity: 'error',
+      occurredAt: '2026-06-07T10:00:00Z',
+      countHint: 1,
+    })
+
+    expect(
+      mapAppNotificationRealtimeSignal({
+        payload: {
+          notification_id: 'notification-1',
+          safe_summary: { raw_payload_readback: false },
+        },
+      }),
+    ).toBeNull()
+
+    expect(
+      mapAppNotificationRealtimeSignal({
+        payload: {
+          notification_id: 'notification-1',
+          credential_value: 'secret',
+        },
+      }),
+    ).toBeNull()
+  })
+
+  it('subscribes to a private tenant realtime channel and falls back safely', () => {
+    let broadcastHandler: (payload: unknown) => void = () => {}
+    let statusHandler: (status: string) => void = () => {}
+    const channel = {
+      on: vi.fn(
+        (_type: string, _filter: Record<string, string>, handler: (payload: unknown) => void) => {
+          broadcastHandler = handler
+          return channel
+        },
+      ),
+      subscribe: vi.fn((handler: (status: string) => void) => {
+        statusHandler = handler
+        return channel
+      }),
+    }
+    const onSignal = vi.fn()
+    const onStatusChange = vi.fn()
+
+    realtimeClient.channel.mockReturnValue(channel as never)
+
+    const subscription = subscribeToAppNotificationSignals({
+      tenantId: 'tenant-1',
+      enabled: true,
+      onSignal,
+      onStatusChange,
+    })
+
+    expect(realtimeClient.realtime.setAuth).toHaveBeenCalled()
+    expect(realtimeClient.channel).toHaveBeenCalledWith(
+      'puls_app:notification-center:tenant:tenant-1',
+      {
+        config: {
+          private: true,
+          broadcast: { self: false, ack: false },
+        },
+      },
+    )
+
+    statusHandler('SUBSCRIBED')
+    expect(onStatusChange).toHaveBeenLastCalledWith('connected')
+
+    broadcastHandler({
+      payload: {
+        notification_id: 'notification-1',
+        source_domain: 'connector_runtime',
+        source_event_key: 'connector_job_failed',
+        severity: 'error',
+        occurred_at: '2026-06-07T10:00:00Z',
+        count_hint: 1,
+      },
+    })
+    expect(onSignal).toHaveBeenCalledWith(
+      expect.objectContaining({ notificationId: 'notification-1' }),
+    )
+
+    statusHandler('CHANNEL_ERROR')
+    expect(onStatusChange).toHaveBeenLastCalledWith('fallback')
+
+    subscription.unsubscribe()
+    expect(realtimeClient.removeChannel).toHaveBeenCalledWith(channel)
   })
 })
