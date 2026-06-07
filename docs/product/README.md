@@ -723,6 +723,18 @@ PR16.9.5 adds per-employee in-app notification preferences and a scenario contra
 | [`scripts/verify-16-9-5-notification-scenario-coverage.sh`](../../scripts/verify-16-9-5-notification-scenario-coverage.sh)                               | PR16.9.5 verify gate                                                                                    |
 | [`scripts/verify-16-9-4-notification-realtime-fallback.sh`](../../scripts/verify-16-9-4-notification-realtime-fallback.sh)                               | PR16.9.4 verify gate                                                                                      |
 
+## PR16.9.6 notification actions and producer orchestrator
+
+PR16.9.6 makes Notification Center actions operational instead of decorative. Known `/erp` notifications route to exact workbench tabs/sections, error notifications can export safe CSV details for support sharing, and the Railway connector worker calls a service-role producer orchestrator after real connector jobs complete. External delivery remains closed.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [16_9_6_notification_actions_and_producer_orchestrator.md](./16_9_6_notification_actions_and_producer_orchestrator.md)                                   | PR16.9.6 action routing, CSV export, producer orchestration, smoke SQL, and safety contract                  |
+| [`supabase/migrations/20260607133000_puls_app_notification_actions_and_producer_orchestrator.sql`](../../supabase/migrations/20260607133000_puls_app_notification_actions_and_producer_orchestrator.sql) | Service-role app notification producer orchestrator and bootstrap status update                              |
+| [`src/lib/notifications/app-notification-actions.ts`](../../src/lib/notifications/app-notification-actions.ts)                                             | Plug-and-play frontend notification action resolver plus safe issue CSV builder                              |
+| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                                       | Railway connector worker best-effort producer refresh after real connector jobs                              |
+| [`scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh`](../../scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh) | PR16.9.6 verify gate                                                                                        |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

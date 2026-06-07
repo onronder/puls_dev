@@ -19,9 +19,10 @@ import {
   SearchCheck,
   ShieldCheck,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { z } from 'zod'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
@@ -58,10 +59,27 @@ import { captureAppError } from '#/lib/observability/sentry'
 import { canShowSetupHub } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
+const ERP_WORKBENCH_TABS = [
+  'setup',
+  'fields',
+  'check',
+  'credentials',
+  'previewApply',
+  'activity',
+] as const
+
+type ErpWorkbenchTab = (typeof ERP_WORKBENCH_TABS)[number]
+
+const erpSearchSchema = z.object({
+  tab: z.enum(ERP_WORKBENCH_TABS).optional(),
+  focus: z.string().regex(/^erp-[a-z0-9-]+$/).optional(),
+})
+
 export const Route = createFileRoute('/_app/erp')({
   head: () => ({
     meta: [{ title: 'Data Connections — PULS' }],
   }),
+  validateSearch: erpSearchSchema,
   component: ErpRoute,
 })
 
@@ -78,16 +96,6 @@ type ConnectorActivityEvent = ErpOverview['activityTimeline'][number]
 type ConnectorSyncLevel = ConnectorActivityEvent['level']
 type ConnectorProviderOption = ErpOverview['providerOptions'][number]
 type ConnectorDomainOwnership = ErpOverview['domainOwnership'][number]
-type ErpWorkbenchTab = 'setup' | 'fields' | 'check' | 'credentials' | 'previewApply' | 'activity'
-
-const ERP_WORKBENCH_TABS: ErpWorkbenchTab[] = [
-  'setup',
-  'fields',
-  'check',
-  'credentials',
-  'previewApply',
-  'activity',
-]
 
 function readinessTone(status: ConnectorStatus): StatusTone {
   if (status === 'ready') return 'success'
@@ -196,6 +204,7 @@ function SetupStepIcon({ status }: { status: ConnectorStatus }) {
 }
 
 function ErpPage() {
+  const routeSearch = Route.useSearch()
   const { t, i18n } = useTranslation()
   const { user, personaRole, activePersona } = useAuth()
   const queryClient = useQueryClient()
@@ -212,6 +221,32 @@ function ErpPage() {
       document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 80)
   }
+  useEffect(() => {
+    const tab = routeSearch.tab
+    const focus = routeSearch.focus
+    if (!tab) return
+
+    const tabTimer = window.setTimeout(() => {
+      setActiveWorkbenchTab(tab)
+    }, 0)
+
+    const scrollTimer = focus
+      ? window.setTimeout(() => {
+          document.getElementById(focus)?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          })
+        }, 120)
+      : undefined
+
+    return () => {
+      window.clearTimeout(tabTimer)
+      if (scrollTimer !== undefined) {
+        window.clearTimeout(scrollTimer)
+      }
+    }
+  }, [routeSearch.focus, routeSearch.tab])
+
   const canManageConnectors = canShowSetupHub(personaRole, activePersona)
   const { data: erpResult, isLoading } = useQuery({
     queryKey: ['erp-overview', user?.id],

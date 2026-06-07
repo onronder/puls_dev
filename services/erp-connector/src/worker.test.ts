@@ -14,6 +14,7 @@ import {
   buildRuntimePreflightCompletionFromContext,
   ConnectorWorkerRpcError,
   parseSupportedJobTypes,
+  refreshConnectorAppNotificationsAfterJob,
   resolveWorkerConfig,
   runWorkerOnce,
   type ClaimedConnectorJob,
@@ -108,6 +109,44 @@ describe('erp-connector worker config', () => {
     expect(headers['Content-Profile']).toBe('puls_integration')
     expect(headers['Content-Type']).toBe('application/json')
     expect(init.body).toBe(JSON.stringify({ p_worker_id: 'worker-a' }))
+  })
+
+  it('can call app notification producer RPCs through the puls_app schema profile', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co/',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+    })
+    const fetchMock = vi.fn(
+      async (_url: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => {
+        return new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      },
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      callSupabaseRpc(
+        config,
+        'run_app_notification_producers',
+        {
+          p_limit: 100,
+          p_tenant_id: null,
+        },
+        'puls_app',
+      ),
+    ).resolves.toEqual([])
+
+    const firstCall = fetchMock.mock.calls[0]
+    if (!firstCall) throw new Error('expected Supabase RPC fetch call')
+    const init = firstCall[1]
+    if (!init) throw new Error('expected Supabase RPC fetch options')
+    const headers = init.headers as Record<string, string>
+
+    expect(headers['Accept-Profile']).toBe('puls_app')
+    expect(headers['Content-Profile']).toBe('puls_app')
   })
 
   it('falls back to noop_health when job type config is empty or invalid', () => {
@@ -257,6 +296,51 @@ describe('erp-connector worker job handling', () => {
       }),
       p_next_action_key: 'wait_for_provider_runtime_implementation',
     })
+  })
+
+  it('refreshes app notification producers after real connector jobs without blocking completion', async () => {
+    const calls: Array<{
+      fn: string
+      args: Record<string, unknown>
+      schema?: 'puls_integration' | 'puls_app'
+    }> = []
+    const rpc = async <T>(
+      fn: string,
+      args: Record<string, unknown>,
+      schema?: 'puls_integration' | 'puls_app',
+    ): Promise<T> => {
+      calls.push({ fn, args, schema })
+      return [] as T
+    }
+
+    await expect(
+      refreshConnectorAppNotificationsAfterJob(
+        noopJob({ job_type: 'connector_runtime_preflight' }),
+        rpc,
+      ),
+    ).resolves.toBe(true)
+
+    expect(calls).toEqual([
+      {
+        fn: 'run_app_notification_producers',
+        args: {
+          p_limit: 100,
+          p_tenant_id: null,
+        },
+        schema: 'puls_app',
+      },
+    ])
+  })
+
+  it('does not refresh app notification producers for noop health checks', async () => {
+    let callCount = 0
+    const rpc = async <T>(): Promise<T> => {
+      callCount += 1
+      return [] as T
+    }
+
+    await expect(refreshConnectorAppNotificationsAfterJob(noopJob(), rpc)).resolves.toBe(false)
+    expect(callCount).toBe(0)
   })
 
   it('executes import_apply only through the PR16 create-only worker RPC when explicitly enabled', async () => {

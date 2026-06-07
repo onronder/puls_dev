@@ -100,8 +100,12 @@
       "detail": "Notification detail",
       "backToList": "Back to notification list",
       "openAction": "Review",
-      "safeSummary": "Safe summary",
-      "noSafeSummary": "There is no additional safe summary for this notification.",
+      "goToProcess": "Go to process",
+      "exportIssueCsv": "Share issue",
+      "exportIssueSuccess": "Issue details were downloaded as CSV.",
+      "exportIssueFailed": "Issue details could not be downloaded.",
+      "safeSummary": "Technical support summary",
+      "noSafeSummary": "There is no additional technical summary for this notification.",
       "severity": "Severity",
       "source": "Source",
       "status": "Status",
@@ -124,7 +128,7 @@
       "critical": "Critical"
     },
     "source": {
-      "connector_runtime": "Connector Runtime",
+      "connector_runtime": "ERP connection",
       "app_notification_center": "Notification Center"
     },
     "safeSummary": {
@@ -156,40 +160,40 @@
     },
     "connectorRuntime": {
       "jobFailed": {
-        "title": "Connector job failed",
-        "body": "Connector runtime produced a safe job error. Operator review is recommended."
+        "title": "ERP connection task failed",
+        "body": "A background task for the ERP connection could not finish. Open the job queue or share the safe issue details."
       },
       "jobDeadLetter": {
-        "title": "Connector job is dead-lettered",
-        "body": "Retry limits were reached. Operator intervention is required."
+        "title": "ERP connection task stopped",
+        "body": "Retry limits were reached. Check the job queue to decide whether to retry or fix the setup."
       },
       "runtimePreflightFailed": {
-        "title": "Runtime preflight failed",
-        "body": "Connector runtime preflight could not complete. Review connection and runtime evidence."
+        "title": "Live connection check failed",
+        "body": "The ERP connection could not be validated before live runtime. Review the credential reference and runtime check in the job queue."
       },
       "createOnlyCompleted": {
-        "title": "Create-only apply completed",
-        "body": "Connector apply produced a safe create-only canonical record."
+        "title": "New records were added to PULS",
+        "body": "New reference records from ERP were safely added to the PULS data model."
       },
       "guardedUpdateCompleted": {
-        "title": "Guarded update apply completed",
-        "body": "Guarded update was applied inside the canonical write boundary."
+        "title": "Data update completed",
+        "body": "Allowed field updates from ERP were safely applied to the PULS data model."
       },
       "rollbackCompleted": {
-        "title": "Guarded update rollback completed",
-        "body": "Approved rollback was applied by the worker and produced an object event."
+        "title": "Rollback completed",
+        "body": "The approved rollback was applied and an operation record was created."
       },
       "rollbackPreviewReady": {
         "title": "Rollback preview is ready",
-        "body": "Rollback preview evidence is ready and needs operator review."
+        "body": "The last update is ready to review before rollback. Open the preview to check the affected fields."
       },
       "rollbackApprovalRecorded": {
         "title": "Rollback approval recorded",
-        "body": "Rollback approval audit evidence was recorded. Worker readiness can be prepared."
+        "body": "Admin approval was recorded. You can continue to execution readiness."
       },
       "rollbackWorkerReady": {
-        "title": "Rollback worker handoff ready",
-        "body": "Rollback worker readiness checks passed. Worker apply can be prepared."
+        "title": "Rollback is ready to run",
+        "body": "Safety checks passed. The rollback can now be queued."
       }
     }
   },

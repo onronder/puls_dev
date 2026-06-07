@@ -188,7 +188,13 @@ type ConnectorJobCompletion = Pick<
   'p_status' | 'p_safe_error_code' | 'p_safe_error_context' | 'p_next_action_key'
 >
 
-type ConnectorWorkerRpc = <T>(fn: string, args: Record<string, unknown>) => Promise<T>
+type ConnectorWorkerRpcSchema = 'puls_integration' | 'puls_app'
+
+type ConnectorWorkerRpc = <T>(
+  fn: string,
+  args: Record<string, unknown>,
+  schema?: ConnectorWorkerRpcSchema,
+) => Promise<T>
 
 type WorkerEnv = Record<string, string | undefined>
 
@@ -209,7 +215,7 @@ const CREATE_ONLY_APPLY_CONTRACT_VERSION = 'pr16.3-create-only-worker-apply-v1'
 const GUARDED_UPDATE_APPLY_CONTRACT_VERSION = 'pr16.4.2-guarded-update-worker-apply-v1'
 const GUARDED_UPDATE_ROLLBACK_APPLY_CONTRACT_VERSION =
   'pr16.8-guarded-update-rollback-worker-apply-v1'
-const SUPABASE_RPC_SCHEMA = 'puls_integration'
+const DEFAULT_SUPABASE_RPC_SCHEMA: ConnectorWorkerRpcSchema = 'puls_integration'
 
 export class ConnectorWorkerRpcError extends Error {
   readonly status: number
@@ -401,6 +407,7 @@ export async function callSupabaseRpc<T>(
   config: ConnectorWorkerConfig,
   fn: string,
   args: Record<string, unknown>,
+  schema: ConnectorWorkerRpcSchema = DEFAULT_SUPABASE_RPC_SCHEMA,
 ): Promise<T> {
   if (!config.supabaseUrl || !config.serviceRoleKey) {
     throw new ConnectorWorkerRpcError(0, 'connector_worker_not_configured')
@@ -411,9 +418,9 @@ export async function callSupabaseRpc<T>(
     headers: {
       apikey: config.serviceRoleKey,
       Authorization: `Bearer ${config.serviceRoleKey}`,
-      'Accept-Profile': SUPABASE_RPC_SCHEMA,
+      'Accept-Profile': schema,
       'Content-Type': 'application/json',
-      'Content-Profile': SUPABASE_RPC_SCHEMA,
+      'Content-Profile': schema,
     },
     body: JSON.stringify(args),
   })
@@ -980,6 +987,38 @@ async function upsertWorkerHeartbeat(
   })
 }
 
+function shouldRefreshConnectorNotifications(job: ClaimedConnectorJob) {
+  return job.job_type !== 'noop_health'
+}
+
+export async function refreshConnectorAppNotificationsAfterJob(
+  job: ClaimedConnectorJob,
+  rpc: ConnectorWorkerRpc,
+) {
+  if (!shouldRefreshConnectorNotifications(job)) {
+    return false
+  }
+
+  try {
+    await rpc(
+      'run_app_notification_producers',
+      {
+        p_limit: 100,
+        p_tenant_id: null,
+      },
+      'puls_app',
+    )
+    return true
+  } catch (error) {
+    const code =
+      error instanceof ConnectorWorkerRpcError
+        ? error.code
+        : 'connector_notification_producer_refresh_failed'
+    console.warn(`erp-connector notification producer refresh skipped: ${code}`)
+    return false
+  }
+}
+
 export async function runWorkerOnce(
   config: ConnectorWorkerConfig,
   rpc: ConnectorWorkerRpc = (fn, args) => callSupabaseRpc(config, fn, args),
@@ -1025,6 +1064,7 @@ export async function runWorkerOnce(
   }
 
   await rpc<string>('complete_connector_job', completeArgs)
+  await refreshConnectorAppNotificationsAfterJob(job, rpc)
   await upsertWorkerHeartbeat(config, rpc, 'idle', job.id, completion.p_safe_error_code)
 
   return { claimed: true, jobId: job.id, status: completion.p_status }
