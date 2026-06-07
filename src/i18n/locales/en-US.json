@@ -1192,6 +1192,35 @@
         "readiness": "Access method, authorization model, and data contract are required."
       }
     },
+    "providerCatalog": {
+      "labels": {
+        "category": "Source type",
+        "method": "Method",
+        "availability": "Setup status"
+      },
+      "categories": {
+        "erp": "ERP source",
+        "file": "File source",
+        "custom": "Custom source"
+      },
+      "methods": {
+        "restApi": "REST API",
+        "customerConfirmed": "Customer-confirmed",
+        "fileOrManual": "File / manual import",
+        "customApi": "Custom API"
+      },
+      "availability": {
+        "setupDraftAvailable": "Setup draft available",
+        "customerConfirmationRequired": "Customer confirmation required",
+        "futureModelReady": "Model ready, flow closed"
+      },
+      "recommendedUse": {
+        "canias": "Useful for tracking source scope, metadata, and secure access readiness for Canias customers before API details are available.",
+        "logo": "Held for Logo customers so the same connector model can be planned while customer-side access reality is confirmed.",
+        "csv_import": "The lowest-risk path for receiving first customer data without API access, with human approval and dry-run preview.",
+        "custom_api": "Used to plan data contract and permission model for middleware or customer-specific APIs outside standard ERP sources."
+      }
+    },
     "providerPreview": {
       "eyebrow": "Selection preview",
       "description": "Preview the preparation needed for this source; a record is created only when you start setup.",

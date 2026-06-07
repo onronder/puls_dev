@@ -768,6 +768,17 @@ PR16.10.0 turns the ERP connector surface into a provider-independent access rea
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | Production-grade `/erp` access readiness UI and real-action routing                                       |
 | [`scripts/verify-16-10-0-connector-access-readiness.sh`](../../scripts/verify-16-10-0-connector-access-readiness.sh)                   | PR16.10.0 verify gate                                                                                    |
 
+## PR16.10.1 connector source catalog
+
+PR16.10.1 makes `/erp` source selection read like a connector catalog rather than a provider list. Every source option exposes source type, transfer method, setup availability, and recommended use while live provider calls, credential readback, writeback, and runtime execution remain closed.
+
+| Document / artifact                                                                                                                   | Purpose                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_10_1_connector_source_catalog.md](./16_10_1_connector_source_catalog.md)                                                           | PR16.10.1 product contract, source catalog fields, safety boundary, and verification                      |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Connector source catalog model and setup availability contract                                            |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` source cards, preview, and setup draft catalog visibility                                          |
+| [`scripts/verify-16-10-1-connector-source-catalog.sh`](../../scripts/verify-16-10-1-connector-source-catalog.sh)                       | PR16.10.1 verify gate                                                                                    |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

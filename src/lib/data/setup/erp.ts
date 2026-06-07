@@ -1278,6 +1278,10 @@ export type ConnectorProviderOption = {
   labelKey: string
   descriptionKey: string
   readinessLabelKey: string
+  categoryKey: string
+  transferMethodKey: string
+  availabilityKey: string
+  recommendedUseKey: string
   status: ConnectorReadinessStatus
   setupAvailable: boolean
   requirements: ConnectorProviderRequirement[]
@@ -2508,6 +2512,10 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     labelKey: 'erp.providerOptions.canias.label',
     descriptionKey: 'erp.providerOptions.canias.description',
     readinessLabelKey: 'erp.providerOptions.canias.readiness',
+    categoryKey: 'erp.providerCatalog.categories.erp',
+    transferMethodKey: 'erp.providerCatalog.methods.restApi',
+    availabilityKey: 'erp.providerCatalog.availability.setupDraftAvailable',
+    recommendedUseKey: 'erp.providerCatalog.recommendedUse.canias',
     status: 'ready',
     setupAvailable: true,
     requirements: [
@@ -2548,6 +2556,10 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     labelKey: 'erp.providerOptions.logo.label',
     descriptionKey: 'erp.providerOptions.logo.description',
     readinessLabelKey: 'erp.providerOptions.logo.readiness',
+    categoryKey: 'erp.providerCatalog.categories.erp',
+    transferMethodKey: 'erp.providerCatalog.methods.customerConfirmed',
+    availabilityKey: 'erp.providerCatalog.availability.customerConfirmationRequired',
+    recommendedUseKey: 'erp.providerCatalog.recommendedUse.logo',
     status: 'partial',
     setupAvailable: false,
     requirements: [
@@ -2588,6 +2600,10 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     labelKey: 'erp.providerOptions.csv_import.label',
     descriptionKey: 'erp.providerOptions.csv_import.description',
     readinessLabelKey: 'erp.providerOptions.csv_import.readiness',
+    categoryKey: 'erp.providerCatalog.categories.file',
+    transferMethodKey: 'erp.providerCatalog.methods.fileOrManual',
+    availabilityKey: 'erp.providerCatalog.availability.setupDraftAvailable',
+    recommendedUseKey: 'erp.providerCatalog.recommendedUse.csv_import',
     status: 'ready',
     setupAvailable: true,
     requirements: [
@@ -2628,6 +2644,10 @@ const CONNECTOR_PROVIDER_OPTIONS: ConnectorProviderOption[] = [
     labelKey: 'erp.providerOptions.custom_api.label',
     descriptionKey: 'erp.providerOptions.custom_api.description',
     readinessLabelKey: 'erp.providerOptions.custom_api.readiness',
+    categoryKey: 'erp.providerCatalog.categories.custom',
+    transferMethodKey: 'erp.providerCatalog.methods.customApi',
+    availabilityKey: 'erp.providerCatalog.availability.futureModelReady',
+    recommendedUseKey: 'erp.providerCatalog.recommendedUse.custom_api',
     status: 'blocked',
     setupAvailable: false,
     requirements: [

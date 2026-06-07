@@ -2843,9 +2843,30 @@ describe('fetchErpOverviewWithMeta', () => {
       'custom_api',
     ])
     expect(result.data.providerOptions.every((option) => option.requirements.length > 0)).toBe(true)
+    expect(
+      result.data.providerOptions.every(
+        (option) =>
+          option.categoryKey.startsWith('erp.providerCatalog.categories.') &&
+          option.transferMethodKey.startsWith('erp.providerCatalog.methods.') &&
+          option.availabilityKey.startsWith('erp.providerCatalog.availability.') &&
+          option.recommendedUseKey.startsWith('erp.providerCatalog.recommendedUse.'),
+      ),
+    ).toBe(true)
     expect(result.data.providerOptions[0].readinessLabelKey).toBe(
       'erp.providerOptions.canias.readiness',
     )
+    expect(result.data.providerOptions[0]).toMatchObject({
+      categoryKey: 'erp.providerCatalog.categories.erp',
+      transferMethodKey: 'erp.providerCatalog.methods.restApi',
+      availabilityKey: 'erp.providerCatalog.availability.setupDraftAvailable',
+      recommendedUseKey: 'erp.providerCatalog.recommendedUse.canias',
+    })
+    expect(result.data.providerOptions[2]).toMatchObject({
+      categoryKey: 'erp.providerCatalog.categories.file',
+      transferMethodKey: 'erp.providerCatalog.methods.fileOrManual',
+      availabilityKey: 'erp.providerCatalog.availability.setupDraftAvailable',
+      recommendedUseKey: 'erp.providerCatalog.recommendedUse.csv_import',
+    })
     expect(result.data.accessReadiness).toMatchObject({
       status: 'blocked',
       score: 0,

@@ -1192,6 +1192,35 @@
         "readiness": "Erişim yöntemi, yetki modeli ve veri sözleşmesi gerekir."
       }
     },
+    "providerCatalog": {
+      "labels": {
+        "category": "Kaynak türü",
+        "method": "Yöntem",
+        "availability": "Kurulum durumu"
+      },
+      "categories": {
+        "erp": "ERP kaynağı",
+        "file": "Dosya kaynağı",
+        "custom": "Özel kaynak"
+      },
+      "methods": {
+        "restApi": "REST API",
+        "customerConfirmed": "Müşteriyle netleşir",
+        "fileOrManual": "Dosya / manuel import",
+        "customApi": "Özel API"
+      },
+      "availability": {
+        "setupDraftAvailable": "Taslak kuruluma açık",
+        "customerConfirmationRequired": "Müşteri doğrulaması bekler",
+        "futureModelReady": "Model hazır, akış kapalı"
+      },
+      "recommendedUse": {
+        "canias": "Canias kullanan müşterilerde API bilgileri gelmeden kaynak kapsamı, metadata ve güvenli erişim hazırlığını takip etmek için uygundur.",
+        "logo": "Logo kullanan müşterilerde aynı connector modelini planlamak ve müşteri tarafı erişim gerçekliğini netleştirmek için tutulur.",
+        "csv_import": "Müşteri API erişimi yokken ilk veriyi kontrollü, insan onaylı ve dry-run önizlemeli almak için en düşük riskli yoldur.",
+        "custom_api": "Standart ERP dışında kalan middleware veya müşteriye özel API'ler için veri sözleşmesi ve yetki modelini planlamakta kullanılır."
+      }
+    },
     "providerPreview": {
       "eyebrow": "Seçim önizlemesi",
       "description": "Seçtiğin kaynak için hangi hazırlıkların gerektiğini burada görürsün; kayıt yalnızca sen başlatınca oluşur.",
