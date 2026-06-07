@@ -442,14 +442,6 @@ export function AppNotificationCenter() {
   }, [queryClient])
 
   useEffect(() => {
-    if (!open) setSelectedId(null)
-  }, [open])
-
-  useEffect(() => {
-    setSelectedId(null)
-  }, [filter])
-
-  useEffect(() => {
     const subscription = subscribeToAppNotificationSignals({
       tenantId: summary?.tenantId ?? null,
       enabled: summary?.notificationRealtimeEnabled ?? false,
@@ -495,8 +487,18 @@ export function AppNotificationCenter() {
     }
   }
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setSelectedId(null)
+    setOpen(nextOpen)
+  }
+
+  const handleFilterChange = (nextFilter: NotificationCenterFilter) => {
+    setSelectedId(null)
+    setFilter(nextFilter)
+  }
+
   const handleNavigate = (notification: AppNotification) => {
-    setOpen(false)
+    handleOpenChange(false)
     void navigate({ to: routeForNotification(notification) })
   }
 
@@ -550,7 +552,7 @@ export function AppNotificationCenter() {
         ) : null}
       </Button>
 
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent className="left-auto right-0 top-0 mt-0 h-[100dvh] max-h-[100dvh] w-full rounded-none border-y-0 border-r-0 pb-0 pt-[env(safe-area-inset-top)] sm:max-w-[440px] sm:rounded-none [&>div:first-child]:hidden">
           <SheetHeader className="px-4 py-3">
             <div className="flex items-start justify-between gap-3">
@@ -567,7 +569,7 @@ export function AppNotificationCenter() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 aria-label={t('common.close')}
               >
                 <X className="h-4 w-4" />
@@ -597,7 +599,7 @@ export function AppNotificationCenter() {
                           ? 'border-[var(--color-border-strong)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
                           : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated)]',
                       )}
-                      onClick={() => setFilter(option)}
+                      onClick={() => handleFilterChange(option)}
                     >
                       {t(`notifications.center.filters.${option}`)}
                     </button>

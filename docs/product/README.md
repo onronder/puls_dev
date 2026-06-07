@@ -711,6 +711,16 @@ PR16.9.4 adds optional private realtime notification hints for the app-wide Noti
 | [16_9_4x_notification_summary_realtime_hotfix.md](./16_9_4x_notification_summary_realtime_hotfix.md)                                                       | PR16.9.4x notification summary realtime hotfix discovered during live UI smoke                            |
 | [`supabase/migrations/20260607114500_puls_app_notification_summary_realtime_hotfix.sql`](../../supabase/migrations/20260607114500_puls_app_notification_summary_realtime_hotfix.sql) | Aligns summary RPC realtime flag with PR16.9.4 bootstrap contract                                         |
 | [`scripts/verify-16-9-4x-notification-summary-realtime-hotfix.sh`](../../scripts/verify-16-9-4x-notification-summary-realtime-hotfix.sh)                   | PR16.9.4x verify gate                                                                                     |
+
+## PR16.9.5 notification scenario coverage
+
+PR16.9.5 adds per-employee in-app notification preferences and a scenario contract RPC so empty inbox, producer emit, dedupe, visibility, paging, read, dismiss, preference, realtime, and safety scenarios can be verified before external delivery is opened.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [16_9_5_notification_scenario_coverage.md](./16_9_5_notification_scenario_coverage.md)                                                                   | PR16.9.5 scenario coverage, preference contract, smoke SQL, and PR16.9.6 handoff                         |
+| [`supabase/migrations/20260607123000_puls_app_notification_scenario_coverage.sql`](../../supabase/migrations/20260607123000_puls_app_notification_scenario_coverage.sql) | In-app preference table/RPCs, scenario contract RPC, and preference-aware list/summary/bulk-read updates |
+| [`scripts/verify-16-9-5-notification-scenario-coverage.sh`](../../scripts/verify-16-9-5-notification-scenario-coverage.sh)                               | PR16.9.5 verify gate                                                                                    |
 | [`scripts/verify-16-9-4-notification-realtime-fallback.sh`](../../scripts/verify-16-9-4-notification-realtime-fallback.sh)                               | PR16.9.4 verify gate                                                                                      |
 
 ## Related packs
