@@ -653,7 +653,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Planning contract:** [`16_9_app_wide_notification_center_strategy.md`](./16_9_app_wide_notification_center_strategy.md)
 
-**Implementation status:** PR16.9.0 implements the `puls_app` schema bootstrap and exposure smoke. PR16.9.0x hardens two pre-existing `puls_integration` lint errors. PR16.9.1 implements the durable app-wide notification ledger and authenticated RPC boundary. PR16.9.2 implements connector producer mapping through a service-role refresh boundary. PR16.9.3 implements the global Notification Center UI with cursor-paged `puls_app` RPC reads; realtime and external delivery remain closed until later PR16.9 sub-phases.
+**Implementation status:** PR16.9.0 implements the `puls_app` schema bootstrap and exposure smoke. PR16.9.0x hardens two pre-existing `puls_integration` lint errors. PR16.9.1 implements the durable app-wide notification ledger and authenticated RPC boundary. PR16.9.2 implements connector producer mapping through a service-role refresh boundary. PR16.9.3 implements the global Notification Center UI with cursor-paged `puls_app` RPC reads. PR16.9.4/4x adds private realtime hints and aligns live summary state. PR16.9.5 adds scenario coverage and per-employee preferences. PR16.9.6 adds exact ERP action routing, safe issue CSV export, and worker-driven producer orchestration while external delivery remains closed.
 
 **Kapsam:**
 
@@ -690,6 +690,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - PR16.9.4 adds optional private realtime notification hints with polling/refetch fallback; realtime is not the correctness path.
 - PR16.9.4x aligns the summary RPC realtime flag with the bootstrap contract after live UI smoke showed polling-only status.
 - PR16.9.5 implements notification scenario coverage and per-employee in-app preferences while external delivery remains closed.
+- PR16.9.6 implements notification action routing, safe error CSV export, and service-role producer orchestration from the Railway connector worker without opening external delivery.
 - External delivery should start only after Notification Center inbox, producer, UI, and private realtime fallback smoke pass.
 
 ### PR16.10 - Canias Runtime Spike On Generic Connector Foundation

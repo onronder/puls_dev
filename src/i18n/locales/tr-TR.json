@@ -100,8 +100,12 @@
       "detail": "Bildirim detayı",
       "backToList": "Bildirim listesine dön",
       "openAction": "İncele",
-      "safeSummary": "Güvenli özet",
-      "noSafeSummary": "Bu bildirim için ek güvenli özet yok.",
+      "goToProcess": "Sürece git",
+      "exportIssueCsv": "Hatayı paylaş",
+      "exportIssueSuccess": "Hata detayları CSV olarak indirildi.",
+      "exportIssueFailed": "Hata detayları indirilemedi.",
+      "safeSummary": "Teknik destek özeti",
+      "noSafeSummary": "Bu bildirim için ek teknik özet yok.",
       "severity": "Önem",
       "source": "Kaynak",
       "status": "Durum",
@@ -124,8 +128,8 @@
       "critical": "Kritik"
     },
     "source": {
-      "connector_runtime": "Connector Runtime",
-      "app_notification_center": "Notification Center"
+      "connector_runtime": "ERP bağlantısı",
+      "app_notification_center": "Bildirim merkezi"
     },
     "safeSummary": {
       "source_event_key": "Olay tipi",
@@ -156,40 +160,40 @@
     },
     "connectorRuntime": {
       "jobFailed": {
-        "title": "Connector job başarısız oldu",
-        "body": "Connector runtime bir job için güvenli hata üretti. Operatör incelemesi önerilir."
+        "title": "ERP bağlantı işlemi başarısız oldu",
+        "body": "ERP bağlantısındaki bir arka plan işlemi tamamlanamadı. İş kuyruğunu açıp güvenli hata bilgisini paylaşabilirsin."
       },
       "jobDeadLetter": {
-        "title": "Connector job dead-letter durumunda",
-        "body": "Tekrar deneme sınırı aşıldı. Operatör müdahalesi gereklidir."
+        "title": "ERP bağlantı işlemi durdu",
+        "body": "Tekrar deneme sınırı aşıldı. İş kuyruğunda kaydı kontrol edip yeniden deneme veya düzeltme kararını verebilirsin."
       },
       "runtimePreflightFailed": {
-        "title": "Runtime preflight başarısız",
-        "body": "Connector runtime preflight kontrolü tamamlanamadı. Bağlantı ve çalışma zamanı kanıtını incele."
+        "title": "Canlı bağlantı kontrolü başarısız",
+        "body": "ERP bağlantısı canlı çalışmadan önce doğrulanamadı. Kimlik referansı ve çalışma zamanı kontrolünü iş kuyruğunda incele."
       },
       "createOnlyCompleted": {
-        "title": "Create-only apply tamamlandı",
-        "body": "Connector apply işlemi güvenli create-only kaydı üretti."
+        "title": "Yeni kayıtlar PULS'a işlendi",
+        "body": "ERP'den gelen yeni referans kayıtları güvenli şekilde PULS veri modeline eklendi."
       },
       "guardedUpdateCompleted": {
-        "title": "Guarded update apply tamamlandı",
-        "body": "Guarded update canonical write sınırı içinde uygulandı."
+        "title": "Veri güncellemesi tamamlandı",
+        "body": "ERP'den gelen izinli alan güncellemeleri güvenli sınırlar içinde PULS veri modeline işlendi."
       },
       "rollbackCompleted": {
-        "title": "Guarded update rollback tamamlandı",
-        "body": "Onaylı rollback worker tarafından uygulandı ve object event üretildi."
+        "title": "Geri alma işlemi tamamlandı",
+        "body": "Onaylı geri alma işlemi uygulandı ve işlem kaydı oluşturuldu."
       },
       "rollbackPreviewReady": {
-        "title": "Rollback preview hazır",
-        "body": "Rollback önizleme kanıtı hazır. Operatör incelemesi gerekiyor."
+        "title": "Geri alma önizlemesi hazır",
+        "body": "Son güncelleme geri alınmadan önce incelenmeye hazır. Önizlemeyi açıp etkilenecek alanları kontrol edebilirsin."
       },
       "rollbackApprovalRecorded": {
-        "title": "Rollback onayı kaydedildi",
-        "body": "Rollback approval audit kaydı üretildi. Worker readiness aşaması hazırlanabilir."
+        "title": "Geri alma onayı kaydedildi",
+        "body": "Yönetici onayı kaydedildi. Çalıştırma hazırlığına geçebilirsin."
       },
       "rollbackWorkerReady": {
-        "title": "Rollback worker handoff hazır",
-        "body": "Rollback worker readiness kontrolleri geçti. Worker apply aşaması hazırlanabilir."
+        "title": "Geri alma çalıştırmaya hazır",
+        "body": "Güvenlik kontrolleri geçti. Geri alma işlemi sıraya alınabilir."
       }
     }
   },

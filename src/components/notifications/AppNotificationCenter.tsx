@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Clock3,
   ExternalLink,
+  FileDown,
   Inbox,
   Info,
   Loader2,
@@ -43,6 +44,11 @@ import {
   type AppNotificationSeverity,
   type NotificationCenterFilter,
 } from '#/lib/data'
+import {
+  buildAppNotificationIssueCsv,
+  resolveAppNotificationAction,
+  type AppNotificationActionTarget,
+} from '#/lib/notifications/app-notification-actions'
 import { cn } from '#/lib/utils'
 
 const NOTIFICATION_PAGE_SIZE = 20
@@ -106,12 +112,6 @@ function severityTone(severity: AppNotificationSeverity) {
 function compactCount(count: number) {
   if (count > 99) return '99+'
   return String(count)
-}
-
-function routeForNotification(notification: AppNotification): '/erp' | '/dashboard' {
-  if (notification.sourceDomain === 'connector_runtime') return '/erp'
-  if (notification.routeHint?.startsWith('connector_runtime')) return '/erp'
-  return '/dashboard'
 }
 
 function fallbackTitle(sourceEventKey: string) {
@@ -236,8 +236,18 @@ type NotificationDetailProps = {
   notification: AppNotification
   onBack: () => void
   onDismiss: (notificationId: string) => void
-  onNavigate: (notification: AppNotification) => void
+  onNavigate: (target: AppNotificationActionTarget) => void
+  onExportIssue: (notification: AppNotification, copy: AppNotificationIssueCsvCopy) => void
   dismissing: boolean
+}
+
+type AppNotificationIssueCsvCopy = {
+  title: string
+  body: string
+  severity: string
+  source: string
+  status: string
+  received: string
 }
 
 function NotificationDetail({
@@ -245,6 +255,7 @@ function NotificationDetail({
   onBack,
   onDismiss,
   onNavigate,
+  onExportIssue,
   dismissing,
 }: NotificationDetailProps) {
   const { t, i18n } = useTranslation()
@@ -267,6 +278,24 @@ function NotificationDetail({
       (row) => row.value !== undefined && row.value !== null && formatSafeValue(row.value) !== '',
     )
     .slice(0, 10)
+  const action = resolveAppNotificationAction(notification)
+  const primaryAction = action.primaryAction
+  const sourceLabel = t(`notifications.source.${notification.sourceDomain}`, {
+    defaultValue: notification.sourceDomain,
+  })
+  const statusLabel = notification.isRead
+    ? t('notifications.center.read')
+    : t('notifications.center.unread')
+  const severityLabel = t(`notifications.severity.${notification.severity}`)
+  const receivedLabel = formatRelativeTime(notification.occurredAt, i18n.language)
+  const csvCopy = {
+    title,
+    body,
+    severity: severityLabel,
+    source: sourceLabel,
+    status: statusLabel,
+    received: receivedLabel,
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -314,29 +343,25 @@ function NotificationDetail({
           <div>
             <dt className="text-[var(--color-text-muted)]">{t('notifications.center.severity')}</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {t(`notifications.severity.${notification.severity}`)}
+              {severityLabel}
             </dd>
           </div>
           <div>
             <dt className="text-[var(--color-text-muted)]">{t('notifications.center.source')}</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {t(`notifications.source.${notification.sourceDomain}`, {
-                defaultValue: notification.sourceDomain,
-              })}
+              {sourceLabel}
             </dd>
           </div>
           <div>
             <dt className="text-[var(--color-text-muted)]">{t('notifications.center.status')}</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {notification.isRead
-                ? t('notifications.center.read')
-                : t('notifications.center.unread')}
+              {statusLabel}
             </dd>
           </div>
           <div>
             <dt className="text-[var(--color-text-muted)]">{t('notifications.center.received')}</dt>
             <dd className="mt-1 font-semibold text-[var(--color-text-primary)]">
-              {formatRelativeTime(notification.occurredAt, i18n.language)}
+              {receivedLabel}
             </dd>
           </div>
         </dl>
@@ -370,10 +395,27 @@ function NotificationDetail({
       </div>
 
       <div className="flex flex-col gap-2 border-t border-[var(--color-border)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row">
-        <Button type="button" className="sm:flex-1" onClick={() => onNavigate(notification)}>
-          <ExternalLink className="h-4 w-4" />
-          {t('notifications.center.openAction')}
-        </Button>
+        {primaryAction ? (
+          <Button
+            type="button"
+            className="sm:flex-1"
+            onClick={() => onNavigate(primaryAction.target)}
+          >
+            <ExternalLink className="h-4 w-4" />
+            {t(primaryAction.labelKey)}
+          </Button>
+        ) : null}
+        {action.canExportIssueCsv ? (
+          <Button
+            type="button"
+            variant={primaryAction ? 'outline' : 'default'}
+            className="sm:flex-1"
+            onClick={() => onExportIssue(notification, csvCopy)}
+          >
+            <FileDown className="h-4 w-4" />
+            {t('notifications.center.exportIssueCsv')}
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="outline"
@@ -497,9 +539,35 @@ export function AppNotificationCenter() {
     setFilter(nextFilter)
   }
 
-  const handleNavigate = (notification: AppNotification) => {
+  const handleNavigate = (target: AppNotificationActionTarget) => {
     handleOpenChange(false)
-    void navigate({ to: routeForNotification(notification) })
+    if (target.to === '/erp') {
+      void navigate({ to: '/erp', search: target.search })
+      return
+    }
+    void navigate({ to: '/dashboard' })
+  }
+
+  const handleExportIssue = (
+    notification: AppNotification,
+    copy: AppNotificationIssueCsvCopy,
+  ) => {
+    try {
+      const action = resolveAppNotificationAction(notification)
+      const csv = buildAppNotificationIssueCsv(notification, copy)
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = action.exportFileName
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      toast.success(t('notifications.center.exportIssueSuccess'))
+    } catch {
+      toast.error(t('notifications.center.exportIssueFailed'))
+    }
   }
 
   const handleRefresh = () => {
@@ -583,6 +651,7 @@ export function AppNotificationCenter() {
               onBack={() => setSelectedId(null)}
               onDismiss={(notificationId) => dismissMutation.mutate(notificationId)}
               onNavigate={handleNavigate}
+              onExportIssue={handleExportIssue}
               dismissing={dismissMutation.isPending}
             />
           ) : (
