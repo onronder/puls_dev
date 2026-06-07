@@ -385,11 +385,12 @@ function buildSettingsOverview({
           { labelKey: 'settingsSetup.evidence.readiness', value: valueKey('settingsSetup.values.percent', { value: overallPct }) },
         ],
       }),
-      section('notifications', 'locked', {
-        value: valueKey('settingsSetup.values.policyPending'),
-        helperKey: 'settingsSetup.helpers.notificationsPending',
+      section('notifications', 'ready', {
+        value: valueKey('settingsSetup.values.enabled'),
+        helperKey: 'settingsSetup.helpers.notificationsReady',
         evidence: [
           { labelKey: 'settingsSetup.evidence.scope', value: valueKey('settingsSetup.values.roleBased') },
+          { labelKey: 'settingsSetup.evidence.preference', value: valueKey('settingsSetup.values.enabled') },
           { labelKey: 'settingsSetup.evidence.audit', value: valueKey('settingsSetup.values.auditCount', { count: auditCount }) },
         ],
       }),

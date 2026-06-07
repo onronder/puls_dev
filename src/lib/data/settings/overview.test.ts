@@ -143,6 +143,11 @@ describe('settings overview adapter', () => {
     expect(result.data.sections.find((section) => section.id === 'roleAccess')?.status).toBe(
       'ready',
     )
+    expect(result.data.sections.find((section) => section.id === 'notifications')).toMatchObject({
+      status: 'ready',
+      value: { key: 'settingsSetup.values.enabled' },
+      helperKey: 'settingsSetup.helpers.notificationsReady',
+    })
     expect(result.data.setupHubItems.find((item) => item.to === '/erp')).toMatchObject({
       status: 'ready',
       value: { key: 'settingsSetup.values.preflightReady' },
@@ -159,6 +164,9 @@ describe('settings overview adapter', () => {
     expect(result.source).toBe('real')
     expect(result.status).toBe('success')
     expect(result.data.sections.find((section) => section.id === 'tenant')?.status).toBe('locked')
+    expect(result.data.sections.find((section) => section.id === 'notifications')?.status).toBe(
+      'locked',
+    )
     expect(result.data.setupHubItems.every((item) => item.status === 'locked')).toBe(true)
   })
 
