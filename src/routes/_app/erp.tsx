@@ -857,6 +857,83 @@ function ErpPage() {
         </section>
       ) : null}
 
+      {data && hasSelectedConnector ? (
+        <section id="erp-go-live-plan" className="mt-8 scroll-mt-6">
+          <SectionHeader
+            title={t('erp.goLivePlan.title')}
+            description={t('erp.goLivePlan.description')}
+          />
+          <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                  <SearchCheck className="h-5 w-5" aria-hidden />
+                </span>
+                <StatusPill tone={readinessTone(data.goLivePlan.status)}>
+                  {t(`erp.readinessStatus.${data.goLivePlan.status}`)}
+                </StatusPill>
+                <StatusPill tone={data.goLivePlan.canStartCustomerPilot ? 'success' : 'warning'}>
+                  {data.goLivePlan.canStartCustomerPilot
+                    ? t('erp.goLivePlan.pilot.ready')
+                    : t('erp.goLivePlan.pilot.waiting')}
+                </StatusPill>
+              </div>
+              <h2 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
+                {t(data.goLivePlan.titleKey)}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                {t(data.goLivePlan.summaryKey)}
+              </p>
+              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.goLivePlan.labels.score')}
+                  </span>
+                  <span className="font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.goLivePlan.score}%
+                  </span>
+                </div>
+                <Progress className="mt-2 h-1.5" value={data.goLivePlan.score} />
+              </div>
+              <div className="mt-4 space-y-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                <p>{t(data.goLivePlan.nextActionKey)}</p>
+                <p>{t('erp.goLivePlan.boundaryNote')}</p>
+              </div>
+            </div>
+            <ol className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+              {data.goLivePlan.gaps.map((gap) => (
+                <li key={gap.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_auto]">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(gap.labelKey)}
+                      </p>
+                      <span className="rounded-full bg-[var(--color-bg-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">
+                        {t(`erp.goLivePlan.owners.${gap.owner}`)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      {t(gap.descriptionKey)}
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
+                      {t(gap.evidenceKey)}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      {t(gap.actionKey)}
+                    </p>
+                  </div>
+                  <div className="sm:justify-self-end">
+                    <StatusPill tone={readinessTone(gap.status)}>
+                      {t(`erp.readinessStatus.${gap.status}`)}
+                    </StatusPill>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      ) : null}
+
       {data && hasNoConnector ? (
         <section className="mt-8">
           <SectionHeader

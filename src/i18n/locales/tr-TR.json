@@ -1231,6 +1231,93 @@
         "review_package": "Müşteri erişim paketi hazır; canlı runtime yine ayrı onay gerektirir."
       }
     },
+    "goLivePlan": {
+      "title": "Canlıya geçiş boşluk planı",
+      "description": "Gerçek API bilgileri gelmeden kapatılabilecek kurulum, kapsam, güvenli erişim ve önizleme eksiklerini sıraya koyar.",
+      "boundaryNote": "Bu plan canlı provider çağrısı yapmaz, credential değeri okumaz, dış sisteme yazmaz ve yalnızca güvenli hazırlık kanıtlarını kullanır.",
+      "labels": {
+        "score": "Plan skoru"
+      },
+      "pilot": {
+        "ready": "Müşteri pilotuna hazır",
+        "waiting": "Pilot için eksik var"
+      },
+      "owners": {
+        "puls_team": "PULS ekibi",
+        "customer": "Müşteri",
+        "joint": "Ortak"
+      },
+      "status": {
+        "ready": {
+          "title": "API dışı plan hazır",
+          "summary": "Canlı runtime açılmadan önce tamamlanabilecek kapsam, mapping, erişim ve önizleme adımları müşteri pilotu için hazır."
+        },
+        "partial": {
+          "title": "API dışı plan ilerliyor",
+          "summary": "Kaynak ve kurulum kanıtları var; güvenli erişim, önizleme veya müşteri teyidi tamamlanınca pilot daha net hale gelir."
+        },
+        "blocked": {
+          "title": "Boşluk planı başlamadı",
+          "summary": "Önce connector kaynağı ve bağlantı yöntemi seçilmeli."
+        }
+      },
+      "gaps": {
+        "source_and_method": {
+          "label": "Kaynak ve yöntem",
+          "description": "Hangi kaynak ve hangi transfer yöntemiyle ilerleyeceğimiz müşteri gerçekliğiyle netleşmeli."
+        },
+        "data_ownership": {
+          "label": "Veri sahipliği",
+          "description": "Bu kaynağın hangi veri alanlarını besleyeceği ve çakışan sahiplik olup olmadığı ayrılmalı."
+        },
+        "field_contract": {
+          "label": "Alan sözleşmesi",
+          "description": "Kaynak alanları PULS canonical modele güvenli ve izlenebilir şekilde bağlanmalı."
+        },
+        "secure_access": {
+          "label": "Güvenli erişim",
+          "description": "Secret değeri UI'a alınmadan güvenli referans veya müşteri erişim süreci netleşmeli."
+        },
+        "preview_validation": {
+          "label": "Önizleme doğrulaması",
+          "description": "Canlı API beklenirken dosya veya dry-run preview üzerinden veri akışı doğrulanmalı."
+        },
+        "customer_review": {
+          "label": "Müşteri teyidi",
+          "description": "Kapsam, yöntem ve güvenlik sınırı müşteriyle paylaşılabilecek netlikte olmalı."
+        }
+      },
+      "evidence": {
+        "sourceMethodReady": "Kaynak ve yöntem seçili.",
+        "sourceMethodPartial": "Kaynak var; yöntem teyidi tamamlanmalı.",
+        "sourceMethodMissing": "Kaynak seçimi bekliyor.",
+        "ownershipReady": "Veri kapsamı ve sahiplik hazır.",
+        "ownershipPartial": "Veri kapsamı kısmi.",
+        "ownershipMissing": "Veri sahipliği bekliyor.",
+        "fieldContractReady": "Alan sözleşmesi hazır.",
+        "fieldContractPartial": "Alan sözleşmesi kısmi.",
+        "fieldContractMissing": "Alan sözleşmesi bekliyor.",
+        "secureAccessReady": "Güvenli erişim referansı hazır.",
+        "secureAccessPartial": "Güvenli erişim süreci devam ediyor.",
+        "secureAccessMissing": "Güvenli erişim bekliyor.",
+        "previewReady": "Önizleme doğrulaması hazır.",
+        "previewPartial": "Önizleme yolu hazırlanabilir.",
+        "previewMissing": "Önizleme doğrulaması bekliyor.",
+        "customerReviewReady": "Müşteri paketi paylaşılabilir.",
+        "customerReviewPartial": "Müşteri paketi hazırlanıyor.",
+        "customerReviewMissing": "Müşteri teyidi için paket bekliyor."
+      },
+      "nextActions": {
+        "select_source": "Önce müşteri için kullanılacak connector kaynağını seç.",
+        "confirm_source_method": "Kaynak ve transfer yöntemini müşteri erişim gerçekliğiyle teyit et.",
+        "complete_data_ownership": "Kaynağın besleyeceği veri kapsamını ve sahiplik ayrımını tamamla.",
+        "complete_field_contract": "Alan sözleşmesini müşteri verisiyle doğrulanabilir hale getir.",
+        "request_secure_access": "Secret değeri toplamadan güvenli erişim referansı veya erişim süreci başlat.",
+        "prepare_preview": "Canlı API beklenirken dry-run veya dosya önizleme doğrulamasını hazırla.",
+        "review_customer_package": "Kapsam, yöntem ve güvenlik sınırını müşteriyle teyit edilebilir hale getir.",
+        "review_plan": "API dışı boşluk planı tamam; canlı runtime ayrı onay ve PR gerektirir."
+      }
+    },
     "actions": {
       "mapFields": "Alanları eşleştir",
       "reviewMapping": "Alan sözleşmesini incele",

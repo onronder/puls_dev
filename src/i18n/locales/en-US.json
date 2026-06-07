@@ -1231,6 +1231,93 @@
         "review_package": "Customer access package is ready; live runtime still requires separate approval."
       }
     },
+    "goLivePlan": {
+      "title": "Go-live gap plan",
+      "description": "Orders the setup, scope, secure access, and preview gaps that can be closed before real API details arrive.",
+      "boundaryNote": "This plan does not call live providers, read credential values, write to external systems, or use anything beyond safe readiness evidence.",
+      "labels": {
+        "score": "Plan score"
+      },
+      "pilot": {
+        "ready": "Ready for customer pilot",
+        "waiting": "Pilot gaps remain"
+      },
+      "owners": {
+        "puls_team": "PULS team",
+        "customer": "Customer",
+        "joint": "Joint"
+      },
+      "status": {
+        "ready": {
+          "title": "Non-API plan is ready",
+          "summary": "Scope, mapping, access, and preview steps that can be completed before live runtime are ready for a customer pilot."
+        },
+        "partial": {
+          "title": "Non-API plan is in progress",
+          "summary": "Source and setup evidence exist; secure access, preview, or customer confirmation should be completed to make the pilot clearer."
+        },
+        "blocked": {
+          "title": "Gap plan has not started",
+          "summary": "Select the connector source and connection method first."
+        }
+      },
+      "gaps": {
+        "source_and_method": {
+          "label": "Source and method",
+          "description": "The source and transfer method must be confirmed against the customer's real access model."
+        },
+        "data_ownership": {
+          "label": "Data ownership",
+          "description": "The data domains this source feeds and any ownership conflicts must be separated."
+        },
+        "field_contract": {
+          "label": "Field contract",
+          "description": "Source fields must connect safely and traceably to the PULS canonical model."
+        },
+        "secure_access": {
+          "label": "Secure access",
+          "description": "A secure reference or customer access process must be clear without bringing secret values into the UI."
+        },
+        "preview_validation": {
+          "label": "Preview validation",
+          "description": "Data movement should be validated through file or dry-run preview while live API access is pending."
+        },
+        "customer_review": {
+          "label": "Customer confirmation",
+          "description": "Scope, method, and safety boundary must be clear enough to share with the customer."
+        }
+      },
+      "evidence": {
+        "sourceMethodReady": "Source and method are selected.",
+        "sourceMethodPartial": "Source exists; method confirmation remains.",
+        "sourceMethodMissing": "Source selection is pending.",
+        "ownershipReady": "Data scope and ownership are ready.",
+        "ownershipPartial": "Data scope is partial.",
+        "ownershipMissing": "Data ownership is pending.",
+        "fieldContractReady": "Field contract is ready.",
+        "fieldContractPartial": "Field contract is partial.",
+        "fieldContractMissing": "Field contract is pending.",
+        "secureAccessReady": "Secure access reference is ready.",
+        "secureAccessPartial": "Secure access is in progress.",
+        "secureAccessMissing": "Secure access is pending.",
+        "previewReady": "Preview validation is ready.",
+        "previewPartial": "Preview path can be prepared.",
+        "previewMissing": "Preview validation is pending.",
+        "customerReviewReady": "Customer package is shareable.",
+        "customerReviewPartial": "Customer package is being prepared.",
+        "customerReviewMissing": "Customer confirmation package is pending."
+      },
+      "nextActions": {
+        "select_source": "Select the connector source for the customer first.",
+        "confirm_source_method": "Confirm source and transfer method against the customer's access reality.",
+        "complete_data_ownership": "Complete the data scope and ownership separation this source will feed.",
+        "complete_field_contract": "Make the field contract verifiable against customer data.",
+        "request_secure_access": "Start the secure access reference or access process without collecting secret values.",
+        "prepare_preview": "Prepare dry-run or file preview validation while live API access is pending.",
+        "review_customer_package": "Make scope, method, and safety boundary clear enough for customer confirmation.",
+        "review_plan": "The non-API gap plan is complete; live runtime still requires a separate approval and PR."
+      }
+    },
     "actions": {
       "mapFields": "Map fields",
       "reviewMapping": "Review field contract",
