@@ -28,6 +28,7 @@
     "email": "Email",
     "password": "Password",
     "signIn": "Sign in",
+    "signOut": "Sign out",
     "signingIn": "Signing in…",
     "kvkkNotice": "By signing in you accept the privacy notice."
   },
@@ -72,6 +73,119 @@
   "persona": {
     "employee": "Employee Mode",
     "manager": "Manager Mode"
+  },
+  "notifications": {
+    "center": {
+      "title": "Notifications",
+      "description": "{{unread}} unread, {{actionRequired}} action required",
+      "bellLabel": "{{unread}} unread, {{actionRequired}} action required notifications",
+      "filters": {
+        "all": "All",
+        "unread": "Unread",
+        "action_required": "Action"
+      },
+      "markAllRead": "Mark all read",
+      "markAllReadSuccess": "Notifications marked as read.",
+      "dismiss": "Dismiss",
+      "dismissSuccess": "Notification dismissed.",
+      "actionFailed": "Notification action could not be completed.",
+      "refresh": "Refresh notifications",
+      "loadMore": "Load more",
+      "endOfList": "All notifications loaded",
+      "emptyTitle": "No notifications right now",
+      "emptyDescription": "New events that need attention will appear here.",
+      "errorTitle": "Notifications could not be loaded",
+      "errorDescription": "Try loading the list again or come back later.",
+      "liveRegion": "{{unread}} unread notifications",
+      "detail": "Notification detail",
+      "backToList": "Back to notification list",
+      "openAction": "Review",
+      "safeSummary": "Safe summary",
+      "noSafeSummary": "There is no additional safe summary for this notification.",
+      "severity": "Severity",
+      "source": "Source",
+      "status": "Status",
+      "received": "Received",
+      "read": "Read",
+      "unread": "Unread",
+      "actionRequired": "Action required"
+    },
+    "severity": {
+      "info": "Info",
+      "success": "Success",
+      "warning": "Warning",
+      "error": "Error",
+      "critical": "Critical"
+    },
+    "source": {
+      "connector_runtime": "Connector Runtime",
+      "app_notification_center": "Notification Center"
+    },
+    "safeSummary": {
+      "source_event_key": "Event type",
+      "safe_error_code": "Safe error code",
+      "job_type": "Job type",
+      "job_status": "Job status",
+      "failure_class": "Failure class",
+      "operator_severity": "Operator severity",
+      "operation": "Operation",
+      "entity_type": "Entity type",
+      "target_table": "Target table",
+      "row_count": "Row count",
+      "rollback_count": "Rollback count",
+      "blocked_count": "Blocked count",
+      "field_diff_count": "Field diff count",
+      "rollback_snapshot_count": "Rollback snapshot count",
+      "next_action_key": "Next action",
+      "canonical_write": "Canonical write",
+      "rollback_execution": "Rollback execution",
+      "source_writeback": "Source writeback",
+      "provider_api_calls": "Provider API calls",
+      "credential_readback": "Credential readback",
+      "raw_payload_readback": "Raw payload readback",
+      "field_value_readback": "Field value readback",
+      "snapshot_payload_readback": "Snapshot payload readback",
+      "external_delivery_enabled": "External delivery",
+      "notification_realtime_enabled": "Realtime"
+    },
+    "connectorRuntime": {
+      "jobFailed": {
+        "title": "Connector job failed",
+        "body": "Connector runtime produced a safe job error. Operator review is recommended."
+      },
+      "jobDeadLetter": {
+        "title": "Connector job is dead-lettered",
+        "body": "Retry limits were reached. Operator intervention is required."
+      },
+      "runtimePreflightFailed": {
+        "title": "Runtime preflight failed",
+        "body": "Connector runtime preflight could not complete. Review connection and runtime evidence."
+      },
+      "createOnlyCompleted": {
+        "title": "Create-only apply completed",
+        "body": "Connector apply produced a safe create-only canonical record."
+      },
+      "guardedUpdateCompleted": {
+        "title": "Guarded update apply completed",
+        "body": "Guarded update was applied inside the canonical write boundary."
+      },
+      "rollbackCompleted": {
+        "title": "Guarded update rollback completed",
+        "body": "Approved rollback was applied by the worker and produced an object event."
+      },
+      "rollbackPreviewReady": {
+        "title": "Rollback preview is ready",
+        "body": "Rollback preview evidence is ready and needs operator review."
+      },
+      "rollbackApprovalRecorded": {
+        "title": "Rollback approval recorded",
+        "body": "Rollback approval audit evidence was recorded. Worker readiness can be prepared."
+      },
+      "rollbackWorkerReady": {
+        "title": "Rollback worker handoff ready",
+        "body": "Rollback worker readiness checks passed. Worker apply can be prepared."
+      }
+    }
   },
   "dashboard": {
     "title": "Dashboard",

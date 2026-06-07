@@ -1,6 +1,7 @@
 import { LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { AppNotificationCenter } from '#/components/notifications/AppNotificationCenter'
 import { PersonaTogglePill } from '#/components/puls/PersonaTogglePill'
 import { Button } from '#/components/ui/button'
 import { useAuth } from '#/lib/auth'
@@ -21,14 +22,17 @@ export function AppHeader() {
           </div>
           <PersonaTogglePill />
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => void signOut()}
-          aria-label="Sign out"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <AppNotificationCenter />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => void signOut()}
+            aria-label={t('auth.signOut')}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </header>
   )

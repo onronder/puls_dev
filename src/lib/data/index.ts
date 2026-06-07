@@ -6,6 +6,7 @@ export {
 
 export {
   pulsAudit,
+  pulsApp,
   pulsCalc,
   pulsCore,
   pulsIntegration,
@@ -16,6 +17,21 @@ export {
   resolveTenantContext,
   type TenantContext,
 } from '#/lib/data/client'
+
+export {
+  dismissAppNotification,
+  fetchAppNotificationPage,
+  fetchAppNotificationSummary,
+  markAllAppNotificationsRead,
+  markAppNotificationRead,
+  type AppNotification,
+  type AppNotificationCursor,
+  type AppNotificationPage,
+  type AppNotificationSeverity,
+  type AppNotificationSummary,
+  type NotificationCenterFilter,
+  type NotificationReadState,
+} from '#/lib/data/app/notifications'
 
 export {
   DataAdapterError,

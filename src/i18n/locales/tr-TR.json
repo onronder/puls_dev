@@ -28,6 +28,7 @@
     "email": "E-posta",
     "password": "Şifre",
     "signIn": "Giriş Yap",
+    "signOut": "Çıkış yap",
     "signingIn": "Giriş yapılıyor…",
     "kvkkNotice": "Giriş yaparak KVKK aydınlatma metnini kabul etmiş olursunuz."
   },
@@ -72,6 +73,119 @@
   "persona": {
     "employee": "Çalışan Modu",
     "manager": "Yönetici Modu"
+  },
+  "notifications": {
+    "center": {
+      "title": "Bildirimler",
+      "description": "{{unread}} okunmamış, {{actionRequired}} aksiyon gerekli",
+      "bellLabel": "{{unread}} okunmamış, {{actionRequired}} aksiyon gerekli bildirim",
+      "filters": {
+        "all": "Tümü",
+        "unread": "Okunmamış",
+        "action_required": "Aksiyon"
+      },
+      "markAllRead": "Tümünü okundu yap",
+      "markAllReadSuccess": "Bildirimler okundu olarak işaretlendi.",
+      "dismiss": "Gizle",
+      "dismissSuccess": "Bildirim gizlendi.",
+      "actionFailed": "Bildirim işlemi tamamlanamadı.",
+      "refresh": "Bildirimleri yenile",
+      "loadMore": "Daha fazla yükle",
+      "endOfList": "Tüm bildirimler yüklendi",
+      "emptyTitle": "Şu anda bildirim yok",
+      "emptyDescription": "Aksiyon gerektiren yeni bir olay olduğunda burada görünecek.",
+      "errorTitle": "Bildirimler yüklenemedi",
+      "errorDescription": "Listeyi tekrar yükleyebilir veya daha sonra deneyebilirsin.",
+      "liveRegion": "{{unread}} okunmamış bildirim var",
+      "detail": "Bildirim detayı",
+      "backToList": "Bildirim listesine dön",
+      "openAction": "İncele",
+      "safeSummary": "Güvenli özet",
+      "noSafeSummary": "Bu bildirim için ek güvenli özet yok.",
+      "severity": "Önem",
+      "source": "Kaynak",
+      "status": "Durum",
+      "received": "Geldiği zaman",
+      "read": "Okundu",
+      "unread": "Okunmadı",
+      "actionRequired": "Aksiyon gerekli"
+    },
+    "severity": {
+      "info": "Bilgi",
+      "success": "Başarılı",
+      "warning": "Uyarı",
+      "error": "Hata",
+      "critical": "Kritik"
+    },
+    "source": {
+      "connector_runtime": "Connector Runtime",
+      "app_notification_center": "Notification Center"
+    },
+    "safeSummary": {
+      "source_event_key": "Olay tipi",
+      "safe_error_code": "Güvenli hata kodu",
+      "job_type": "Job tipi",
+      "job_status": "Job durumu",
+      "failure_class": "Hata sınıfı",
+      "operator_severity": "Operatör seviyesi",
+      "operation": "Operasyon",
+      "entity_type": "Varlık tipi",
+      "target_table": "Hedef tablo",
+      "row_count": "Satır sayısı",
+      "rollback_count": "Rollback sayısı",
+      "blocked_count": "Bloke sayısı",
+      "field_diff_count": "Alan farkı sayısı",
+      "rollback_snapshot_count": "Rollback snapshot sayısı",
+      "next_action_key": "Sonraki aksiyon",
+      "canonical_write": "Canonical write",
+      "rollback_execution": "Rollback execution",
+      "source_writeback": "Source writeback",
+      "provider_api_calls": "Provider API çağrısı",
+      "credential_readback": "Credential readback",
+      "raw_payload_readback": "Raw payload readback",
+      "field_value_readback": "Field value readback",
+      "snapshot_payload_readback": "Snapshot payload readback",
+      "external_delivery_enabled": "External delivery",
+      "notification_realtime_enabled": "Realtime"
+    },
+    "connectorRuntime": {
+      "jobFailed": {
+        "title": "Connector job başarısız oldu",
+        "body": "Connector runtime bir job için güvenli hata üretti. Operatör incelemesi önerilir."
+      },
+      "jobDeadLetter": {
+        "title": "Connector job dead-letter durumunda",
+        "body": "Tekrar deneme sınırı aşıldı. Operatör müdahalesi gereklidir."
+      },
+      "runtimePreflightFailed": {
+        "title": "Runtime preflight başarısız",
+        "body": "Connector runtime preflight kontrolü tamamlanamadı. Bağlantı ve çalışma zamanı kanıtını incele."
+      },
+      "createOnlyCompleted": {
+        "title": "Create-only apply tamamlandı",
+        "body": "Connector apply işlemi güvenli create-only kaydı üretti."
+      },
+      "guardedUpdateCompleted": {
+        "title": "Guarded update apply tamamlandı",
+        "body": "Guarded update canonical write sınırı içinde uygulandı."
+      },
+      "rollbackCompleted": {
+        "title": "Guarded update rollback tamamlandı",
+        "body": "Onaylı rollback worker tarafından uygulandı ve object event üretildi."
+      },
+      "rollbackPreviewReady": {
+        "title": "Rollback preview hazır",
+        "body": "Rollback önizleme kanıtı hazır. Operatör incelemesi gerekiyor."
+      },
+      "rollbackApprovalRecorded": {
+        "title": "Rollback onayı kaydedildi",
+        "body": "Rollback approval audit kaydı üretildi. Worker readiness aşaması hazırlanabilir."
+      },
+      "rollbackWorkerReady": {
+        "title": "Rollback worker handoff hazır",
+        "body": "Rollback worker readiness kontrolleri geçti. Worker apply aşaması hazırlanabilir."
+      }
+    }
   },
   "dashboard": {
     "title": "Ana Sayfa",
