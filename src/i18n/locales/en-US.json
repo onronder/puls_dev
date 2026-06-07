@@ -120,6 +120,49 @@
         "polling": "Auto-refreshing"
       }
     },
+    "preferences": {
+      "open": "Open notification settings",
+      "title": "Notification settings",
+      "description": "Manage in-app notifications by source.",
+      "sourceScope": "Source scope",
+      "save": "Save",
+      "reset": "Reset defaults",
+      "saveSuccess": "Notification settings were saved.",
+      "resetSuccess": "Notification settings were reset to defaults.",
+      "errorTitle": "Notification settings could not be loaded",
+      "errorDescription": "Try loading the settings again or come back later.",
+      "criticalNote": "Critical notifications always stay visible for safety. Email, mobile push, and external delivery stay closed in this phase.",
+      "scopes": {
+        "connectorRuntime": {
+          "title": "ERP connection",
+          "description": "In-app notifications from ERP connection, job queue, apply, and rollback processes."
+        }
+      },
+      "inbox": {
+        "title": "In-app visibility",
+        "description": "Controls whether new notifications from this source appear in Notification Center.",
+        "enabled": "Show",
+        "disabled": "Mute"
+      },
+      "minimumSeverity": {
+        "title": "Minimum severity",
+        "description": "Non-critical notifications below this level are hidden from the list."
+      },
+      "actionOnly": {
+        "title": "Action filter",
+        "description": "Optionally keep only notifications that require follow-up visible.",
+        "all": "All notifications",
+        "actionRequired": "Action only"
+      },
+      "mute": {
+        "title": "Temporary mute",
+        "description": "Temporarily hides non-critical notifications from this source.",
+        "none": "No mute",
+        "one_hour": "1 hour",
+        "one_day": "24 hours",
+        "existing": "Muted until {{time}}"
+      }
+    },
     "severity": {
       "info": "Info",
       "success": "Success",
@@ -4182,7 +4225,7 @@
       "accountNoTenant": "The user must be linked to a company workspace first.",
       "tenantReady": "This session is operating inside a company workspace.",
       "tenantMissing": "Admin settings cannot open until a company workspace is resolved.",
-      "notificationsPending": "Notification preferences will open through process-level policy; only scope is visible for now.",
+      "notificationsPending": "In-app notification preferences are managed from the Notifications panel; email and mobile delivery remain closed.",
       "notificationsNoTenant": "Notification scope is resolved after the company workspace is linked.",
       "localeReady": "Language and timezone match the current operating scope.",
       "themePending": "The current theme is active; personal theme preference is not stored yet.",
@@ -4230,8 +4273,8 @@
         "title": "Notification preferences",
         "summary": "Email, in-app, and future mobile notifications",
         "action": "Edit",
-        "sheetDescription": "Notification channels will open by role and process.",
-        "sheetBody": "Email and in-app notifications will be tailored to leave, expense, performance, and setup events."
+        "sheetDescription": "In-app preferences are active inside Notification Center.",
+        "sheetBody": "ERP connection notifications can be personalized from the Notifications panel settings. Email, mobile push, and external delivery remain closed in this phase."
       },
       "locale": {
         "title": "Language & region",

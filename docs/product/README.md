@@ -735,6 +735,17 @@ PR16.9.6 makes Notification Center actions operational instead of decorative. Kn
 | [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                                       | Railway connector worker best-effort producer refresh after real connector jobs                              |
 | [`scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh`](../../scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh) | PR16.9.6 verify gate                                                                                        |
 
+## PR16.9.7 notification preferences UI
+
+PR16.9.7 makes the existing in-app notification preference RPC contract visible in the product. Notification Center now includes source-scoped settings for ERP connection notifications, including in-app visibility, minimum severity, action-only filtering, temporary mute, and reset to defaults. External delivery remains closed.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [16_9_7_notification_preferences_ui.md](./16_9_7_notification_preferences_ui.md)                                                                         | PR16.9.7 preference UI behavior, safety contract, smoke SQL, and PR16.10 handoff                             |
+| [`supabase/migrations/20260607150000_puls_app_notification_preferences_ui_contract.sql`](../../supabase/migrations/20260607150000_puls_app_notification_preferences_ui_contract.sql) | Bootstrap status contract update for preference UI readiness                                                  |
+| [`src/components/notifications/AppNotificationCenter.tsx`](../../src/components/notifications/AppNotificationCenter.tsx)                                  | Global notification sheet with source-scoped preference UI                                                    |
+| [`scripts/verify-16-9-7-notification-preferences-ui.sh`](../../scripts/verify-16-9-7-notification-preferences-ui.sh)                                     | PR16.9.7 verify gate                                                                                        |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

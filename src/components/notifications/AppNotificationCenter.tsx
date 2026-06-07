@@ -14,6 +14,10 @@ import {
   MailOpen,
   Radio,
   RefreshCw,
+  RotateCcw,
+  Save,
+  Settings2,
+  ShieldCheck,
   Trash2,
   X,
 } from 'lucide-react'
@@ -32,18 +36,30 @@ import {
   SheetTitle,
 } from '#/components/ui/sheet'
 import {
+  clearAppNotificationPreference,
   dismissAppNotification,
   fetchAppNotificationPage,
+  fetchAppNotificationPreferences,
   fetchAppNotificationSummary,
   markAllAppNotificationsRead,
   markAppNotificationRead,
   subscribeToAppNotificationSignals,
+  upsertAppNotificationPreference,
   type AppNotification,
   type AppNotificationCursor,
+  type AppNotificationPreference,
+  type AppNotificationPreferenceInput,
   type AppNotificationRealtimeStatus,
   type AppNotificationSeverity,
   type NotificationCenterFilter,
 } from '#/lib/data'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import {
   buildAppNotificationIssueCsv,
   resolveAppNotificationAction,
@@ -54,6 +70,23 @@ import { cn } from '#/lib/utils'
 const NOTIFICATION_PAGE_SIZE = 20
 
 const filters: NotificationCenterFilter[] = ['all', 'unread', 'action_required']
+
+const preferenceScopes = [
+  {
+    sourceDomain: 'connector_runtime',
+    sourceEventKey: 'all',
+    labelKey: 'notifications.preferences.scopes.connectorRuntime.title',
+    descriptionKey: 'notifications.preferences.scopes.connectorRuntime.description',
+  },
+] as const
+
+const preferenceSeverityOptions: AppNotificationSeverity[] = [
+  'info',
+  'success',
+  'warning',
+  'error',
+  'critical',
+]
 
 const safeSummaryFields = [
   'source_event_key',
@@ -82,6 +115,24 @@ const safeSummaryFields = [
   'external_delivery_enabled',
   'notification_realtime_enabled',
 ]
+
+type NotificationMuteMode = 'none' | 'one_hour' | 'one_day' | 'existing'
+
+type NotificationPreferenceDraft = {
+  inboxEnabled: boolean
+  minimumSeverity: AppNotificationSeverity
+  actionRequiredOnly: boolean
+  muteMode: NotificationMuteMode
+}
+
+type NotificationPreferenceScope = (typeof preferenceScopes)[number]
+
+const defaultPreferenceDraft: NotificationPreferenceDraft = {
+  inboxEnabled: true,
+  minimumSeverity: 'info',
+  actionRequiredOnly: false,
+  muteMode: 'none',
+}
 
 function severityTone(severity: AppNotificationSeverity) {
   switch (severity) {
@@ -141,6 +192,33 @@ function formatExactTime(value: string, locale: string) {
   }).format(new Date(value))
 }
 
+function isFutureTimestamp(value: string | null) {
+  return Boolean(value && new Date(value).getTime() > Date.now())
+}
+
+function draftFromPreference(
+  preference: AppNotificationPreference | null,
+): NotificationPreferenceDraft {
+  if (!preference) return defaultPreferenceDraft
+
+  return {
+    inboxEnabled: preference.inboxEnabled,
+    minimumSeverity: preference.minimumSeverity,
+    actionRequiredOnly: preference.actionRequiredOnly,
+    muteMode: isFutureTimestamp(preference.mutedUntil) ? 'existing' : 'none',
+  }
+}
+
+function mutedUntilForMode(
+  mode: NotificationMuteMode,
+  existingPreference: AppNotificationPreference | null,
+) {
+  if (mode === 'one_hour') return new Date(Date.now() + 3_600_000).toISOString()
+  if (mode === 'one_day') return new Date(Date.now() + 86_400_000).toISOString()
+  if (mode === 'existing') return existingPreference?.mutedUntil ?? null
+  return null
+}
+
 function formatSafeValue(value: unknown) {
   if (typeof value === 'boolean') return value ? 'true' : 'false'
   if (typeof value === 'number') return String(value)
@@ -148,6 +226,293 @@ function formatSafeValue(value: unknown) {
   if (value === null || value === undefined) return ''
   if (Array.isArray(value)) return value.join(', ')
   return JSON.stringify(value)
+}
+
+type NotificationPreferencesPanelProps = {
+  scope: NotificationPreferenceScope
+  preference: AppNotificationPreference | null
+  draft: NotificationPreferenceDraft
+  loading: boolean
+  error: boolean
+  saving: boolean
+  resetting: boolean
+  onBack: () => void
+  onDraftChange: (draft: NotificationPreferenceDraft) => void
+  onSave: () => void
+  onReset: () => void
+  onRefresh: () => void
+}
+
+function NotificationPreferencesPanel({
+  scope,
+  preference,
+  draft,
+  loading,
+  error,
+  saving,
+  resetting,
+  onBack,
+  onDraftChange,
+  onSave,
+  onReset,
+  onRefresh,
+}: NotificationPreferencesPanelProps) {
+  const { t, i18n } = useTranslation()
+  const existingMuteActive = draft.muteMode === 'existing' && isFutureTimestamp(preference?.mutedUntil ?? null)
+  const muteOptions: NotificationMuteMode[] = existingMuteActive
+    ? ['existing', 'none', 'one_hour', 'one_day']
+    : ['none', 'one_hour', 'one_day']
+  const activeMuteLabel =
+    existingMuteActive && preference?.mutedUntil
+      ? t('notifications.preferences.mute.existing', {
+          time: formatExactTime(preference.mutedUntil, i18n.language),
+        })
+      : null
+
+  const updateDraft = (patch: Partial<NotificationPreferenceDraft>) => {
+    onDraftChange({ ...draft, ...patch })
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onBack}
+          aria-label={t('notifications.center.backToList')}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+            {t('notifications.preferences.title')}
+          </p>
+          <p className="truncate text-xs text-[var(--color-text-muted)]">
+            {t('notifications.preferences.description')}
+          </p>
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-20 animate-pulse rounded-lg bg-[var(--color-bg-elevated)]"
+              />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
+            <AlertTriangle className="h-8 w-8 text-[var(--color-warning)]" />
+            <p className="mt-3 text-sm font-semibold text-[var(--color-text-primary)]">
+              {t('notifications.preferences.errorTitle')}
+            </p>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+              {t('notifications.preferences.errorDescription')}
+            </p>
+            <Button type="button" className="mt-4" onClick={onRefresh}>
+              <RefreshCw className="h-4 w-4" />
+              {t('common.retry')}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <section className="border-b border-[var(--color-border)] pb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                {t('notifications.preferences.sourceScope')}
+              </p>
+              <h3 className="mt-1 text-base font-semibold text-[var(--color-text-primary)]">
+                {t(scope.labelKey)}
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
+                {t(scope.descriptionKey)}
+              </p>
+            </section>
+
+            <section className="space-y-3 border-b border-[var(--color-border)] pb-4">
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {t('notifications.preferences.inbox.title')}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                  {t('notifications.preferences.inbox.description')}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  aria-pressed={draft.inboxEnabled}
+                  className={cn(
+                    'min-h-11 rounded-lg border px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]',
+                    draft.inboxEnabled
+                      ? 'border-[var(--color-border-strong)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                      : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]',
+                  )}
+                  onClick={() => updateDraft({ inboxEnabled: true })}
+                >
+                  {t('notifications.preferences.inbox.enabled')}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={!draft.inboxEnabled}
+                  className={cn(
+                    'min-h-11 rounded-lg border px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]',
+                    !draft.inboxEnabled
+                      ? 'border-[color-mix(in_srgb,var(--color-warning)_35%,transparent)] bg-[var(--color-warning-soft)] text-[var(--color-warning)]'
+                      : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]',
+                  )}
+                  onClick={() => updateDraft({ inboxEnabled: false })}
+                >
+                  {t('notifications.preferences.inbox.disabled')}
+                </button>
+              </div>
+            </section>
+
+            <section className="space-y-3 border-b border-[var(--color-border)] pb-4">
+              <div>
+                <label
+                  className="text-sm font-semibold text-[var(--color-text-primary)]"
+                  htmlFor="notification-minimum-severity"
+                >
+                  {t('notifications.preferences.minimumSeverity.title')}
+                </label>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                  {t('notifications.preferences.minimumSeverity.description')}
+                </p>
+              </div>
+              <Select
+                value={draft.minimumSeverity}
+                onValueChange={(value) =>
+                  updateDraft({ minimumSeverity: value as AppNotificationSeverity })
+                }
+              >
+                <SelectTrigger id="notification-minimum-severity">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {preferenceSeverityOptions.map((severity) => (
+                    <SelectItem key={severity} value={severity}>
+                      {t(`notifications.severity.${severity}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </section>
+
+            <section className="space-y-3 border-b border-[var(--color-border)] pb-4">
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {t('notifications.preferences.actionOnly.title')}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                  {t('notifications.preferences.actionOnly.description')}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  aria-pressed={!draft.actionRequiredOnly}
+                  className={cn(
+                    'min-h-11 rounded-lg border px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]',
+                    !draft.actionRequiredOnly
+                      ? 'border-[var(--color-border-strong)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                      : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]',
+                  )}
+                  onClick={() => updateDraft({ actionRequiredOnly: false })}
+                >
+                  {t('notifications.preferences.actionOnly.all')}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={draft.actionRequiredOnly}
+                  className={cn(
+                    'min-h-11 rounded-lg border px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]',
+                    draft.actionRequiredOnly
+                      ? 'border-[var(--color-border-strong)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                      : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]',
+                  )}
+                  onClick={() => updateDraft({ actionRequiredOnly: true })}
+                >
+                  {t('notifications.preferences.actionOnly.actionRequired')}
+                </button>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {t('notifications.preferences.mute.title')}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                  {t('notifications.preferences.mute.description')}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {muteOptions.map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    aria-pressed={draft.muteMode === mode}
+                    className={cn(
+                      'min-h-11 rounded-lg border px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]',
+                      draft.muteMode === mode
+                        ? 'border-[color-mix(in_srgb,var(--color-warning)_35%,transparent)] bg-[var(--color-warning-soft)] text-[var(--color-warning)]'
+                        : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]',
+                    )}
+                    onClick={() => updateDraft({ muteMode: mode })}
+                  >
+                    {mode === 'existing' && activeMuteLabel
+                      ? activeMuteLabel
+                      : t(`notifications.preferences.mute.${mode}`)}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <div className="flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-3">
+              <ShieldCheck
+                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-success)]"
+                aria-hidden="true"
+              />
+              <p className="text-xs leading-5 text-[var(--color-text-muted)]">
+                {t('notifications.preferences.criticalNote')}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-[var(--color-border)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row">
+        <Button
+          type="button"
+          className="sm:flex-1"
+          onClick={onSave}
+          disabled={loading || error || saving || resetting}
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {t('notifications.preferences.save')}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="sm:flex-1"
+          onClick={onReset}
+          disabled={!preference || loading || error || saving || resetting}
+        >
+          {resetting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RotateCcw className="h-4 w-4" />
+          )}
+          {t('notifications.preferences.reset')}
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 type NotificationItemProps = {
@@ -442,7 +807,10 @@ export function AppNotificationCenter() {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState<NotificationCenterFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [preferencesOpen, setPreferencesOpen] = useState(false)
+  const [preferenceDraft, setPreferenceDraft] = useState<NotificationPreferenceDraft | null>(null)
   const [realtimeStatus, setRealtimeStatus] = useState<AppNotificationRealtimeStatus>('disabled')
+  const preferenceScope = preferenceScopes[0]
 
   const summaryQuery = useQuery({
     queryKey: ['app-notifications', 'summary'],
@@ -464,6 +832,13 @@ export function AppNotificationCenter() {
     enabled: open,
   })
 
+  const preferencesQuery = useQuery({
+    queryKey: ['app-notifications', 'preferences', preferenceScope.sourceDomain],
+    queryFn: () => fetchAppNotificationPreferences(preferenceScope.sourceDomain),
+    enabled: open && preferencesOpen,
+    staleTime: 30_000,
+  })
+
   const notifications = useMemo(
     () => pageQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [pageQuery.data],
@@ -475,6 +850,13 @@ export function AppNotificationCenter() {
   const unreadCount = summary?.unreadCount ?? 0
   const actionRequiredCount = summary?.actionRequiredCount ?? 0
   const criticalCount = summary?.criticalCount ?? 0
+  const activePreference =
+    preferencesQuery.data?.find(
+      (preference) =>
+        preference.sourceDomain === preferenceScope.sourceDomain &&
+        preference.sourceEventKey === preferenceScope.sourceEventKey,
+    ) ?? null
+  const currentPreferenceDraft = preferenceDraft ?? draftFromPreference(activePreference)
 
   const invalidateNotifications = useCallback(async () => {
     await Promise.all([
@@ -522,6 +904,37 @@ export function AppNotificationCenter() {
     },
   })
 
+  const upsertPreferenceMutation = useMutation({
+    mutationFn: (input: AppNotificationPreferenceInput) => upsertAppNotificationPreference(input),
+    onSuccess: async () => {
+      setPreferenceDraft(null)
+      await Promise.all([
+        invalidateNotifications(),
+        queryClient.invalidateQueries({ queryKey: ['app-notifications', 'preferences'] }),
+      ])
+      toast.success(t('notifications.preferences.saveSuccess'))
+    },
+    onError: () => {
+      toast.error(t('notifications.center.actionFailed'))
+    },
+  })
+
+  const clearPreferenceMutation = useMutation({
+    mutationFn: () =>
+      clearAppNotificationPreference(preferenceScope.sourceDomain, preferenceScope.sourceEventKey),
+    onSuccess: async () => {
+      setPreferenceDraft(null)
+      await Promise.all([
+        invalidateNotifications(),
+        queryClient.invalidateQueries({ queryKey: ['app-notifications', 'preferences'] }),
+      ])
+      toast.success(t('notifications.preferences.resetSuccess'))
+    },
+    onError: () => {
+      toast.error(t('notifications.center.actionFailed'))
+    },
+  })
+
   const handleSelect = (notification: AppNotification) => {
     setSelectedId(notification.notificationId)
     if (!notification.isRead) {
@@ -530,7 +943,10 @@ export function AppNotificationCenter() {
   }
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) setSelectedId(null)
+    if (!nextOpen) {
+      setSelectedId(null)
+      setPreferencesOpen(false)
+    }
     setOpen(nextOpen)
   }
 
@@ -572,6 +988,32 @@ export function AppNotificationCenter() {
 
   const handleRefresh = () => {
     void invalidateNotifications()
+  }
+
+  const handlePreferencesRefresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ['app-notifications', 'preferences'] })
+  }
+
+  const handlePreferencesOpen = () => {
+    setSelectedId(null)
+    setPreferenceDraft(null)
+    setPreferencesOpen(true)
+  }
+
+  const handlePreferencesBack = () => {
+    setPreferenceDraft(null)
+    setPreferencesOpen(false)
+  }
+
+  const handlePreferenceSave = () => {
+    upsertPreferenceMutation.mutate({
+      sourceDomain: preferenceScope.sourceDomain,
+      sourceEventKey: preferenceScope.sourceEventKey,
+      inboxEnabled: currentPreferenceDraft.inboxEnabled,
+      minimumSeverity: currentPreferenceDraft.minimumSeverity,
+      mutedUntil: mutedUntilForMode(currentPreferenceDraft.muteMode, activePreference),
+      actionRequiredOnly: currentPreferenceDraft.actionRequiredOnly,
+    })
   }
 
   const realtimeLabelKey = summary?.notificationRealtimeEnabled
@@ -654,6 +1096,21 @@ export function AppNotificationCenter() {
               onExportIssue={handleExportIssue}
               dismissing={dismissMutation.isPending}
             />
+          ) : preferencesOpen ? (
+            <NotificationPreferencesPanel
+              scope={preferenceScope}
+              preference={activePreference}
+              draft={currentPreferenceDraft}
+              loading={preferencesQuery.isLoading}
+              error={preferencesQuery.isError}
+              saving={upsertPreferenceMutation.isPending}
+              resetting={clearPreferenceMutation.isPending}
+              onBack={handlePreferencesBack}
+              onDraftChange={setPreferenceDraft}
+              onSave={handlePreferenceSave}
+              onReset={() => clearPreferenceMutation.mutate()}
+              onRefresh={handlePreferencesRefresh}
+            />
           ) : (
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="border-b border-[var(--color-border)] px-4 py-3">
@@ -704,6 +1161,15 @@ export function AppNotificationCenter() {
                         (summaryQuery.isFetching || pageQuery.isFetching) && 'animate-spin',
                       )}
                     />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handlePreferencesOpen}
+                    aria-label={t('notifications.preferences.open')}
+                  >
+                    <Settings2 className="h-4 w-4" />
                   </Button>
                 </div>
 

@@ -120,6 +120,49 @@
         "polling": "Otomatik yenileniyor"
       }
     },
+    "preferences": {
+      "open": "Bildirim ayarlarını aç",
+      "title": "Bildirim ayarları",
+      "description": "Uygulama içi bildirimleri kaynak bazında yönet.",
+      "sourceScope": "Kaynak kapsamı",
+      "save": "Kaydet",
+      "reset": "Varsayılana dön",
+      "saveSuccess": "Bildirim ayarları kaydedildi.",
+      "resetSuccess": "Bildirim ayarları varsayılana döndü.",
+      "errorTitle": "Bildirim ayarları yüklenemedi",
+      "errorDescription": "Ayarları tekrar yükleyebilir veya daha sonra deneyebilirsin.",
+      "criticalNote": "Kritik bildirimler güvenlik nedeniyle her zaman görünür kalır. E-posta, mobil push ve harici teslimat bu fazda kapalıdır.",
+      "scopes": {
+        "connectorRuntime": {
+          "title": "ERP bağlantısı",
+          "description": "ERP bağlantısı, iş kuyruğu, uygulama ve geri alma süreçlerinden gelen uygulama içi bildirimler."
+        }
+      },
+      "inbox": {
+        "title": "Uygulama içi görünürlük",
+        "description": "Bu kaynak için yeni bildirimlerin Notification Center içinde görünüp görünmeyeceğini belirler.",
+        "enabled": "Göster",
+        "disabled": "Sessize al"
+      },
+      "minimumSeverity": {
+        "title": "Minimum önem",
+        "description": "Bu seviyenin altındaki kritik olmayan bildirimler listede gizlenir."
+      },
+      "actionOnly": {
+        "title": "Aksiyon filtresi",
+        "description": "İstersen yalnızca takip gerektiren bildirimleri görünür bırak.",
+        "all": "Tüm bildirimler",
+        "actionRequired": "Sadece aksiyon"
+      },
+      "mute": {
+        "title": "Geçici sessize alma",
+        "description": "Bu kaynak için kritik olmayan bildirimleri kısa süreliğine gizler.",
+        "none": "Sessize alma yok",
+        "one_hour": "1 saat",
+        "one_day": "24 saat",
+        "existing": "{{time}} kadar sessizde"
+      }
+    },
     "severity": {
       "info": "Bilgi",
       "success": "Başarılı",
@@ -4182,7 +4225,7 @@
       "accountNoTenant": "Önce kullanıcı bir şirket alanına bağlanmalı.",
       "tenantReady": "Bu oturum bir şirket alanı içinde çalışıyor.",
       "tenantMissing": "Şirket alanı bulunmadan yönetici ayarları açılamaz.",
-      "notificationsPending": "Bildirim tercihleri süreç bazlı politika ile açılacak; şu an sadece kapsam görünür.",
+      "notificationsPending": "Uygulama içi bildirim tercihleri Bildirimler panelinden yönetilir; e-posta ve mobil teslimat kapalıdır.",
       "notificationsNoTenant": "Bildirim kapsamı şirket alanı bağlandıktan sonra belirlenir.",
       "localeReady": "Dil ve saat bölgesi uygulamanın mevcut çalışma kapsamıyla uyumlu.",
       "themePending": "Tema görünümü çalışıyor; kişisel tema seçimi henüz kaydedilmiyor.",
@@ -4230,8 +4273,8 @@
         "title": "Bildirim tercihleri",
         "summary": "E-posta, uygulama içi ve ileride mobil bildirimler",
         "action": "Düzenle",
-        "sheetDescription": "Bildirim kanalları rol ve süreç bazlı açılacak.",
-        "sheetBody": "E-posta ve uygulama içi bildirimler, izin, masraf, performans ve kurulum olaylarına göre kişiselleştirilecek."
+        "sheetDescription": "Uygulama içi tercihler Notification Center içinde çalışır.",
+        "sheetBody": "ERP bağlantısı bildirimleri Bildirimler panelindeki ayarlardan kişiselleştirilebilir. E-posta, mobil push ve harici teslimat bu fazda kapalı kalır."
       },
       "locale": {
         "title": "Dil ve bölge",
