@@ -362,6 +362,36 @@ export type ConnectorAccessReadiness = {
   requirements: ConnectorAccessRequirement[]
 }
 
+export type ConnectorCustomerHandoffItemId =
+  | 'source_identity'
+  | 'transfer_method'
+  | 'scope_package'
+  | 'field_contract'
+  | 'secure_access'
+  | 'preview_path'
+
+export type ConnectorCustomerHandoffItem = {
+  id: ConnectorCustomerHandoffItemId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+  valueKey: string
+  nextActionKey: string
+}
+
+export type ConnectorCustomerHandoff = {
+  status: ConnectorReadinessStatus
+  score: number
+  titleKey: string
+  summaryKey: string
+  nextActionKey: string
+  liveProviderCallsEnabled: false
+  credentialReadbackEnabled: false
+  sourceWritebackEnabled: false
+  shareableWithCustomer: boolean
+  items: ConnectorCustomerHandoffItem[]
+}
+
 export type ConnectorApplyChangeSetStatus =
   | 'not_available'
   | 'needs_preview'
@@ -1319,6 +1349,7 @@ export type ErpOverview = {
   credentialBoundary: ConnectorCredentialBoundary
   credentialHandoff: ConnectorCredentialHandoff
   accessReadiness: ConnectorAccessReadiness
+  customerHandoff: ConnectorCustomerHandoff
   importPreview: ConnectorImportPreview
   applyReadiness: ConnectorApplyReadiness
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
@@ -3009,7 +3040,7 @@ function scoreAccessRequirement(status: ConnectorReadinessStatus): number {
 
 function summarizeAccessStatus(
   connectorState: ConnectorLifecycleState,
-  requirements: ConnectorAccessRequirement[],
+  requirements: Array<{ status: ConnectorReadinessStatus }>,
 ): ConnectorReadinessStatus {
   if (connectorState !== 'connector_selected') return 'blocked'
   if (requirements.every((requirement) => requirement.status === 'ready')) return 'ready'
@@ -3159,6 +3190,139 @@ function buildConnectorAccessReadiness({
       requirements.find((requirement) => requirement.id === 'offline_preview_path')?.status !==
         'blocked',
     requirements,
+  }
+}
+
+function customerHandoffItem(
+  id: ConnectorCustomerHandoffItemId,
+  status: ConnectorReadinessStatus,
+  valueKey: string,
+  nextActionKey: string,
+): ConnectorCustomerHandoffItem {
+  return {
+    id,
+    labelKey: `erp.customerHandoff.items.${id}.label`,
+    descriptionKey: `erp.customerHandoff.items.${id}.description`,
+    status,
+    valueKey,
+    nextActionKey,
+  }
+}
+
+function buildConnectorCustomerHandoff({
+  connectorState,
+  connectionMethod,
+  credentialBoundary,
+  credentialHandoff,
+  importPreview,
+  mappedFields,
+  totalFields,
+  namespaceCount,
+  ownedDomainCount,
+}: {
+  connectorState: ConnectorLifecycleState
+  connectionMethod?: string | null
+  credentialBoundary: ConnectorCredentialBoundary
+  credentialHandoff: ConnectorCredentialHandoff
+  importPreview: ConnectorImportPreview
+  mappedFields: number
+  totalFields: number
+  namespaceCount: number
+  ownedDomainCount: number
+}): ConnectorCustomerHandoff {
+  const hasConnection = connectorState === 'connector_selected'
+  const method = connectionMethod ?? null
+  const scopeReady = hasConnection && namespaceCount > 0 && ownedDomainCount > 0
+  const scopePartial = hasConnection && (namespaceCount > 0 || ownedDomainCount > 0)
+  const fieldContractReady = hasConnection && totalFields > 0 && mappedFields >= totalFields
+  const fieldContractPartial = hasConnection && mappedFields > 0
+  const credentialReady = credentialBoundary.status === 'ready'
+  const credentialPartial =
+    credentialBoundary.status === 'partial' || credentialHandoff.readiness === 'partial'
+  const previewReady = importPreview.status === 'preview_ready'
+  const previewPartial =
+    importPreview.status === 'no_batch' ||
+    importPreview.status === 'ready_to_preview' ||
+    importPreview.action === 'run_dry_run_preview'
+
+  const items = [
+    customerHandoffItem(
+      'source_identity',
+      hasConnection ? 'ready' : 'blocked',
+      hasConnection
+        ? 'erp.customerHandoff.values.sourceReady'
+        : 'erp.customerHandoff.values.sourceMissing',
+      'erp.customerHandoff.nextActions.select_source',
+    ),
+    customerHandoffItem(
+      'transfer_method',
+      hasConnection && method ? 'ready' : hasConnection ? 'partial' : 'blocked',
+      method
+        ? `erp.accessReadiness.values.methods.${method}`
+        : 'erp.customerHandoff.values.methodMissing',
+      'erp.customerHandoff.nextActions.confirm_method',
+    ),
+    customerHandoffItem(
+      'scope_package',
+      scopeReady ? 'ready' : scopePartial ? 'partial' : 'blocked',
+      scopeReady
+        ? 'erp.customerHandoff.values.scopeReady'
+        : scopePartial
+          ? 'erp.customerHandoff.values.scopePartial'
+          : 'erp.customerHandoff.values.scopeMissing',
+      'erp.customerHandoff.nextActions.complete_scope',
+    ),
+    customerHandoffItem(
+      'field_contract',
+      fieldContractReady ? 'ready' : fieldContractPartial ? 'partial' : 'blocked',
+      fieldContractReady
+        ? 'erp.customerHandoff.values.fieldContractReady'
+        : fieldContractPartial
+          ? 'erp.customerHandoff.values.fieldContractPartial'
+          : 'erp.customerHandoff.values.fieldContractMissing',
+      'erp.customerHandoff.nextActions.complete_mapping',
+    ),
+    customerHandoffItem(
+      'secure_access',
+      credentialReady ? 'ready' : credentialPartial ? 'partial' : 'blocked',
+      credentialReady
+        ? 'erp.customerHandoff.values.secureAccessReady'
+        : credentialPartial
+          ? 'erp.customerHandoff.values.secureAccessPartial'
+          : 'erp.customerHandoff.values.secureAccessMissing',
+      'erp.customerHandoff.nextActions.request_secure_reference',
+    ),
+    customerHandoffItem(
+      'preview_path',
+      previewReady ? 'ready' : previewPartial ? 'partial' : 'blocked',
+      previewReady
+        ? 'erp.customerHandoff.values.previewReady'
+        : previewPartial
+          ? 'erp.customerHandoff.values.previewPartial'
+          : 'erp.customerHandoff.values.previewMissing',
+      'erp.customerHandoff.nextActions.prepare_preview',
+    ),
+  ]
+
+  const status = summarizeAccessStatus(connectorState, items)
+  const score = Math.round(
+    items.reduce((total, item) => total + scoreAccessRequirement(item.status), 0) / items.length,
+  )
+  const nextItem =
+    items.find((item) => item.status === 'blocked') ??
+    items.find((item) => item.status === 'partial')
+
+  return {
+    status,
+    score,
+    titleKey: `erp.customerHandoff.status.${status}.title`,
+    summaryKey: `erp.customerHandoff.status.${status}.summary`,
+    nextActionKey: nextItem?.nextActionKey ?? 'erp.customerHandoff.nextActions.review_package',
+    liveProviderCallsEnabled: false,
+    credentialReadbackEnabled: false,
+    sourceWritebackEnabled: false,
+    shareableWithCustomer: hasConnection && items.every((item) => item.status !== 'blocked'),
+    items,
   }
 }
 
@@ -6246,6 +6410,17 @@ function buildOverview({
     totalFields,
     namespaceCount: namespaces.length,
   })
+  const customerHandoff = buildConnectorCustomerHandoff({
+    connectorState,
+    connectionMethod: currentConnection?.connection_method,
+    credentialBoundary,
+    credentialHandoff,
+    importPreview: resolvedImportPreview,
+    mappedFields,
+    totalFields,
+    namespaceCount: namespaces.length,
+    ownedDomainCount: ownedDomains.length,
+  })
   const resolvedApplyReadiness =
     applyReadiness ??
     buildConnectorApplyReadiness({
@@ -6382,6 +6557,7 @@ function buildOverview({
     credentialBoundary,
     credentialHandoff,
     accessReadiness,
+    customerHandoff,
     importPreview: resolvedImportPreview,
     applyReadiness: resolvedApplyReadiness,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,

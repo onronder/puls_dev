@@ -350,6 +350,29 @@ describe('fetchErpOverviewWithMeta', () => {
       status: 'partial',
       valueKey: 'erp.accessReadiness.values.customerApiPartial',
     })
+    expect(result.data.customerHandoff).toMatchObject({
+      status: 'partial',
+      score: 83,
+      liveProviderCallsEnabled: false,
+      credentialReadbackEnabled: false,
+      sourceWritebackEnabled: false,
+      shareableWithCustomer: true,
+      nextActionKey: 'erp.customerHandoff.nextActions.request_secure_reference',
+    })
+    expect(result.data.customerHandoff.items.map((item) => item.id)).toEqual([
+      'source_identity',
+      'transfer_method',
+      'scope_package',
+      'field_contract',
+      'secure_access',
+      'preview_path',
+    ])
+    expect(
+      result.data.customerHandoff.items.find((item) => item.id === 'secure_access'),
+    ).toMatchObject({
+      status: 'partial',
+      valueKey: 'erp.customerHandoff.values.secureAccessPartial',
+    })
     expect(result.data.lifecycle).toMatchObject({
       stage: 'credential',
       status: 'partial',
@@ -2876,6 +2899,13 @@ describe('fetchErpOverviewWithMeta', () => {
       sourceWritebackEnabled: false,
       canProceedWithoutLiveApi: false,
     })
+    expect(result.data.customerHandoff).toMatchObject({
+      status: 'blocked',
+      score: 0,
+      shareableWithCustomer: false,
+      nextActionKey: 'erp.customerHandoff.nextActions.select_source',
+    })
+    expect(result.data.customerHandoff.items.every((row) => row.status === 'blocked')).toBe(true)
     expect(result.data.accessReadiness.requirements.every((row) => row.status === 'blocked')).toBe(
       true,
     )
@@ -3066,6 +3096,12 @@ describe('fetchErpOverviewWithMeta', () => {
       action: 'none',
       requestable: false,
       blockedBy: 'not_required',
+    })
+    expect(
+      result.data.customerHandoff.items.find((item) => item.id === 'secure_access'),
+    ).toMatchObject({
+      status: 'ready',
+      valueKey: 'erp.customerHandoff.values.secureAccessReady',
     })
     expect(
       result.data.capabilities.find((capability) => capability.id === 'transfer_method'),

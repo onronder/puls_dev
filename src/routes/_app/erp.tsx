@@ -780,6 +780,83 @@ function ErpPage() {
         </section>
       ) : null}
 
+      {data && hasSelectedConnector ? (
+        <section id="erp-customer-handoff" className="mt-8 scroll-mt-6">
+          <SectionHeader
+            title={t('erp.customerHandoff.title')}
+            description={t('erp.customerHandoff.description')}
+          />
+          <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                  <ClipboardCheck className="h-5 w-5" aria-hidden />
+                </span>
+                <StatusPill tone={readinessTone(data.customerHandoff.status)}>
+                  {t(`erp.readinessStatus.${data.customerHandoff.status}`)}
+                </StatusPill>
+                <StatusPill tone={data.customerHandoff.shareableWithCustomer ? 'success' : 'info'}>
+                  {data.customerHandoff.shareableWithCustomer
+                    ? t('erp.customerHandoff.shareable.ready')
+                    : t('erp.customerHandoff.shareable.inProgress')}
+                </StatusPill>
+              </div>
+              <h2 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
+                {t(data.customerHandoff.titleKey)}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                {t(data.customerHandoff.summaryKey)}
+              </p>
+              <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
+                <div>
+                  <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.customerHandoff.labels.source')}
+                  </dt>
+                  <dd className="mt-1 truncate text-[var(--color-text-primary)]">
+                    {data.provider.label}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.customerHandoff.labels.score')}
+                  </dt>
+                  <dd className="mt-1 font-mono text-[var(--color-text-primary)]">
+                    {data.customerHandoff.score}%
+                  </dd>
+                </div>
+              </dl>
+              <Progress className="mt-3 h-1.5" value={data.customerHandoff.score} />
+              <div className="mt-4 space-y-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                <p>{t(data.customerHandoff.nextActionKey)}</p>
+                <p>{t('erp.customerHandoff.boundaryNote')}</p>
+              </div>
+            </div>
+            <ul className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+              {data.customerHandoff.items.map((item) => (
+                <li key={item.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_auto]">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {t(item.labelKey)}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      {t(item.descriptionKey)}
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
+                      {t(item.valueKey)}
+                    </p>
+                  </div>
+                  <div className="sm:justify-self-end">
+                    <StatusPill tone={readinessTone(item.status)}>
+                      {t(`erp.readinessStatus.${item.status}`)}
+                    </StatusPill>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      ) : null}
+
       {data && hasNoConnector ? (
         <section className="mt-8">
           <SectionHeader

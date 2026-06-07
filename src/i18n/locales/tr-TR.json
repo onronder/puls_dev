@@ -1152,6 +1152,85 @@
         "openPreview": "Önizleme adımına git"
       }
     },
+    "customerHandoff": {
+      "title": "Müşteri erişim paketi",
+      "description": "Kaynak kurulumu müşteriyle konuşulabilecek net bir paket haline gelir: kapsam, yöntem, alan sözleşmesi, güvenli erişim ve önizleme yolu.",
+      "boundaryNote": "Bu paket provider çağrısı yapmaz, credential değeri okumaz, dış sisteme yazmaz ve yalnızca güvenli hazırlık kanıtlarını özetler.",
+      "labels": {
+        "source": "Kaynak",
+        "score": "Paket skoru"
+      },
+      "shareable": {
+        "ready": "Paylaşıma hazır",
+        "inProgress": "Hazırlanıyor"
+      },
+      "status": {
+        "ready": {
+          "title": "Müşteri paketi hazır",
+          "summary": "Kaynak, kapsam, alan sözleşmesi, güvenli erişim ve önizleme yolu müşteri görüşmesi için yeterince açık."
+        },
+        "partial": {
+          "title": "Müşteri paketi hazırlanıyor",
+          "summary": "Kaynak ve kurulum kanıtları var; müşteri/API erişimi veya önizleme yolu tamamlanınca paket netleşir."
+        },
+        "blocked": {
+          "title": "Müşteri paketi başlamadı",
+          "summary": "Önce connector kaynağı ve bağlantı yöntemi netleşmeli."
+        }
+      },
+      "items": {
+        "source_identity": {
+          "label": "Kaynak kimliği",
+          "description": "Müşterinin hangi ERP, dosya veya özel API kaynağını bağlayacağı belli olmalı."
+        },
+        "transfer_method": {
+          "label": "Transfer yöntemi",
+          "description": "Canlı API, dosya veya manuel import yolu müşteri gerçekliğiyle uyumlu olmalı."
+        },
+        "scope_package": {
+          "label": "Veri kapsamı",
+          "description": "Hangi veri alanlarının bu kaynak tarafından besleneceği açıkça ayrılmalı."
+        },
+        "field_contract": {
+          "label": "Alan sözleşmesi",
+          "description": "Müşteri alanları PULS veri modeliyle güvenli ve izlenebilir biçimde eşleşmeli."
+        },
+        "secure_access": {
+          "label": "Güvenli erişim",
+          "description": "Secret değeri UI'da görünmeden yalnızca güvenli referans durumu izlenmeli."
+        },
+        "preview_path": {
+          "label": "Önizleme yolu",
+          "description": "Canlı API beklerken dosya veya dry-run import ile doğrulama yapılabilmeli."
+        }
+      },
+      "values": {
+        "sourceReady": "Kaynak seçildi",
+        "sourceMissing": "Kaynak seçimi bekliyor",
+        "methodMissing": "Yöntem bekliyor",
+        "scopeReady": "Kapsam hazır",
+        "scopePartial": "Kapsam kısmi",
+        "scopeMissing": "Kapsam bekliyor",
+        "fieldContractReady": "Alan sözleşmesi hazır",
+        "fieldContractPartial": "Alan sözleşmesi kısmi",
+        "fieldContractMissing": "Alan sözleşmesi bekliyor",
+        "secureAccessReady": "Güvenli referans hazır",
+        "secureAccessPartial": "Güvenli erişim süreci devam ediyor",
+        "secureAccessMissing": "Güvenli erişim bekliyor",
+        "previewReady": "Önizleme hazır",
+        "previewPartial": "Önizleme hazırlanabilir",
+        "previewMissing": "Önizleme bekliyor"
+      },
+      "nextActions": {
+        "select_source": "Müşteri için kullanılacak connector kaynağını seç.",
+        "confirm_method": "Transfer yöntemini müşteri erişim gerçekliğiyle netleştir.",
+        "complete_scope": "Kaynağın besleyeceği veri kapsamını ve sahipliğini tamamla.",
+        "complete_mapping": "Alan sözleşmesini müşteri verisiyle doğrulanabilir hale getir.",
+        "request_secure_reference": "Secret değeri toplamadan güvenli erişim referansı talep et.",
+        "prepare_preview": "Canlı API beklenirken dry-run veya dosya önizleme yolunu hazırla.",
+        "review_package": "Müşteri erişim paketi hazır; canlı runtime yine ayrı onay gerektirir."
+      }
+    },
     "actions": {
       "mapFields": "Alanları eşleştir",
       "reviewMapping": "Alan sözleşmesini incele",

@@ -762,6 +762,35 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Seçim preview’i availability ve recommended use gösterir.
 - Draft sheet catalog bilgilerini tekrarlar.
 
+### PR16.10.2 - Connector Customer Handoff Checklist
+
+**Ürün değeri:** Seçili connector ekranı teknik kurulum not defteri gibi değil, müşteriyle konuşulabilir erişim paketi gibi davranır.
+
+**Kapsam:**
+
+- Source identity
+- Transfer method
+- Data scope
+- Field contract
+- Secure access
+- Preview path
+- Selected connector ekranında customer handoff score, shareability ve checklist görünürlüğü
+
+**Kapsam dışı:**
+
+- Provider API call
+- Credential readback
+- Source/ERP writeback
+- Runtime connector execution
+- Database migration
+- Raw payload veya provider response readback
+
+**Doğrulama:**
+
+- `/erp` selected-connector state customer access package gösterir.
+- Handoff modeli mevcut safe setup evidence üzerinden üretilir.
+- No-connector state shareable customer package gibi görünmez.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

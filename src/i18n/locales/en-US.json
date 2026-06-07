@@ -1152,6 +1152,85 @@
         "openPreview": "Go to preview step"
       }
     },
+    "customerHandoff": {
+      "title": "Customer access package",
+      "description": "Turns source setup into a clear customer-facing package: scope, method, field contract, secure access, and preview path.",
+      "boundaryNote": "This package does not call providers, read credential values, write to external systems, or expose anything beyond safe readiness evidence.",
+      "labels": {
+        "source": "Source",
+        "score": "Package score"
+      },
+      "shareable": {
+        "ready": "Ready to share",
+        "inProgress": "In progress"
+      },
+      "status": {
+        "ready": {
+          "title": "Customer package is ready",
+          "summary": "Source, scope, field contract, secure access, and preview path are clear enough for the customer conversation."
+        },
+        "partial": {
+          "title": "Customer package is being prepared",
+          "summary": "Source and setup evidence exist; customer/API access or preview path should be completed to make the package clear."
+        },
+        "blocked": {
+          "title": "Customer package has not started",
+          "summary": "Clarify the connector source and transfer method first."
+        }
+      },
+      "items": {
+        "source_identity": {
+          "label": "Source identity",
+          "description": "The ERP, file, or custom API source the customer will connect must be clear."
+        },
+        "transfer_method": {
+          "label": "Transfer method",
+          "description": "Live API, file, or manual import path must match the customer's real access model."
+        },
+        "scope_package": {
+          "label": "Data scope",
+          "description": "The data domains fed by this source must be separated clearly."
+        },
+        "field_contract": {
+          "label": "Field contract",
+          "description": "Customer fields must map safely and traceably into the PULS data model."
+        },
+        "secure_access": {
+          "label": "Secure access",
+          "description": "Only secure reference status should be tracked without showing secret values in the UI."
+        },
+        "preview_path": {
+          "label": "Preview path",
+          "description": "File or dry-run import validation should work while live API access is pending."
+        }
+      },
+      "values": {
+        "sourceReady": "Source selected",
+        "sourceMissing": "Source selection pending",
+        "methodMissing": "Method pending",
+        "scopeReady": "Scope ready",
+        "scopePartial": "Scope partial",
+        "scopeMissing": "Scope pending",
+        "fieldContractReady": "Field contract ready",
+        "fieldContractPartial": "Field contract partial",
+        "fieldContractMissing": "Field contract pending",
+        "secureAccessReady": "Secure reference ready",
+        "secureAccessPartial": "Secure access in progress",
+        "secureAccessMissing": "Secure access pending",
+        "previewReady": "Preview ready",
+        "previewPartial": "Preview can be prepared",
+        "previewMissing": "Preview pending"
+      },
+      "nextActions": {
+        "select_source": "Select the connector source for the customer.",
+        "confirm_method": "Confirm transfer method against the customer's access reality.",
+        "complete_scope": "Complete the data scope and ownership this source will feed.",
+        "complete_mapping": "Make the field contract verifiable against customer data.",
+        "request_secure_reference": "Request a secure access reference without collecting secret values.",
+        "prepare_preview": "Prepare a dry-run or file preview path while live API access is pending.",
+        "review_package": "Customer access package is ready; live runtime still requires separate approval."
+      }
+    },
     "actions": {
       "mapFields": "Map fields",
       "reviewMapping": "Review field contract",
