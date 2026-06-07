@@ -690,6 +690,16 @@ PR16.9.2 maps selected connector/runtime evidence into the app-wide Notification
 | [`supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql`](../../supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql) | Service-role connector notification refresh RPC and bootstrap status producer mapping update              |
 | [`scripts/verify-16-9-2-connector-notification-producers.sh`](../../scripts/verify-16-9-2-connector-notification-producers.sh)                           | PR16.9.2 verify gate                                                                                      |
 
+## PR16.9.3 notification center UI
+
+PR16.9.3 adds the first production-grade app-wide Notification Center UI. It renders a global shell bell, cursor-paged notification pane, safe detail review, and read/dismiss actions through `puls_app` RPCs while keeping realtime, preferences, and external delivery closed.
+
+| Document / artifact                                                                                                                                      | Purpose                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_9_3_notification_center_ui.md](./16_9_3_notification_center_ui.md)                                                                                   | PR16.9.3 UI behavior contract, mobile/Capacitor requirements, smoke SQL, and PR16.9.4 handoff             |
+| [`supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql`](../../supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql) | Cursor-paged notification RPC and bootstrap status UI readiness update                                    |
+| [`scripts/verify-16-9-3-notification-center-ui.sh`](../../scripts/verify-16-9-3-notification-center-ui.sh)                                               | PR16.9.3 verify gate                                                                                      |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

@@ -5,6 +5,7 @@ export const pulsCore = () => supabase.schema('puls_core')
 export const pulsWorkflow = () => supabase.schema('puls_workflow')
 export const pulsPerformance = () => supabase.schema('puls_performance')
 export const pulsIntegration = () => supabase.schema('puls_integration')
+export const pulsApp = () => supabase.schema('puls_app')
 export const pulsCalc = () => supabase.schema('puls_calc')
 export const pulsAudit = () => supabase.schema('puls_audit')
 

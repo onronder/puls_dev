@@ -653,7 +653,7 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 
 **Planning contract:** [`16_9_app_wide_notification_center_strategy.md`](./16_9_app_wide_notification_center_strategy.md)
 
-**Implementation status:** PR16.9.0 implements the `puls_app` schema bootstrap and exposure smoke. PR16.9.0x hardens two pre-existing `puls_integration` lint errors. PR16.9.1 implements the durable app-wide notification ledger and authenticated RPC boundary. PR16.9.2 implements connector producer mapping through a service-role refresh boundary; UI, realtime, and delivery remain closed until later PR16.9 sub-phases.
+**Implementation status:** PR16.9.0 implements the `puls_app` schema bootstrap and exposure smoke. PR16.9.0x hardens two pre-existing `puls_integration` lint errors. PR16.9.1 implements the durable app-wide notification ledger and authenticated RPC boundary. PR16.9.2 implements connector producer mapping through a service-role refresh boundary. PR16.9.3 implements the global Notification Center UI with cursor-paged `puls_app` RPC reads; realtime and external delivery remain closed until later PR16.9 sub-phases.
 
 **Kapsam:**
 
@@ -686,7 +686,8 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - Role visibility doğru çalışır.
 - Read/unread/dismiss UI state DB ledger ile tutarlıdır.
 - PR16.9.2 connector producer refresh is service-role only and idempotent.
-- UI, realtime, and external delivery should start only after local and linked PR16.9.2 smoke pass.
+- PR16.9.3 notification center UI uses `puls_app` RPCs explicitly, supports detail pane review before navigation, and passes responsive desktop/mobile smoke.
+- Realtime and external delivery should start only after PR16.9.3 UI smoke passes.
 
 ### PR16.10 - Canias Runtime Spike On Generic Connector Foundation
 
