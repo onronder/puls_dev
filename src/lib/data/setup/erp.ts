@@ -332,6 +332,36 @@ export type ConnectorImportPreview = {
   safeToApply: false
 }
 
+export type ConnectorAccessRequirementId =
+  | 'source_selected'
+  | 'connection_method'
+  | 'metadata_contract'
+  | 'secure_access_reference'
+  | 'customer_api_access'
+  | 'offline_preview_path'
+
+export type ConnectorAccessRequirement = {
+  id: ConnectorAccessRequirementId
+  labelKey: string
+  descriptionKey: string
+  status: ConnectorReadinessStatus
+  valueKey: string
+  nextActionKey: string
+}
+
+export type ConnectorAccessReadiness = {
+  status: ConnectorReadinessStatus
+  score: number
+  titleKey: string
+  summaryKey: string
+  nextActionKey: string
+  liveProviderCallsEnabled: false
+  credentialReadbackEnabled: false
+  sourceWritebackEnabled: false
+  canProceedWithoutLiveApi: boolean
+  requirements: ConnectorAccessRequirement[]
+}
+
 export type ConnectorApplyChangeSetStatus =
   | 'not_available'
   | 'needs_preview'
@@ -1284,6 +1314,7 @@ export type ErpOverview = {
   preflight: ConnectorPreflightResult
   credentialBoundary: ConnectorCredentialBoundary
   credentialHandoff: ConnectorCredentialHandoff
+  accessReadiness: ConnectorAccessReadiness
   importPreview: ConnectorImportPreview
   applyReadiness: ConnectorApplyReadiness
   applyApprovalPolicy: ConnectorApplyApprovalPolicy
@@ -2934,6 +2965,183 @@ function emptyConnectorImportPreview(
   }
 }
 
+function accessRequirement(
+  id: ConnectorAccessRequirementId,
+  status: ConnectorReadinessStatus,
+  valueKey: string,
+  nextActionKey: string,
+): ConnectorAccessRequirement {
+  return {
+    id,
+    labelKey: `erp.accessReadiness.requirements.${id}.label`,
+    descriptionKey: `erp.accessReadiness.requirements.${id}.description`,
+    status,
+    valueKey,
+    nextActionKey,
+  }
+}
+
+function scoreAccessRequirement(status: ConnectorReadinessStatus): number {
+  if (status === 'ready') return 100
+  if (status === 'partial') return 50
+  return 0
+}
+
+function summarizeAccessStatus(
+  connectorState: ConnectorLifecycleState,
+  requirements: ConnectorAccessRequirement[],
+): ConnectorReadinessStatus {
+  if (connectorState !== 'connector_selected') return 'blocked'
+  if (requirements.every((requirement) => requirement.status === 'ready')) return 'ready'
+  if (requirements.some((requirement) => requirement.status !== 'blocked')) return 'partial'
+  return 'blocked'
+}
+
+function deriveAccessNextAction(
+  connectorState: ConnectorLifecycleState,
+  requirements: ConnectorAccessRequirement[],
+): string {
+  if (connectorState !== 'connector_selected')
+    return 'erp.accessReadiness.nextActions.select_source'
+  const firstBlocked = requirements.find((requirement) => requirement.status === 'blocked')
+  if (firstBlocked) return firstBlocked.nextActionKey
+  const firstPartial = requirements.find((requirement) => requirement.status === 'partial')
+  return firstPartial?.nextActionKey ?? 'erp.accessReadiness.nextActions.review_readiness'
+}
+
+function buildConnectorAccessReadiness({
+  connectorState,
+  connectionMethod,
+  credentialBoundary,
+  credentialHandoff,
+  importPreview,
+  mappedFields,
+  totalFields,
+  namespaceCount,
+}: {
+  connectorState: ConnectorLifecycleState
+  connectionMethod?: string | null
+  credentialBoundary: ConnectorCredentialBoundary
+  credentialHandoff: ConnectorCredentialHandoff
+  importPreview: ConnectorImportPreview
+  mappedFields: number
+  totalFields: number
+  namespaceCount: number
+}): ConnectorAccessReadiness {
+  const hasConnection = connectorState === 'connector_selected'
+  const method = connectionMethod ?? null
+  const methodKnown = method !== null
+  const liveApiMethod =
+    method === 'rest_api' || method === 'soap' || method === 'webhook' || method === 'custom_api'
+  const metadataReady =
+    hasConnection && totalFields > 0 && mappedFields >= totalFields && namespaceCount > 0
+  const metadataPartial = hasConnection && (totalFields > 0 || namespaceCount > 0)
+  const credentialReady = credentialBoundary.status === 'ready'
+  const credentialPartial =
+    credentialBoundary.status === 'partial' ||
+    credentialHandoff.status === 'requested' ||
+    credentialHandoff.status === 'reference_pending' ||
+    credentialHandoff.status === 'ready_for_verification'
+  const previewReady = importPreview.status === 'preview_ready'
+  const previewPartial =
+    importPreview.status === 'no_batch' ||
+    importPreview.status === 'ready_to_preview' ||
+    importPreview.action === 'run_dry_run_preview'
+
+  const requirements = [
+    accessRequirement(
+      'source_selected',
+      hasConnection ? 'ready' : 'blocked',
+      hasConnection
+        ? 'erp.accessReadiness.values.sourceSelected'
+        : 'erp.accessReadiness.values.sourceMissing',
+      'erp.accessReadiness.nextActions.select_source',
+    ),
+    accessRequirement(
+      'connection_method',
+      hasConnection && method ? 'ready' : hasConnection ? 'partial' : 'blocked',
+      method
+        ? `erp.accessReadiness.values.methods.${method}`
+        : 'erp.accessReadiness.values.methodMissing',
+      'erp.accessReadiness.nextActions.confirm_method',
+    ),
+    accessRequirement(
+      'metadata_contract',
+      metadataReady ? 'ready' : metadataPartial ? 'partial' : 'blocked',
+      metadataReady
+        ? 'erp.accessReadiness.values.metadataReady'
+        : metadataPartial
+          ? 'erp.accessReadiness.values.metadataPartial'
+          : 'erp.accessReadiness.values.metadataMissing',
+      'erp.accessReadiness.nextActions.complete_metadata',
+    ),
+    accessRequirement(
+      'secure_access_reference',
+      credentialReady ? 'ready' : credentialPartial ? 'partial' : 'blocked',
+      credentialReady
+        ? 'erp.accessReadiness.values.credentialReady'
+        : credentialPartial
+          ? 'erp.accessReadiness.values.credentialPartial'
+          : 'erp.accessReadiness.values.credentialMissing',
+      'erp.accessReadiness.nextActions.request_secure_reference',
+    ),
+    accessRequirement(
+      'customer_api_access',
+      !hasConnection || !methodKnown
+        ? 'blocked'
+        : !liveApiMethod
+          ? 'ready'
+          : credentialReady || credentialPartial
+            ? 'partial'
+            : 'blocked',
+      !hasConnection || !methodKnown
+        ? 'erp.accessReadiness.values.customerApiMissing'
+        : !liveApiMethod
+          ? 'erp.accessReadiness.values.liveApiNotRequired'
+          : credentialReady || credentialPartial
+            ? 'erp.accessReadiness.values.customerApiPartial'
+            : 'erp.accessReadiness.values.customerApiMissing',
+      'erp.accessReadiness.nextActions.request_customer_api_access',
+    ),
+    accessRequirement(
+      'offline_preview_path',
+      previewReady ? 'ready' : previewPartial ? 'partial' : 'blocked',
+      previewReady
+        ? 'erp.accessReadiness.values.previewReady'
+        : previewPartial
+          ? 'erp.accessReadiness.values.previewPartial'
+          : 'erp.accessReadiness.values.previewMissing',
+      'erp.accessReadiness.nextActions.prepare_preview',
+    ),
+  ]
+
+  const status = summarizeAccessStatus(connectorState, requirements)
+  const score = Math.round(
+    requirements.reduce(
+      (total, requirement) => total + scoreAccessRequirement(requirement.status),
+      0,
+    ) / requirements.length,
+  )
+
+  return {
+    status,
+    score,
+    titleKey: `erp.accessReadiness.status.${status}.title`,
+    summaryKey: `erp.accessReadiness.status.${status}.summary`,
+    nextActionKey: deriveAccessNextAction(connectorState, requirements),
+    liveProviderCallsEnabled: false,
+    credentialReadbackEnabled: false,
+    sourceWritebackEnabled: false,
+    canProceedWithoutLiveApi:
+      hasConnection &&
+      requirements.find((requirement) => requirement.id === 'metadata_contract')?.status !==
+        'blocked' &&
+      requirements.find((requirement) => requirement.id === 'offline_preview_path')?.status !==
+        'blocked',
+    requirements,
+  }
+}
+
 function buildConnectorImportPreview({
   connectorState,
   batch,
@@ -3717,8 +3925,7 @@ function buildConnectorGuardedUpdateRollbackPreview({
       rowCount: Number(row?.row_count ?? runbook.summary.updateCount),
       rollbackCount: Number(row?.rollback_count ?? 0),
       blockedCount: Number(
-        row?.blocked_count ??
-          (status === 'blocked' ? Math.max(runbook.summary.updateCount, 1) : 0),
+        row?.blocked_count ?? (status === 'blocked' ? Math.max(runbook.summary.updateCount, 1) : 0),
       ),
       staleBlockedCount: Number(row?.stale_blocked_count ?? 0),
       fieldDiffCount: Number(row?.field_diff_count ?? runbook.summary.fieldDiffCount),
@@ -3759,7 +3966,8 @@ function buildConnectorGuardedUpdateRollbackApproval({
       ? 'not_available'
       : approvalRecorded
         ? 'approval_recorded'
-        : rollbackPreview.status === 'not_available' || rollbackPreview.status === 'needs_generation'
+        : rollbackPreview.status === 'not_available' ||
+            rollbackPreview.status === 'needs_generation'
           ? 'needs_preview'
           : previewReady
             ? 'needs_approval'
@@ -3905,7 +4113,8 @@ function buildConnectorGuardedUpdateRollbackWorkerReadiness({
     workerContract: row?.worker_contract ?? null,
     expectedJobType: row?.expected_job_type ?? null,
     expectedJobDomain: row?.expected_job_domain ?? null,
-    rollbackPreviewChecksum: row?.rollback_preview_checksum ?? rollbackApproval.rollbackPreviewChecksum,
+    rollbackPreviewChecksum:
+      row?.rollback_preview_checksum ?? rollbackApproval.rollbackPreviewChecksum,
     nextActionKey:
       row?.next_action_key ??
       (status === 'needs_generation'
@@ -4386,8 +4595,7 @@ function buildConnectorApplyExecutionContract({
       applySafetyContract.contractVersion === 'pr16.4.4-guarded-update-recovery-runbook-v1' ||
       applySafetyContract.contractVersion === 'pr16.5-guarded-update-rollback-preview-v1' ||
       applySafetyContract.contractVersion === 'pr16.6-guarded-update-rollback-approval-v1' ||
-      applySafetyContract.contractVersion ===
-        'pr16.7-guarded-update-rollback-worker-readiness-v1')
+      applySafetyContract.contractVersion === 'pr16.7-guarded-update-rollback-worker-readiness-v1')
   const workerGuardedUpdateOpen =
     workerApplyBoundaryOpen &&
     (applySafetyContract.contractVersion === 'pr16.4.2-guarded-update-worker-apply-v1' ||
@@ -4395,8 +4603,7 @@ function buildConnectorApplyExecutionContract({
       applySafetyContract.contractVersion === 'pr16.4.4-guarded-update-recovery-runbook-v1' ||
       applySafetyContract.contractVersion === 'pr16.5-guarded-update-rollback-preview-v1' ||
       applySafetyContract.contractVersion === 'pr16.6-guarded-update-rollback-approval-v1' ||
-      applySafetyContract.contractVersion ===
-        'pr16.7-guarded-update-rollback-worker-readiness-v1')
+      applySafetyContract.contractVersion === 'pr16.7-guarded-update-rollback-worker-readiness-v1')
   const createOnlySafeToExecute =
     previewReady &&
     approvalRecorded &&
@@ -5958,6 +6165,7 @@ function buildOverview({
   const readinessScore = deriveReadinessScore(checks)
   const readinessStatus = deriveReadinessStatus(checks)
   const identityCount = namespaces.reduce((total, namespace) => total + namespace.identityCount, 0)
+  const currentConnection = connections?.find((row) => row.id === connectionId)
   const preflight = buildConnectorPreflightResult({
     connectorState,
     isActive,
@@ -5981,7 +6189,7 @@ function buildOverview({
   })
   const capabilities = buildConnectorSourceCapabilities({
     connectorState,
-    connectionMethod: connections?.find((row) => row.id === connectionId)?.connection_method,
+    connectionMethod: currentConnection?.connection_method,
     credentialBoundary,
     canonicalClasses,
     namespaceCount: namespaces.length,
@@ -6008,6 +6216,16 @@ function buildOverview({
     updatedAt: credentialHandoffUpdatedAt,
   })
   const resolvedImportPreview = importPreview ?? emptyConnectorImportPreview(connectorState)
+  const accessReadiness = buildConnectorAccessReadiness({
+    connectorState,
+    connectionMethod: currentConnection?.connection_method,
+    credentialBoundary,
+    credentialHandoff,
+    importPreview: resolvedImportPreview,
+    mappedFields,
+    totalFields,
+    namespaceCount: namespaces.length,
+  })
   const resolvedApplyReadiness =
     applyReadiness ??
     buildConnectorApplyReadiness({
@@ -6143,6 +6361,7 @@ function buildOverview({
     preflight,
     credentialBoundary,
     credentialHandoff,
+    accessReadiness,
     importPreview: resolvedImportPreview,
     applyReadiness: resolvedApplyReadiness,
     applyApprovalPolicy: resolvedApplyApprovalPolicy,
@@ -6787,12 +7006,11 @@ async function fetchRealErpOverview(userId: string): Promise<ErpOverview> {
     rollbackPreview: guardedUpdateRollbackPreview,
     row: guardedUpdateRollbackApprovalRow,
   })
-  const guardedUpdateRollbackWorkerReadiness =
-    buildConnectorGuardedUpdateRollbackWorkerReadiness({
-      connectorState: connection ? 'connector_selected' : 'no_connector',
-      rollbackApproval: guardedUpdateRollbackApproval,
-      row: guardedUpdateRollbackWorkerReadinessRow,
-    })
+  const guardedUpdateRollbackWorkerReadiness = buildConnectorGuardedUpdateRollbackWorkerReadiness({
+    connectorState: connection ? 'connector_selected' : 'no_connector',
+    rollbackApproval: guardedUpdateRollbackApproval,
+    row: guardedUpdateRollbackWorkerReadinessRow,
+  })
 
   return buildOverview({
     connectorState: connection ? 'connector_selected' : 'no_connector',
@@ -8113,7 +8331,8 @@ export async function recordConnectorGuardedUpdateRollbackApproval(
         blocked_count: overview.guardedUpdateRollbackPreview.summary.blockedCount,
         stale_blocked_count: overview.guardedUpdateRollbackPreview.summary.staleBlockedCount,
         field_diff_count: overview.guardedUpdateRollbackPreview.summary.fieldDiffCount,
-        rollback_snapshot_count: overview.guardedUpdateRollbackPreview.summary.rollbackSnapshotCount,
+        rollback_snapshot_count:
+          overview.guardedUpdateRollbackPreview.summary.rollbackSnapshotCount,
         approval_policy: 'admin_only',
         approval_recorded: true,
         approver_role: ctx.personaRole,

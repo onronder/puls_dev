@@ -333,6 +333,23 @@ describe('fetchErpOverviewWithMeta', () => {
       blockedBy: 'none',
       captureBoundary: 'server_side_write_only',
     })
+    expect(result.data.accessReadiness).toMatchObject({
+      status: 'partial',
+      score: 75,
+      liveProviderCallsEnabled: false,
+      credentialReadbackEnabled: false,
+      sourceWritebackEnabled: false,
+      canProceedWithoutLiveApi: true,
+      nextActionKey: 'erp.accessReadiness.nextActions.request_secure_reference',
+    })
+    expect(
+      result.data.accessReadiness.requirements.find(
+        (requirement) => requirement.id === 'customer_api_access',
+      ),
+    ).toMatchObject({
+      status: 'partial',
+      valueKey: 'erp.accessReadiness.values.customerApiPartial',
+    })
     expect(result.data.lifecycle).toMatchObject({
       stage: 'credential',
       status: 'partial',
@@ -2726,12 +2743,8 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
       'snapshot_payload',
     )
-    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
-      'before_value',
-    )
-    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
-      'after_value',
-    )
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain('before_value')
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain('after_value')
     expect(JSON.stringify(overview.data.guardedUpdateRollbackPreview)).not.toContain(
       '"raw_payload":',
     )
@@ -2744,9 +2757,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(JSON.stringify(overview.data.guardedUpdateRollbackApproval)).not.toContain(
       'before_value',
     )
-    expect(JSON.stringify(overview.data.guardedUpdateRollbackApproval)).not.toContain(
-      'after_value',
-    )
+    expect(JSON.stringify(overview.data.guardedUpdateRollbackApproval)).not.toContain('after_value')
     expect(JSON.stringify(overview.data.guardedUpdateRollbackApproval)).not.toContain(
       '"raw_payload":',
     )
@@ -2834,6 +2845,18 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.providerOptions.every((option) => option.requirements.length > 0)).toBe(true)
     expect(result.data.providerOptions[0].readinessLabelKey).toBe(
       'erp.providerOptions.canias.readiness',
+    )
+    expect(result.data.accessReadiness).toMatchObject({
+      status: 'blocked',
+      score: 0,
+      nextActionKey: 'erp.accessReadiness.nextActions.select_source',
+      liveProviderCallsEnabled: false,
+      credentialReadbackEnabled: false,
+      sourceWritebackEnabled: false,
+      canProceedWithoutLiveApi: false,
+    })
+    expect(result.data.accessReadiness.requirements.every((row) => row.status === 'blocked')).toBe(
+      true,
     )
     expect(isErpOverviewEmpty(result.data)).toBe(false)
   })

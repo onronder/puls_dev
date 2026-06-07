@@ -757,6 +757,17 @@ PR16.9.7x aligns `/ayarlar` with the PR16.9.7 Notification Center preference UI.
 | [`src/lib/data/settings/overview.test.ts`](../../src/lib/data/settings/overview.test.ts)                                                                  | Regression coverage for tenant-ready and no-tenant locked notification states                                |
 | [`scripts/verify-16-9-7x-settings-notification-status-hotfix.sh`](../../scripts/verify-16-9-7x-settings-notification-status-hotfix.sh)                   | PR16.9.7x verify gate                                                                                       |
 
+## PR16.10.0 connector access readiness
+
+PR16.10.0 turns the ERP connector surface into a provider-independent access readiness module before any live customer API work begins. Canias, Logo, CSV/Excel, and custom API sources share the same readiness vocabulary: selected source, method, metadata, secure reference, customer/API access, and offline preview path. Provider calls, credential value readback, and source writeback remain closed.
+
+| Document / artifact                                                                                                                   | Purpose                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_10_0_connector_access_readiness.md](./16_10_0_connector_access_readiness.md)                                                       | PR16.10.0 product contract, safety boundary, verification, and PR17 handoff                               |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Provider-independent readiness model derived from existing safe connector setup evidence                   |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | Production-grade `/erp` access readiness UI and real-action routing                                       |
+| [`scripts/verify-16-10-0-connector-access-readiness.sh`](../../scripts/verify-16-10-0-connector-access-readiness.sh)                   | PR16.10.0 verify gate                                                                                    |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

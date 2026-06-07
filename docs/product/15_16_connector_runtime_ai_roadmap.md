@@ -695,36 +695,46 @@ CRUD audit kuralı da aynı sertlikte ele alınmalıdır:
 - PR16.9.7x keeps `/ayarlar` notification preferences `ready/enabled` for tenant-scoped users while preserving the no-tenant locked state.
 - External delivery should start only after Notification Center inbox, producer, UI, and private realtime fallback smoke pass.
 
-### PR16.10 - Canias Runtime Spike On Generic Connector Foundation
+### PR16.10 - Connector Access Readiness Before Live Provider Runtime
 
-**Ürün değeri:** Canias artık sadece metadata/demo profili olmaktan çıkar; generic PULS runtime omurgası üzerinde ilk ERP API connector denemesi başlar.
+PR16.10.0 implements provider-independent connector access readiness before any live Canias or customer API integration is attempted.
+
+**Ürün değeri:** ERP connector yüzeyi artık geliştirme not defteri gibi davranmaz; Canias, Logo, CSV/Excel ve custom API kaynakları için aynı üretim diliyle “neyimiz hazır, ne eksik, API olmadan ne ilerleyebilir” sorusunu yanıtlar.
 
 **Kapsam:**
 
-- Canias connector adapter contract
-- Read-only connection test
-- Metadata discovery veya declared-field refresh
-- Dry-run import batch oluşturma
-- Preview üretme
-- Runtime logs
-- PR16 safety modeline uygun change-set handoff
+- Provider-independent access readiness model
+- `/erp` içinde production-grade erişim hazırlığı modülü
+- Source selection, connection method, metadata contract, secure reference, customer/API access ve offline preview path kanıtları
+- Gerçek aksiyon varsa görünen yönlendirme:
+  - secure reference talebi,
+  - metadata/mapping inceleme,
+  - dry-run preview adımına geçiş
+- Canias, Logo, CSV/Excel ve custom API için ortak vocabulary
+- No provider API calls, no credential readback, no source writeback
 
 **Kapsam dışı:**
 
+- Gerçek Canias API çağrısı
+- Müşteri API credential/base URL/network testi
+- Provider-specific adapter implementation
 - ERP writeback
 - Destructive sync
 - Direct canonical apply without PR16 safety controls
-- Canias-specific product architecture
+- Raw provider payload UI/AI/Sentry exposure
 
 **AI-ready çıktı:**
 
-- AI Coach Canias'tan gelen setup/preflight/preview sinyallerini diğer kaynaklarla aynı vocabulary ile yorumlar.
+- AI Coach connector kaynaklarını provider isminden bağımsız olarak aynı readiness vocabulary ile yorumlar.
+- Canlı API erişimi yokken kullanıcıya güvenli ve ürün diliyle eksik listesini anlatabilir.
 
 **Doğrulama:**
 
-- Canias runtime generic job queue üzerinden çalışır.
-- Provider-specific code generic connector contract dışına taşmaz.
-- Raw provider payload UI/AI/Sentry içinde görünmez.
+- `/erp` selected connector durumunda erişim hazırlığı özetini ve checklist’i gösterir.
+- Canlı API yöntemleri customer/API access adımını eksik/kısmi gösterir.
+- Manuel veya dosya tabanlı yöntemlerde live API gereksinimi hazır kabul edilir.
+- Provider calls, credential value readback ve source writeback kapalı kalır.
+- No database migration is required.
 
 ### PR16.11 - AI Operational Recommendations
 
