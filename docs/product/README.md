@@ -779,6 +779,17 @@ PR16.10.1 makes `/erp` source selection read like a connector catalog rather tha
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` source cards, preview, and setup draft catalog visibility                                          |
 | [`scripts/verify-16-10-1-connector-source-catalog.sh`](../../scripts/verify-16-10-1-connector-source-catalog.sh)                       | PR16.10.1 verify gate                                                                                    |
 
+## PR16.10.2 connector customer handoff checklist
+
+PR16.10.2 turns the selected `/erp` connector into a customer-facing access package. It shows source identity, transfer method, data scope, field contract, secure access, and preview path without opening provider calls, credential readback, source writeback, runtime execution, or raw payload exposure.
+
+| Document / artifact                                                                                                                   | Purpose                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_10_2_connector_customer_handoff_checklist.md](./16_10_2_connector_customer_handoff_checklist.md)                                   | PR16.10.2 product contract, customer handoff checklist, safety boundary, and verification                 |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Connector customer handoff model derived from safe setup evidence                                         |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` selected connector customer access package UI                                                      |
+| [`scripts/verify-16-10-2-connector-customer-handoff-checklist.sh`](../../scripts/verify-16-10-2-connector-customer-handoff-checklist.sh) | PR16.10.2 verify gate                                                                                    |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
