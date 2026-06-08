@@ -629,30 +629,6 @@ function ErpPage() {
   const selectedProviderCanStart = selectedProvider?.setupAvailable === true
   const pageTitle = data && hasNoConnector ? t('erp.noConnector.title') : t('erp.title')
   const pageSubtitle = data && hasNoConnector ? t('erp.noConnector.subtitle') : t('erp.subtitle')
-  const accessNextAction = data?.accessReadiness.nextActionKey
-  const accessAction =
-    accessNextAction === 'erp.accessReadiness.nextActions.request_secure_reference' &&
-    canRequestCredentialHandoff
-      ? {
-          label: t('erp.accessReadiness.actions.requestSecureReference'),
-          icon: ShieldCheck,
-          onClick: () => setCredentialSheetOpen(true),
-        }
-      : accessNextAction === 'erp.accessReadiness.nextActions.complete_metadata'
-        ? {
-            label: t('erp.accessReadiness.actions.reviewMetadata'),
-            icon: Database,
-            onClick: () => showWorkbenchTab('fields', 'erp-mapping-discovery'),
-          }
-        : accessNextAction === 'erp.accessReadiness.nextActions.prepare_preview' &&
-            canRunImportPreview
-          ? {
-              label: t('erp.accessReadiness.actions.openPreview'),
-              icon: SearchCheck,
-              onClick: () => showWorkbenchTab('previewApply', 'erp-import-preview'),
-            }
-          : null
-  const AccessActionIcon = accessAction?.icon
   const mappedFieldCount = data?.mappings.filter((mapping) => mapping.status === 'mapped').length ?? 0
   const totalFieldCount = data?.mappings.length ?? 0
   const previewReady = data?.importPreview.status === 'preview_ready'
@@ -776,7 +752,7 @@ function ErpPage() {
             evidenceKey: 'erp.journey.steps.source.evidence',
             detailTab: canRequestCredentialHandoff ? 'credentials' : 'setup',
             detailTargetId: canRequestCredentialHandoff
-              ? 'erp-access-readiness'
+              ? 'erp-credential-boundary'
               : 'erp-setup-details',
             primaryAction: canRequestCredentialHandoff
               ? {
@@ -1221,237 +1197,6 @@ function ErpPage() {
         </div>
       ) : null}
 
-      {data && hasSelectedConnector && technicalDetailsOpen ? (
-        <section id="erp-access-readiness" className="mt-8 scroll-mt-6">
-          <SectionHeader
-            title={t('erp.accessReadiness.title')}
-            description={t('erp.accessReadiness.description')}
-          />
-          <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
-                  <ClipboardCheck className="h-5 w-5" aria-hidden />
-                </span>
-                <StatusPill tone={readinessTone(data.accessReadiness.status)}>
-                  {t(`erp.readinessStatus.${data.accessReadiness.status}`)}
-                </StatusPill>
-              </div>
-              <h2 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
-                {t(data.accessReadiness.titleKey)}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
-                {t(data.accessReadiness.summaryKey)}
-              </p>
-              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    {t('erp.accessReadiness.score')}
-                  </span>
-                  <span className="font-mono text-lg font-semibold text-[var(--color-text-primary)]">
-                    {data.accessReadiness.score}%
-                  </span>
-                </div>
-                <Progress className="mt-2 h-1.5" value={data.accessReadiness.score} />
-              </div>
-              <div className="mt-4 space-y-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                <p>{t(data.accessReadiness.nextActionKey)}</p>
-                <p>{t('erp.accessReadiness.boundaryNote')}</p>
-              </div>
-              {accessAction ? (
-                <Button
-                  type="button"
-                  className="touch-target mt-4 w-full sm:w-auto"
-                  onClick={accessAction.onClick}
-                >
-                  {AccessActionIcon ? <AccessActionIcon className="h-4 w-4" /> : null}
-                  {accessAction.label}
-                </Button>
-              ) : null}
-            </div>
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {data.accessReadiness.requirements.map((requirement) => (
-                <li
-                  key={requirement.id}
-                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                        {t(requirement.labelKey)}
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                        {t(requirement.descriptionKey)}
-                      </p>
-                    </div>
-                    <StatusPill tone={readinessTone(requirement.status)}>
-                      {t(`erp.readinessStatus.${requirement.status}`)}
-                    </StatusPill>
-                  </div>
-                  <p className="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
-                    {t(requirement.valueKey)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      ) : null}
-
-      {data && hasSelectedConnector && technicalDetailsOpen ? (
-        <section id="erp-customer-handoff" className="mt-8 scroll-mt-6">
-          <SectionHeader
-            title={t('erp.customerHandoff.title')}
-            description={t('erp.customerHandoff.description')}
-          />
-          <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
-                  <ClipboardCheck className="h-5 w-5" aria-hidden />
-                </span>
-                <StatusPill tone={readinessTone(data.customerHandoff.status)}>
-                  {t(`erp.readinessStatus.${data.customerHandoff.status}`)}
-                </StatusPill>
-                <StatusPill tone={data.customerHandoff.shareableWithCustomer ? 'success' : 'info'}>
-                  {data.customerHandoff.shareableWithCustomer
-                    ? t('erp.customerHandoff.shareable.ready')
-                    : t('erp.customerHandoff.shareable.inProgress')}
-                </StatusPill>
-              </div>
-              <h2 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
-                {t(data.customerHandoff.titleKey)}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
-                {t(data.customerHandoff.summaryKey)}
-              </p>
-              <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
-                <div>
-                  <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    {t('erp.customerHandoff.labels.source')}
-                  </dt>
-                  <dd className="mt-1 truncate text-[var(--color-text-primary)]">
-                    {data.provider.label}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    {t('erp.customerHandoff.labels.score')}
-                  </dt>
-                  <dd className="mt-1 font-mono text-[var(--color-text-primary)]">
-                    {data.customerHandoff.score}%
-                  </dd>
-                </div>
-              </dl>
-              <Progress className="mt-3 h-1.5" value={data.customerHandoff.score} />
-              <div className="mt-4 space-y-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                <p>{t(data.customerHandoff.nextActionKey)}</p>
-                <p>{t('erp.customerHandoff.boundaryNote')}</p>
-              </div>
-            </div>
-            <ul className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
-              {data.customerHandoff.items.map((item) => (
-                <li key={item.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_auto]">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {t(item.labelKey)}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                      {t(item.descriptionKey)}
-                    </p>
-                    <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
-                      {t(item.valueKey)}
-                    </p>
-                  </div>
-                  <div className="sm:justify-self-end">
-                    <StatusPill tone={readinessTone(item.status)}>
-                      {t(`erp.readinessStatus.${item.status}`)}
-                    </StatusPill>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      ) : null}
-
-      {data && hasSelectedConnector && technicalDetailsOpen ? (
-        <section id="erp-go-live-plan" className="mt-8 scroll-mt-6">
-          <SectionHeader
-            title={t('erp.goLivePlan.title')}
-            description={t('erp.goLivePlan.description')}
-          />
-          <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 lg:grid-cols-[0.85fr_1.15fr]">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
-                  <SearchCheck className="h-5 w-5" aria-hidden />
-                </span>
-                <StatusPill tone={readinessTone(data.goLivePlan.status)}>
-                  {t(`erp.readinessStatus.${data.goLivePlan.status}`)}
-                </StatusPill>
-                <StatusPill tone={data.goLivePlan.canStartCustomerPilot ? 'success' : 'warning'}>
-                  {data.goLivePlan.canStartCustomerPilot
-                    ? t('erp.goLivePlan.pilot.ready')
-                    : t('erp.goLivePlan.pilot.waiting')}
-                </StatusPill>
-              </div>
-              <h2 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
-                {t(data.goLivePlan.titleKey)}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
-                {t(data.goLivePlan.summaryKey)}
-              </p>
-              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    {t('erp.goLivePlan.labels.score')}
-                  </span>
-                  <span className="font-mono text-lg font-semibold text-[var(--color-text-primary)]">
-                    {data.goLivePlan.score}%
-                  </span>
-                </div>
-                <Progress className="mt-2 h-1.5" value={data.goLivePlan.score} />
-              </div>
-              <div className="mt-4 space-y-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                <p>{t(data.goLivePlan.nextActionKey)}</p>
-                <p>{t('erp.goLivePlan.boundaryNote')}</p>
-              </div>
-            </div>
-            <ol className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
-              {data.goLivePlan.gaps.map((gap) => (
-                <li key={gap.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_auto]">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                        {t(gap.labelKey)}
-                      </p>
-                      <span className="rounded-full bg-[var(--color-bg-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">
-                        {t(`erp.goLivePlan.owners.${gap.owner}`)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                      {t(gap.descriptionKey)}
-                    </p>
-                    <p className="mt-2 text-xs font-medium text-[var(--color-text-secondary)]">
-                      {t(gap.evidenceKey)}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                      {t(gap.actionKey)}
-                    </p>
-                  </div>
-                  <div className="sm:justify-self-end">
-                    <StatusPill tone={readinessTone(gap.status)}>
-                      {t(`erp.readinessStatus.${gap.status}`)}
-                    </StatusPill>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-      ) : null}
-
       {data && hasNoConnector ? (
         <section className="mt-8">
           <SectionHeader
@@ -1787,32 +1532,17 @@ function ErpPage() {
       ) : null}
 
       {data && hasSelectedConnector ? (
-        <details
+        <SheetShell
           open={technicalDetailsOpen}
-          onToggle={(event) => setTechnicalDetailsOpen(event.currentTarget.open)}
-          className="mt-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]"
+          onOpenChange={setTechnicalDetailsOpen}
+          title={t('erp.journey.technicalDetails.title')}
+          description={t('erp.journey.technicalDetails.description')}
+          className="w-[calc(100vw-1rem)] sm:inset-x-auto sm:bottom-4 sm:left-auto sm:right-4 sm:top-4 sm:mt-0 sm:h-auto sm:max-h-none sm:w-[min(1040px,calc(100vw-2rem))] sm:rounded-2xl"
         >
-          <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 marker:hidden">
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-[var(--color-text-primary)]">
-                {t('erp.journey.technicalDetails.title')}
-              </span>
-              <span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">
-                {t('erp.journey.technicalDetails.description')}
-              </span>
-            </span>
-            <ChevronRight
-              className={cn(
-                'h-5 w-5 shrink-0 text-[var(--color-text-muted)] transition-transform',
-                technicalDetailsOpen ? 'rotate-90' : 'rotate-0',
-              )}
-              aria-hidden
-            />
-          </summary>
           <Tabs
             value={activeWorkbenchTab}
             onValueChange={(value) => setActiveWorkbenchTab(value as ErpWorkbenchTab)}
-            className="border-t border-[var(--color-border)] p-4"
+            className="space-y-4"
           >
           <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
             <TabsList
@@ -3880,7 +3610,7 @@ function ErpPage() {
           </TabsContent>
 
           <TabsContent value="credentials" className="mt-6">
-            <section>
+            <section id="erp-credential-boundary" className="scroll-mt-6">
               <SectionHeader
                 title={t('erp.sections.credentialBoundary')}
                 description={t('erp.sections.credentialBoundaryDescription')}
@@ -4559,7 +4289,7 @@ function ErpPage() {
             </section>
           </TabsContent>
           </Tabs>
-        </details>
+        </SheetShell>
       ) : null}
     </div>
   )
