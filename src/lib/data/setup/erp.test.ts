@@ -2906,16 +2906,14 @@ describe('fetchErpOverviewWithMeta', () => {
     ])
     expect(result.data.dataSources.map((source) => source.providerId)).toEqual([
       'canias',
-      'logo',
       'csv_import',
-      'custom_api',
     ])
     expect(result.data.dataSources.every((source) => source.sourceKind === 'catalog')).toBe(true)
     expect(result.data.dataSources[0]).toMatchObject({
       status: 'not_configured',
       primaryAction: 'start_setup',
     })
-    expect(result.data.dataSources[2]).toMatchObject({
+    expect(result.data.dataSources[1]).toMatchObject({
       providerId: 'csv_import',
       status: 'not_configured',
       primaryAction: 'start_setup',

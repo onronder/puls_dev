@@ -3052,7 +3052,7 @@ function buildDataSources({
 
   const configuredProviderIds = new Set(connectionSources.map((source) => source.providerId))
   const catalogSources = providerOptions
-    .filter((option) => !configuredProviderIds.has(option.id))
+    .filter((option) => option.setupAvailable && !configuredProviderIds.has(option.id))
     .map<DataSourceSummary>((option) => {
       const status: DataSourceStatus = 'not_configured'
       const primaryAction = dataSourcePrimaryActionFromStatus({
