@@ -24,8 +24,8 @@ coverage.
 - Connector job notification idempotency must not depend on mutable job status.
 - Connector job notification dedupe is normalized at the durable ledger
   boundary.
-- Existing duplicate status-derived connector job notifications are archived,
-  not deleted.
+- Existing notification ledger rows remain immutable; PR16.10.9 normalizes new
+  connector job notification inserts only.
 - Connector worker completion requires an active worker lease.
 - Create-only apply execution requires an active worker lease.
 - Guarded-update apply execution requires an active worker lease.
