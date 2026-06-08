@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppVerikaynaklariRouteImport } from './routes/_app/verikaynaklari'
 import { Route as AppSozlesmelerRouteImport } from './routes/_app/sozlesmeler'
 import { Route as AppSirketKurulumRouteImport } from './routes/_app/sirket-kurulum'
 import { Route as AppProfilRouteImport } from './routes/_app/profil'
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppVerikaynaklariRoute = AppVerikaynaklariRouteImport.update({
+  id: '/verikaynaklari',
+  path: '/verikaynaklari',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSozlesmelerRoute = AppSozlesmelerRouteImport.update({
   id: '/sozlesmeler',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/profil': typeof AppProfilRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
   '/sozlesmeler': typeof AppSozlesmelerRoute
+  '/verikaynaklari': typeof AppVerikaynaklariRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/profil': typeof AppProfilRoute
   '/sirket-kurulum': typeof AppSirketKurulumRoute
   '/sozlesmeler': typeof AppSozlesmelerRoute
+  '/verikaynaklari': typeof AppVerikaynaklariRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/_app/profil': typeof AppProfilRoute
   '/_app/sirket-kurulum': typeof AppSirketKurulumRoute
   '/_app/sozlesmeler': typeof AppSozlesmelerRoute
+  '/_app/verikaynaklari': typeof AppVerikaynaklariRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/profil'
     | '/sirket-kurulum'
     | '/sozlesmeler'
+    | '/verikaynaklari'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/profil'
     | '/sirket-kurulum'
     | '/sozlesmeler'
+    | '/verikaynaklari'
   id:
     | '__root__'
     | '/'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/_app/profil'
     | '/_app/sirket-kurulum'
     | '/_app/sozlesmeler'
+    | '/_app/verikaynaklari'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -327,6 +339,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/verikaynaklari': {
+      id: '/_app/verikaynaklari'
+      path: '/verikaynaklari'
+      fullPath: '/verikaynaklari'
+      preLoaderRoute: typeof AppVerikaynaklariRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/sozlesmeler': {
       id: '/_app/sozlesmeler'
@@ -492,6 +511,7 @@ interface AppRouteChildren {
   AppProfilRoute: typeof AppProfilRoute
   AppSirketKurulumRoute: typeof AppSirketKurulumRoute
   AppSozlesmelerRoute: typeof AppSozlesmelerRoute
+  AppVerikaynaklariRoute: typeof AppVerikaynaklariRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -515,6 +535,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfilRoute: AppProfilRoute,
   AppSirketKurulumRoute: AppSirketKurulumRoute,
   AppSozlesmelerRoute: AppSozlesmelerRoute,
+  AppVerikaynaklariRoute: AppVerikaynaklariRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

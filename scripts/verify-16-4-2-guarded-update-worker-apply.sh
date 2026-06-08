@@ -22,7 +22,7 @@ ROADMAP="$(file_at_ref docs/product/15_16_connector_runtime_ai_roadmap.md)"
 README="$(file_at_ref docs/product/README.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260606100000_puls_integration_guarded_update_worker_apply.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 WORKER="$(file_at_ref services/erp-connector/src/worker.ts)"
@@ -243,7 +243,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/index.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR16.4.2 guarded update worker apply: $changed" >&2
         exit 1

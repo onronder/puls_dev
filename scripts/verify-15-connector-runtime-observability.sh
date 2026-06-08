@@ -22,7 +22,7 @@ README="$(file_at_ref docs/product/README.md)"
 ROADMAP="$(file_at_ref docs/product/15_16_connector_runtime_ai_roadmap.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260604120000_puls_integration_connector_runtime_observability.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 SERVICE_WORKER="$(file_at_ref services/erp-connector/src/worker.ts)"
@@ -232,7 +232,7 @@ if [[ "$REF" == "WORKTREE" && -n "$BASE" ]]; then
       src/lib/data/index.ts|\
       src/lib/data/setup/erp.ts|\
       src/lib/data/setup/erp.test.ts|\
-      src/routes/_app/erp.tsx)
+      src/routes/_app/verikaynaklari.tsx)
         ;;
       supabase/.temp/cli-latest|supabase/.branches/*)
         ;;

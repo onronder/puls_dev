@@ -10,7 +10,7 @@ export type ErpNotificationTab =
 
 export type AppNotificationActionTarget =
   | {
-      to: '/erp'
+      to: '/verikaynaklari'
       search: {
         tab: ErpNotificationTab
         focus: string
@@ -157,7 +157,7 @@ export function resolveAppNotificationAction(
           kind: 'route',
           labelKey: 'notifications.center.goToProcess',
           target: {
-            to: '/erp',
+            to: '/verikaynaklari',
             search: {
               tab: target.tab,
               focus: target.focus,

@@ -50,7 +50,7 @@ describe('app notification actions', () => {
       labelKey: 'notifications.center.goToProcess',
       exactTarget: true,
       target: {
-        to: '/erp',
+        to: '/verikaynaklari',
         search: {
           tab: 'activity',
           focus: 'erp-runtime-queue',
@@ -72,7 +72,7 @@ describe('app notification actions', () => {
     expect(action.primaryAction).toMatchObject({
       exactTarget: true,
       target: {
-        to: '/erp',
+        to: '/verikaynaklari',
         search: {
           tab: 'previewApply',
           focus: 'erp-guarded-update-rollback-worker-readiness',

@@ -957,8 +957,8 @@ export function AppNotificationCenter() {
 
   const handleNavigate = (target: AppNotificationActionTarget) => {
     handleOpenChange(false)
-    if (target.to === '/erp') {
-      void navigate({ to: '/erp', search: target.search })
+    if (target.to === '/verikaynaklari') {
+      void navigate({ to: '/verikaynaklari', search: target.search })
       return
     }
     void navigate({ to: '/dashboard' })

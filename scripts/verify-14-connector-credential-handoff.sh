@@ -22,7 +22,7 @@ README="$(file_at_ref docs/product/README.md)"
 ROADMAP="$(file_at_ref docs/product/14_connector_implementation_roadmap.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260603120000_puls_integration_connector_credential_handoff.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
 EN_LOCALE="$(file_at_ref src/i18n/locales/en-US.json)"
@@ -199,7 +199,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/index.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR14.14 credential handoff: $changed" >&2
         exit 1

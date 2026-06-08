@@ -277,7 +277,7 @@ function DashboardPage() {
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
               <Button type="button" className="touch-target" asChild>
-                <Link to="/erp">
+                <Link to="/verikaynaklari">
                   {t('dashboard.emptyTenant.primaryAction')}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
@@ -420,13 +420,13 @@ function DashboardPage() {
                   </dl>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button type="button" className="touch-target h-10" asChild>
-                      <Link to="/erp">
+                      <Link to="/verikaynaklari">
                         {t('dashboardSetup.erpCard.openMapping')}
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
                     <Button type="button" variant="outline" className="touch-target h-10" asChild>
-                      <Link to="/erp">{t('dashboardSetup.erpCard.viewSyncLogs')}</Link>
+                      <Link to="/verikaynaklari">{t('dashboardSetup.erpCard.viewSyncLogs')}</Link>
                     </Button>
                   </div>
                 </div>

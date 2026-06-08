@@ -22,7 +22,7 @@ ROADMAP="$(file_at_ref docs/product/15_16_connector_runtime_ai_roadmap.md)"
 README="$(file_at_ref docs/product/README.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260605100000_puls_integration_apply_safety_contract.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
@@ -208,7 +208,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
     esac
 
     case "$changed" in
-      services/**|supabase/seed/**|src/routes/_app/erp.tsx|package.json|pnpm-lock.yaml|.env*|docs/api/openapi.yaml|openapi.json|swagger.json)
+      services/**|supabase/seed/**|src/routes/_app/verikaynaklari.tsx|package.json|pnpm-lock.yaml|.env*|docs/api/openapi.yaml|openapi.json|swagger.json)
         echo "FAIL: forbidden path changed for PR16.1 apply safety contract: $changed" >&2
         exit 1
         ;;

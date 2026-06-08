@@ -47,11 +47,11 @@ describe('canShowSetupHub', () => {
 
 describe('canAccessSetupRoute', () => {
   it('allows setup routes only for admin in manager mode', () => {
-    expect(canAccessSetupRoute('hr_admin', 'manager', '/erp')).toBe(true)
-    expect(canAccessSetupRoute('hr_admin', 'employee', '/erp')).toBe(false)
-    expect(canAccessSetupRoute('superadmin', 'manager', '/erp')).toBe(true)
-    expect(canAccessSetupRoute('superadmin', 'employee', '/erp')).toBe(false)
-    expect(canAccessSetupRoute('manager', 'manager', '/erp')).toBe(false)
+    expect(canAccessSetupRoute('hr_admin', 'manager', '/verikaynaklari')).toBe(true)
+    expect(canAccessSetupRoute('hr_admin', 'employee', '/verikaynaklari')).toBe(false)
+    expect(canAccessSetupRoute('superadmin', 'manager', '/verikaynaklari')).toBe(true)
+    expect(canAccessSetupRoute('superadmin', 'employee', '/verikaynaklari')).toBe(false)
+    expect(canAccessSetupRoute('manager', 'manager', '/verikaynaklari')).toBe(false)
   })
 
   it('allows non-setup paths for everyone', () => {

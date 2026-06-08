@@ -26,7 +26,7 @@ WORKER_README="$(file_at_ref services/erp-connector/README.md)"
 WORKER_TEST="$(file_at_ref services/erp-connector/src/worker.test.ts)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
 EN_LOCALE="$(file_at_ref src/i18n/locales/en-US.json)"
@@ -229,7 +229,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/index.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql) ;;
       *)
         echo "FAIL: unexpected changed path for PR16.8 rollback worker apply: $changed" >&2

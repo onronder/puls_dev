@@ -197,7 +197,7 @@ const DOMAIN_META: Record<
     titleKey: 'aiCoachSetup.contextDomains.connector_runtime.title',
     descriptionKey: 'aiCoachSetup.contextDomains.connector_runtime.description',
     guardrailKey: 'aiCoachSetup.contextDomains.connector_runtime.guardrail',
-    route: '/erp',
+    route: '/verikaynaklari',
   },
   employee_quality: {
     titleKey: 'aiCoachSetup.contextDomains.employee_quality.title',

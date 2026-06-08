@@ -21,7 +21,7 @@ ERP_TS="$(file_at_ref src/lib/data/setup/erp.ts)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DASHBOARD_TS="$(file_at_ref src/lib/data/dashboard/overview.ts)"
 DASHBOARD_TEST="$(file_at_ref src/lib/data/dashboard/overview.test.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 TR="$(file_at_ref src/i18n/locales/tr-TR.json)"
 EN="$(file_at_ref src/i18n/locales/en-US.json)"
 
@@ -148,7 +148,7 @@ while IFS= read -r changed; do
     src/lib/data/dashboard/overview.test.ts) ;;
     src/lib/data/setup/erp.ts) ;;
     src/lib/data/setup/erp.test.ts) ;;
-    src/routes/_app/erp.tsx) ;;
+    src/routes/_app/verikaynaklari.tsx) ;;
     src/i18n/locales/tr-TR.json) ;;
     src/i18n/locales/en-US.json) ;;
     supabase/.temp/*) ;;
@@ -170,7 +170,7 @@ done <<< "$CHANGED"
 if grep -R -E "credentials_ref|OPENAI_API_KEY|CANIAS_API_KEY|chat\\.completions|responses\\.create|sync_canias_now|write_to_canias|apply_import_batch|record_import_row|create_import_batch" \
   docs/product/14_mapping_discovery.md \
   src/lib/data/setup/erp.ts \
-  src/routes/_app/erp.tsx \
+  src/routes/_app/verikaynaklari.tsx \
   src/i18n/locales/tr-TR.json \
   src/i18n/locales/en-US.json >/dev/null; then
   echo "FAIL: PR14.10 changed files contain forbidden runtime, credential, or import patterns" >&2

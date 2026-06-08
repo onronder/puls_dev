@@ -1832,7 +1832,7 @@ export type DemoDashboardQueueItem = {
   id: string
   titleKey: string
   metaKey: string
-  to: '/performans' | '/erp' | '/izin' | '/masraf'
+  to: '/performans' | '/verikaynaklari' | '/izin' | '/masraf'
   tone: DemoDashboardQueueTone
   icon: DemoDashboardQueueIcon
 }
@@ -1876,7 +1876,7 @@ const demoDashboardOverview: DemoDashboardOverview = {
       id: 'q2',
       titleKey: 'dashboardSetup.queue.fieldMapping.title',
       metaKey: 'dashboardSetup.queue.fieldMapping.meta',
-      to: '/erp',
+      to: '/verikaynaklari',
       tone: 'warning',
       icon: 'plug',
     },

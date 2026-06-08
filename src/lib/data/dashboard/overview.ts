@@ -124,7 +124,7 @@ export function buildDashboardQueue(input: BuildDashboardQueueInput): DemoDashbo
       id: 'q2',
       titleKey: 'dashboardSetup.queue.fieldMapping.title',
       metaKey: 'dashboardSetup.queue.fieldMapping.meta',
-      to: '/erp',
+      to: '/verikaynaklari',
       tone: 'warning',
       icon: 'plug',
     })

@@ -58,7 +58,8 @@
     "sozlesmeler": "Sözleşmeler",
     "cuzdan": "Masraf",
     "kale": "İş Değerleme",
-    "erp": "ERP Entegrasyon",
+    "erp": "Veri Kaynakları",
+    "dataSources": "Veri Kaynakları",
     "sirketKurulum": "Şirket Kurulum",
     "departmanlar": "Departmanlar",
     "pozisyonlar": "Pozisyonlar",
@@ -901,9 +902,66 @@
   },
   "erp": {
     "eyebrow": "Tanım & Kurulum",
-    "title": "Veri bağlantıları",
+    "title": "Veri Kaynakları",
     "subtitle": "ERP, dosya ve özel API kaynaklarını PULS'un ortak veri modeline güvenli biçimde bağla.",
     "badge": "Beklemede",
+    "dataSources": {
+      "title": "Kaynaklar",
+      "description": "ERP, dosya ve özel API bağlantılarını kaynak nesnesi olarak yönet.",
+      "addSource": "Yeni kaynak ekle",
+      "inventoryTitle": "Kaynaklar",
+      "inventoryDescription": "Kayıtlı ve kuruluma hazır kaynakları tek yerden gör.",
+      "inventoryCount": "{{count}} kayıtlı",
+      "detailTitle": "Kaynak özeti",
+      "emptyTitle": "Henüz kaynak yok",
+      "emptyDescription": "İlk veri kaynağını ekleyerek alan eşleştirme ve önizleme akışını başlat.",
+      "type": "Tip",
+      "method": "Bağlantı yöntemi",
+      "scope": "Veri kapsamı",
+      "lastRun": "Son işlem",
+      "nextAction": "Sıradaki aksiyon",
+      "status": {
+        "active": "Aktif",
+        "passive": "Pasif",
+        "setup_incomplete": "Kurulum eksik",
+        "ready": "Hazır",
+        "not_configured": "Kurulmadı",
+        "blocked": "Blokaj var",
+        "paused": "Duraklatıldı"
+      },
+      "actions": {
+        "start_setup": "Kurulumu başlat",
+        "continue_setup": "Kuruluma devam et",
+        "upload_file": "Dosya yükle",
+        "run_preview": "Önizleme çalıştır",
+        "review_results": "Sonuçları incele",
+        "open_details": "Detayları aç",
+        "none": "Aksiyon yok",
+        "advancedAudit": "Gelişmiş denetim"
+      },
+      "nextActions": {
+        "startSetup": "Kaynak kurulumunu başlat",
+        "continueSetup": "Kuruluma devam et",
+        "uploadFile": "Dosya akışını hazırla",
+        "runPreview": "Önizleme çalıştır",
+        "reviewResults": "Sonuçları incele",
+        "openDetails": "Detayları aç",
+        "futureProvider": "Bağlantı modeli netleşince kurulabilir"
+      },
+      "values": {
+        "active": "Aktif",
+        "passive": "Pasif",
+        "noLastRun": "Henüz çalışmadı",
+        "noScope": "Kapsam seçilmedi"
+      },
+      "scopeValues": {
+        "employees": "Çalışanlar",
+        "departments": "Departmanlar",
+        "positions": "Pozisyonlar",
+        "locations": "Lokasyonlar",
+        "cost_centers": "Masraf merkezleri"
+      }
+    },
     "noConnector": {
       "title": "Bağlantı kurulumu",
       "subtitle": "Önce veri kaynağını seç. Kimlik bilgisi, canlı aktarım ve ERP'ye yazma adımları sen onaylamadan açılmaz.",

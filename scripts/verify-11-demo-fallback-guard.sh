@@ -21,7 +21,7 @@ ROUTES=(
   "src/routes/_app/masraf-kategorileri.tsx"
   "src/routes/_app/departmanlar.tsx"
   "src/routes/_app/pozisyonlar.tsx"
-  "src/routes/_app/erp.tsx"
+  "src/routes/_app/verikaynaklari.tsx"
   "src/routes/_app/ayarlar.tsx"
   "src/routes/_app/ai-koc.tsx"
   "src/routes/_app/performans-parametreleri.tsx"
@@ -171,7 +171,7 @@ route_with_meta() {
     src/routes/_app/masraf-kategorileri.tsx) printf '%s' 'fetchExpenseCategoriesOverviewWithMeta' ;;
     src/routes/_app/departmanlar.tsx) printf '%s' 'fetchDepartmentsOverviewWithMeta' ;;
     src/routes/_app/pozisyonlar.tsx) printf '%s' 'fetchPositionsOverviewWithMeta' ;;
-    src/routes/_app/erp.tsx) printf '%s' 'fetchErpOverviewWithMeta' ;;
+    src/routes/_app/verikaynaklari.tsx) printf '%s' 'fetchErpOverviewWithMeta' ;;
     src/routes/_app/ayarlar.tsx) printf '%s' 'fetchSettingsOverviewWithMeta' ;;
     src/routes/_app/ai-koc.tsx) printf '%s' 'fetchAiCoachOverviewWithMeta' ;;
     src/routes/_app/performans-parametreleri.tsx) printf '%s' 'fetchPerformanceParametersOverviewWithMeta' ;;
