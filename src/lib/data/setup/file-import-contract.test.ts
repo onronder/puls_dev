@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import * as XLSX from 'xlsx'
 
 import {
   buildFileImportCsvTemplate,
@@ -9,14 +8,23 @@ import {
   parseFileImportPackage,
 } from '#/lib/data/setup/file-import-contract'
 
+type ExcelWorksheet = import('exceljs').Worksheet
+
 function csvFile(name: string, content: string): File {
   return new File([content], name, { type: 'text/csv' })
 }
 
-function xlsxFile(name: string, sheet: XLSX.WorkSheet): File {
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, sheet, 'Import')
-  const data = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer
+async function xlsxFile(
+  name: string,
+  rows: Array<Array<string | number | boolean | Date | null>>,
+  configure?: (sheet: ExcelWorksheet) => void,
+): Promise<File> {
+  const ExcelJS = (await import('exceljs')).default
+  const workbook = new ExcelJS.Workbook()
+  const sheet = workbook.addWorksheet('Import')
+  rows.forEach((row) => sheet.addRow(row))
+  configure?.(sheet)
+  const data = await workbook.xlsx.writeBuffer()
   return new File([data], name, {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
@@ -106,14 +114,17 @@ describe('file import contract', () => {
   })
 
   it('rejects Excel formula cells when cached value is unavailable', async () => {
-    const sheet = XLSX.utils.aoa_to_sheet([
-      ['employee_code', 'full_name'],
-      ['E-001', null],
-    ])
-    sheet.B2 = { t: 'n', f: '1+1' }
-
     const result = await parseFileImport(
-      xlsxFile('puls_employees_v1_20260608.xlsx', sheet),
+      await xlsxFile(
+        'puls_employees_v1_20260608.xlsx',
+        [
+          ['employee_code', 'full_name'],
+          ['E-001', null],
+        ],
+        (sheet) => {
+          sheet.getCell('B2').value = { formula: '1+1' }
+        },
+      ),
       'employees',
     )
 

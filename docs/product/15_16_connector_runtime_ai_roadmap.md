@@ -990,6 +990,36 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - File import package parse paralel `Promise.all` yerine sequential çalışır.
 - DataSource Manager route component ayrıştırma sonrası typecheck, lint, i18n ve Vitest regresyonlarından geçer.
 
+### PR16.10.11 - Security & Runtime Truth Hardening
+
+**Ürün değeri:** PR17 öncesinde DataSource Manager ve connector worker güven yüzeyi kapanır; dosya import, demo veri görünürlüğü, worker retry davranışı ve CI audit kapıları üretim gerçekliğiyle hizalanır.
+
+**Kapsam:**
+
+- Vulnerable xlsx parser riskini kapatma: `xlsx@0.18.x` dependency'sini kaldırma ve XLSX import yolunu maintained parser ile sürdürme
+- Demo fallback truthfulness: real data error durumunda sample data açık uyarı ile gösterilir
+- Worker loop fixed interval yerine safe retry backoff + bounded jitter kullanır
+- Service-role RPC header'ları gerekli kalır, loggable metadata redaction helper/test ile korunur
+- CI quality job high dependency audit ve Supabase schema audit çalıştırır; Supabase CI secret'ları yoksa audit açık skip notice ile geçer
+
+**Kapsam dışı:**
+
+- DataSource Manager teknik inspector redesign
+- Büyük route component split
+- Canonical apply davranışı açma veya değiştirme
+- Provider API call
+- Credential, raw payload, field value veya snapshot readback
+- Source/ERP writeback
+- PR17 page-by-page productization
+
+**Doğrulama:**
+
+- `xlsx` dependency graph'ta yoktur; XLSX parser `exceljs` ile çalışır.
+- Formula cell cached value yoksa import contract reject eder.
+- Demo error fallback `role=alert` ile kullanıcıya açıkça görünür.
+- Worker loop `setInterval` kullanmaz; retry window ve jitter testlenir.
+- CI high dependency audit ve `audit:supabase` çalıştırır; Supabase env yoksa job kırılmadan explicit skip üretir.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

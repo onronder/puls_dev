@@ -218,7 +218,10 @@ function DepartmanlarPage() {
         </Button>
       </div>
 
-      <DemoSourcePill visible={departmentsResult?.source === 'demo'} />
+      <DemoSourcePill
+        visible={departmentsResult?.source === 'demo'}
+        fallbackReason={departmentsResult?.fallbackReason}
+      />
 
       {isLoading ? (
         <div className="-mx-4 mb-6 mt-5 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">

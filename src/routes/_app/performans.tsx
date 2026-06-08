@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '#/components/puls/EmptyState'
+import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -521,11 +522,16 @@ function PerformansPage() {
         </div>
       </div>
 
-      {showDemoSourcePill ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <StatusPill tone="neutral">{t('orgSetupReadiness.source.demo')}</StatusPill>
-        </div>
-      ) : null}
+      <DemoSourcePill
+        visible={showDemoSourcePill}
+        fallbackReason={
+          performanceOverviewResult?.fallbackReason === 'error' ||
+          cyclesResult?.fallbackReason === 'error'
+            ? 'error'
+            : performanceOverviewResult?.fallbackReason ?? cyclesResult?.fallbackReason
+        }
+        className="mt-4"
+      />
 
       {isLoading ? (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

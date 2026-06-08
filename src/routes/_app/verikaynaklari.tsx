@@ -1269,7 +1269,10 @@ function ErpPage() {
         }
       />
 
-      <DemoSourcePill visible={erpResult?.source === 'demo'} />
+      <DemoSourcePill
+        visible={erpResult?.source === 'demo'}
+        fallbackReason={erpResult?.fallbackReason}
+      />
 
       {data ? (
         <section id="data-source-manager" className="mt-6 scroll-mt-6">

@@ -233,6 +233,17 @@ function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(Math.trunc(value), min), max)
 }
 
+export function calculateWorkerLoopDelayMs(
+  pollMs: number,
+  retryAfterSeconds = 0,
+  random: () => number = Math.random,
+) {
+  const retryDelayMs = Math.max(0, Math.trunc(retryAfterSeconds)) * 1000
+  const baseDelayMs = retryDelayMs > 0 ? Math.max(pollMs, retryDelayMs) : pollMs
+  const jitterFactor = 0.85 + Math.min(Math.max(random(), 0), 1) * 0.3
+  return clampNumber(baseDelayMs * jitterFactor, 1000, 300000)
+}
+
 function parseBoolean(value: string | undefined, fallback = false) {
   if (value === undefined) return fallback
   return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase())
@@ -403,6 +414,33 @@ export function buildHealthPayload(config: ConnectorWorkerConfig): ConnectorWork
   }
 }
 
+export function buildSupabaseRpcHeaders(
+  serviceRoleKey: string,
+  schema: ConnectorWorkerRpcSchema,
+): Record<string, string> {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    'Accept-Profile': schema,
+    'Content-Type': 'application/json',
+    'Content-Profile': schema,
+  }
+}
+
+export function redactConnectorWorkerHeaders(
+  headers: Record<string, string>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers).map(([key, value]) => {
+      const normalizedKey = key.toLowerCase()
+      if (normalizedKey === 'apikey' || normalizedKey === 'authorization') {
+        return [key, '[REDACTED]']
+      }
+      return [key, value]
+    }),
+  )
+}
+
 export async function callSupabaseRpc<T>(
   config: ConnectorWorkerConfig,
   fn: string,
@@ -415,13 +453,7 @@ export async function callSupabaseRpc<T>(
 
   const response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${fn}`, {
     method: 'POST',
-    headers: {
-      apikey: config.serviceRoleKey,
-      Authorization: `Bearer ${config.serviceRoleKey}`,
-      'Accept-Profile': schema,
-      'Content-Type': 'application/json',
-      'Content-Profile': schema,
-    },
+    headers: buildSupabaseRpcHeaders(config.serviceRoleKey, schema),
     body: JSON.stringify(args),
   })
 
@@ -1073,30 +1105,43 @@ export async function runWorkerOnce(
 export function startConnectorWorkerLoop(
   config: ConnectorWorkerConfig,
   rpc: ConnectorWorkerRpc = (fn, args) => callSupabaseRpc(config, fn, args),
+  options: { random?: () => number } = {},
 ) {
   let running = false
   let stopped = false
+  let timeout: ReturnType<typeof setTimeout> | null = null
+
+  const scheduleNextTick = (retryAfterSeconds = 0) => {
+    if (stopped) return
+    timeout = setTimeout(
+      tick,
+      calculateWorkerLoopDelayMs(config.pollMs, retryAfterSeconds, options.random),
+    )
+  }
 
   const tick = async () => {
     if (running || stopped) return
     running = true
+    let retryAfterSeconds = 0
     try {
       await runWorkerOnce(config, rpc)
     } catch (error) {
       const code =
         error instanceof ConnectorWorkerRpcError ? error.code : 'connector_worker_loop_failed'
+      const observation = buildSafeWorkerFailureObservation(code, 'retry_worker_loop')
+      retryAfterSeconds = observation.retryAfterSeconds
       await upsertWorkerHeartbeat(config, rpc, 'error', null, code).catch(() => undefined)
       console.warn(`erp-connector worker loop recorded safe error: ${code}`)
     } finally {
       running = false
+      scheduleNextTick(retryAfterSeconds)
     }
   }
 
-  const interval = setInterval(tick, config.pollMs)
   void tick()
 
   return () => {
     stopped = true
-    clearInterval(interval)
+    if (timeout) clearTimeout(timeout)
   }
 }

@@ -133,7 +133,10 @@ function AyarlarPage() {
         )}
       />
 
-      <DemoSourcePill visible={settingsResult?.source === 'demo'} />
+      <DemoSourcePill
+        visible={settingsResult?.source === 'demo'}
+        fallbackReason={settingsResult?.fallbackReason}
+      />
 
       {showSetupHub ? (
         <section className="mb-8">

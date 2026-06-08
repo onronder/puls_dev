@@ -23,6 +23,10 @@
     "reload": "Sayfayı yenile",
     "dashboard": "Ana sayfaya dön"
   },
+  "demoSource": {
+    "errorTitle": "Gerçek veri yüklenemedi",
+    "errorBody": "Bu ekran şu anda örnek veri gösteriyor. Karar vermeden önce bağlantıyı yenile veya daha sonra tekrar dene."
+  },
   "auth": {
     "loginTitle": "Giriş Yap",
     "email": "E-posta",

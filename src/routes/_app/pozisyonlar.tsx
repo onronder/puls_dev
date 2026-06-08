@@ -269,6 +269,12 @@ function PozisyonlarPage() {
         visible={
           positionsResult?.source === 'demo' || departmentsResult?.source === 'demo'
         }
+        fallbackReason={
+          positionsResult?.fallbackReason === 'error' ||
+          departmentsResult?.fallbackReason === 'error'
+            ? 'error'
+            : positionsResult?.fallbackReason ?? departmentsResult?.fallbackReason
+        }
       />
 
       {isLoading ? (

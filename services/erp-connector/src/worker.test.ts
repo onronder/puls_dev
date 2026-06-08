@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   buildSafeWorkerFailureObservation,
+  buildSupabaseRpcHeaders,
   callSupabaseRpc,
+  calculateWorkerLoopDelayMs,
   buildConnectorJobCompletion,
   buildCreateOnlyApplyCompletionFromResult,
   buildCreateOnlyApplyFailureCompletion,
@@ -16,11 +18,14 @@ import {
   parseSupportedJobTypes,
   refreshConnectorAppNotificationsAfterJob,
   resolveWorkerConfig,
+  redactConnectorWorkerHeaders,
   runWorkerOnce,
+  startConnectorWorkerLoop,
   type ClaimedConnectorJob,
 } from './worker.ts'
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
@@ -70,6 +75,19 @@ describe('erp-connector worker config', () => {
     expect(config.supportedJobTypes).toEqual(['noop_health'])
     expect(serialized).not.toContain('service-role-secret-value')
     expect(serialized).not.toContain('SERVICE_ROLE')
+  })
+
+  it('redacts service-role headers from loggable worker metadata', () => {
+    const headers = buildSupabaseRpcHeaders('service-role-secret-value', 'puls_integration')
+    const redacted = redactConnectorWorkerHeaders(headers)
+    const serialized = JSON.stringify(redacted)
+
+    expect(headers.apikey).toBe('service-role-secret-value')
+    expect(headers.Authorization).toBe('Bearer service-role-secret-value')
+    expect(redacted.apikey).toBe('[REDACTED]')
+    expect(redacted.Authorization).toBe('[REDACTED]')
+    expect(serialized).not.toContain('service-role-secret-value')
+    expect(redacted['Content-Profile']).toBe('puls_integration')
   })
 
   it('calls Supabase RPC endpoints through the puls_integration schema profile', async () => {
@@ -977,5 +995,46 @@ describe('erp-connector worker job handling', () => {
     expect(serialized).not.toContain('password')
     expect(serialized).not.toContain('credentials_ref')
     expect(serialized).not.toContain('raw_payload')
+  })
+
+  it('calculates worker loop delay from retry windows with bounded jitter', () => {
+    expect(calculateWorkerLoopDelayMs(5000, 0, () => 0.5)).toBe(5000)
+    expect(calculateWorkerLoopDelayMs(5000, 120, () => 0.5)).toBe(120000)
+    expect(calculateWorkerLoopDelayMs(5000, 120, () => 0)).toBe(102000)
+    expect(calculateWorkerLoopDelayMs(5000, 120, () => 1)).toBe(138000)
+  })
+
+  it('backs off worker loop retries after safe loop failures', async () => {
+    vi.useFakeTimers()
+
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_POLL_MS: '1000',
+      PULS_CONNECTOR_WORKER_ID: 'worker-a',
+    })
+    let claimAttempts = 0
+    const rpc = async <T>(fn: string): Promise<T> => {
+      if (fn === 'upsert_connector_worker_heartbeat') return 'worker-a' as T
+      if (fn === 'recover_stale_connector_jobs') return [] as T
+      if (fn === 'claim_next_connector_job') {
+        claimAttempts += 1
+        throw new ConnectorWorkerRpcError(500, 'connector_worker_loop_failed')
+      }
+      return [] as T
+    }
+
+    const stop = startConnectorWorkerLoop(config, rpc, { random: () => 0.5 })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(claimAttempts).toBe(1)
+
+    await vi.advanceTimersByTimeAsync(119999)
+    expect(claimAttempts).toBe(1)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await vi.waitFor(() => expect(claimAttempts).toBe(2))
+
+    stop()
   })
 })

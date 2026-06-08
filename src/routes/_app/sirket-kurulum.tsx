@@ -212,7 +212,10 @@ function SirketKurulumPage() {
         subtitle={t('companySetup.description')}
       />
 
-      <DemoSourcePill visible={companySetupResult?.source === 'demo'} />
+      <DemoSourcePill
+        visible={companySetupResult?.source === 'demo'}
+        fallbackReason={companySetupResult?.fallbackReason}
+      />
 
       {isLoading ? (
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

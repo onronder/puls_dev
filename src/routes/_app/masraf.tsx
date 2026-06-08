@@ -203,7 +203,10 @@ function MasrafPage() {
         </Button>
       </div>
 
-      <DemoSourcePill visible={expenseResult?.source === 'demo'} />
+      <DemoSourcePill
+        visible={expenseResult?.source === 'demo'}
+        fallbackReason={expenseResult?.fallbackReason}
+      />
 
       {isLoading ? (
         <div className="mt-5 space-y-3">
