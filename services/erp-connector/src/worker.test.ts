@@ -101,7 +101,9 @@ describe('erp-connector worker config', () => {
     if (!init) throw new Error('expected Supabase RPC fetch options')
     const headers = init.headers as Record<string, string>
 
-    expect(String(url)).toBe('https://example.supabase.co/rest/v1/rpc/upsert_connector_worker_heartbeat')
+    expect(String(url)).toBe(
+      'https://example.supabase.co/rest/v1/rpc/upsert_connector_worker_heartbeat',
+    )
     expect(init.method).toBe('POST')
     expect(headers.apikey).toBe('service-role-secret-value')
     expect(headers.Authorization).toBe('Bearer service-role-secret-value')
@@ -223,10 +225,11 @@ describe('erp-connector worker config', () => {
       }),
     )
 
-    await expect(callSupabaseRpc(config, 'execute_connector_create_only_apply_job', {})).rejects
-      .toMatchObject({
-        code: 'puls_connector_create_only_approval_required',
-      })
+    await expect(
+      callSupabaseRpc(config, 'execute_connector_create_only_apply_job', {}),
+    ).rejects.toMatchObject({
+      code: 'puls_connector_create_only_approval_required',
+    })
   })
 })
 
@@ -607,8 +610,7 @@ describe('erp-connector worker job handling', () => {
       false,
     )
     expect(
-      calls.find((call) => call.fn === 'execute_connector_guarded_update_rollback_apply_job')
-        ?.args,
+      calls.find((call) => call.fn === 'execute_connector_guarded_update_rollback_apply_job')?.args,
     ).toMatchObject({
       p_job_id: 'rollback-job-1',
       p_worker_id: 'worker-a',
@@ -666,6 +668,61 @@ describe('erp-connector worker job handling', () => {
     })
     expect(JSON.stringify(failure)).not.toContain('"raw_payload":')
     expect(JSON.stringify(failure)).not.toContain('credentials_ref')
+  })
+
+  it('completes import_apply safely when the active lease guard rejects execution', async () => {
+    const config = resolveWorkerConfig({
+      PULS_SUPABASE_URL: 'https://example.supabase.co',
+      PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
+      PULS_CONNECTOR_WORKER_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_IMPORT_APPLY_ENABLED: 'true',
+      PULS_CONNECTOR_WORKER_JOB_TYPES: 'import_apply',
+      PULS_CONNECTOR_WORKER_ID: 'worker-a',
+    })
+    const calls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
+      calls.push({ fn, args })
+      if (fn === 'claim_next_connector_job') {
+        return [
+          noopJob({
+            id: 'apply-job-lease-expired',
+            job_type: 'import_apply',
+          }),
+        ] as T
+      }
+      if (fn === 'execute_connector_create_only_apply_job') {
+        throw new ConnectorWorkerRpcError(400, 'puls_connector_job_lease_expired')
+      }
+      if (fn === 'complete_connector_job') return 'apply-job-lease-expired' as T
+      if (fn === 'upsert_connector_worker_heartbeat') return 'worker-a' as T
+      if (fn === 'heartbeat_connector_job') return 'apply-job-lease-expired' as T
+      return [] as T
+    }
+
+    const result = await runWorkerOnce(config, rpc)
+
+    expect(result).toEqual({
+      claimed: true,
+      jobId: 'apply-job-lease-expired',
+      status: 'failed',
+    })
+    expect(calls.find((call) => call.fn === 'complete_connector_job')?.args).toMatchObject({
+      p_job_id: 'apply-job-lease-expired',
+      p_status: 'failed',
+      p_safe_error_code: 'puls_connector_job_lease_expired',
+      p_next_action_key: 'review_create_only_apply_failure',
+      p_safe_error_context: expect.objectContaining({
+        canonical_write: false,
+        source_writeback: false,
+        credential_readback: false,
+        provider_api_calls: false,
+      }),
+    })
+
+    const serialized = JSON.stringify(calls)
+    expect(serialized).not.toContain('service-role-secret-value')
+    expect(serialized).not.toContain('credentials_ref')
+    expect(serialized).not.toContain('"raw_payload":')
   })
 
   it('fails guarded update import_apply safely when the PR16.4.2 RPC rejects the job', () => {
@@ -831,10 +888,11 @@ describe('erp-connector worker job handling', () => {
       p_worker_id: 'worker-a',
       p_job_types: ['connector_runtime_preflight'],
     })
-    expect(calls.find((call) => call.fn === 'get_connector_runtime_preflight_context')?.args)
-      .toMatchObject({
-        p_connection_id: 'connection-1',
-      })
+    expect(
+      calls.find((call) => call.fn === 'get_connector_runtime_preflight_context')?.args,
+    ).toMatchObject({
+      p_connection_id: 'connection-1',
+    })
     expect(calls.find((call) => call.fn === 'complete_connector_job')?.args).toMatchObject({
       p_job_id: 'runtime-job-1',
       p_status: 'succeeded',

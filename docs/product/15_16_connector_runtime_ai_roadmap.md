@@ -958,6 +958,38 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Revoked credential late verification ile verified hale dönemez.
 - CI `pnpm run test` çalıştırır.
 
+### PR16.10.10 - DataSource Operational Hardening
+
+**Ürün değeri:** PR16.10.8 ve PR16.10.9 sonrasında DataSource Manager'ın kullanıcı akışını büyütmeden operasyonel sağlamlığı artırır. CSV / Excel package ingest, credential reference doğrulama, Notification Center realtime aboneliği ve büyük route bakım borcu daha kontrollü hale gelir.
+
+**Kapsam:**
+
+- Browser-side CSV / Excel package parse işlemini sequential çalıştırma
+- File import adapter ve server RPC tarafında canonical HR dependency order garantisi
+- Duplicate, unsupported veya out-of-order package scope'larını server tarafında reject etme
+- Regex operator bağımlılığı olmayan deterministic credential reference parser
+- Tenant bazlı shared Notification Center realtime subscription registry
+- File import ve provider draft sheet'lerini `/verikaynaklari` route'undan presentation component olarak ayırma
+- Worker active lease rejection için regression testi
+
+**Kapsam dışı:**
+
+- Teknik inspector'ın tam redesign'ı
+- Canonical apply
+- Worker apply execution davranışı açma
+- Provider API call
+- Credential, raw payload, field value veya snapshot readback
+- Source/ERP writeback
+- PR17 page-by-page productization
+
+**Doğrulama:**
+
+- Server package ingest canonical scope sırası dışındaki paketleri kabul etmez.
+- Credential reference parser unsupported scheme, query string ve boşluk içeren referansları reddeder.
+- Notification Center aynı tenant için birden fazla realtime channel açmaz.
+- File import package parse paralel `Promise.all` yerine sequential çalışır.
+- DataSource Manager route component ayrıştırma sonrası typecheck, lint, i18n ve Vitest regresyonlarından geçer.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

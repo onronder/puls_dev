@@ -3559,33 +3559,6 @@ describe('fetchErpOverviewWithMeta', () => {
       packageId: 'package-1',
       files: [
         {
-          scope: 'legal_entities',
-          fileName: 'puls_legal_entities_v1_20260608.csv',
-          parseResult: {
-            ok: true,
-            scope: 'legal_entities',
-            fileName: 'puls_legal_entities_v1_20260608.csv',
-            fileExtension: 'csv',
-            fileSizeBytes: 64,
-            fileChecksum: 'b'.repeat(64),
-            templateVersion: 'v1',
-            businessDate: '20260608',
-            delimiter: ',',
-            rowCount: 1,
-            rows: [
-              {
-                rowNumber: 2,
-                entityType: 'legal_entity',
-                externalId: 'LE-001',
-                payload: { code: 'LE-001', name: 'PULS Demo' },
-              },
-            ],
-            mappedColumns: [],
-            ignoredHeaders: [],
-            issues: [],
-          },
-        },
-        {
           scope: 'employees',
           fileName: 'puls_employees_v1_20260608.csv',
           parseResult: {
@@ -3605,6 +3578,33 @@ describe('fetchErpOverviewWithMeta', () => {
                 entityType: 'employee',
                 externalId: 'E-001',
                 payload: { employee_code: 'E-001', full_name: 'Ayşe Öz' },
+              },
+            ],
+            mappedColumns: [],
+            ignoredHeaders: [],
+            issues: [],
+          },
+        },
+        {
+          scope: 'legal_entities',
+          fileName: 'puls_legal_entities_v1_20260608.csv',
+          parseResult: {
+            ok: true,
+            scope: 'legal_entities',
+            fileName: 'puls_legal_entities_v1_20260608.csv',
+            fileExtension: 'csv',
+            fileSizeBytes: 64,
+            fileChecksum: 'b'.repeat(64),
+            templateVersion: 'v1',
+            businessDate: '20260608',
+            delimiter: ',',
+            rowCount: 1,
+            rows: [
+              {
+                rowNumber: 2,
+                entityType: 'legal_entity',
+                externalId: 'LE-001',
+                payload: { code: 'LE-001', name: 'PULS Demo' },
               },
             ],
             mappedColumns: [],
@@ -3637,6 +3637,12 @@ describe('fetchErpOverviewWithMeta', () => {
         }),
       }),
     })
+    const packageCall = capture.rpcCalls?.find((call) => call.fn === 'ingest_file_import_package')
+    const packageArg = packageCall?.args as { p_package?: { items?: Array<{ scope?: string }> } }
+    expect(packageArg.p_package?.items?.map((item) => item.scope)).toEqual([
+      'legal_entities',
+      'employees',
+    ])
   })
 
   it('persists a dry-run preflight record without enabling runtime', async () => {

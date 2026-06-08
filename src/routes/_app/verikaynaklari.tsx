@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Database,
-  Download,
-  FileCheck2,
   FileSpreadsheet,
   Globe2,
   Info,
@@ -26,6 +24,8 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
+import { FileImportSheet } from '#/components/data-sources/FileImportSheet'
+import { ProviderDraftSheet } from '#/components/data-sources/ProviderDraftSheet'
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -290,17 +290,6 @@ function ProviderOptionIcon({ id }: { id: ConnectorProviderOption['id'] }) {
   if (id === 'custom_api') return <Braces className={className} aria-hidden />
   if (id === 'logo') return <Globe2 className={className} aria-hidden />
   return <Plug className={className} aria-hidden />
-}
-
-function fileImportIssueLabelKey(code: string): string {
-  return `erp.fileImport.issues.${code}`
-}
-
-function formatFileImportDelimiter(
-  delimiter: FileImportPackageResult['files'][number]['parseResult']['delimiter'],
-): string {
-  if (delimiter === '\t') return 'Tab'
-  return delimiter ?? '-'
 }
 
 function downloadFileImportTemplate(scope: FileImportScopeId) {
@@ -1235,7 +1224,9 @@ function ErpPage() {
       void runImportPreviewMutation
         .mutateAsync()
         .then(() => setFileImportSheetOpen(false))
-        .catch(() => undefined)
+        .catch((error) => {
+          console.warn('File import preview could not be started from the import sheet.', error)
+        })
       return
     }
     if (!fileImportPackageResult?.ok) return
@@ -1346,8 +1337,8 @@ function ErpPage() {
                           isUnavailableCatalog
                             ? 'cursor-not-allowed border-[var(--color-border)] bg-[var(--color-bg-surface)] opacity-55'
                             : isSelected
-                            ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] bg-[var(--color-primary-soft)]'
-                            : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)]',
+                              ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] bg-[var(--color-primary-soft)]'
+                              : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)]',
                         )}
                       >
                         <div className="flex items-start gap-3">
@@ -1550,398 +1541,49 @@ function ErpPage() {
       ) : null}
 
       {data && selectedProvider ? (
-        <SheetShell
+        <ProviderDraftSheet
           open={draftSheetOpen}
           onOpenChange={setDraftSheetOpen}
-          title={t('erp.draftSheet.title', { provider: t(selectedProvider.labelKey) })}
-          description={t('erp.draftSheet.description')}
-          footer={
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="touch-target w-full sm:w-auto"
-                onClick={() => setDraftSheetOpen(false)}
-              >
-                {t('erp.draftSheet.close')}
-              </Button>
-              <Button
-                type="button"
-                className="touch-target w-full sm:w-auto"
-                disabled={
-                  !canManageConnectors || !selectedProviderCanStart || startSetupMutation.isPending
-                }
-                onClick={() => {
-                  if (selectedProviderCanStart) {
-                    void startSetupMutation.mutateAsync(selectedProvider.id)
-                  }
-                }}
-              >
-                {startSetupMutation.isPending
-                  ? t('erp.draftSheet.creating')
-                  : !canManageConnectors
-                    ? t('erp.draftSheet.adminRequiredAction')
-                    : selectedProviderCanStart
-                      ? t('erp.draftSheet.startSetup')
-                      : t('erp.draftSheet.futureProvider')}
-              </Button>
-            </div>
-          }
-        >
-          <div className="space-y-5">
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    {t('erp.draftSheet.summary')}
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
-                    {t(selectedProvider.labelKey)}
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
-                    {t(selectedProvider.readinessLabelKey)}
-                  </p>
-                  <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                    {selectedProvider.setupAvailable
-                      ? t('erp.draftSheet.persistedSetupHint')
-                      : t('erp.draftSheet.futureProviderHint')}
-                  </p>
-                  <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
-                    <div>
-                      <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                        {t('erp.providerCatalog.labels.category')}
-                      </dt>
-                      <dd className="mt-1 text-[var(--color-text-primary)]">
-                        {t(selectedProvider.categoryKey)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                        {t('erp.providerCatalog.labels.availability')}
-                      </dt>
-                      <dd className="mt-1 text-[var(--color-text-primary)]">
-                        {t(selectedProvider.availabilityKey)}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-                <StatusPill tone={readinessTone(selectedProvider.status)}>
-                  {t(`erp.readinessStatus.${selectedProvider.status}`)}
-                </StatusPill>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {t('erp.draftSheet.requirements')}
-              </p>
-              <ul className="mt-2 divide-y divide-[var(--color-border)] rounded-xl border border-[var(--color-border)]">
-                {selectedProvider.requirements.map((requirement) => (
-                  <li key={requirement.id} className="p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                          {t(requirement.labelKey)}
-                        </p>
-                        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                          {t(requirement.descriptionKey)}
-                        </p>
-                      </div>
-                      <StatusPill tone={readinessTone(requirement.status)}>
-                        {t(`erp.readinessStatus.${requirement.status}`)}
-                      </StatusPill>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-xl border border-[color-mix(in_srgb,var(--color-warning)_25%,transparent)] bg-[var(--color-warning-soft)] p-4">
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {t('erp.draftSheet.guardrailTitle')}
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-                {t('erp.draftSheet.guardrailBody')}
-              </p>
-            </div>
-          </div>
-        </SheetShell>
+          onClose={() => setDraftSheetOpen(false)}
+          provider={selectedProvider}
+          canManage={canManageConnectors}
+          canStart={selectedProviderCanStart}
+          isPending={startSetupMutation.isPending}
+          onStart={() => {
+            if (selectedProviderCanStart) {
+              void startSetupMutation.mutateAsync(selectedProvider.id)
+            }
+          }}
+        />
       ) : null}
 
       {data ? (
-        <SheetShell
+        <FileImportSheet
           open={fileImportSheetOpen}
           onOpenChange={setFileImportSheetOpen}
-          title={t('erp.fileImport.title')}
-          description={t('erp.fileImport.description')}
-          className="w-[calc(100vw-1rem)] sm:inset-x-auto sm:bottom-4 sm:left-auto sm:right-4 sm:top-4 sm:mt-0 sm:h-auto sm:max-h-none sm:w-[min(720px,calc(100vw-2rem))] sm:rounded-2xl"
-          footer={
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="touch-target w-full sm:w-auto"
-                onClick={() => setFileImportSheetOpen(false)}
-              >
-                {t('erp.fileImport.actions.close')}
-              </Button>
-              <Button
-                type="button"
-                className="touch-target w-full sm:w-auto"
-                disabled={fileImportPrimaryDisabled}
-                onClick={handleFileImportPrimaryAction}
-              >
-                {fileImportPackageStaged ? (
-                  <SearchCheck className="h-4 w-4" />
-                ) : activeFileImportConnectionId ? (
-                  <FileCheck2 className="h-4 w-4" />
-                ) : (
-                  <Plug className="h-4 w-4" />
-                )}
-                {fileImportPrimaryLabel}
-              </Button>
-            </div>
+          onClose={() => setFileImportSheetOpen(false)}
+          sourceLabel={
+            fileImportSource
+              ? dataSourceDisplayName(fileImportSource, t)
+              : t('erp.providerOptions.csv_import.label')
           }
-        >
-          <div className="space-y-4">
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    {t('erp.fileImport.source')}
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
-                    {fileImportSource
-                      ? dataSourceDisplayName(fileImportSource, t)
-                      : t('erp.providerOptions.csv_import.label')}
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
-                    {activeFileImportConnectionId
-                      ? t('erp.fileImport.sourceReady')
-                      : t('erp.fileImport.sourceRequired')}
-                  </p>
-                </div>
-                <StatusPill tone={activeFileImportConnectionId ? 'success' : 'warning'}>
-                  {activeFileImportConnectionId
-                    ? t('erp.readinessStatus.ready')
-                    : t('erp.readinessStatus.partial')}
-                </StatusPill>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {t('erp.fileImport.scopeTitle')}
-              </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {fileImportScopes.map((scope) => {
-                  const selected = scope.id === fileImportScope
-                  return (
-                    <button
-                      key={scope.id}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => handleFileImportScopeChange(scope.id)}
-                      className={cn(
-                        'touch-target rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
-                        selected
-                          ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
-                          : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)]',
-                      )}
-                    >
-                      {t(scope.labelKey)}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                  {t('erp.fileImport.templateTitle')}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                  {t('erp.fileImport.templateDescription', {
-                    fileName: buildFileImportExpectedFileName(fileImportScope),
-                  })}
-                </p>
-                <div className="mt-4 grid gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="touch-target w-full"
-                    onClick={() => downloadFileImportTemplate(fileImportScope)}
-                  >
-                    <Download className="h-4 w-4" />
-                    {t('erp.fileImport.actions.downloadTemplate')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="touch-target w-full"
-                    onClick={() =>
-                      downloadAllFileImportTemplates(fileImportScopes.map((scope) => scope.id))
-                    }
-                  >
-                    <Download className="h-4 w-4" />
-                    {t('erp.fileImport.actions.downloadAllTemplates')}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                  {t('erp.fileImport.fileTitle')}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                  {t('erp.fileImport.fileDescription')}
-                </p>
-                <label className="touch-target mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition-colors hover:border-[color-mix(in_srgb,var(--color-primary)_35%,transparent)]">
-                  <FileSpreadsheet className="h-4 w-4" aria-hidden />
-                  {fileImportParsing
-                    ? t('erp.fileImport.actions.parsing')
-                    : t('erp.fileImport.actions.chooseFile')}
-                  <input
-                    type="file"
-                    accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    multiple
-                    className="sr-only"
-                    disabled={fileImportParsing}
-                    onChange={handleFileImportFileChange}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {fileImportPackageResult ? (
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {fileImportPackageResult.ok
-                        ? t('erp.fileImport.contractReady')
-                        : t('erp.fileImport.contractBlocked')}
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                      {t('erp.fileImport.packageSummary', {
-                        files: fileImportPackageResult.fileCount,
-                        rows: fileImportPackageResult.rowCount,
-                      })}
-                    </p>
-                  </div>
-                  <StatusPill tone={fileImportPackageResult.ok ? 'success' : 'danger'}>
-                    {fileImportPackageResult.ok
-                      ? t('erp.readinessStatus.ready')
-                      : t('erp.readinessStatus.blocked')}
-                  </StatusPill>
-                </div>
-
-                <div className="mt-4 grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.fileImport.metrics.files')}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
-                      {fileImportPackageResult.fileCount}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.fileImport.metrics.rows')}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
-                      {fileImportPackageResult.rowCount}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.fileImport.metrics.readyFiles')}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
-                      {fileImportPackageResult.readyFileCount}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.fileImport.metrics.findings')}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
-                      {fileImportErrors.length} / {fileImportWarnings.length}
-                    </p>
-                  </div>
-                </div>
-
-                <ul className="mt-4 divide-y divide-[var(--color-border)] rounded-lg border border-[var(--color-border)]">
-                  {fileImportPackageResult.files.map((item) => (
-                    <li key={item.fileName} className="flex items-start justify-between gap-3 p-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
-                          {item.fileName}
-                        </p>
-                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                          {item.scope
-                            ? t(`erp.fileImport.scopes.${item.scope}`)
-                            : t('erp.fileImport.unknownScope')}{' '}
-                          · {item.parseResult.rowCount} {t('erp.fileImport.metrics.rows')}
-                          {item.parseResult.delimiter
-                            ? ` · ${formatFileImportDelimiter(item.parseResult.delimiter)}`
-                            : ''}
-                        </p>
-                      </div>
-                      <StatusPill tone={item.parseResult.ok ? 'success' : 'danger'}>
-                        {item.parseResult.ok
-                          ? t('erp.readinessStatus.ready')
-                          : t('erp.readinessStatus.blocked')}
-                      </StatusPill>
-                    </li>
-                  ))}
-                </ul>
-
-                {fileImportPackageStaged ? (
-                  <div className="mt-4 rounded-lg border border-[color-mix(in_srgb,var(--color-success)_25%,transparent)] bg-[var(--color-success-soft)] px-3 py-2 text-sm font-medium text-[var(--color-text-primary)]">
-                    {t('erp.fileImport.stagedPackage', {
-                      count: fileImportStagedBatchIds.length,
-                    })}
-                  </div>
-                ) : null}
-
-                {fileImportPackageResult.issues.length > 0 ? (
-                  <ul className="mt-4 divide-y divide-[var(--color-border)] rounded-lg border border-[var(--color-border)]">
-                    {fileImportPackageResult.issues.slice(0, 8).map((issue, index) => (
-                      <li key={`${issue.code}-${index}`} className="flex gap-3 p-3">
-                        <AlertTriangle
-                          className={cn(
-                            'mt-0.5 h-4 w-4 shrink-0',
-                            issue.level === 'error'
-                              ? 'text-[var(--color-danger)]'
-                              : 'text-[var(--color-warning)]',
-                          )}
-                          aria-hidden
-                        />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                            {t(fileImportIssueLabelKey(issue.code), {
-                              defaultValue: issue.code,
-                            })}
-                          </p>
-                          {issue.rowNumber || issue.column ? (
-                            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                              {t('erp.fileImport.issueContext', {
-                                row: issue.rowNumber ?? '-',
-                                column: issue.column ?? '-',
-                              })}
-                            </p>
-                          ) : null}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </SheetShell>
+          sourceReady={Boolean(activeFileImportConnectionId)}
+          scopes={fileImportScopes}
+          selectedScope={fileImportScope}
+          onScopeChange={handleFileImportScopeChange}
+          packageResult={fileImportPackageResult}
+          errorCount={fileImportErrors.length}
+          warningCount={fileImportWarnings.length}
+          staged={fileImportPackageStaged}
+          stagedBatchCount={fileImportStagedBatchIds.length}
+          parsing={fileImportParsing}
+          primaryDisabled={fileImportPrimaryDisabled}
+          primaryLabel={fileImportPrimaryLabel}
+          onPrimaryAction={handleFileImportPrimaryAction}
+          onFileChange={handleFileImportFileChange}
+          onDownloadTemplate={downloadFileImportTemplate}
+          onDownloadAllTemplates={downloadAllFileImportTemplates}
+        />
       ) : null}
 
       {data && hasSelectedConnector ? (

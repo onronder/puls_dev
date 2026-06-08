@@ -847,6 +847,20 @@ PR16.10.9 closes production safety findings after PR16.10.8 without changing the
 | [`src/lib/supabase.ts`](../../src/lib/supabase.ts)                                                                                                  | Production Supabase environment fail-fast                                                                   |
 | [`scripts/verify-16-10-9-runtime-safety-hardening.sh`](../../scripts/verify-16-10-9-runtime-safety-hardening.sh)                                    | PR16.10.9 verify gate                                                                                        |
 
+## PR16.10.10 DataSource operational hardening
+
+PR16.10.10 stabilizes DataSource Manager after the CSV / Excel import and runtime safety phases without changing the user journey. It enforces canonical package scope order on the server, replaces regex-based credential reference checks with deterministic parsing, shares tenant Notification Center realtime subscriptions, parses import packages sequentially, and extracts high-churn DataSource Manager sheets from the route.
+
+| Document / artifact                                                                                                                     | Purpose                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [16_10_10_datasource_operational_hardening.md](./16_10_10_datasource_operational_hardening.md)                                         | PR16.10.10 product/backend/frontend contract, safety boundary, and verification |
+| [`supabase/migrations/20260608130000_puls_datasource_operational_hardening.sql`](../../supabase/migrations/20260608130000_puls_datasource_operational_hardening.sql) | Credential reference parser and server-side file import package ordering guard  |
+| [`src/components/data-sources/FileImportSheet.tsx`](../../src/components/data-sources/FileImportSheet.tsx)                              | Extracted CSV / Excel import sheet presentation component                       |
+| [`src/components/data-sources/ProviderDraftSheet.tsx`](../../src/components/data-sources/ProviderDraftSheet.tsx)                        | Extracted provider draft sheet presentation component                           |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                        | Sequential package parsing and canonical file import scope ranking              |
+| [`src/lib/data/app/notifications.ts`](../../src/lib/data/app/notifications.ts)                                                          | Shared tenant realtime subscription registry for Notification Center signals    |
+| [`scripts/verify-16-10-10-datasource-operational-hardening.sh`](../../scripts/verify-16-10-10-datasource-operational-hardening.sh)      | PR16.10.10 verify gate                                                          |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

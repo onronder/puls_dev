@@ -7,10 +7,11 @@ import {
   parseRpcErrorCode,
 } from '#/lib/data/errors'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
-import type {
-  FileImportPackageResult,
-  FileImportParsedRow,
-  FileImportScopeId,
+import {
+  fileImportScopeRank,
+  type FileImportPackageResult,
+  type FileImportParsedRow,
+  type FileImportScopeId,
 } from '#/lib/data/setup/file-import-contract'
 
 export type ConnectorReadinessStatus = 'ready' | 'partial' | 'blocked'
@@ -8084,11 +8085,17 @@ export async function ingestFileImportPackage(
     })
   }
 
+  const orderedFiles = [...input.files].sort((left, right) => {
+    const scopeOrder = fileImportScopeRank(left.scope) - fileImportScopeRank(right.scope)
+    if (scopeOrder !== 0) return scopeOrder
+    return left.fileName.localeCompare(right.fileName, 'tr')
+  })
+
   const ingest = await pulsIntegration().rpc('ingest_file_import_package', {
     p_connection_id: input.connectionId,
     p_package: {
       package_id: input.packageId,
-      items: input.files.map((file) => ({
+      items: orderedFiles.map((file) => ({
         scope: file.scope,
         manifest: {
           file_name: file.parseResult.fileName,
@@ -8138,13 +8145,15 @@ export async function ingestFileImportPackage(
   return {
     connectionId: result.connection_id ?? input.connectionId,
     packageId: result.package_id ?? input.packageId,
-    fileCount: Number(result.file_count ?? input.files.length),
-    rowCount: Number(result.row_count ?? input.files.reduce((sum, file) => sum + file.parseResult.rowCount, 0)),
+    fileCount: Number(result.file_count ?? orderedFiles.length),
+    rowCount: Number(
+      result.row_count ?? orderedFiles.reduce((sum, file) => sum + file.parseResult.rowCount, 0),
+    ),
     status: result.status ?? 'uploaded',
     mode: result.mode ?? 'dry_run',
     nextActionKey: result.next_action_key ?? 'run_file_import_preview',
     items: (result.items ?? []).map((item, index) => {
-      const inputFile = input.files[index]
+      const inputFile = orderedFiles[index]
       return {
         connectionId: item.connection_id ?? input.connectionId,
         sourceNamespaceId: item.source_namespace_id ?? '',
