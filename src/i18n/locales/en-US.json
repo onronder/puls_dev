@@ -1067,6 +1067,28 @@
         "description": "Writing to ERP or external systems requires a separate approval and safety boundary."
       }
     },
+    "journey": {
+      "title": "Connection setup",
+      "description": "Choose the source first, then complete scope, fields, secure access, and preview in order. Open technical evidence only when you need it.",
+      "labels": {
+        "source": "Source",
+        "score": "Readiness",
+        "nextAction": "Next step"
+      },
+      "actions": {
+        "requestSecureAccess": "Start secure access",
+        "openFields": "Open fields and scope",
+        "openPreview": "Go to preview",
+        "openSetup": "Open setup details",
+        "openDetails": "Open technical details",
+        "showDetails": "Show details",
+        "hideDetails": "Hide details"
+      },
+      "technicalDetails": {
+        "title": "Technical details and audit evidence",
+        "description": "Open setup, fields, checks, credentials, preview/apply, and activity records when you need them."
+      }
+    },
     "accessReadiness": {
       "title": "Access readiness",
       "description": "Shows customer access, secure reference, and offline preview readiness before live API access opens.",

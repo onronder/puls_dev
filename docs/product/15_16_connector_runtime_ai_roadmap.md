@@ -817,6 +817,33 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Plan mevcut safe setup evidence üzerinden üretilir.
 - No-connector state customer pilot ready gibi görünmez.
 
+### PR16.10.4 - ERP Connector Journey Simplification
+
+**Ürün değeri:** `/erp` artık teknik control board gibi değil, connector kurulumu için “sıradaki doğru adım”ı gösteren sade ürün akışı gibi davranır.
+
+**Kapsam:**
+
+- Selected connector state için tek primary journey surface
+- Source, readiness score, current status, next action ve ordered setup gaps
+- Teknik kanıtların default kapalı details paneline taşınması
+- Deep-link ve in-page action geldiğinde teknik panelin otomatik açılması
+- No-connector state’in source selection akışını koruması
+
+**Kapsam dışı:**
+
+- Provider API call
+- Credential readback
+- Source/ERP writeback
+- Runtime connector execution
+- Database migration
+- Apply, rollback veya notification contract değişikliği
+
+**Doğrulama:**
+
+- `/erp` selected-connector state tek sade bağlantı akışı gösterir.
+- Teknik tab menüsü normal girişte gizlidir, detay açıldığında erişilebilir.
+- Existing deep-link/focus routes teknik paneli otomatik açar.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

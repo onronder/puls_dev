@@ -26,7 +26,6 @@ import { z } from 'zod'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
-import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { SheetShell } from '#/components/puls/SheetShell'
@@ -217,7 +216,9 @@ function ErpPage() {
   const [draftSheetOpen, setDraftSheetOpen] = useState(false)
   const [credentialSheetOpen, setCredentialSheetOpen] = useState(false)
   const [activeWorkbenchTab, setActiveWorkbenchTab] = useState<ErpWorkbenchTab>('setup')
+  const [technicalDetailsOpen, setTechnicalDetailsOpen] = useState(false)
   const showWorkbenchTab = (tab: ErpWorkbenchTab, targetId?: string) => {
+    setTechnicalDetailsOpen(true)
     setActiveWorkbenchTab(tab)
     if (!targetId) return
     window.setTimeout(() => {
@@ -230,6 +231,7 @@ function ErpPage() {
     if (!tab) return
 
     const tabTimer = window.setTimeout(() => {
+      setTechnicalDetailsOpen(true)
       setActiveWorkbenchTab(tab)
     }, 0)
 
@@ -594,6 +596,42 @@ function ErpPage() {
             }
           : null
   const AccessActionIcon = accessAction?.icon
+  const goLiveNextAction = data?.goLivePlan.nextActionKey
+  const journeyAction =
+    goLiveNextAction === 'erp.goLivePlan.nextActions.request_secure_access' &&
+    canRequestCredentialHandoff
+      ? {
+          label: t('erp.journey.actions.requestSecureAccess'),
+          icon: ShieldCheck,
+          onClick: () => setCredentialSheetOpen(true),
+        }
+      : goLiveNextAction === 'erp.goLivePlan.nextActions.complete_field_contract' ||
+          goLiveNextAction === 'erp.goLivePlan.nextActions.complete_data_ownership'
+        ? {
+            label: t('erp.journey.actions.openFields'),
+            icon: Database,
+            onClick: () => showWorkbenchTab('fields', 'erp-mapping-discovery'),
+          }
+        : goLiveNextAction === 'erp.goLivePlan.nextActions.prepare_preview'
+          ? {
+              label: t('erp.journey.actions.openPreview'),
+              icon: SearchCheck,
+              onClick: () => showWorkbenchTab('previewApply', 'erp-import-preview'),
+            }
+          : goLiveNextAction === 'erp.goLivePlan.nextActions.confirm_source_method'
+            ? {
+                label: t('erp.journey.actions.openSetup'),
+                icon: Plug,
+                onClick: () => showWorkbenchTab('setup'),
+              }
+            : data && hasSelectedConnector
+              ? {
+                  label: t('erp.journey.actions.openDetails'),
+                  icon: SearchCheck,
+                  onClick: () => setTechnicalDetailsOpen(true),
+                }
+              : null
+  const JourneyActionIcon = journeyAction?.icon
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -613,7 +651,112 @@ function ErpPage() {
 
       <DemoSourcePill visible={erpResult?.source === 'demo'} />
 
-      {data ? (
+      {data && hasSelectedConnector ? (
+        <section id="erp-connector-journey" className="mt-6 scroll-mt-6">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusPill tone={readinessTone(data.goLivePlan.status)}>
+                    {t(`erp.readinessStatus.${data.goLivePlan.status}`)}
+                  </StatusPill>
+                  <StatusPill tone={data.goLivePlan.canStartCustomerPilot ? 'success' : 'warning'}>
+                    {data.goLivePlan.canStartCustomerPilot
+                      ? t('erp.goLivePlan.pilot.ready')
+                      : t('erp.goLivePlan.pilot.waiting')}
+                  </StatusPill>
+                </div>
+                <h2 className="mt-4 text-2xl font-semibold text-[var(--color-text-primary)]">
+                  {t('erp.journey.title')}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                  {t('erp.journey.description')}
+                </p>
+                <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
+                  <div>
+                    <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                      {t('erp.journey.labels.source')}
+                    </dt>
+                    <dd className="mt-1 truncate text-sm font-medium text-[var(--color-text-primary)]">
+                      {data.provider.label}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                      {t('erp.journey.labels.score')}
+                    </dt>
+                    <dd className="mt-1 font-mono text-sm font-semibold text-[var(--color-text-primary)]">
+                      {data.goLivePlan.score}%
+                    </dd>
+                  </div>
+                </dl>
+                <Progress className="mt-3 h-1.5" value={data.goLivePlan.score} />
+                <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.journey.labels.nextAction')}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-primary)]">
+                    {t(data.goLivePlan.nextActionKey)}
+                  </p>
+                </div>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  {journeyAction ? (
+                    <Button
+                      type="button"
+                      className="touch-target w-full sm:w-auto"
+                      onClick={journeyAction.onClick}
+                    >
+                      {JourneyActionIcon ? <JourneyActionIcon className="h-4 w-4" /> : null}
+                      {journeyAction.label}
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full sm:w-auto"
+                    onClick={() => setTechnicalDetailsOpen((open) => !open)}
+                  >
+                    <SearchCheck className="h-4 w-4" />
+                    {technicalDetailsOpen
+                      ? t('erp.journey.actions.hideDetails')
+                      : t('erp.journey.actions.showDetails')}
+                  </Button>
+                </div>
+              </div>
+
+              <ol className="grid gap-2 sm:grid-cols-2">
+                {data.goLivePlan.gaps.map((gap, index) => (
+                  <li
+                    key={gap.id}
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-[var(--color-text-muted)]">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                            {t(gap.labelKey)}
+                          </p>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                          {t(gap.evidenceKey)}
+                        </p>
+                      </div>
+                      <StatusPill tone={readinessTone(gap.status)}>
+                        {t(`erp.readinessStatus.${gap.status}`)}
+                      </StatusPill>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {data && hasNoConnector ? (
         <section className="mt-6">
           <SectionHeader
             title={
@@ -667,43 +810,9 @@ function ErpPage() {
           <Skeleton className="h-28 rounded-xl" />
           <Skeleton className="h-28 rounded-xl" />
         </div>
-      ) : data && hasSelectedConnector ? (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            compact
-            label={t('erp.metrics.provider')}
-            value={data.provider.label}
-            hint={t(data.provider.statusLabelKey)}
-            icon={Plug}
-          />
-          <div>
-            <MetricCard
-              compact
-              label={t(data.setupSummary.labelKey)}
-              value={t(data.setupSummary.valueKey)}
-              hint={t(data.setupSummary.hintKey)}
-            />
-            {data.setupSummary.progress === null ? null : (
-              <Progress className="mt-2 h-1.5" value={data.setupSummary.progress} />
-            )}
-          </div>
-          <MetricCard
-            compact
-            label={t('erp.metrics.fieldMapping')}
-            value={`${data.status.mappedFields} / ${data.status.totalFields}`}
-            hint={t('erp.metrics.fieldMappingHint')}
-          />
-          <MetricCard
-            compact
-            label={t('erp.metrics.namespaces')}
-            value={`${data.namespaces.length}`}
-            hint={t('erp.metrics.namespacesHint')}
-            icon={Database}
-          />
-        </div>
       ) : null}
 
-      {data && hasSelectedConnector ? (
+      {data && hasSelectedConnector && technicalDetailsOpen ? (
         <section id="erp-access-readiness" className="mt-8 scroll-mt-6">
           <SectionHeader
             title={t('erp.accessReadiness.title')}
@@ -780,7 +889,7 @@ function ErpPage() {
         </section>
       ) : null}
 
-      {data && hasSelectedConnector ? (
+      {data && hasSelectedConnector && technicalDetailsOpen ? (
         <section id="erp-customer-handoff" className="mt-8 scroll-mt-6">
           <SectionHeader
             title={t('erp.customerHandoff.title')}
@@ -857,7 +966,7 @@ function ErpPage() {
         </section>
       ) : null}
 
-      {data && hasSelectedConnector ? (
+      {data && hasSelectedConnector && technicalDetailsOpen ? (
         <section id="erp-go-live-plan" className="mt-8 scroll-mt-6">
           <SectionHeader
             title={t('erp.goLivePlan.title')}
@@ -1269,11 +1378,33 @@ function ErpPage() {
       ) : null}
 
       {data && hasSelectedConnector ? (
-        <Tabs
-          value={activeWorkbenchTab}
-          onValueChange={(value) => setActiveWorkbenchTab(value as ErpWorkbenchTab)}
-          className="mt-8"
+        <details
+          open={technicalDetailsOpen}
+          onToggle={(event) => setTechnicalDetailsOpen(event.currentTarget.open)}
+          className="mt-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]"
         >
+          <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 marker:hidden">
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-[var(--color-text-primary)]">
+                {t('erp.journey.technicalDetails.title')}
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">
+                {t('erp.journey.technicalDetails.description')}
+              </span>
+            </span>
+            <ChevronRight
+              className={cn(
+                'h-5 w-5 shrink-0 text-[var(--color-text-muted)] transition-transform',
+                technicalDetailsOpen ? 'rotate-90' : 'rotate-0',
+              )}
+              aria-hidden
+            />
+          </summary>
+          <Tabs
+            value={activeWorkbenchTab}
+            onValueChange={(value) => setActiveWorkbenchTab(value as ErpWorkbenchTab)}
+            className="border-t border-[var(--color-border)] p-4"
+          >
           <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
             <TabsList
               aria-label={t('erp.tabs.label')}
@@ -4018,7 +4149,8 @@ function ErpPage() {
               </ul>
             </section>
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </details>
       ) : null}
     </div>
   )

@@ -801,6 +801,16 @@ PR16.10.3 turns the selected `/erp` connector into an actionable go-live gap pla
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` selected connector go-live gap plan UI                                                             |
 | [`scripts/verify-16-10-3-connector-go-live-gap-plan.sh`](../../scripts/verify-16-10-3-connector-go-live-gap-plan.sh)                   | PR16.10.3 verify gate                                                                                    |
 
+## PR16.10.4 ERP connector journey simplification
+
+PR16.10.4 turns `/erp` from a dense connector control board into a simple connector setup journey. The selected connector view shows one primary journey card with source, readiness, next action, and ordered setup gaps, while technical evidence and tabs remain available behind an on-demand details panel.
+
+| Document / artifact                                                                                                                   | Purpose                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [16_10_4_erp_connector_journey_simplification.md](./16_10_4_erp_connector_journey_simplification.md)                                   | PR16.10.4 product contract, simplified journey UX, safety boundary, and verification                      |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` selected connector journey UI and collapsed technical details panel                                |
+| [`scripts/verify-16-10-4-erp-connector-journey-simplification.sh`](../../scripts/verify-16-10-4-erp-connector-journey-simplification.sh) | PR16.10.4 verify gate                                                                                    |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
