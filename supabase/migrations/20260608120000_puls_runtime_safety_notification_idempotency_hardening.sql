@@ -84,74 +84,14 @@ $$;
 DROP TRIGGER IF EXISTS app_notifications_normalize_dedupe_key
   ON puls_app.app_notifications;
 CREATE TRIGGER app_notifications_normalize_dedupe_key
-  BEFORE INSERT OR UPDATE OF source_domain, source_table, dedupe_key
+  BEFORE INSERT
   ON puls_app.app_notifications
   FOR EACH ROW
   EXECUTE FUNCTION puls_app.normalize_app_notification_dedupe_key_trigger();
 
--- Archive duplicate status-derived connector job notifications before moving the
--- surviving row to the immutable event key. This preserves the durable ledger
--- while removing double-counted active notifications.
-WITH affected AS (
-  SELECT
-    notification.id,
-    notification.tenant_id,
-    notification.dedupe_key,
-    puls_app.normalize_app_notification_dedupe_key(
-      notification.source_domain,
-      notification.source_table,
-      notification.dedupe_key
-    ) AS normalized_key,
-    row_number() OVER (
-      PARTITION BY notification.tenant_id,
-      puls_app.normalize_app_notification_dedupe_key(
-        notification.source_domain,
-        notification.source_table,
-        notification.dedupe_key
-      )
-      ORDER BY notification.occurred_at ASC, notification.created_at ASC, notification.id ASC
-    ) AS rn
-  FROM puls_app.app_notifications notification
-  WHERE notification.source_domain = 'connector_runtime'
-    AND notification.source_table = 'puls_integration.connector_jobs'
-), duplicates AS (
-  SELECT *
-  FROM affected
-  WHERE normalized_key IS NOT NULL
-    AND normalized_key <> dedupe_key
-    AND rn > 1
-)
-UPDATE puls_app.app_notifications notification
-SET
-  notification_status = 'archived',
-  dedupe_key = duplicates.normalized_key || ':archived:' || notification.id::TEXT,
-  safe_summary = notification.safe_summary || jsonb_build_object(
-    'dedupe_superseded', TRUE,
-    'superseded_by_dedupe_key', duplicates.normalized_key
-  )
-FROM duplicates
-WHERE notification.id = duplicates.id;
-
-WITH affected AS (
-  SELECT
-    notification.id,
-    notification.dedupe_key,
-    puls_app.normalize_app_notification_dedupe_key(
-      notification.source_domain,
-      notification.source_table,
-      notification.dedupe_key
-    ) AS normalized_key
-  FROM puls_app.app_notifications notification
-  WHERE notification.source_domain = 'connector_runtime'
-    AND notification.source_table = 'puls_integration.connector_jobs'
-)
-UPDATE puls_app.app_notifications notification
-SET dedupe_key = affected.normalized_key
-FROM affected
-WHERE notification.id = affected.id
-  AND affected.normalized_key IS NOT NULL
-  AND affected.normalized_key <> affected.dedupe_key;
-
+-- Existing notification ledger rows are immutable by design. PR16.10.9 only
+-- normalizes new connector job notification inserts; historical rows remain as
+-- originally emitted and are not updated or deleted by this migration.
 
 
 CREATE OR REPLACE FUNCTION puls_integration.complete_connector_job(

@@ -37,8 +37,8 @@ for needle in \
   "ALTER FUNCTION puls_app.normalize_app_notification_dedupe_key(TEXT, TEXT, TEXT)" \
   "STABLE" \
   "app_notifications_normalize_dedupe_key" \
-  "dedupe_superseded" \
-  "superseded_by_dedupe_key" \
+  "Existing notification ledger rows are immutable by design" \
+  "BEFORE INSERT" \
   "CREATE OR REPLACE FUNCTION puls_integration.complete_connector_job" \
   "CREATE OR REPLACE FUNCTION puls_integration.revoke_connector_credential_reference" \
   "CREATE OR REPLACE FUNCTION puls_integration.mark_connector_credential_verification" \
@@ -60,6 +60,11 @@ done
 
 if grep -Fq "tenant_id IS NULL" <<< "$MIGRATION"; then
   echo "FAIL: PR16.10.9 audit policy must not reintroduce nullable tenant inserts" >&2
+  exit 1
+fi
+
+if grep -Fq "UPDATE puls_app.app_notifications" <<< "$MIGRATION"; then
+  echo "FAIL: PR16.10.9 migration must not update immutable notification ledger rows" >&2
   exit 1
 fi
 

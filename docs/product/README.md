@@ -837,7 +837,7 @@ PR16.10.8 makes CSV / Excel the first production-grade manual file lane in PULS 
 
 ## PR16.10.9 runtime safety hardening
 
-PR16.10.9 closes production safety findings after PR16.10.8 without changing the DataSource Manager UI. It tightens the audit tenant boundary, makes connector job notifications idempotent across job status changes, requires active worker leases before completion or apply execution, blocks late verification success after credential revocation, and adds Vitest to CI.
+PR16.10.9 closes production safety findings after PR16.10.8 without changing the DataSource Manager UI. It tightens the audit tenant boundary, makes new connector job notifications idempotent across job status changes without updating immutable ledger rows, requires active worker leases before completion or apply execution, blocks late verification success after credential revocation, and adds Vitest to CI.
 
 | Document / artifact                                                                                                                                | Purpose                                                                                                      |
 | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |

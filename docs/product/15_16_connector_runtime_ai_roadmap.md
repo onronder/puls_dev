@@ -932,7 +932,7 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 
 - `puls_audit.audit_logs` authenticated insert policy'de nullable tenant write kapatma
 - Connector job Notification Center dedupe key normalizasyonu
-- Status-derived duplicate connector job notification'larını archive ederek aktif çift sayımı kaldırma
+- Mevcut immutable notification ledger satırlarını değiştirmeden yeni connector job notification insert'lerini normalize etme
 - Worker `complete_connector_job` için active lease guard
 - Create-only, guarded update ve rollback worker apply RPC'leri için active lease guard
 - Credential revoke sonrası queued, retrying ve running runtime preflight job'larını cancel etme
