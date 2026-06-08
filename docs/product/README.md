@@ -811,6 +811,16 @@ PR16.10.4 turns `/erp` from a dense connector control board into a simple connec
 | [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                             | `/erp` selected connector journey UI and collapsed technical details panel                                |
 | [`scripts/verify-16-10-4-erp-connector-journey-simplification.sh`](../../scripts/verify-16-10-4-erp-connector-journey-simplification.sh) | PR16.10.4 verify gate                                                                                    |
 
+## PR16.10.6 ERP step-scoped connector journey
+
+PR16.10.6 keeps ERP connectors as the main product path and treats CSV / Excel as the first executable manual file connector lane. `/erp` now renders selected connectors through a six-step journey with one primary action per step, while existing technical evidence remains available through step-scoped advanced details and deep links.
+
+| Document / artifact                                                                                                                       | Purpose                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [16_10_6_erp_step_scoped_connector_journey.md](./16_10_6_erp_step_scoped_connector_journey.md)                                             | PR16.10.6 product contract, step-scoped journey UX, safety boundary, and verification                        |
+| [`src/routes/_app/erp.tsx`](../../src/routes/_app/erp.tsx)                                                                                 | `/erp` selected connector stepper, primary action binding, and deep-link-aware technical details              |
+| [`scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh`](../../scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh)         | PR16.10.6 verify gate                                                                                        |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

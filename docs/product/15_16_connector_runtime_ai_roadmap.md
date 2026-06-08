@@ -844,6 +844,43 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Teknik tab menüsü normal girişte gizlidir, detay açıldığında erişilebilir.
 - Existing deep-link/focus routes teknik paneli otomatik açar.
 
+### PR16.10.6 - ERP Step-Scoped Connector Journey
+
+**Ürün değeri:** `/erp`, connector-first kalırken her adımı tek aksiyonlu, sade ve üretim diliyle çalışan bir journey shell'e dönüşür.
+
+**Kapsam:**
+
+- Selected connector state için altı adımlı canonical journey:
+  - kaynak ve erişim,
+  - alan eşleştirme,
+  - dry-run preview,
+  - değişiklik inceleme,
+  - onay ve worker handoff,
+  - sonuç takibi
+- CSV / Excel'in ilk çalışan manual file connector lane olarak konumlanması
+- Canias ve diğer ERP/API connector'larının ana connector path olarak korunması
+- Her adımda tek primary CTA
+- Teknik kanıtların step-scoped advanced details altında tutulması
+- Existing `tab`/`focus` deep-link davranışının ilgili step ve teknik hedefe bağlanması
+
+**Kapsam dışı:**
+
+- CSV / Excel upload veya parse
+- Mapping persistence
+- Yeni RPC veya migration
+- Provider API call
+- Credential readback
+- Source/ERP writeback
+- Apply, rollback, notification, RLS veya worker contract değişikliği
+- Product UI içinde release note, roadmap veya future-work notu
+
+**Doğrulama:**
+
+- `/erp` selected-connector state altı adımlı connector journey gösterir.
+- Her adım tek primary aksiyon ve tek teknik detay girişine sahiptir.
+- Normal girişte teknik kanıtlar kapalıdır.
+- Existing notification/deep-link route'ları doğru journey step'i ve teknik target'ı açar.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.
