@@ -4,6 +4,7 @@ import {
   buildDefaultConnectorFieldMappings,
   buildDemoErpOverview,
   fetchErpOverviewWithMeta,
+  ingestFileImportBatch,
   isErpOverviewEmpty,
   mapConnectorSetupError,
   mapProviderLabel,
@@ -322,7 +323,7 @@ describe('fetchErpOverviewWithMeta', () => {
       sourceKind: 'catalog',
       status: 'not_configured',
       setupAvailable: true,
-      primaryAction: 'start_setup',
+      primaryAction: 'upload_file',
     })
     expect(result.data.setupSummary).toEqual({
       labelKey: 'erp.metrics.setup',
@@ -2924,7 +2925,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.dataSources[2]).toMatchObject({
       providerId: 'csv_import',
       status: 'not_configured',
-      primaryAction: 'start_setup',
+      primaryAction: 'upload_file',
     })
     expect(result.data.dataSources[3]).toMatchObject({
       providerId: 'custom_api',
@@ -3323,7 +3324,7 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.setup.status).toBe('mapping_ready')
   })
 
-  it('blocks a second source from owning an already mapped canonical domain', async () => {
+  it('blocks a second source from owning an active canonical domain', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
     const integrationClient = client({
       erp_connections: {
@@ -3332,9 +3333,10 @@ describe('fetchErpOverviewWithMeta', () => {
             id: 'connection-canias',
             provider: 'canias',
             connection_key: 'canias-default',
-            setup_status: 'mapping_ready',
-            setup_step: 'preflight',
+            setup_status: 'connected',
+            setup_step: 'runtime',
             is_enabled: true,
+            is_active: true,
             owned_domains: ['employees', 'departments'],
             created_at: '2026-06-01T00:00:00.000Z',
             updated_at: '2026-06-01T00:00:00.000Z',
@@ -3351,6 +3353,136 @@ describe('fetchErpOverviewWithMeta', () => {
         i18nKey: 'erp.errors.domainOwned',
       },
     )
+  })
+
+  it('allows CSV setup while Canias is still a non-runtime setup source', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { inserts: [], updates: [] }
+    const integrationClient = client(
+      {
+        erp_connections: {
+          data: [
+            {
+              id: 'connection-canias',
+              provider: 'canias',
+              connection_key: 'canias-default',
+              setup_status: 'mapping_ready',
+              setup_step: 'preflight',
+              is_enabled: true,
+              is_active: false,
+              owned_domains: ['employees', 'departments'],
+              created_at: '2026-06-01T00:00:00.000Z',
+              updated_at: '2026-06-01T00:00:00.000Z',
+            },
+          ],
+          error: null,
+          singleData: { id: 'connection-csv' },
+        },
+        erp_field_mappings: { data: [], error: null },
+        erp_sync_batches: { data: { id: 'history-1' }, error: null },
+      },
+      capture,
+    )
+    vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
+
+    const result = await startConnectorSetup('user-1', { providerId: 'csv_import' })
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-csv',
+      providerId: 'csv_import',
+      setupStatus: 'mapping_ready',
+      currentStep: 'namespace',
+    })
+    expect(capture.inserts).toContainEqual({
+      table: 'erp_connections',
+      payload: expect.objectContaining({
+        provider: 'csv',
+        connection_method: 'manual_import',
+        connection_key: 'csv-excel-default',
+      }),
+    })
+  })
+
+  it('stages parsed CSV/Excel rows through the file import RPC only', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { rpcCalls: [] }
+    const integrationClient = client(
+      {
+        'rpc:ingest_file_import_batch': {
+          data: {
+            connection_id: 'connection-csv',
+            source_namespace_id: 'namespace-csv',
+            manifest_id: 'manifest-1',
+            import_batch_id: 'batch-1',
+            scope_key: 'employees',
+            row_count: 1,
+            status: 'uploaded',
+            mode: 'dry_run',
+            next_action_key: 'run_file_import_preview',
+          },
+          error: null,
+        },
+      },
+      capture,
+    )
+    vi.mocked(pulsIntegration).mockReturnValue(integrationClient as never)
+
+    const result = await ingestFileImportBatch('user-1', {
+      connectionId: 'connection-csv',
+      scope: 'employees',
+      fileName: 'puls_employees_v1_20260608.csv',
+      fileExtension: 'csv',
+      fileSizeBytes: 128,
+      fileChecksum: 'a'.repeat(64),
+      businessDate: '20260608',
+      delimiter: ';',
+      rowCount: 1,
+      rows: [
+        {
+          rowNumber: 2,
+          entityType: 'employee',
+          externalId: 'E-001',
+          payload: {
+            employee_code: 'E-001',
+            full_name: 'Ayşe Öz',
+            email: 'ayse@example.com',
+          },
+        },
+      ],
+    })
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-csv',
+      sourceNamespaceId: 'namespace-csv',
+      manifestId: 'manifest-1',
+      batchId: 'batch-1',
+      scope: 'employees',
+      rowCount: 1,
+      status: 'uploaded',
+      mode: 'dry_run',
+    })
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'ingest_file_import_batch',
+      args: expect.objectContaining({
+        p_connection_id: 'connection-csv',
+        p_scope_key: 'employees',
+        p_manifest: expect.objectContaining({
+          file_name: 'puls_employees_v1_20260608.csv',
+          file_checksum: 'a'.repeat(64),
+          business_date: '20260608',
+          row_count: 1,
+        }),
+        p_rows: [
+          expect.objectContaining({
+            row_number: 2,
+            entity_type: 'employee',
+            external_id: 'E-001',
+          }),
+        ],
+      }),
+    })
+    expect(JSON.stringify(capture.rpcCalls)).not.toContain('raw_payload')
+    expect(JSON.stringify(capture.rpcCalls)).not.toContain('credential')
   })
 
   it('persists a dry-run preflight record without enabling runtime', async () => {
