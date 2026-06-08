@@ -178,6 +178,12 @@
     "safeSummary": {
       "source_event_key": "Event type",
       "safe_error_code": "Safe error code",
+      "package_id": "Package ID",
+      "file_name": "File name",
+      "file_extension": "File type",
+      "business_date": "File date",
+      "scope_key": "Data scope",
+      "import_batch_id": "Import batch ID",
       "job_type": "Job type",
       "job_status": "Job status",
       "failure_class": "Failure class",
@@ -214,6 +220,10 @@
       "runtimePreflightFailed": {
         "title": "Live connection check failed",
         "body": "The ERP connection could not be validated before live runtime. Review the credential reference and runtime check in the job queue."
+      },
+      "fileImportUploaded": {
+        "title": "File import is ready for preview",
+        "body": "The uploaded file was safely queued for dry-run preview. Open the preview to review the changes."
       },
       "createOnlyCompleted": {
         "title": "New records were added to PULS",
@@ -1544,45 +1554,51 @@
     },
     "fileImport": {
       "title": "CSV / Excel import",
-      "description": "Download the template, validate the file, and prepare rows safely for dry-run preview only.",
+      "description": "Validate HR template files as one dry-run package and prepare rows safely for preview.",
       "source": "Source",
       "sourceReady": "Source ready",
       "sourceRequired": "Source draft is prepared first",
       "scopeTitle": "Data scope",
       "templateTitle": "Template",
-      "templateDescription": "Expected file name: {{fileName}}. Each file carries one scope; ZIP files are not accepted.",
+      "templateDescription": "Expected file name for the selected scope: {{fileName}}. Download each scope template to fill the full HR data model.",
       "fileTitle": "File",
-      "fileDescription": "CSV is limited to 5 MB and Excel to 10 MB. Formula cells are rejected when a cached value cannot be read.",
-      "contractReady": "File matches the contract",
-      "contractBlocked": "File needs correction",
+      "fileDescription": "Choose one or more CSV/XLSX files. Each file must carry its own scope name; ZIP files are not accepted.",
+      "contractReady": "Package is ready for preview",
+      "contractBlocked": "Package needs correction",
       "stagedBatch": "Dry-run batch ready: {{batchId}}",
+      "stagedPackage": "{{count}} files were queued for dry-run.",
+      "packageSummary": "{{files}} files · {{rows}} rows",
+      "unknownScope": "Scope could not be read",
       "issueContext": "Row {{row}} · {{column}}",
       "actions": {
         "close": "Close",
         "prepareSource": "Prepare source",
         "preparingSource": "Preparing source",
         "downloadTemplate": "Download template",
-        "chooseFile": "Choose file",
+        "downloadAllTemplates": "Download all templates",
+        "chooseFile": "Choose files",
         "waitingFile": "Waiting for file",
-        "parsing": "Reading file",
+        "parsing": "Reading files",
         "stage": "Prepare preview",
         "staging": "Preparing",
-        "fixFile": "Fix file",
+        "fixFile": "Fix package",
         "runPreview": "Run preview",
         "runningPreview": "Opening preview"
       },
       "metrics": {
+        "files": "Files",
         "rows": "Rows",
         "columns": "Fields",
+        "readyFiles": "Ready",
         "delimiter": "Delimiter",
         "findings": "Errors / warnings"
       },
       "toast": {
         "sourceReady": "CSV / Excel source is ready.",
-        "parsed": "{{count}} rows validated. No data was written.",
-        "parseBlocked": "The file does not match the contract. Fix the errors and upload it again.",
-        "parseFailed": "The file could not be read. Check the format and file name.",
-        "staged": "{{count}} rows were prepared for dry-run preview."
+        "parsed": "{{count}} rows validated across {{files}} files. No data was written.",
+        "parseBlocked": "The package does not match the contract. Fix the errors and upload it again.",
+        "parseFailed": "The files could not be read. Check the format and file names.",
+        "staged": "{{count}} rows across {{files}} files were prepared for dry-run preview."
       },
       "scopes": {
         "employees": "Employees",
@@ -1620,6 +1636,10 @@
       "issues": {
         "INVALID_FILE_NAME": "The file name does not match the expected contract.",
         "FILE_SCOPE_MISMATCH": "The file name does not match the selected data scope.",
+        "FILE_SCOPE_NOT_ALLOWED": "This file scope is not enabled for the source.",
+        "PACKAGE_FILE_REQUIRED": "Choose at least one file for the package.",
+        "PACKAGE_TOO_MANY_FILES": "The package exceeds the allowed file count.",
+        "DUPLICATE_SCOPE_IN_PACKAGE": "The same data scope cannot appear in more than one package file.",
         "INVALID_FILE_DATE": "Use YYYYMMDD for the file date.",
         "UNSUPPORTED_FILE_TYPE": "Only CSV or XLSX files are accepted.",
         "FILE_TOO_LARGE": "The file exceeds the allowed size limit.",

@@ -82,6 +82,28 @@ describe('app notification actions', () => {
     expect(action.canExportIssueCsv).toBe(false)
   })
 
+  it('routes file import upload notifications to the import preview section', () => {
+    const action = resolveAppNotificationAction(
+      notification({
+        sourceEventKey: 'file_import_uploaded',
+        severity: 'success',
+        routeHint: 'connector_runtime.file_import',
+      }),
+    )
+
+    expect(action.primaryAction).toMatchObject({
+      exactTarget: true,
+      target: {
+        to: '/verikaynaklari',
+        search: {
+          tab: 'previewApply',
+          focus: 'erp-import-preview',
+        },
+      },
+    })
+    expect(action.canExportIssueCsv).toBe(false)
+  })
+
   it('uses CSV export instead of a vague route for unknown ERP error notifications', () => {
     const action = resolveAppNotificationAction(
       notification({

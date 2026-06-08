@@ -5,6 +5,7 @@ import {
   buildDemoErpOverview,
   fetchErpOverviewWithMeta,
   ingestFileImportBatch,
+  ingestFileImportPackage,
   isErpOverviewEmpty,
   mapConnectorSetupError,
   mapProviderLabel,
@@ -3403,22 +3404,33 @@ describe('fetchErpOverviewWithMeta', () => {
     })
   })
 
-  it('stages parsed CSV/Excel rows through the file import RPC only', async () => {
+  it('stages parsed CSV/Excel rows through the file import package RPC only', async () => {
     resolveTenant.mockResolvedValue(mockTenantContext())
     const capture: ClientCapture = { rpcCalls: [] }
     const integrationClient = client(
       {
-        'rpc:ingest_file_import_batch': {
+        'rpc:ingest_file_import_package': {
           data: {
             connection_id: 'connection-csv',
-            source_namespace_id: 'namespace-csv',
-            manifest_id: 'manifest-1',
-            import_batch_id: 'batch-1',
-            scope_key: 'employees',
+            package_id: 'package-1',
+            file_count: 1,
             row_count: 1,
             status: 'uploaded',
             mode: 'dry_run',
             next_action_key: 'run_file_import_preview',
+            items: [
+              {
+                connection_id: 'connection-csv',
+                source_namespace_id: 'namespace-csv',
+                manifest_id: 'manifest-1',
+                import_batch_id: 'batch-1',
+                scope_key: 'employees',
+                row_count: 1,
+                status: 'uploaded',
+                mode: 'dry_run',
+                next_action_key: 'run_file_import_preview',
+              },
+            ],
           },
           error: null,
         },
@@ -3462,27 +3474,163 @@ describe('fetchErpOverviewWithMeta', () => {
       mode: 'dry_run',
     })
     expect(capture.rpcCalls).toContainEqual({
-      fn: 'ingest_file_import_batch',
+      fn: 'ingest_file_import_package',
       args: expect.objectContaining({
         p_connection_id: 'connection-csv',
-        p_scope_key: 'employees',
-        p_manifest: expect.objectContaining({
-          file_name: 'puls_employees_v1_20260608.csv',
-          file_checksum: 'a'.repeat(64),
-          business_date: '20260608',
-          row_count: 1,
+        p_package: expect.objectContaining({
+          items: [
+            expect.objectContaining({
+              scope: 'employees',
+              manifest: expect.objectContaining({
+                file_name: 'puls_employees_v1_20260608.csv',
+                file_checksum: 'a'.repeat(64),
+                business_date: '20260608',
+                row_count: 1,
+              }),
+              rows: [
+                expect.objectContaining({
+                  row_number: 2,
+                  entity_type: 'employee',
+                  external_id: 'E-001',
+                }),
+              ],
+            }),
+          ],
         }),
-        p_rows: [
-          expect.objectContaining({
-            row_number: 2,
-            entity_type: 'employee',
-            external_id: 'E-001',
-          }),
-        ],
       }),
     })
     expect(JSON.stringify(capture.rpcCalls)).not.toContain('raw_payload')
     expect(JSON.stringify(capture.rpcCalls)).not.toContain('credential')
+  })
+
+  it('stages multiple parsed files through one atomic file import package RPC', async () => {
+    resolveTenant.mockResolvedValue(mockTenantContext())
+    const capture: ClientCapture = { rpcCalls: [] }
+    setupSeededMocks(
+      {
+        'rpc:ingest_file_import_package': {
+          data: {
+            connection_id: 'connection-csv',
+            package_id: 'package-1',
+            file_count: 2,
+            row_count: 2,
+            status: 'uploaded',
+            mode: 'dry_run',
+            next_action_key: 'run_file_import_preview',
+            items: [
+              {
+                connection_id: 'connection-csv',
+                source_namespace_id: 'namespace-csv',
+                manifest_id: 'manifest-legal',
+                import_batch_id: 'batch-legal',
+                scope_key: 'legal_entities',
+                row_count: 1,
+                status: 'uploaded',
+                mode: 'dry_run',
+                next_action_key: 'run_file_import_preview',
+              },
+              {
+                connection_id: 'connection-csv',
+                source_namespace_id: 'namespace-csv',
+                manifest_id: 'manifest-employee',
+                import_batch_id: 'batch-employee',
+                scope_key: 'employees',
+                row_count: 1,
+                status: 'uploaded',
+                mode: 'dry_run',
+                next_action_key: 'run_file_import_preview',
+              },
+            ],
+          },
+          error: null,
+        },
+      },
+      capture,
+    )
+
+    const result = await ingestFileImportPackage('user-1', {
+      connectionId: 'connection-csv',
+      packageId: 'package-1',
+      files: [
+        {
+          scope: 'legal_entities',
+          fileName: 'puls_legal_entities_v1_20260608.csv',
+          parseResult: {
+            ok: true,
+            scope: 'legal_entities',
+            fileName: 'puls_legal_entities_v1_20260608.csv',
+            fileExtension: 'csv',
+            fileSizeBytes: 64,
+            fileChecksum: 'b'.repeat(64),
+            templateVersion: 'v1',
+            businessDate: '20260608',
+            delimiter: ',',
+            rowCount: 1,
+            rows: [
+              {
+                rowNumber: 2,
+                entityType: 'legal_entity',
+                externalId: 'LE-001',
+                payload: { code: 'LE-001', name: 'PULS Demo' },
+              },
+            ],
+            mappedColumns: [],
+            ignoredHeaders: [],
+            issues: [],
+          },
+        },
+        {
+          scope: 'employees',
+          fileName: 'puls_employees_v1_20260608.csv',
+          parseResult: {
+            ok: true,
+            scope: 'employees',
+            fileName: 'puls_employees_v1_20260608.csv',
+            fileExtension: 'csv',
+            fileSizeBytes: 64,
+            fileChecksum: 'c'.repeat(64),
+            templateVersion: 'v1',
+            businessDate: '20260608',
+            delimiter: ',',
+            rowCount: 1,
+            rows: [
+              {
+                rowNumber: 2,
+                entityType: 'employee',
+                externalId: 'E-001',
+                payload: { employee_code: 'E-001', full_name: 'Ayşe Öz' },
+              },
+            ],
+            mappedColumns: [],
+            ignoredHeaders: [],
+            issues: [],
+          },
+        },
+      ],
+    })
+
+    expect(result).toMatchObject({
+      connectionId: 'connection-csv',
+      packageId: 'package-1',
+      fileCount: 2,
+      rowCount: 2,
+      status: 'uploaded',
+      mode: 'dry_run',
+    })
+    expect(result.items.map((item) => item.scope)).toEqual(['legal_entities', 'employees'])
+    expect(capture.rpcCalls).toContainEqual({
+      fn: 'ingest_file_import_package',
+      args: expect.objectContaining({
+        p_connection_id: 'connection-csv',
+        p_package: expect.objectContaining({
+          package_id: 'package-1',
+          items: expect.arrayContaining([
+            expect.objectContaining({ scope: 'legal_entities' }),
+            expect.objectContaining({ scope: 'employees' }),
+          ]),
+        }),
+      }),
+    })
   })
 
   it('persists a dry-run preflight record without enabling runtime', async () => {

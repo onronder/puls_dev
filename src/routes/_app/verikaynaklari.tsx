@@ -37,7 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
 import { useAuth } from '#/lib/auth'
 import {
   fetchErpOverviewWithMeta,
-  ingestFileImportBatch,
+  ingestFileImportPackage,
   mapConnectorSetupError,
   recordConnectorApplyApproval,
   recordConnectorGuardedUpdateRollbackApproval,
@@ -59,8 +59,8 @@ import {
   buildFileImportCsvTemplate,
   buildFileImportExpectedFileName,
   fileImportScopeOptions,
-  parseFileImport,
-  type FileImportParseResult,
+  parseFileImportPackage,
+  type FileImportPackageResult,
   type FileImportScopeId,
 } from '#/lib/data/setup/file-import-contract'
 import { captureAppError } from '#/lib/observability/sentry'
@@ -296,7 +296,9 @@ function fileImportIssueLabelKey(code: string): string {
   return `erp.fileImport.issues.${code}`
 }
 
-function formatFileImportDelimiter(delimiter: FileImportParseResult['delimiter']): string {
+function formatFileImportDelimiter(
+  delimiter: FileImportPackageResult['files'][number]['parseResult']['delimiter'],
+): string {
   if (delimiter === '\t') return 'Tab'
   return delimiter ?? '-'
 }
@@ -314,6 +316,12 @@ function downloadFileImportTemplate(scope: FileImportScopeId) {
   URL.revokeObjectURL(url)
 }
 
+function downloadAllFileImportTemplates(scopes: FileImportScopeId[]) {
+  scopes.forEach((scope, index) => {
+    window.setTimeout(() => downloadFileImportTemplate(scope), index * 120)
+  })
+}
+
 function ErpPage() {
   const routeSearch = Route.useSearch()
   const { t, i18n } = useTranslation()
@@ -327,10 +335,9 @@ function ErpPage() {
   const [fileImportSourceId, setFileImportSourceId] = useState<string | null>(null)
   const [fileImportConnectionId, setFileImportConnectionId] = useState<string | null>(null)
   const [fileImportScope, setFileImportScope] = useState<FileImportScopeId>('employees')
-  const [fileImportParseResult, setFileImportParseResult] = useState<FileImportParseResult | null>(
-    null,
-  )
-  const [fileImportStagedBatchId, setFileImportStagedBatchId] = useState<string | null>(null)
+  const [fileImportPackageResult, setFileImportPackageResult] =
+    useState<FileImportPackageResult | null>(null)
+  const [fileImportStagedBatchIds, setFileImportStagedBatchIds] = useState<string[]>([])
   const [fileImportParsing, setFileImportParsing] = useState(false)
   const [draftSheetOpen, setDraftSheetOpen] = useState(false)
   const [credentialSheetOpen, setCredentialSheetOpen] = useState(false)
@@ -426,27 +433,22 @@ function ErpPage() {
   })
   const ingestFileImportMutation = useMutation({
     mutationFn: ({
-      parseResult,
+      packageResult,
       connectionId,
     }: {
-      parseResult: FileImportParseResult
+      packageResult: FileImportPackageResult
       connectionId: string
     }) =>
-      ingestFileImportBatch(user!.id, {
+      ingestFileImportPackage(user!.id, {
         connectionId,
-        scope: fileImportScope,
-        fileName: parseResult.fileName,
-        fileExtension: parseResult.fileExtension ?? 'csv',
-        fileSizeBytes: parseResult.fileSizeBytes,
-        fileChecksum: parseResult.fileChecksum ?? '',
-        businessDate: parseResult.businessDate ?? '',
-        delimiter: parseResult.delimiter,
-        rowCount: parseResult.rowCount,
-        rows: parseResult.rows,
+        packageId: packageResult.packageId,
+        files: packageResult.files,
       }),
     onSuccess: (result) => {
-      setFileImportStagedBatchId(result.batchId)
-      toast.success(t('erp.fileImport.toast.staged', { count: result.rowCount }))
+      setFileImportStagedBatchIds(result.items.map((item) => item.batchId).filter(Boolean))
+      toast.success(
+        t('erp.fileImport.toast.staged', { count: result.rowCount, files: result.fileCount }),
+      )
       void queryClient.invalidateQueries({ queryKey: ['erp-overview', user?.id] })
       void queryClient.invalidateQueries({ queryKey: ['dashboard-overview', user?.id] })
     },
@@ -454,7 +456,7 @@ function ErpPage() {
       const mapped = mapConnectorSetupError(error)
       captureAppError(error, {
         area: 'connector_setup',
-        operation: 'ingestFileImportBatch',
+        operation: 'ingestFileImportPackage',
         providerId: 'csv_import',
         route: '/verikaynaklari',
       })
@@ -1116,10 +1118,11 @@ function ErpPage() {
   const fileImportScopes = FILE_IMPORT_SCOPES.filter(
     (scope) => fileImportSourceScopes.size === 0 || fileImportSourceScopes.has(scope.id),
   )
+  const fileImportPackageStaged = fileImportStagedBatchIds.length > 0
   const fileImportErrors =
-    fileImportParseResult?.issues.filter((issue) => issue.level === 'error') ?? []
+    fileImportPackageResult?.issues.filter((issue) => issue.level === 'error') ?? []
   const fileImportWarnings =
-    fileImportParseResult?.issues.filter((issue) => issue.level === 'warning') ?? []
+    fileImportPackageResult?.issues.filter((issue) => issue.level === 'warning') ?? []
   const fileImportPrimaryDisabled =
     !canManageConnectors ||
     fileImportParsing ||
@@ -1127,12 +1130,12 @@ function ErpPage() {
     ingestFileImportMutation.isPending ||
     runImportPreviewMutation.isPending ||
     (Boolean(activeFileImportConnectionId) &&
-      (!fileImportParseResult || (!fileImportParseResult.ok && !fileImportStagedBatchId)))
+      (!fileImportPackageResult || (!fileImportPackageResult.ok && !fileImportPackageStaged)))
   const fileImportPrimaryLabel = !activeFileImportConnectionId
     ? prepareFileImportSourceMutation.isPending
       ? t('erp.fileImport.actions.preparingSource')
       : t('erp.fileImport.actions.prepareSource')
-    : fileImportStagedBatchId
+    : fileImportPackageStaged
       ? runImportPreviewMutation.isPending
         ? t('erp.fileImport.actions.runningPreview')
         : t('erp.fileImport.actions.runPreview')
@@ -1140,9 +1143,9 @@ function ErpPage() {
         ? t('erp.fileImport.actions.parsing')
         : ingestFileImportMutation.isPending
           ? t('erp.fileImport.actions.staging')
-          : !fileImportParseResult
+          : !fileImportPackageResult
             ? t('erp.fileImport.actions.waitingFile')
-            : fileImportParseResult.ok
+            : fileImportPackageResult.ok
               ? t('erp.fileImport.actions.stage')
               : t('erp.fileImport.actions.fixFile')
   const firstStartableProvider =
@@ -1176,40 +1179,49 @@ function ErpPage() {
     setFileImportSourceId(source.id)
     setFileImportConnectionId(source.connectionId)
     setFileImportScope(initialScope)
-    setFileImportParseResult(null)
-    setFileImportStagedBatchId(null)
+    setFileImportPackageResult(null)
+    setFileImportStagedBatchIds([])
     setFileImportSheetOpen(true)
   }
 
   const handleFileImportScopeChange = (scope: FileImportScopeId) => {
     setFileImportScope(scope)
-    setFileImportParseResult(null)
-    setFileImportStagedBatchId(null)
+    setFileImportPackageResult(null)
+    setFileImportStagedBatchIds([])
   }
 
   const handleFileImportFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0]
-    if (!file) return
+    const files = Array.from(event.currentTarget.files ?? [])
+    if (files.length === 0) return
     setFileImportParsing(true)
-    setFileImportParseResult(null)
-    setFileImportStagedBatchId(null)
+    setFileImportPackageResult(null)
+    setFileImportStagedBatchIds([])
     try {
-      const parsed = await parseFileImport(file, fileImportScope)
-      setFileImportParseResult(parsed)
+      const parsed = await parseFileImportPackage(
+        files,
+        fileImportScopes.map((scope) => scope.id),
+      )
+      setFileImportPackageResult(parsed)
       if (parsed.ok) {
-        toast.success(t('erp.fileImport.toast.parsed', { count: parsed.rowCount }))
+        toast.success(
+          t('erp.fileImport.toast.parsed', {
+            count: parsed.rowCount,
+            files: parsed.fileCount,
+          }),
+        )
       } else {
         toast.error(t('erp.fileImport.toast.parseBlocked'))
       }
     } catch (error) {
       captureAppError(error, {
         area: 'connector_setup',
-        operation: 'parseFileImport',
+        operation: 'parseFileImportPackage',
         providerId: 'csv_import',
         route: '/verikaynaklari',
       })
       toast.error(t('erp.fileImport.toast.parseFailed'))
     } finally {
+      event.currentTarget.value = ''
       setFileImportParsing(false)
     }
   }
@@ -1219,16 +1231,16 @@ function ErpPage() {
       void prepareFileImportSourceMutation.mutateAsync()
       return
     }
-    if (fileImportStagedBatchId) {
+    if (fileImportPackageStaged) {
       void runImportPreviewMutation
         .mutateAsync()
         .then(() => setFileImportSheetOpen(false))
         .catch(() => undefined)
       return
     }
-    if (!fileImportParseResult?.ok) return
+    if (!fileImportPackageResult?.ok) return
     void ingestFileImportMutation.mutateAsync({
-      parseResult: fileImportParseResult,
+      packageResult: fileImportPackageResult,
       connectionId: activeFileImportConnectionId,
     })
   }
@@ -1679,7 +1691,7 @@ function ErpPage() {
                 disabled={fileImportPrimaryDisabled}
                 onClick={handleFileImportPrimaryAction}
               >
-                {fileImportStagedBatchId ? (
+                {fileImportPackageStaged ? (
                   <SearchCheck className="h-4 w-4" />
                 ) : activeFileImportConnectionId ? (
                   <FileCheck2 className="h-4 w-4" />
@@ -1754,15 +1766,28 @@ function ErpPage() {
                     fileName: buildFileImportExpectedFileName(fileImportScope),
                   })}
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="touch-target mt-4 w-full"
-                  onClick={() => downloadFileImportTemplate(fileImportScope)}
-                >
-                  <Download className="h-4 w-4" />
-                  {t('erp.fileImport.actions.downloadTemplate')}
-                </Button>
+                <div className="mt-4 grid gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full"
+                    onClick={() => downloadFileImportTemplate(fileImportScope)}
+                  >
+                    <Download className="h-4 w-4" />
+                    {t('erp.fileImport.actions.downloadTemplate')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="touch-target w-full"
+                    onClick={() =>
+                      downloadAllFileImportTemplates(fileImportScopes.map((scope) => scope.id))
+                    }
+                  >
+                    <Download className="h-4 w-4" />
+                    {t('erp.fileImport.actions.downloadAllTemplates')}
+                  </Button>
+                </div>
               </div>
 
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
@@ -1780,6 +1805,7 @@ function ErpPage() {
                   <input
                     type="file"
                     accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    multiple
                     className="sr-only"
                     disabled={fileImportParsing}
                     onChange={handleFileImportFileChange}
@@ -1788,21 +1814,24 @@ function ErpPage() {
               </div>
             </div>
 
-            {fileImportParseResult ? (
+            {fileImportPackageResult ? (
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {fileImportParseResult.ok
+                      {fileImportPackageResult.ok
                         ? t('erp.fileImport.contractReady')
                         : t('erp.fileImport.contractBlocked')}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                      {fileImportParseResult.fileName}
+                      {t('erp.fileImport.packageSummary', {
+                        files: fileImportPackageResult.fileCount,
+                        rows: fileImportPackageResult.rowCount,
+                      })}
                     </p>
                   </div>
-                  <StatusPill tone={fileImportParseResult.ok ? 'success' : 'danger'}>
-                    {fileImportParseResult.ok
+                  <StatusPill tone={fileImportPackageResult.ok ? 'success' : 'danger'}>
+                    {fileImportPackageResult.ok
                       ? t('erp.readinessStatus.ready')
                       : t('erp.readinessStatus.blocked')}
                   </StatusPill>
@@ -1811,26 +1840,26 @@ function ErpPage() {
                 <div className="mt-4 grid gap-2 sm:grid-cols-4">
                   <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                      {t('erp.fileImport.metrics.files')}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
+                      {fileImportPackageResult.fileCount}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                       {t('erp.fileImport.metrics.rows')}
                     </p>
                     <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
-                      {fileImportParseResult.rowCount}
+                      {fileImportPackageResult.rowCount}
                     </p>
                   </div>
                   <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.fileImport.metrics.columns')}
+                      {t('erp.fileImport.metrics.readyFiles')}
                     </p>
                     <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
-                      {fileImportParseResult.mappedColumns.length}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.fileImport.metrics.delimiter')}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
-                      {formatFileImportDelimiter(fileImportParseResult.delimiter)}
+                      {fileImportPackageResult.readyFileCount}
                     </p>
                   </div>
                   <div className="rounded-lg bg-[var(--color-bg-surface)] px-3 py-2">
@@ -1843,15 +1872,43 @@ function ErpPage() {
                   </div>
                 </div>
 
-                {fileImportStagedBatchId ? (
+                <ul className="mt-4 divide-y divide-[var(--color-border)] rounded-lg border border-[var(--color-border)]">
+                  {fileImportPackageResult.files.map((item) => (
+                    <li key={item.fileName} className="flex items-start justify-between gap-3 p-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                          {item.fileName}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                          {item.scope
+                            ? t(`erp.fileImport.scopes.${item.scope}`)
+                            : t('erp.fileImport.unknownScope')}{' '}
+                          · {item.parseResult.rowCount} {t('erp.fileImport.metrics.rows')}
+                          {item.parseResult.delimiter
+                            ? ` · ${formatFileImportDelimiter(item.parseResult.delimiter)}`
+                            : ''}
+                        </p>
+                      </div>
+                      <StatusPill tone={item.parseResult.ok ? 'success' : 'danger'}>
+                        {item.parseResult.ok
+                          ? t('erp.readinessStatus.ready')
+                          : t('erp.readinessStatus.blocked')}
+                      </StatusPill>
+                    </li>
+                  ))}
+                </ul>
+
+                {fileImportPackageStaged ? (
                   <div className="mt-4 rounded-lg border border-[color-mix(in_srgb,var(--color-success)_25%,transparent)] bg-[var(--color-success-soft)] px-3 py-2 text-sm font-medium text-[var(--color-text-primary)]">
-                    {t('erp.fileImport.stagedBatch', { batchId: fileImportStagedBatchId })}
+                    {t('erp.fileImport.stagedPackage', {
+                      count: fileImportStagedBatchIds.length,
+                    })}
                   </div>
                 ) : null}
 
-                {fileImportParseResult.issues.length > 0 ? (
+                {fileImportPackageResult.issues.length > 0 ? (
                   <ul className="mt-4 divide-y divide-[var(--color-border)] rounded-lg border border-[var(--color-border)]">
-                    {fileImportParseResult.issues.slice(0, 6).map((issue, index) => (
+                    {fileImportPackageResult.issues.slice(0, 8).map((issue, index) => (
                       <li key={`${issue.code}-${index}`} className="flex gap-3 p-3">
                         <AlertTriangle
                           className={cn(

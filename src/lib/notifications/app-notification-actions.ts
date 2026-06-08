@@ -55,6 +55,11 @@ const connectorRuntimeEventTargets: Record<string, ConnectorRuntimeTarget> = {
     focus: 'erp-runtime-queue',
     exactTarget: true,
   },
+  file_import_uploaded: {
+    tab: 'previewApply',
+    focus: 'erp-import-preview',
+    exactTarget: true,
+  },
   import_apply_create_only_completed: {
     tab: 'previewApply',
     focus: 'erp-controlled-apply',
@@ -101,6 +106,11 @@ const connectorRuntimeRouteHintTargets: Record<string, ConnectorRuntimeTarget> =
   'connector_runtime.apply': {
     tab: 'previewApply',
     focus: 'erp-controlled-apply',
+    exactTarget: false,
+  },
+  'connector_runtime.file_import': {
+    tab: 'previewApply',
+    focus: 'erp-import-preview',
     exactTarget: false,
   },
   'connector_runtime.rollback': {

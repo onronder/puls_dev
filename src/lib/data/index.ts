@@ -146,6 +146,7 @@ export {
   fetchErpOverviewWithMeta,
   buildDefaultConnectorFieldMappings,
   ingestFileImportBatch,
+  ingestFileImportPackage,
   mapConnectorSetupError,
   recordConnectorApplyApproval,
   recordConnectorGuardedUpdateRollbackApproval,

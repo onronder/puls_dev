@@ -8,6 +8,7 @@ import {
 } from '#/lib/data/errors'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 import type {
+  FileImportPackageResult,
   FileImportParsedRow,
   FileImportScopeId,
 } from '#/lib/data/setup/file-import-contract'
@@ -1984,6 +1985,23 @@ export type IngestFileImportBatchResult = {
   status: 'uploaded'
   mode: 'dry_run'
   nextActionKey: string
+}
+
+export type IngestFileImportPackageInput = {
+  connectionId: string
+  packageId: string
+  files: FileImportPackageResult['files']
+}
+
+export type IngestFileImportPackageResult = {
+  connectionId: string
+  packageId: string
+  fileCount: number
+  rowCount: number
+  status: 'uploaded'
+  mode: 'dry_run'
+  nextActionKey: string
+  items: IngestFileImportBatchResult[]
 }
 
 export type RunConnectorPreflightResult = {
@@ -7983,13 +8001,46 @@ export async function ingestFileImportBatch(
   userId: string,
   input: IngestFileImportBatchInput,
 ): Promise<IngestFileImportBatchResult> {
+  const packageResult = await ingestFileImportPackage(userId, {
+    connectionId: input.connectionId,
+    packageId: crypto.randomUUID(),
+    files: [
+      {
+        scope: input.scope,
+        fileName: input.fileName,
+        parseResult: {
+          ok: true,
+          scope: input.scope,
+          fileName: input.fileName,
+          fileExtension: input.fileExtension,
+          fileSizeBytes: input.fileSizeBytes,
+          fileChecksum: input.fileChecksum,
+          templateVersion: 'v1',
+          businessDate: input.businessDate,
+          delimiter: input.delimiter,
+          rowCount: input.rowCount,
+          rows: input.rows,
+          mappedColumns: [],
+          ignoredHeaders: [],
+          issues: [],
+        },
+      },
+    ],
+  })
+  return packageResult.items[0]!
+}
+
+export async function ingestFileImportPackage(
+  userId: string,
+  input: IngestFileImportPackageInput,
+): Promise<IngestFileImportPackageResult> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) {
     throw new DataAdapterError({
       code: 'PULS_CONNECTOR_TENANT_REQUIRED',
       message: 'File import requires tenant context',
       source: 'adapter',
-      operation: 'ingestFileImportBatch',
+      operation: 'ingestFileImportPackage',
       i18nKey: 'erp.errors.tenantMissing',
     })
   }
@@ -7998,7 +8049,7 @@ export async function ingestFileImportBatch(
       code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
       message: 'File import requires admin permission',
       source: 'adapter',
-      operation: 'ingestFileImportBatch',
+      operation: 'ingestFileImportPackage',
       i18nKey: 'erp.errors.adminRequired',
     })
   }
@@ -8007,67 +8058,105 @@ export async function ingestFileImportBatch(
       code: 'PULS_FILE_IMPORT_CONNECTION_REQUIRED',
       message: 'File import requires a configured data source',
       source: 'adapter',
-      operation: 'ingestFileImportBatch',
+      operation: 'ingestFileImportPackage',
       i18nKey: 'erp.errors.sourceMissing',
     })
   }
-  if (!input.fileChecksum || input.rows.length === 0 || input.rowCount !== input.rows.length) {
+  if (
+    input.files.length === 0 ||
+    input.files.some((file) => {
+      const result = file.parseResult
+      return (
+        !file.scope ||
+        !result.ok ||
+        !result.fileChecksum ||
+        result.rows.length === 0 ||
+        result.rowCount !== result.rows.length
+      )
+    })
+  ) {
     throw new DataAdapterError({
       code: 'PULS_FILE_IMPORT_PAYLOAD_INVALID',
-      message: 'File import payload is not ready for ingest',
+      message: 'File import package is not ready for ingest',
       source: 'adapter',
-      operation: 'ingestFileImportBatch',
+      operation: 'ingestFileImportPackage',
       i18nKey: 'erp.errors.fileImportBlocked',
     })
   }
 
-  const ingest = await pulsIntegration().rpc('ingest_file_import_batch', {
+  const ingest = await pulsIntegration().rpc('ingest_file_import_package', {
     p_connection_id: input.connectionId,
-    p_scope_key: input.scope,
-    p_manifest: {
-      file_name: input.fileName,
-      file_extension: input.fileExtension,
-      file_size_bytes: input.fileSizeBytes,
-      file_checksum: input.fileChecksum,
-      template_version: 'v1',
-      business_date: input.businessDate,
-      delimiter: input.delimiter,
-      row_count: input.rowCount,
+    p_package: {
+      package_id: input.packageId,
+      items: input.files.map((file) => ({
+        scope: file.scope,
+        manifest: {
+          file_name: file.parseResult.fileName,
+          file_extension: file.parseResult.fileExtension,
+          file_size_bytes: file.parseResult.fileSizeBytes,
+          file_checksum: file.parseResult.fileChecksum,
+          template_version: 'v1',
+          business_date: file.parseResult.businessDate,
+          delimiter: file.parseResult.delimiter,
+          row_count: file.parseResult.rowCount,
+        },
+        rows: file.parseResult.rows.map((row) => ({
+          row_number: row.rowNumber,
+          entity_type: row.entityType,
+          external_id: row.externalId,
+          payload: row.payload,
+        })),
+      })),
     },
-    p_rows: input.rows.map((row) => ({
-      row_number: row.rowNumber,
-      entity_type: row.entityType,
-      external_id: row.externalId,
-      payload: row.payload,
-    })),
   })
 
   if (ingest.error) {
-    throw fromConnectorRpcError(ingest.error, 'ingestFileImportBatch')
+    throw fromConnectorRpcError(ingest.error, 'ingestFileImportPackage')
   }
 
   const result = (ingest.data ?? {}) as {
     connection_id?: string | null
-    source_namespace_id?: string | null
-    manifest_id?: string | null
-    import_batch_id?: string | null
-    scope_key?: FileImportScopeId | null
+    package_id?: string | null
+    file_count?: number | null
     row_count?: number | null
     status?: 'uploaded' | null
     mode?: 'dry_run' | null
     next_action_key?: string | null
+    items?: Array<{
+      connection_id?: string | null
+      source_namespace_id?: string | null
+      manifest_id?: string | null
+      import_batch_id?: string | null
+      scope_key?: FileImportScopeId | null
+      row_count?: number | null
+      status?: 'uploaded' | null
+      mode?: 'dry_run' | null
+      next_action_key?: string | null
+    }> | null
   }
 
   return {
     connectionId: result.connection_id ?? input.connectionId,
-    sourceNamespaceId: result.source_namespace_id ?? '',
-    manifestId: result.manifest_id ?? '',
-    batchId: result.import_batch_id ?? '',
-    scope: result.scope_key ?? input.scope,
-    rowCount: Number(result.row_count ?? input.rowCount),
+    packageId: result.package_id ?? input.packageId,
+    fileCount: Number(result.file_count ?? input.files.length),
+    rowCount: Number(result.row_count ?? input.files.reduce((sum, file) => sum + file.parseResult.rowCount, 0)),
     status: result.status ?? 'uploaded',
     mode: result.mode ?? 'dry_run',
     nextActionKey: result.next_action_key ?? 'run_file_import_preview',
+    items: (result.items ?? []).map((item, index) => {
+      const inputFile = input.files[index]
+      return {
+        connectionId: item.connection_id ?? input.connectionId,
+        sourceNamespaceId: item.source_namespace_id ?? '',
+        manifestId: item.manifest_id ?? '',
+        batchId: item.import_batch_id ?? '',
+        scope: item.scope_key ?? inputFile?.scope ?? 'employees',
+        rowCount: Number(item.row_count ?? inputFile?.parseResult.rowCount ?? 0),
+        status: item.status ?? 'uploaded',
+        mode: item.mode ?? 'dry_run',
+        nextActionKey: item.next_action_key ?? 'run_file_import_preview',
+      }
+    }),
   }
 }
 

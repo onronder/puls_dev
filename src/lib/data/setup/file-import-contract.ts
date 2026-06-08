@@ -79,6 +79,23 @@ export type FileImportParseResult = {
   issues: FileImportIssue[]
 }
 
+export type FileImportPackageItem = {
+  scope: FileImportScopeId | null
+  fileName: string
+  parseResult: FileImportParseResult
+}
+
+export type FileImportPackageResult = {
+  ok: boolean
+  packageId: string
+  files: FileImportPackageItem[]
+  fileCount: number
+  readyFileCount: number
+  blockedFileCount: number
+  rowCount: number
+  issues: FileImportIssue[]
+}
+
 type TableCell = string | number | boolean | Date | null
 
 type ParsedTable = {
@@ -95,6 +112,14 @@ type XlsxModule = typeof import('xlsx')
 const COMMON_BOOLEAN_TRUE = new Set(['true', '1', 'yes', 'evet', 'aktif', 'active'])
 const COMMON_BOOLEAN_FALSE = new Set(['false', '0', 'no', 'hayir', 'hayır', 'pasif', 'inactive'])
 const NULL_LITERALS = new Set(['null', '(null)'])
+const FILE_IMPORT_SCOPE_ORDER: FileImportScopeId[] = [
+  'legal_entities',
+  'locations',
+  'cost_centers',
+  'departments',
+  'positions',
+  'employees',
+]
 
 const BLOCKED_HEADER_PATTERNS = [
   'salary',
@@ -234,7 +259,7 @@ function column(
 }
 
 export function fileImportScopeOptions(): FileImportScopeContract[] {
-  return Object.values(FILE_IMPORT_SCOPE_CONTRACTS)
+  return FILE_IMPORT_SCOPE_ORDER.map((scope) => FILE_IMPORT_SCOPE_CONTRACTS[scope])
 }
 
 export function getFileImportScopeContract(scope: FileImportScopeId): FileImportScopeContract {
@@ -254,6 +279,16 @@ export function buildFileImportCsvTemplate(scope: FileImportScopeId): string {
   const contract = getFileImportScopeContract(scope)
   const headers = contract.columns.map((col) => escapeCsvValue(col.key)).join(',')
   return `\uFEFF${headers}\n`
+}
+
+export function buildFileImportPackageId(): string {
+  return crypto.randomUUID()
+}
+
+export function inferFileImportScopeFromFileName(fileName: string): FileImportScopeId | null {
+  const match = /^puls_([a-z_]+)_v1_\d{8}\.(?:csv|xlsx)$/i.exec(fileName.trim())
+  const scope = match?.[1] as FileImportScopeId | undefined
+  return scope && scope in FILE_IMPORT_SCOPE_CONTRACTS ? scope : null
 }
 
 export async function parseFileImport(file: File, scope: FileImportScopeId): Promise<FileImportParseResult> {
@@ -305,6 +340,91 @@ export async function parseFileImport(file: File, scope: FileImportScopeId): Pro
   }
 }
 
+export async function parseFileImportPackage(
+  files: File[],
+  allowedScopes: FileImportScopeId[] = FILE_IMPORT_SCOPE_ORDER,
+  packageId = buildFileImportPackageId(),
+): Promise<FileImportPackageResult> {
+  const allowedScopeSet = new Set(allowedScopes)
+  const issues: FileImportIssue[] = []
+  if (files.length === 0) {
+    issues.push({ level: 'error', code: 'PACKAGE_FILE_REQUIRED' })
+  }
+  if (files.length > allowedScopes.length) {
+    issues.push({
+      level: 'error',
+      code: 'PACKAGE_TOO_MANY_FILES',
+      detail: `${files.length}/${allowedScopes.length}`,
+    })
+  }
+
+  const parsedFiles = await Promise.all(
+    files.map(async (file): Promise<FileImportPackageItem> => {
+      const inferredScope = inferFileImportScopeFromFileName(file.name)
+      if (!inferredScope) {
+        return {
+          scope: null,
+          fileName: file.name,
+          parseResult: emptyParseResult(file, 'employees', fileExtension(file.name), null, null, [
+            { level: 'error', code: 'INVALID_FILE_NAME', detail: file.name },
+          ]),
+        }
+      }
+      if (!allowedScopeSet.has(inferredScope)) {
+        return {
+          scope: inferredScope,
+          fileName: file.name,
+          parseResult: addIssueToParseResult(await parseFileImport(file, inferredScope), {
+            level: 'error',
+            code: 'FILE_SCOPE_NOT_ALLOWED',
+            detail: inferredScope,
+          }),
+        }
+      }
+      return {
+        scope: inferredScope,
+        fileName: file.name,
+        parseResult: await parseFileImport(file, inferredScope),
+      }
+    }),
+  )
+
+  const seenScopes = new Map<FileImportScopeId, number>()
+  const filesWithPackageChecks = parsedFiles.map((item) => {
+    if (!item.scope) return item
+    const previousCount = seenScopes.get(item.scope) ?? 0
+    seenScopes.set(item.scope, previousCount + 1)
+    if (previousCount === 0) return item
+    return {
+      ...item,
+      parseResult: addIssueToParseResult(item.parseResult, {
+        level: 'error',
+        code: 'DUPLICATE_SCOPE_IN_PACKAGE',
+        detail: item.scope,
+      }),
+    }
+  })
+
+  const orderedFiles = filesWithPackageChecks.sort((left, right) => {
+    const leftIndex = left.scope ? FILE_IMPORT_SCOPE_ORDER.indexOf(left.scope) : 999
+    const rightIndex = right.scope ? FILE_IMPORT_SCOPE_ORDER.indexOf(right.scope) : 999
+    return leftIndex - rightIndex || left.fileName.localeCompare(right.fileName, 'tr')
+  })
+  const fileIssues = orderedFiles.flatMap((item) => item.parseResult.issues)
+  const allIssues = [...issues, ...fileIssues]
+
+  return {
+    ok: allIssues.every((issue) => issue.level !== 'error'),
+    packageId,
+    files: orderedFiles,
+    fileCount: orderedFiles.length,
+    readyFileCount: orderedFiles.filter((item) => item.parseResult.ok).length,
+    blockedFileCount: orderedFiles.filter((item) => !item.parseResult.ok).length,
+    rowCount: orderedFiles.reduce((sum, item) => sum + item.parseResult.rowCount, 0),
+    issues: allIssues,
+  }
+}
+
 function emptyParseResult(
   file: File,
   scope: FileImportScopeId,
@@ -328,6 +448,17 @@ function emptyParseResult(
     mappedColumns: [],
     ignoredHeaders: [],
     issues,
+  }
+}
+
+function addIssueToParseResult(
+  result: FileImportParseResult,
+  issue: FileImportIssue,
+): FileImportParseResult {
+  return {
+    ...result,
+    ok: false,
+    issues: [...result.issues, issue],
   }
 }
 

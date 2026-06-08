@@ -178,6 +178,12 @@
     "safeSummary": {
       "source_event_key": "Olay tipi",
       "safe_error_code": "Güvenli hata kodu",
+      "package_id": "Paket ID",
+      "file_name": "Dosya adı",
+      "file_extension": "Dosya tipi",
+      "business_date": "Dosya tarihi",
+      "scope_key": "Veri kapsamı",
+      "import_batch_id": "Import batch ID",
       "job_type": "Job tipi",
       "job_status": "Job durumu",
       "failure_class": "Hata sınıfı",
@@ -214,6 +220,10 @@
       "runtimePreflightFailed": {
         "title": "Canlı bağlantı kontrolü başarısız",
         "body": "ERP bağlantısı canlı çalışmadan önce doğrulanamadı. Kimlik referansı ve çalışma zamanı kontrolünü iş kuyruğunda incele."
+      },
+      "fileImportUploaded": {
+        "title": "Dosya içe aktarımı önizlemeye hazır",
+        "body": "Yüklenen dosya güvenli dry-run kuyruğuna alındı. Önizlemeyi açıp değişiklikleri inceleyebilirsin."
       },
       "createOnlyCompleted": {
         "title": "Yeni kayıtlar PULS'a işlendi",
@@ -1544,45 +1554,51 @@
     },
     "fileImport": {
       "title": "CSV / Excel içe aktarımı",
-      "description": "Şablonu indir, dosyayı doğrula ve veriyi yalnızca dry-run önizleme için güvenli şekilde hazırla.",
+      "description": "HR şablon dosyalarını tek dry-run paketi olarak doğrula ve önizleme için güvenli şekilde hazırla.",
       "source": "Kaynak",
       "sourceReady": "Kaynak hazır",
       "sourceRequired": "Önce kaynak taslağı hazırlanır",
       "scopeTitle": "Veri kapsamı",
       "templateTitle": "Şablon",
-      "templateDescription": "Beklenen dosya adı: {{fileName}}. Her dosya tek kapsam taşır; ZIP kabul edilmez.",
+      "templateDescription": "Seçili kapsam için beklenen dosya adı: {{fileName}}. Tüm kapsamları doldurmak için her kapsamın şablonunu indir.",
       "fileTitle": "Dosya",
-      "fileDescription": "CSV için 5 MB, Excel için 10 MB sınırı vardır. Formül hücreleri değer olarak okunamazsa dosya reddedilir.",
-      "contractReady": "Dosya sözleşmeye uygun",
-      "contractBlocked": "Dosya düzeltilmeli",
+      "fileDescription": "Bir veya daha fazla CSV/XLSX dosyası seç. Her dosya kendi kapsam adını taşımalı; ZIP kabul edilmez.",
+      "contractReady": "Paket önizlemeye hazır",
+      "contractBlocked": "Paket düzeltilmeli",
       "stagedBatch": "Dry-run batch hazır: {{batchId}}",
+      "stagedPackage": "{{count}} dosya dry-run kuyruğuna alındı.",
+      "packageSummary": "{{files}} dosya · {{rows}} satır",
+      "unknownScope": "Kapsam okunamadı",
       "issueContext": "{{row}}. satır · {{column}}",
       "actions": {
         "close": "Kapat",
         "prepareSource": "Kaynağı hazırla",
         "preparingSource": "Kaynak hazırlanıyor",
         "downloadTemplate": "Şablonu indir",
-        "chooseFile": "Dosya seç",
+        "downloadAllTemplates": "Tüm şablonları indir",
+        "chooseFile": "Dosyaları seç",
         "waitingFile": "Dosya bekleniyor",
-        "parsing": "Dosya okunuyor",
+        "parsing": "Dosyalar okunuyor",
         "stage": "Önizlemeye hazırla",
         "staging": "Hazırlanıyor",
-        "fixFile": "Dosyayı düzelt",
+        "fixFile": "Paketi düzelt",
         "runPreview": "Önizleme çalıştır",
         "runningPreview": "Önizleme açılıyor"
       },
       "metrics": {
+        "files": "Dosya",
         "rows": "Satır",
         "columns": "Alan",
+        "readyFiles": "Hazır",
         "delimiter": "Ayraç",
         "findings": "Hata / uyarı"
       },
       "toast": {
         "sourceReady": "CSV / Excel kaynağı hazırlandı.",
-        "parsed": "{{count}} satır doğrulandı. Henüz veri yazılmadı.",
-        "parseBlocked": "Dosya sözleşmeye uymuyor. Hataları düzeltip tekrar yükle.",
-        "parseFailed": "Dosya okunamadı. Biçimi ve dosya adını kontrol et.",
-        "staged": "{{count}} satır dry-run önizleme için hazırlandı."
+        "parsed": "{{files}} dosyada {{count}} satır doğrulandı. Henüz veri yazılmadı.",
+        "parseBlocked": "Paket sözleşmeye uymuyor. Hataları düzeltip tekrar yükle.",
+        "parseFailed": "Dosyalar okunamadı. Biçimi ve dosya adlarını kontrol et.",
+        "staged": "{{files}} dosyada {{count}} satır dry-run önizleme için hazırlandı."
       },
       "scopes": {
         "employees": "Çalışanlar",
@@ -1620,6 +1636,10 @@
       "issues": {
         "INVALID_FILE_NAME": "Dosya adı beklenen sözleşmeye uymuyor.",
         "FILE_SCOPE_MISMATCH": "Dosya adı seçilen veri kapsamıyla eşleşmiyor.",
+        "FILE_SCOPE_NOT_ALLOWED": "Bu kaynak için dosya kapsamı açık değil.",
+        "PACKAGE_FILE_REQUIRED": "Paket için en az bir dosya seç.",
+        "PACKAGE_TOO_MANY_FILES": "Paket izin verilen dosya sayısını aşıyor.",
+        "DUPLICATE_SCOPE_IN_PACKAGE": "Aynı veri kapsamı pakette birden fazla dosyada yer alamaz.",
         "INVALID_FILE_DATE": "Dosya tarihini YYYYMMDD biçiminde yaz.",
         "UNSUPPORTED_FILE_TYPE": "Yalnızca CSV veya XLSX kabul edilir.",
         "FILE_TOO_LARGE": "Dosya boyutu izin verilen sınırı aşıyor.",

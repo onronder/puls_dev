@@ -4,7 +4,9 @@ import * as XLSX from 'xlsx'
 import {
   buildFileImportCsvTemplate,
   buildFileImportExpectedFileName,
+  inferFileImportScopeFromFileName,
   parseFileImport,
+  parseFileImportPackage,
 } from '#/lib/data/setup/file-import-contract'
 
 function csvFile(name: string, content: string): File {
@@ -118,6 +120,51 @@ describe('file import contract', () => {
     expect(result.ok).toBe(false)
     expect(result.issues).toContainEqual(
       expect.objectContaining({ code: 'XLSX_FORMULA_VALUE_MISSING', rowNumber: 2 }),
+    )
+  })
+
+  it('infers scope from the PULS filename contract', () => {
+    expect(inferFileImportScopeFromFileName('puls_departments_v1_20260608.csv')).toBe(
+      'departments',
+    )
+    expect(inferFileImportScopeFromFileName('Calisanlar06082026.csv')).toBeNull()
+  })
+
+  it('parses a multi-file HR import package in dependency order', async () => {
+    const packageResult = await parseFileImportPackage(
+      [
+        csvFile('puls_employees_v1_20260608.csv', 'employee_code,full_name\nE-001,Ayşe Öz\n'),
+        csvFile('puls_departments_v1_20260608.csv', 'code,name\nD-001,İnsan Kaynakları\n'),
+        csvFile('puls_legal_entities_v1_20260608.csv', 'code,name\nLE-001,PULS Demo\n'),
+      ],
+      ['employees', 'departments', 'legal_entities'],
+      'package-1',
+    )
+
+    expect(packageResult.ok).toBe(true)
+    expect(packageResult.packageId).toBe('package-1')
+    expect(packageResult.fileCount).toBe(3)
+    expect(packageResult.rowCount).toBe(3)
+    expect(packageResult.files.map((item) => item.scope)).toEqual([
+      'legal_entities',
+      'departments',
+      'employees',
+    ])
+  })
+
+  it('blocks duplicate scopes inside the same package', async () => {
+    const packageResult = await parseFileImportPackage(
+      [
+        csvFile('puls_departments_v1_20260608.csv', 'code,name\nD-001,İnsan Kaynakları\n'),
+        csvFile('puls_departments_v1_20260609.csv', 'code,name\nD-002,Finans\n'),
+      ],
+      ['departments'],
+      'package-1',
+    )
+
+    expect(packageResult.ok).toBe(false)
+    expect(packageResult.issues).toContainEqual(
+      expect.objectContaining({ code: 'DUPLICATE_SCOPE_IN_PACKAGE', level: 'error' }),
     )
   })
 })
