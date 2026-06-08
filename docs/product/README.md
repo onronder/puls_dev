@@ -835,6 +835,18 @@ PR16.10.8 makes CSV / Excel the first production-grade manual file lane in PULS 
 | [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                            | CSV/Excel import sheet with template set download, package validation result, staging CTA, and preview handoff |
 | [`scripts/verify-16-10-8-csv-excel-import-contract.sh`](../../scripts/verify-16-10-8-csv-excel-import-contract.sh)                         | PR16.10.8 verify gate                                                                                         |
 
+## PR16.10.9 runtime safety hardening
+
+PR16.10.9 closes production safety findings after PR16.10.8 without changing the DataSource Manager UI. It tightens the audit tenant boundary, makes connector job notifications idempotent across job status changes, requires active worker leases before completion or apply execution, blocks late verification success after credential revocation, and adds Vitest to CI.
+
+| Document / artifact                                                                                                                                | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [16_10_9_runtime_safety_hardening.md](./16_10_9_runtime_safety_hardening.md)                                                                       | PR16.10.9 runtime safety contract, safety boundary, and verification                                         |
+| [`supabase/migrations/20260608120000_puls_runtime_safety_notification_idempotency_hardening.sql`](../../supabase/migrations/20260608120000_puls_runtime_safety_notification_idempotency_hardening.sql) | Audit policy hardening, notification dedupe normalization, active lease guards, and revoke/verification guard |
+| [`supabase/migrations/20260608121000_puls_app_notification_dedupe_volatility_alignment.sql`](../../supabase/migrations/20260608121000_puls_app_notification_dedupe_volatility_alignment.sql) | Idempotent STABLE volatility alignment for the notification dedupe normalizer                                 |
+| [`src/lib/supabase.ts`](../../src/lib/supabase.ts)                                                                                                  | Production Supabase environment fail-fast                                                                   |
+| [`scripts/verify-16-10-9-runtime-safety-hardening.sh`](../../scripts/verify-16-10-9-runtime-safety-hardening.sh)                                    | PR16.10.9 verify gate                                                                                        |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
