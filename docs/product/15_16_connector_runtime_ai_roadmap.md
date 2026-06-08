@@ -881,6 +881,49 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Normal girişte teknik kanıtlar kapalıdır.
 - Existing notification/deep-link route'ları doğru journey step'i ve teknik target'ı açar.
 
+### PR16.10.8 - CSV / Excel Import Contract
+
+**Ürün değeri:** API bilgileri beklenirken PULS DataSource Manager gerçek veri kabul edebilen ama canonical yazımı kapalı tutan güvenli bir CSV / Excel lane kazanır. Admin tüm HR core scope'ları için şablon indirir, doldurulmuş dosyaları tek paket olarak doğrular, dry-run batch'leri atomik şekilde hazırlar, dosya ingest kayıtlarını loglar, kullanıcı dostu bildirim üretir ve mevcut önizleme akışına geçer.
+
+**Kapsam:**
+
+- PULS HR Import Contract v1
+- Employees, departments, positions, legal entities, locations ve cost centers için scope bazlı şablonlar
+- Bir veya daha fazla scope dosyasını tek HR import paketi olarak doğrulama
+- `puls_<scope>_v1_YYYYMMDD.csv|xlsx` dosya adı sözleşmesi
+- CSV delimiter detection: comma, semicolon, tab
+- XLSX formula cached value kontrolü
+- TR karakter desteği
+- Empty/null ayrımı ve `NULL` literal warning'i
+- Date standardı: `YYYY-MM-DD` veya timezone-bearing ISO datetime
+- Hassas header/key blokajı
+- Duplicate checksum ve same-day open batch blokajı
+- Atomik package dry-run batch staging RPC
+- Başarılı her dosya ingest'i için metadata-only manifest, sync log ve Notification Center producer candidate
+- `/verikaynaklari` içinde CSV / Excel import sheet, seçili template ve tüm HR template seti download
+
+**Kapsam dışı:**
+
+- Canonical apply
+- Browser direct canonical write
+- Worker apply execution
+- Provider API call
+- Credential readback
+- Source/ERP writeback
+- Raw file bytes veya raw payload UI
+- ZIP veya arşiv import
+- Birthday veya engagement notification üretimi
+
+**Doğrulama:**
+
+- Parser invalid filename, sensitive header, ambiguous date, formula-without-value ve over-limit dosyaları reddeder.
+- Valid CSV / XLSX package dosyaları dry-run batch'lere atomik şekilde alınır.
+- RPC partial package ingest kabul etmez.
+- `import_file_manifests` metadata-only kalır.
+- Service-role producer manifest kayıtlarından idempotent, user-friendly notification üretir.
+- Authenticated direct table writes kapalıdır; ingest sadece admin RPC boundary'den geçer.
+- Supabase local migration apply ve `puls_integration` lint error-free geçer.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

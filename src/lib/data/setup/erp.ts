@@ -7,6 +7,11 @@ import {
   parseRpcErrorCode,
 } from '#/lib/data/errors'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
+import type {
+  FileImportPackageResult,
+  FileImportParsedRow,
+  FileImportScopeId,
+} from '#/lib/data/setup/file-import-contract'
 
 export type ConnectorReadinessStatus = 'ready' | 'partial' | 'blocked'
 export type ConnectorMappingStatus = 'mapped' | 'pending'
@@ -1957,6 +1962,48 @@ export type StartConnectorSetupResult = {
   currentStep: ConnectorSetupCurrentStep
 }
 
+export type IngestFileImportBatchInput = {
+  connectionId: string
+  scope: FileImportScopeId
+  fileName: string
+  fileExtension: 'csv' | 'xlsx'
+  fileSizeBytes: number
+  fileChecksum: string
+  businessDate: string
+  delimiter: ',' | ';' | '\t' | null
+  rowCount: number
+  rows: FileImportParsedRow[]
+}
+
+export type IngestFileImportBatchResult = {
+  connectionId: string
+  sourceNamespaceId: string
+  manifestId: string
+  batchId: string
+  scope: FileImportScopeId
+  rowCount: number
+  status: 'uploaded'
+  mode: 'dry_run'
+  nextActionKey: string
+}
+
+export type IngestFileImportPackageInput = {
+  connectionId: string
+  packageId: string
+  files: FileImportPackageResult['files']
+}
+
+export type IngestFileImportPackageResult = {
+  connectionId: string
+  packageId: string
+  fileCount: number
+  rowCount: number
+  status: 'uploaded'
+  mode: 'dry_run'
+  nextActionKey: string
+  items: IngestFileImportBatchResult[]
+}
+
 export type RunConnectorPreflightResult = {
   connectionId: string
   status: ConnectorReadinessStatus
@@ -2150,7 +2197,14 @@ const SETUP_PROVIDER_CONFIG: Partial<
     authMode: 'none',
     credentialRequired: false,
     connectionKey: 'csv-excel-default',
-    ownedDomains: ['employees', 'departments', 'positions', 'cost_centers'],
+    ownedDomains: [
+      'employees',
+      'departments',
+      'positions',
+      'legal_entities',
+      'locations',
+      'cost_centers',
+    ],
     sourceType: 'file',
   },
 }
@@ -2603,6 +2657,8 @@ function fromConnectorRpcError(
     i18nKey:
       code === 'PULS_IMPORT_BATCH_STATE_INVALID'
         ? 'erp.errors.importPreviewBlocked'
+        : code.startsWith('PULS_FILE_IMPORT_')
+          ? 'erp.errors.fileImportBlocked'
         : code.startsWith('PULS_CONNECTOR_APPLY_CHANGE_SET_')
           ? 'erp.errors.applyChangeSetBlocked'
           : code.startsWith('PULS_CONNECTOR_CREATE_ONLY_')
@@ -3015,11 +3071,14 @@ function buildDataSources({
       providerOptions.find((candidate) => candidate.id === 'custom_api') ??
       providerOptions[providerOptions.length - 1]
     const status = dataSourceStatusFromConnection(connection)
-    const primaryAction = dataSourcePrimaryActionFromStatus({
-      status,
-      sourceKind: 'connection',
-      setupAvailable: option?.setupAvailable === true,
-    })
+    const primaryAction =
+      providerId === 'csv_import'
+        ? 'upload_file'
+        : dataSourcePrimaryActionFromStatus({
+            status,
+            sourceKind: 'connection',
+            setupAvailable: option?.setupAvailable === true,
+          })
 
     return {
       id: `connection:${connection.id ?? connection.connection_key ?? providerId}`,
@@ -3055,11 +3114,14 @@ function buildDataSources({
     .filter((option) => !configuredProviderIds.has(option.id))
     .map<DataSourceSummary>((option) => {
       const status: DataSourceStatus = 'not_configured'
-      const primaryAction = dataSourcePrimaryActionFromStatus({
-        status,
-        sourceKind: 'catalog',
-        setupAvailable: option.setupAvailable,
-      })
+      const primaryAction =
+        option.id === 'csv_import' && option.setupAvailable
+          ? 'upload_file'
+          : dataSourcePrimaryActionFromStatus({
+              status,
+              sourceKind: 'catalog',
+              setupAvailable: option.setupAvailable,
+            })
 
       return {
         id: `catalog:${option.id}`,
@@ -3084,7 +3146,7 @@ function buildDataSources({
         canEdit: false,
         canPause: false,
         canRunPreview: false,
-        canUploadFile: false,
+        canUploadFile: option.id === 'csv_import',
       }
     })
 
@@ -7775,6 +7837,7 @@ export async function startConnectorSetup(
       (connection) =>
         connection.id !== existingConnection?.id &&
         connection.is_enabled !== false &&
+        (connection.is_active === true || connection.setup_status === 'connected') &&
         connection.provider !== config.provider &&
         hasConnectorDomainOverlap(connection.owned_domains, config.ownedDomains),
     ),
@@ -7931,6 +7994,169 @@ export async function startConnectorSetup(
     providerId: input.providerId,
     setupStatus: hasMappingContract ? 'mapping_ready' : 'draft',
     currentStep: hasMappingContract ? 'namespace' : 'mapping',
+  }
+}
+
+export async function ingestFileImportBatch(
+  userId: string,
+  input: IngestFileImportBatchInput,
+): Promise<IngestFileImportBatchResult> {
+  const packageResult = await ingestFileImportPackage(userId, {
+    connectionId: input.connectionId,
+    packageId: crypto.randomUUID(),
+    files: [
+      {
+        scope: input.scope,
+        fileName: input.fileName,
+        parseResult: {
+          ok: true,
+          scope: input.scope,
+          fileName: input.fileName,
+          fileExtension: input.fileExtension,
+          fileSizeBytes: input.fileSizeBytes,
+          fileChecksum: input.fileChecksum,
+          templateVersion: 'v1',
+          businessDate: input.businessDate,
+          delimiter: input.delimiter,
+          rowCount: input.rowCount,
+          rows: input.rows,
+          mappedColumns: [],
+          ignoredHeaders: [],
+          issues: [],
+        },
+      },
+    ],
+  })
+  return packageResult.items[0]!
+}
+
+export async function ingestFileImportPackage(
+  userId: string,
+  input: IngestFileImportPackageInput,
+): Promise<IngestFileImportPackageResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_TENANT_REQUIRED',
+      message: 'File import requires tenant context',
+      source: 'adapter',
+      operation: 'ingestFileImportPackage',
+      i18nKey: 'erp.errors.tenantMissing',
+    })
+  }
+  if (ctx.personaRole !== 'hr_admin' && ctx.personaRole !== 'superadmin') {
+    throw new DataAdapterError({
+      code: 'PULS_CONNECTOR_ADMIN_REQUIRED',
+      message: 'File import requires admin permission',
+      source: 'adapter',
+      operation: 'ingestFileImportPackage',
+      i18nKey: 'erp.errors.adminRequired',
+    })
+  }
+  if (!input.connectionId) {
+    throw new DataAdapterError({
+      code: 'PULS_FILE_IMPORT_CONNECTION_REQUIRED',
+      message: 'File import requires a configured data source',
+      source: 'adapter',
+      operation: 'ingestFileImportPackage',
+      i18nKey: 'erp.errors.sourceMissing',
+    })
+  }
+  if (
+    input.files.length === 0 ||
+    input.files.some((file) => {
+      const result = file.parseResult
+      return (
+        !file.scope ||
+        !result.ok ||
+        !result.fileChecksum ||
+        result.rows.length === 0 ||
+        result.rowCount !== result.rows.length
+      )
+    })
+  ) {
+    throw new DataAdapterError({
+      code: 'PULS_FILE_IMPORT_PAYLOAD_INVALID',
+      message: 'File import package is not ready for ingest',
+      source: 'adapter',
+      operation: 'ingestFileImportPackage',
+      i18nKey: 'erp.errors.fileImportBlocked',
+    })
+  }
+
+  const ingest = await pulsIntegration().rpc('ingest_file_import_package', {
+    p_connection_id: input.connectionId,
+    p_package: {
+      package_id: input.packageId,
+      items: input.files.map((file) => ({
+        scope: file.scope,
+        manifest: {
+          file_name: file.parseResult.fileName,
+          file_extension: file.parseResult.fileExtension,
+          file_size_bytes: file.parseResult.fileSizeBytes,
+          file_checksum: file.parseResult.fileChecksum,
+          template_version: 'v1',
+          business_date: file.parseResult.businessDate,
+          delimiter: file.parseResult.delimiter,
+          row_count: file.parseResult.rowCount,
+        },
+        rows: file.parseResult.rows.map((row) => ({
+          row_number: row.rowNumber,
+          entity_type: row.entityType,
+          external_id: row.externalId,
+          payload: row.payload,
+        })),
+      })),
+    },
+  })
+
+  if (ingest.error) {
+    throw fromConnectorRpcError(ingest.error, 'ingestFileImportPackage')
+  }
+
+  const result = (ingest.data ?? {}) as {
+    connection_id?: string | null
+    package_id?: string | null
+    file_count?: number | null
+    row_count?: number | null
+    status?: 'uploaded' | null
+    mode?: 'dry_run' | null
+    next_action_key?: string | null
+    items?: Array<{
+      connection_id?: string | null
+      source_namespace_id?: string | null
+      manifest_id?: string | null
+      import_batch_id?: string | null
+      scope_key?: FileImportScopeId | null
+      row_count?: number | null
+      status?: 'uploaded' | null
+      mode?: 'dry_run' | null
+      next_action_key?: string | null
+    }> | null
+  }
+
+  return {
+    connectionId: result.connection_id ?? input.connectionId,
+    packageId: result.package_id ?? input.packageId,
+    fileCount: Number(result.file_count ?? input.files.length),
+    rowCount: Number(result.row_count ?? input.files.reduce((sum, file) => sum + file.parseResult.rowCount, 0)),
+    status: result.status ?? 'uploaded',
+    mode: result.mode ?? 'dry_run',
+    nextActionKey: result.next_action_key ?? 'run_file_import_preview',
+    items: (result.items ?? []).map((item, index) => {
+      const inputFile = input.files[index]
+      return {
+        connectionId: item.connection_id ?? input.connectionId,
+        sourceNamespaceId: item.source_namespace_id ?? '',
+        manifestId: item.manifest_id ?? '',
+        batchId: item.import_batch_id ?? '',
+        scope: item.scope_key ?? inputFile?.scope ?? 'employees',
+        rowCount: Number(item.row_count ?? inputFile?.parseResult.rowCount ?? 0),
+        status: item.status ?? 'uploaded',
+        mode: item.mode ?? 'dry_run',
+        nextActionKey: item.next_action_key ?? 'run_file_import_preview',
+      }
+    }),
   }
 }
 

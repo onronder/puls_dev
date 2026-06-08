@@ -42,10 +42,11 @@ point: what should I do next?
 
 The executable CSV / Excel work remains split deliberately:
 
-- PR16.10.7: file upload, parsing, and field mapping.
-- PR16.10.8: import batch ingestion, validation, dry-run preview, and review.
-- PR16.10.9: worker apply completion, activity, notification, and settings
-  integration.
+- PR16.10.7: DataSource Manager IA, source inventory, source detail shell, and
+  route/name alignment.
+- PR16.10.8: CSV / Excel template contract, browser-side parsing, atomic
+  dry-run batch staging, and preview handoff.
+- PR16.10.9: source, batch, job, and event based technical inspector refactor.
 
 ## Verification
 

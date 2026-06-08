@@ -821,6 +821,20 @@ PR16.10.6 keeps ERP connectors as the main product path and treats CSV / Excel a
 | [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                 | `/erp` selected connector stepper, primary action binding, and deep-link-aware technical details              |
 | [`scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh`](../../scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh)         | PR16.10.6 verify gate                                                                                        |
 
+## PR16.10.8 CSV / Excel import contract
+
+PR16.10.8 makes CSV / Excel the first production-grade manual file lane in PULS DataSource Manager. It publishes scope-specific HR templates, accepts one or more filled files as an atomic import package, detects CSV delimiters, rejects unsafe Excel formulas and sensitive fields, logs each successful file ingest, produces safe Notification Center candidates, and hands staged dry-run batches to the existing preview flow. Canonical apply, provider calls, credential readback, raw file storage, and source writeback remain closed.
+
+| Document / artifact                                                                                                                        | Purpose                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| [16_10_8_csv_excel_import_contract.md](./16_10_8_csv_excel_import_contract.md)                                                             | PR16.10.8 HR import contract, UI/backend safety boundary, and verification                                    |
+| [`supabase/migrations/20260608100000_puls_integration_file_import_contract.sql`](../../supabase/migrations/20260608100000_puls_integration_file_import_contract.sql) | Metadata-only manifest table, atomic CSV/Excel package ingest RPC, and file import notification producer      |
+| [`supabase/migrations/20260608103000_puls_integration_file_import_package_contract.sql`](../../supabase/migrations/20260608103000_puls_integration_file_import_package_contract.sql) | Idempotent package-contract alignment for databases that already applied the first PR16.10.8 migration        |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                            | Browser-side template, package parsing, delimiter, type, date, formula, null, and sensitive-header contract   |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                              | DataSource Manager adapter support for CSV/Excel package upload, source ownership, and safe ingest handoff    |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                            | CSV/Excel import sheet with template set download, package validation result, staging CTA, and preview handoff |
+| [`scripts/verify-16-10-8-csv-excel-import-contract.sh`](../../scripts/verify-16-10-8-csv-excel-import-contract.sh)                         | PR16.10.8 verify gate                                                                                         |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
