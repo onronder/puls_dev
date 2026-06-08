@@ -1020,6 +1020,35 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Worker loop `setInterval` kullanmaz; retry window ve jitter testlenir.
 - CI high dependency audit ve `audit:supabase` çalıştırır; Supabase env yoksa job kırılmadan explicit skip üretir.
 
+### PR16.10.12 - DataSource Manager Structure Hardening
+
+**Ürün değeri:** PR17 öncesinde `/verikaynaklari` route'u tekrar büyüyen bir developer kara tahtası olmaktan çıkar; kaynak envanteri, teknik inspector ve paylaşılan UI sözlüğü ayrı modüller olurken mevcut ürün davranışı korunur.
+
+**Kapsam:**
+
+- DataSource source inventory + selected-source summary'yi route dışına `DataSourceManagerSection` olarak ayırma
+- Teknik audit sheet'i route dışına `DataSourceTechnicalDetailsSheet` olarak ayırma
+- Journey tab mapping, status tone, icon ve display helper'larını `dataSourceUi` içinde toplama
+- Paylaşılan UI helper'ları için hedefli Vitest coverage
+- Route dosyasını data loading, mutation orchestration ve sheet wiring sınırına indirme
+
+**Kapsam dışı:**
+
+- Teknik inspector redesign
+- Canonical apply davranışı açma veya değiştirme
+- Provider API call
+- Credential, raw payload, field value veya snapshot readback
+- Source/ERP writeback
+- PR17 page-by-page productization
+
+**Doğrulama:**
+
+- `/verikaynaklari` route'u artık kaynak envanteri veya teknik inspector JSX'ini doğrudan taşımaz.
+- DataSource Manager ana ekranı kaynak listesi ve detay özetini aynı aksiyonlarla gösterir.
+- Teknik detay sheet'i mevcut tab, CTA ve safe evidence davranışını korur.
+- `dataSourceUi` journey/fallback/scope helper testleri geçer.
+- Typecheck, lint, i18n, build ve PR16.10.12 verify gate geçer.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.
