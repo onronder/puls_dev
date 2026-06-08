@@ -2915,10 +2915,22 @@ describe('fetchErpOverviewWithMeta', () => {
       status: 'not_configured',
       primaryAction: 'start_setup',
     })
+    expect(result.data.dataSources[1]).toMatchObject({
+      providerId: 'logo',
+      status: 'not_configured',
+      primaryAction: 'none',
+      setupAvailable: false,
+    })
     expect(result.data.dataSources[2]).toMatchObject({
       providerId: 'csv_import',
       status: 'not_configured',
       primaryAction: 'start_setup',
+    })
+    expect(result.data.dataSources[3]).toMatchObject({
+      providerId: 'custom_api',
+      status: 'not_configured',
+      primaryAction: 'none',
+      setupAvailable: false,
     })
     expect(result.data.providerOptions.every((option) => option.requirements.length > 0)).toBe(true)
     expect(
