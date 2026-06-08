@@ -303,7 +303,7 @@ function emptySettingsOverview(): SettingsOverview {
       }),
     ],
     setupHubItems: [
-      setupHubItem({ to: '/erp', progress: 0 }),
+      setupHubItem({ to: '/verikaynaklari', progress: 0 }),
       setupHubItem({ to: '/sirket-kurulum', progress: 0 }),
       setupHubItem({ to: '/departmanlar', progress: 0 }),
       setupHubItem({ to: '/pozisyonlar', progress: 0 }),
@@ -431,7 +431,7 @@ function buildSettingsOverview({
     ],
     setupHubItems: [
       setupHubItem({
-        to: '/erp',
+        to: '/verikaynaklari',
         progress: integrationPct,
         value: connectorValue,
         hintKey: connectorHint,
@@ -443,7 +443,7 @@ function buildSettingsOverview({
       setupHubItem({ to: '/masraf-kategorileri', progress: workflowPct }),
       setupHubItem({ to: '/performans-parametreleri', progress: performancePct }),
     ].map((item) =>
-      item.to === '/erp'
+      item.to === '/verikaynaklari'
         ? {
             ...item,
             value: connectorValue,

@@ -148,7 +148,7 @@ describe('settings overview adapter', () => {
       value: { key: 'settingsSetup.values.enabled' },
       helperKey: 'settingsSetup.helpers.notificationsReady',
     })
-    expect(result.data.setupHubItems.find((item) => item.to === '/erp')).toMatchObject({
+    expect(result.data.setupHubItems.find((item) => item.to === '/verikaynaklari')).toMatchObject({
       status: 'ready',
       value: { key: 'settingsSetup.values.preflightReady' },
       hintKey: 'settingsSetup.setupHub.hints.connectorMapped',
@@ -175,6 +175,6 @@ describe('settings overview adapter', () => {
 
     expect(overview.sections).toHaveLength(6)
     expect(overview.sections.every((section) => section.evidence.length > 0)).toBe(true)
-    expect(overview.setupHubItems.map((item) => item.to)).toContain('/erp')
+    expect(overview.setupHubItems.map((item) => item.to)).toContain('/verikaynaklari')
   })
 })

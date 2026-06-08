@@ -26,7 +26,7 @@ SERVICE_WORKER="$(file_at_ref services/erp-connector/src/worker.ts)"
 SERVICE_TEST="$(file_at_ref services/erp-connector/src/worker.test.ts)"
 MIGRATION="$(file_at_ref supabase/migrations/20260604110000_puls_integration_connector_worker_skeleton.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
@@ -281,7 +281,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/index.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR15.2 connector worker skeleton: $changed" >&2
         exit 1

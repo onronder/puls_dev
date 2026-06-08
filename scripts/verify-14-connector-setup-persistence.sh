@@ -23,7 +23,7 @@ STRATEGY="$(file_at_ref docs/product/13_v1_product_packaging_strategy.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260602090000_puls_integration_connector_setup_lifecycle.sql)"
 SEED_LOAD="$(file_at_ref supabase/seed/puls-sanayi-v1/sql/01_load_puls_sanayi_seed.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 DASHBOARD_ADAPTER="$(file_at_ref src/lib/data/dashboard/overview.ts)"
 SETUP_ACCESS="$(file_at_ref src/lib/setup-access.ts)"
 SETUP_GUARD="$(file_at_ref src/components/auth/SetupRouteGuard.tsx)"
@@ -204,7 +204,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
       src/lib/setup-access.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR14.8 connector setup persistence: $changed" >&2
         exit 1

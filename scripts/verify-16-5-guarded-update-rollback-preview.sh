@@ -23,7 +23,7 @@ README="$(file_at_ref docs/product/README.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql)"
 MIGRATION_FIX="$(file_at_ref supabase/migrations/20260606131000_puls_integration_rollback_preview_generation_disambiguation.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
@@ -220,7 +220,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/index.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR16.5 rollback preview: $changed" >&2
         exit 1

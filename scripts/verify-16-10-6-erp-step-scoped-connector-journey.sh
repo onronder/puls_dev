@@ -20,7 +20,7 @@ echo "Checking ${REF}: PR16.10.6 ERP step-scoped connector journey ..."
 DOC="$(file_at_ref docs/product/16_10_6_erp_step_scoped_connector_journey.md)"
 ROADMAP="$(file_at_ref docs/product/15_16_connector_runtime_ai_roadmap.md)"
 README="$(file_at_ref docs/product/README.md)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
 EN_LOCALE="$(file_at_ref src/i18n/locales/en-US.json)"
 

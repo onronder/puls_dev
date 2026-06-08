@@ -86,7 +86,7 @@ export const sidebarGroups: NavGroup[] = [
 
 /** Admin setup routes surfaced inside /ayarlar hub (not in desktop sidebar). */
 export const adminSetupNavItems: NavItem[] = [
-  { to: '/erp', labelKey: 'nav.erp', icon: Waypoints },
+  { to: '/verikaynaklari', labelKey: 'nav.dataSources', icon: Waypoints },
   { to: '/sirket-kurulum', labelKey: 'nav.sirketKurulum', icon: Building2 },
   { to: '/departmanlar', labelKey: 'nav.departmanlar', icon: GitBranch },
   { to: '/pozisyonlar', labelKey: 'nav.pozisyonlar', icon: Briefcase },

@@ -21,7 +21,7 @@ DOC="$(file_at_ref docs/product/14_role_tenant_empty_state_matrix.md)"
 README="$(file_at_ref docs/product/README.md)"
 STRATEGY="$(file_at_ref docs/product/13_v1_product_packaging_strategy.md)"
 DASHBOARD_ROUTE="$(file_at_ref src/routes/_app/dashboard.tsx)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
 EN_LOCALE="$(file_at_ref src/i18n/locales/en-US.json)"
 ROLE_E2E="$(file_at_ref e2e/role-tenant-matrix.spec.ts)"
@@ -180,7 +180,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       e2e/role-tenant-matrix.spec.ts) ;;
       package.json) ;;
       src/routes/_app/dashboard.tsx) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       src/i18n/locales/tr-TR.json) ;;
       src/i18n/locales/en-US.json) ;;
       docs/product/14_role_tenant_empty_state_matrix.md) ;;

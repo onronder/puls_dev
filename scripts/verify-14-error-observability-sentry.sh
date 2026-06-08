@@ -29,7 +29,7 @@ ROOT_ROUTE="$(file_at_ref src/routes/__root.tsx)"
 ERROR_BOUNDARY="$(file_at_ref src/components/puls/AppErrorBoundary.tsx)"
 ERROR_FALLBACK="$(file_at_ref src/components/puls/AppErrorFallback.tsx)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 INDEX_TS="$(file_at_ref src/lib/data/index.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
@@ -252,7 +252,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/observability/sentry.test.ts) ;;
       src/lib/observability/sentry.ts) ;;
       src/routes/__root.tsx) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR14.9 error observability: $changed" >&2
         exit 1

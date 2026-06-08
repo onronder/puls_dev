@@ -234,7 +234,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
     esac
 
     case "$changed" in
-      supabase/migrations/*|supabase/seed/*|services/*|src/lib/data/setup/*|src/routes/_app/erp.tsx|package.json|.env*|docs/api/openapi.yaml|openapi.json|swagger.json)
+      supabase/migrations/*|supabase/seed/*|services/*|src/lib/data/setup/*|src/routes/_app/verikaynaklari.tsx|package.json|.env*|docs/api/openapi.yaml|openapi.json|swagger.json)
         echo "FAIL: forbidden path changed for PR15.6 AI runtime evidence contract: $changed" >&2
         exit 1
         ;;

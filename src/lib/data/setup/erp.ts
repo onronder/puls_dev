@@ -1350,6 +1350,50 @@ export type ConnectorProviderOption = {
   requirements: ConnectorProviderRequirement[]
 }
 
+export type DataSourceStatus =
+  | 'active'
+  | 'passive'
+  | 'setup_incomplete'
+  | 'ready'
+  | 'not_configured'
+  | 'blocked'
+  | 'paused'
+
+export type DataSourcePrimaryAction =
+  | 'start_setup'
+  | 'continue_setup'
+  | 'upload_file'
+  | 'run_preview'
+  | 'review_results'
+  | 'open_details'
+  | 'none'
+
+export type DataSourceSummary = {
+  id: string
+  connectionId: string | null
+  providerId: ConnectorProviderOption['id']
+  providerCode: string | null
+  providerLabelKey: string
+  displayName: string
+  typeLabelKey: string
+  methodLabelKey: string
+  status: DataSourceStatus
+  readiness: ConnectorReadinessStatus
+  enabled: boolean
+  active: boolean
+  scope: string[]
+  lastRunAt: string | null
+  nextActionLabelKey: string
+  primaryAction: DataSourcePrimaryAction
+  setupAvailable: boolean
+  setupStep: ConnectorSetupCurrentStep | 'not_started' | null
+  sourceKind: 'connection' | 'catalog'
+  canEdit: boolean
+  canPause: boolean
+  canRunPreview: boolean
+  canUploadFile: boolean
+}
+
 export type ErpOverview = {
   connectorState: ConnectorLifecycleState
   provider: {
@@ -1406,6 +1450,7 @@ export type ErpOverview = {
   transferModes: ConnectorTransferMode[]
   guardrails: ConnectorGuardrail[]
   providerOptions: ConnectorProviderOption[]
+  dataSources: DataSourceSummary[]
   syncLogs: ConnectorSyncLog[]
   activityTimeline: ConnectorActivityEvent[]
   status: {
@@ -2829,6 +2874,9 @@ type ErpConnectionCandidate = Pick<
   | 'display_name'
   | 'connection_method'
   | 'connection_key'
+  | 'is_active'
+  | 'last_sync_at'
+  | 'last_status'
   | 'setup_status'
   | 'setup_step'
   | 'is_enabled'
@@ -2873,6 +2921,174 @@ export function pickCurrentErpConnection<T extends ErpConnectionCandidate>(
 
     return connectionUpdatedAt(right) - connectionUpdatedAt(left)
   })[0]
+}
+
+function providerOptionIdFromCode(
+  provider: string | null | undefined,
+): ConnectorProviderOption['id'] {
+  const normalized = provider?.trim().toLowerCase()
+  if (normalized === 'csv' || normalized === 'csv_import' || normalized === 'excel') {
+    return 'csv_import'
+  }
+  if (normalized === 'canias') return 'canias'
+  if (normalized === 'logo') return 'logo'
+  return 'custom_api'
+}
+
+function dataSourceReadiness(status: DataSourceStatus): ConnectorReadinessStatus {
+  if (status === 'active' || status === 'ready') return 'ready'
+  if (status === 'blocked' || status === 'not_configured') return 'blocked'
+  return 'partial'
+}
+
+function dataSourceStatusFromConnection(connection: ErpConnectionCandidate): DataSourceStatus {
+  if (connection.setup_status === 'archived') return 'blocked'
+  if (connection.is_enabled === false || connection.setup_status === 'disabled') return 'paused'
+  if (connection.setup_status === 'error') return 'blocked'
+  if (connection.is_active === true) return 'active'
+  if (
+    connection.setup_status === 'connected' ||
+    connection.setup_status === 'preflight_ready' ||
+    connection.setup_status === 'mapping_ready' ||
+    connection.setup_status === 'setup_in_progress' ||
+    connection.setup_status === 'draft'
+  ) {
+    return 'setup_incomplete'
+  }
+  return 'passive'
+}
+
+function dataSourcePrimaryActionFromStatus({
+  status,
+  sourceKind,
+  setupAvailable,
+}: {
+  status: DataSourceStatus
+  sourceKind: DataSourceSummary['sourceKind']
+  setupAvailable: boolean
+}): DataSourcePrimaryAction {
+  if (sourceKind === 'catalog') {
+    if (!setupAvailable) return 'none'
+    return 'start_setup'
+  }
+
+  if (status === 'setup_incomplete' || status === 'paused' || status === 'passive') {
+    return 'continue_setup'
+  }
+  if (status === 'active' || status === 'ready') return 'review_results'
+  return 'open_details'
+}
+
+function dataSourceNextActionLabelKey(action: DataSourcePrimaryAction): string {
+  switch (action) {
+    case 'start_setup':
+      return 'erp.dataSources.nextActions.startSetup'
+    case 'continue_setup':
+      return 'erp.dataSources.nextActions.continueSetup'
+    case 'upload_file':
+      return 'erp.dataSources.nextActions.uploadFile'
+    case 'run_preview':
+      return 'erp.dataSources.nextActions.runPreview'
+    case 'review_results':
+      return 'erp.dataSources.nextActions.reviewResults'
+    case 'open_details':
+      return 'erp.dataSources.nextActions.openDetails'
+    default:
+      return 'erp.dataSources.nextActions.futureProvider'
+  }
+}
+
+function buildDataSources({
+  connections,
+  providerOptions,
+}: {
+  connections: ErpConnectionCandidate[]
+  providerOptions: ConnectorProviderOption[]
+}): DataSourceSummary[] {
+  const visibleConnections = connections.filter(
+    (connection) => connection.setup_status !== 'archived',
+  )
+  const connectionSources = visibleConnections.map<DataSourceSummary>((connection) => {
+    const providerId = providerOptionIdFromCode(connection.provider)
+    const option =
+      providerOptions.find((candidate) => candidate.id === providerId) ??
+      providerOptions.find((candidate) => candidate.id === 'custom_api') ??
+      providerOptions[providerOptions.length - 1]
+    const status = dataSourceStatusFromConnection(connection)
+    const primaryAction = dataSourcePrimaryActionFromStatus({
+      status,
+      sourceKind: 'connection',
+      setupAvailable: option?.setupAvailable === true,
+    })
+
+    return {
+      id: `connection:${connection.id ?? connection.connection_key ?? providerId}`,
+      connectionId: connection.id ?? null,
+      providerId,
+      providerCode: connection.provider?.trim().toLowerCase() || null,
+      providerLabelKey: option?.labelKey ?? 'erp.providerOptions.custom_api.label',
+      displayName: mapProviderLabel(connection.provider, connection.display_name),
+      typeLabelKey: option?.categoryKey ?? 'erp.providerCatalog.categories.custom',
+      methodLabelKey: option?.transferMethodKey ?? 'erp.providerCatalog.methods.customApi',
+      status,
+      readiness: dataSourceReadiness(status),
+      enabled: connection.is_enabled !== false,
+      active: connection.is_active === true,
+      scope: normalizeOwnedDomains(connection.owned_domains),
+      lastRunAt: connection.last_sync_at ?? null,
+      nextActionLabelKey: dataSourceNextActionLabelKey(primaryAction),
+      primaryAction,
+      setupAvailable: option?.setupAvailable === true,
+      setupStep: connection.setup_step ?? null,
+      sourceKind: 'connection',
+      canEdit: false,
+      canPause: false,
+      canRunPreview:
+        providerId === 'csv_import' || connection.connection_method === 'manual_import',
+      canUploadFile:
+        providerId === 'csv_import' || connection.connection_method === 'manual_import',
+    }
+  })
+
+  const configuredProviderIds = new Set(connectionSources.map((source) => source.providerId))
+  const catalogSources = providerOptions
+    .filter((option) => !configuredProviderIds.has(option.id))
+    .map<DataSourceSummary>((option) => {
+      const status: DataSourceStatus = 'not_configured'
+      const primaryAction = dataSourcePrimaryActionFromStatus({
+        status,
+        sourceKind: 'catalog',
+        setupAvailable: option.setupAvailable,
+      })
+
+      return {
+        id: `catalog:${option.id}`,
+        connectionId: null,
+        providerId: option.id,
+        providerCode: null,
+        providerLabelKey: option.labelKey,
+        displayName: option.id === 'csv_import' ? 'CSV / Excel Import' : '',
+        typeLabelKey: option.categoryKey,
+        methodLabelKey: option.transferMethodKey,
+        status,
+        readiness: dataSourceReadiness(status),
+        enabled: false,
+        active: false,
+        scope: SETUP_PROVIDER_CONFIG[option.id]?.ownedDomains ?? [],
+        lastRunAt: null,
+        nextActionLabelKey: dataSourceNextActionLabelKey(primaryAction),
+        primaryAction,
+        setupAvailable: option.setupAvailable,
+        setupStep: 'not_started',
+        sourceKind: 'catalog',
+        canEdit: false,
+        canPause: false,
+        canRunPreview: false,
+        canUploadFile: false,
+      }
+    })
+
+  return [...connectionSources, ...catalogSources]
 }
 
 function defaultAuthModeForMethod(method: string | null | undefined): ConnectorAuthMode {
@@ -3430,7 +3646,8 @@ function buildConnectorGoLivePlan({
     importPreview.status === 'ready_to_preview' ||
     importPreview.action === 'run_dry_run_preview'
   const packageShareable = customerHandoff.shareableWithCustomer
-  const packagePartial = hasConnection && customerHandoff.items.some((item) => item.status !== 'blocked')
+  const packagePartial =
+    hasConnection && customerHandoff.items.some((item) => item.status !== 'blocked')
 
   const gaps = [
     goLiveGap(
@@ -6787,6 +7004,10 @@ function buildOverview({
     transferModes: TRANSFER_MODES,
     guardrails: CONNECTOR_GUARDRAILS,
     providerOptions: CONNECTOR_PROVIDER_OPTIONS,
+    dataSources: buildDataSources({
+      connections: connections ?? [],
+      providerOptions: CONNECTOR_PROVIDER_OPTIONS,
+    }),
     syncLogs,
     activityTimeline,
     status: {

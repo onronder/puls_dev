@@ -23,7 +23,7 @@ ROADMAP="$(file_at_ref docs/product/14_connector_implementation_roadmap.md)"
 MIGRATION="$(file_at_ref supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql)"
 PROOF_SQL="$(file_at_ref supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
@@ -235,7 +235,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/index.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR14.16 import preview: $changed" >&2
         exit 1

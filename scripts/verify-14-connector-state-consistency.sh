@@ -24,7 +24,7 @@ MIGRATION="$(file_at_ref supabase/migrations/20260603110000_puls_integration_con
 SEED_LOAD="$(file_at_ref supabase/seed/puls-sanayi-v1/sql/01_load_puls_sanayi_seed.sql)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
 DASHBOARD_ADAPTER="$(file_at_ref src/lib/data/dashboard/overview.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DASHBOARD_TEST="$(file_at_ref src/lib/data/dashboard/overview.test.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
@@ -198,7 +198,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/index.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/setup/erp.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR14.12B connector state consistency: $changed" >&2
         exit 1

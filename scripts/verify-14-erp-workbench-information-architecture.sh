@@ -20,7 +20,7 @@ echo "Checking ${REF}: PR14.21 ERP workbench information architecture ..."
 DOC="$(file_at_ref docs/product/14_erp_workbench_information_architecture.md)"
 README="$(file_at_ref docs/product/README.md)"
 ROADMAP="$(file_at_ref docs/product/14_connector_implementation_roadmap.md)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 E2E="$(file_at_ref e2e/ui-stabilization.spec.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
 EN_LOCALE="$(file_at_ref src/i18n/locales/en-US.json)"
@@ -141,7 +141,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       scripts/verify-14-erp-workbench-information-architecture.sh) ;;
       src/i18n/locales/en-US.json) ;;
       src/i18n/locales/tr-TR.json) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       *)
         echo "FAIL: unexpected changed path for PR14.21 ERP workbench IA: $changed" >&2
         exit 1

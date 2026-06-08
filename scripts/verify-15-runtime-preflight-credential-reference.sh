@@ -33,7 +33,7 @@ MIGRATION="$(file_at_ref supabase/migrations/20260604140000_puls_integration_run
 WORKER="$(file_at_ref services/erp-connector/src/worker.ts)"
 WORKER_TEST="$(file_at_ref services/erp-connector/src/worker.test.ts)"
 ERP_ADAPTER="$(file_at_ref src/lib/data/setup/erp.ts)"
-ERP_ROUTE="$(file_at_ref src/routes/_app/erp.tsx)"
+ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 ERP_TEST="$(file_at_ref src/lib/data/setup/erp.test.ts)"
 DATA_INDEX="$(file_at_ref src/lib/data/index.ts)"
 TR_LOCALE="$(file_at_ref src/i18n/locales/tr-TR.json)"
@@ -252,7 +252,7 @@ if [[ -n "$CHANGED_FILES" ]]; then
       src/lib/data/setup/erp.ts) ;;
       src/lib/data/setup/erp.test.ts) ;;
       src/lib/data/index.ts) ;;
-      src/routes/_app/erp.tsx) ;;
+      src/routes/_app/verikaynaklari.tsx) ;;
       src/i18n/locales/tr-TR.json) ;;
       src/i18n/locales/en-US.json) ;;
       *)

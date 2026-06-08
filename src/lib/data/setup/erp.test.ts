@@ -307,6 +307,23 @@ describe('fetchErpOverviewWithMeta', () => {
     expect(result.data.provider.label).toBe('Canias ERP (Pasif)')
     expect(result.data.provider.status).toBe('mapping_ready')
     expect(result.data.setup.status).toBe('mapping_ready')
+    expect(result.data.dataSources[0]).toMatchObject({
+      sourceKind: 'connection',
+      providerId: 'canias',
+      displayName: 'Canias ERP (Pasif)',
+      status: 'setup_incomplete',
+      active: false,
+      enabled: true,
+      primaryAction: 'continue_setup',
+    })
+    expect(
+      result.data.dataSources.find((source) => source.providerId === 'csv_import'),
+    ).toMatchObject({
+      sourceKind: 'catalog',
+      status: 'not_configured',
+      setupAvailable: true,
+      primaryAction: 'start_setup',
+    })
     expect(result.data.setupSummary).toEqual({
       labelKey: 'erp.metrics.setup',
       valueKey: 'erp.setupSummary.values.credentialPending',
@@ -2887,6 +2904,22 @@ describe('fetchErpOverviewWithMeta', () => {
       'csv_import',
       'custom_api',
     ])
+    expect(result.data.dataSources.map((source) => source.providerId)).toEqual([
+      'canias',
+      'logo',
+      'csv_import',
+      'custom_api',
+    ])
+    expect(result.data.dataSources.every((source) => source.sourceKind === 'catalog')).toBe(true)
+    expect(result.data.dataSources[0]).toMatchObject({
+      status: 'not_configured',
+      primaryAction: 'start_setup',
+    })
+    expect(result.data.dataSources[2]).toMatchObject({
+      providerId: 'csv_import',
+      status: 'not_configured',
+      primaryAction: 'start_setup',
+    })
     expect(result.data.providerOptions.every((option) => option.requirements.length > 0)).toBe(true)
     expect(
       result.data.providerOptions.every(

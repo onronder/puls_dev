@@ -58,7 +58,8 @@
     "sozlesmeler": "Contracts",
     "cuzdan": "Expenses",
     "kale": "Job Evaluation",
-    "erp": "ERP Integration",
+    "erp": "Data Sources",
+    "dataSources": "Data Sources",
     "sirketKurulum": "Company Setup",
     "departmanlar": "Departments",
     "pozisyonlar": "Positions",
@@ -901,9 +902,66 @@
   },
   "erp": {
     "eyebrow": "Setup & Configuration",
-    "title": "Data connections",
+    "title": "Data Sources",
     "subtitle": "Connect ERP, file, and custom API sources safely into the shared PULS data model.",
     "badge": "Pending",
+    "dataSources": {
+      "title": "Sources",
+      "description": "Manage ERP, file, and custom API connections as source objects.",
+      "addSource": "Add source",
+      "inventoryTitle": "Sources",
+      "inventoryDescription": "Review configured and setup-ready sources in one place.",
+      "inventoryCount": "{{count}} configured",
+      "detailTitle": "Source summary",
+      "emptyTitle": "No sources yet",
+      "emptyDescription": "Add the first data source to start mapping and preview workflows.",
+      "type": "Type",
+      "method": "Connection method",
+      "scope": "Data scope",
+      "lastRun": "Last run",
+      "nextAction": "Next action",
+      "status": {
+        "active": "Active",
+        "passive": "Passive",
+        "setup_incomplete": "Setup incomplete",
+        "ready": "Ready",
+        "not_configured": "Not configured",
+        "blocked": "Blocked",
+        "paused": "Paused"
+      },
+      "actions": {
+        "start_setup": "Start setup",
+        "continue_setup": "Continue setup",
+        "upload_file": "Upload file",
+        "run_preview": "Run preview",
+        "review_results": "Review results",
+        "open_details": "Open details",
+        "none": "No action",
+        "advancedAudit": "Advanced audit"
+      },
+      "nextActions": {
+        "startSetup": "Start source setup",
+        "continueSetup": "Continue setup",
+        "uploadFile": "Prepare file flow",
+        "runPreview": "Run preview",
+        "reviewResults": "Review results",
+        "openDetails": "Open details",
+        "futureProvider": "Available when the connection model is ready"
+      },
+      "values": {
+        "active": "Active",
+        "passive": "Passive",
+        "noLastRun": "Not run yet",
+        "noScope": "No scope selected"
+      },
+      "scopeValues": {
+        "employees": "Employees",
+        "departments": "Departments",
+        "positions": "Positions",
+        "locations": "Locations",
+        "cost_centers": "Cost centers"
+      }
+    },
     "noConnector": {
       "title": "Connection setup",
       "subtitle": "Start by choosing a data source. Credentials, live transfer, and ERP writes stay off until you explicitly approve them.",
