@@ -924,6 +924,40 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Authenticated direct table writes kapalıdır; ingest sadece admin RPC boundary'den geçer.
 - Supabase local migration apply ve `puls_integration` lint error-free geçer.
 
+### PR16.10.9 - Runtime Safety Hardening
+
+**Ürün değeri:** PR16.10.8 sonrası production readiness raporunda görülen runtime ve idempotency riskleri, DataSource Manager UI'ını büyütmeden kapatılır. Audit tenant boundary, notification idempotency, worker lease ownership, credential revoke sonucu ve production Supabase config güvenli hale gelir.
+
+**Kapsam:**
+
+- `puls_audit.audit_logs` authenticated insert policy'de nullable tenant write kapatma
+- Connector job Notification Center dedupe key normalizasyonu
+- Status-derived duplicate connector job notification'larını archive ederek aktif çift sayımı kaldırma
+- Worker `complete_connector_job` için active lease guard
+- Create-only, guarded update ve rollback worker apply RPC'leri için active lease guard
+- Credential revoke sonrası queued, retrying ve running runtime preflight job'larını cancel etme
+- Revoked credential üstüne late verification success yazılmasını engelleme
+- Production Supabase env missing durumunda fail-fast
+- CI quality job içine Vitest regression testleri ekleme
+
+**Kapsam dışı:**
+
+- DataSource Manager UI refactor
+- Teknik inspector redesign
+- Canonical apply davranış değişikliği
+- Provider API call
+- Source writeback
+- Credential, raw payload, field value veya snapshot readback
+- PR17 page-by-page productization
+
+**Doğrulama:**
+
+- Audit policy `tenant_id IS NULL` kabul etmez.
+- Connector job notification dedupe key job status değişiminden etkilenmez.
+- Expired worker lease completion veya apply execution çalıştıramaz.
+- Revoked credential late verification ile verified hale dönemez.
+- CI `pnpm run test` çalıştırır.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.
