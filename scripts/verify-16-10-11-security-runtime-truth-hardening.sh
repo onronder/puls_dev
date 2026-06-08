@@ -29,6 +29,7 @@ ERP_ROUTE="$(file_at_ref src/routes/_app/verikaynaklari.tsx)"
 WORKER="$(file_at_ref services/erp-connector/src/worker.ts)"
 WORKER_TEST="$(file_at_ref services/erp-connector/src/worker.test.ts)"
 CI="$(file_at_ref .github/workflows/ci.yml)"
+SUPABASE_AUDIT="$(file_at_ref scripts/audit-supabase-schema.mjs)"
 
 for needle in \
   "PR16.10.11 Security & Runtime Truth Hardening" \
@@ -151,9 +152,21 @@ done
 
 for needle in \
   "pnpm audit --audit-level high" \
-  "pnpm run audit:supabase"; do
+  "pnpm run audit:supabase" \
+  "secrets.VITE_SUPABASE_URL" \
+  "secrets.VITE_SUPABASE_ANON_KEY"; do
   if ! grep -Fq "$needle" <<< "$CI"; then
     echo "FAIL: CI missing audit gate: $needle" >&2
+    exit 1
+  fi
+done
+
+for needle in \
+  "process.env.VITE_SUPABASE_URL" \
+  "process.env.GITHUB_ACTIONS === 'true'" \
+  "Supabase schema audit skipped"; do
+  if ! grep -Fq "$needle" <<< "$SUPABASE_AUDIT"; then
+    echo "FAIL: Supabase audit script missing CI-compatible env handling: $needle" >&2
     exit 1
   fi
 done

@@ -32,7 +32,9 @@ behavior, CI audit gates, and service-role log redaction.
 
 - Vitest remains in CI.
 - Dependency audit blocks high-severity vulnerable dependency paths.
-- Supabase schema audit is part of the quality job.
+- Supabase schema audit is part of the quality job. It uses CI secrets when
+  configured and emits an explicit skip notice instead of failing when those
+  secrets are absent.
 - The CI gate must fail if `xlsx` re-enters the dependency graph or if the
   worker loop returns to fixed `setInterval` polling.
 

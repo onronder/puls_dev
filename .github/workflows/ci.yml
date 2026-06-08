@@ -26,7 +26,11 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run test
       - run: pnpm audit --audit-level high
-      - run: pnpm run audit:supabase
+      - name: Audit Supabase schema
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: pnpm run audit:supabase
       - run: pnpm run build
       - run: pnpm run check-i18n
 

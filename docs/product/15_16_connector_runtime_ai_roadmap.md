@@ -1000,7 +1000,7 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Demo fallback truthfulness: real data error durumunda sample data açık uyarı ile gösterilir
 - Worker loop fixed interval yerine safe retry backoff + bounded jitter kullanır
 - Service-role RPC header'ları gerekli kalır, loggable metadata redaction helper/test ile korunur
-- CI quality job high dependency audit ve Supabase schema audit çalıştırır
+- CI quality job high dependency audit ve Supabase schema audit çalıştırır; Supabase CI secret'ları yoksa audit açık skip notice ile geçer
 
 **Kapsam dışı:**
 
@@ -1018,7 +1018,7 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Formula cell cached value yoksa import contract reject eder.
 - Demo error fallback `role=alert` ile kullanıcıya açıkça görünür.
 - Worker loop `setInterval` kullanmaz; retry window ve jitter testlenir.
-- CI high dependency audit ve `audit:supabase` çalıştırır.
+- CI high dependency audit ve `audit:supabase` çalıştırır; Supabase env yoksa job kırılmadan explicit skip üretir.
 
 ### PR16.11 - AI Operational Recommendations
 

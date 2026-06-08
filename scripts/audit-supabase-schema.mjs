@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Read-only schema audit for an existing Supabase project.
- * Run locally after filling .env.local (never commit keys).
+ * Run locally after filling .env.local (never commit keys), or in CI with
+ * VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY configured.
  *
  *   node scripts/audit-supabase-schema.mjs
  */
@@ -9,12 +10,7 @@ import { createClient } from '@supabase/supabase-js'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-function loadEnvLocal() {
-  const path = resolve(process.cwd(), '.env.local')
-  if (!existsSync(path)) {
-    console.error('Missing .env.local — run: cp .env.example .env.local')
-    process.exit(1)
-  }
+function parseEnvFile(path) {
   const env = {}
   for (const line of readFileSync(path, 'utf8').split('\n')) {
     const trimmed = line.trim()
@@ -26,13 +22,30 @@ function loadEnvLocal() {
   return env
 }
 
-const LOVABLE_TABLES = [
-  'profiles',
-  'tenants',
-  'user_tenants',
-  'user_roles',
-  'audit_log',
-]
+function loadAuditEnv() {
+  const env = {
+    VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
+  }
+
+  if (env.VITE_SUPABASE_URL && env.VITE_SUPABASE_ANON_KEY) return env
+
+  const path = resolve(process.cwd(), '.env.local')
+  if (!existsSync(path)) {
+    if (process.env.GITHUB_ACTIONS === 'true') return env
+    console.error('Missing .env.local — run: cp .env.example .env.local')
+    process.exit(1)
+  }
+
+  const fileEnv = parseEnvFile(path)
+  return {
+    ...fileEnv,
+    VITE_SUPABASE_URL: env.VITE_SUPABASE_URL ?? fileEnv.VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY ?? fileEnv.VITE_SUPABASE_ANON_KEY,
+  }
+}
+
+const LOVABLE_TABLES = ['profiles', 'tenants', 'user_tenants', 'user_roles', 'audit_log']
 
 const PULS_TABLES = [
   'departments',
@@ -58,11 +71,20 @@ async function tableExists(supabase, table, schema = 'public') {
 }
 
 async function main() {
-  const env = loadEnvLocal()
+  const env = loadAuditEnv()
   const url = env.VITE_SUPABASE_URL
   const key = env.VITE_SUPABASE_ANON_KEY
   if (!url || !key) {
-    console.error('Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local')
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      console.log(
+        'Supabase schema audit skipped: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are not configured for CI.',
+      )
+      return
+    }
+
+    console.error(
+      'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local or the environment',
+    )
     process.exit(1)
   }
 
@@ -93,7 +115,11 @@ async function main() {
 
   const { data: session } = await supabase.auth.getSession()
   console.log('\n--- Auth session ---')
-  console.log(session.session ? `  Logged in as ${session.session.user.email}` : '  No active session (expected for audit script)')
+  console.log(
+    session.session
+      ? `  Logged in as ${session.session.user.email}`
+      : '  No active session (expected for audit script)',
+  )
 }
 
 main().catch((err) => {
