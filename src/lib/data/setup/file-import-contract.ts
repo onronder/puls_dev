@@ -262,6 +262,12 @@ export function fileImportScopeOptions(): FileImportScopeContract[] {
   return FILE_IMPORT_SCOPE_ORDER.map((scope) => FILE_IMPORT_SCOPE_CONTRACTS[scope])
 }
 
+export function fileImportScopeRank(scope: FileImportScopeId | null | undefined): number {
+  if (!scope) return 999
+  const index = FILE_IMPORT_SCOPE_ORDER.indexOf(scope)
+  return index === -1 ? 999 : index
+}
+
 export function getFileImportScopeContract(scope: FileImportScopeId): FileImportScopeContract {
   return FILE_IMPORT_SCOPE_CONTRACTS[scope]
 }
@@ -291,7 +297,10 @@ export function inferFileImportScopeFromFileName(fileName: string): FileImportSc
   return scope && scope in FILE_IMPORT_SCOPE_CONTRACTS ? scope : null
 }
 
-export async function parseFileImport(file: File, scope: FileImportScopeId): Promise<FileImportParseResult> {
+export async function parseFileImport(
+  file: File,
+  scope: FileImportScopeId,
+): Promise<FileImportParseResult> {
   const contract = getFileImportScopeContract(scope)
   const extension = fileExtension(file.name)
   const checksum = await sha256File(file)
@@ -358,36 +367,37 @@ export async function parseFileImportPackage(
     })
   }
 
-  const parsedFiles = await Promise.all(
-    files.map(async (file): Promise<FileImportPackageItem> => {
-      const inferredScope = inferFileImportScopeFromFileName(file.name)
-      if (!inferredScope) {
-        return {
-          scope: null,
-          fileName: file.name,
-          parseResult: emptyParseResult(file, 'employees', fileExtension(file.name), null, null, [
-            { level: 'error', code: 'INVALID_FILE_NAME', detail: file.name },
-          ]),
-        }
-      }
-      if (!allowedScopeSet.has(inferredScope)) {
-        return {
-          scope: inferredScope,
-          fileName: file.name,
-          parseResult: addIssueToParseResult(await parseFileImport(file, inferredScope), {
-            level: 'error',
-            code: 'FILE_SCOPE_NOT_ALLOWED',
-            detail: inferredScope,
-          }),
-        }
-      }
-      return {
+  const parsedFiles: FileImportPackageItem[] = []
+  for (const file of files) {
+    const inferredScope = inferFileImportScopeFromFileName(file.name)
+    if (!inferredScope) {
+      parsedFiles.push({
+        scope: null,
+        fileName: file.name,
+        parseResult: emptyParseResult(file, 'employees', fileExtension(file.name), null, null, [
+          { level: 'error', code: 'INVALID_FILE_NAME', detail: file.name },
+        ]),
+      })
+      continue
+    }
+    if (!allowedScopeSet.has(inferredScope)) {
+      parsedFiles.push({
         scope: inferredScope,
         fileName: file.name,
-        parseResult: await parseFileImport(file, inferredScope),
-      }
-    }),
-  )
+        parseResult: addIssueToParseResult(await parseFileImport(file, inferredScope), {
+          level: 'error',
+          code: 'FILE_SCOPE_NOT_ALLOWED',
+          detail: inferredScope,
+        }),
+      })
+      continue
+    }
+    parsedFiles.push({
+      scope: inferredScope,
+      fileName: file.name,
+      parseResult: await parseFileImport(file, inferredScope),
+    })
+  }
 
   const seenScopes = new Map<FileImportScopeId, number>()
   const filesWithPackageChecks = parsedFiles.map((item) => {
@@ -406,8 +416,8 @@ export async function parseFileImportPackage(
   })
 
   const orderedFiles = filesWithPackageChecks.sort((left, right) => {
-    const leftIndex = left.scope ? FILE_IMPORT_SCOPE_ORDER.indexOf(left.scope) : 999
-    const rightIndex = right.scope ? FILE_IMPORT_SCOPE_ORDER.indexOf(right.scope) : 999
+    const leftIndex = fileImportScopeRank(left.scope)
+    const rightIndex = fileImportScopeRank(right.scope)
     return leftIndex - rightIndex || left.fileName.localeCompare(right.fileName, 'tr')
   })
   const fileIssues = orderedFiles.flatMap((item) => item.parseResult.issues)
@@ -487,7 +497,11 @@ async function parseCsvFile(file: File): Promise<ParsedTable> {
 async function parseXlsxFile(file: File): Promise<ParsedTable> {
   const XLSX = await import('xlsx')
   const buffer = await file.arrayBuffer()
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true, bookFiles: true }) as WorkbookWithFiles
+  const workbook = XLSX.read(buffer, {
+    type: 'array',
+    cellDates: true,
+    bookFiles: true,
+  }) as WorkbookWithFiles
   const firstSheetName = workbook.SheetNames[0]
   if (!firstSheetName) {
     return {
@@ -545,7 +559,10 @@ function collectFormulaIssuesFromWorksheetXml(
     | (XLSX.SheetProps & { sheetId?: string | number; sheetid?: string | number })
     | undefined
   const sheetId = sheetMeta?.sheetId ?? sheetMeta?.sheetid
-  const content = workbookFileContent(workbook, sheetId ? `xl/worksheets/sheet${sheetId}.xml` : null)
+  const content = workbookFileContent(
+    workbook,
+    sheetId ? `xl/worksheets/sheet${sheetId}.xml` : null,
+  )
   if (!content) return []
 
   const issues: FileImportIssue[] = []
@@ -735,8 +752,16 @@ function parseCellValue(
 ): string | number | boolean | null {
   const normalizedText = normalizeCellText(rawValue)
   if (normalizedText === null || NULL_LITERALS.has(normalizedText.toLocaleLowerCase('tr-TR'))) {
-    if (typeof rawValue === 'string' && NULL_LITERALS.has(rawValue.trim().toLocaleLowerCase('tr-TR'))) {
-      issues.push({ level: 'warning', code: 'NULL_LITERAL_NORMALIZED', rowNumber, column: column.key })
+    if (
+      typeof rawValue === 'string' &&
+      NULL_LITERALS.has(rawValue.trim().toLocaleLowerCase('tr-TR'))
+    ) {
+      issues.push({
+        level: 'warning',
+        code: 'NULL_LITERAL_NORMALIZED',
+        rowNumber,
+        column: column.key,
+      })
     }
     return null
   }
@@ -840,8 +865,9 @@ function detectDelimiter(text: string): ',' | ';' | '\t' {
     const variance = counts.reduce((sum, count) => sum + Math.abs(count - counts[0]!), 0)
     return { delimiter, total, variance }
   })
-  return scored.sort((left, right) => right.total - left.total || left.variance - right.variance)[0]!
-    .delimiter
+  return scored.sort(
+    (left, right) => right.total - left.total || left.variance - right.variance,
+  )[0]!.delimiter
 }
 
 function countDelimiterOutsideQuotes(line: string, delimiter: ',' | ';' | '\t'): number {

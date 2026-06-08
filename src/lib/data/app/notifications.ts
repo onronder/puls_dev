@@ -22,6 +22,20 @@ export type AppNotificationSignalSubscription = {
   unsubscribe: () => void
 }
 
+type AppNotificationSignalListener = (signal: AppNotificationRealtimeSignal) => void
+type AppNotificationStatusListener = (status: AppNotificationRealtimeStatus) => void
+type AppNotificationRealtimeChannel = ReturnType<typeof supabase.channel>
+type AppNotificationRealtimeEntry = {
+  topic: string
+  channel: AppNotificationRealtimeChannel
+  signalListeners: Set<AppNotificationSignalListener>
+  statusListeners: Set<AppNotificationStatusListener>
+  status: AppNotificationRealtimeStatus
+  active: boolean
+}
+
+const appNotificationRealtimeEntries = new Map<string, AppNotificationRealtimeEntry>()
+
 export type AppNotificationCursor = {
   priority: number
   occurred_at: string
@@ -332,13 +346,29 @@ export function subscribeToAppNotificationSignals({
   }
 
   const topic = appNotificationRealtimeTopic(tenantId)
-  let active = true
+  const existingEntry = appNotificationRealtimeEntries.get(topic)
+  if (existingEntry) {
+    existingEntry.signalListeners.add(onSignal)
+    if (onStatusChange) existingEntry.statusListeners.add(onStatusChange)
+    onStatusChange?.(existingEntry.status)
+    return {
+      topic,
+      unsubscribe: () => {
+        releaseAppNotificationRealtimeEntry(topic, onSignal, onStatusChange)
+      },
+    }
+  }
 
-  onStatusChange?.('connecting')
+  const signalListeners = new Set<AppNotificationSignalListener>([onSignal])
+  const statusListeners = new Set<AppNotificationStatusListener>()
+  if (onStatusChange) statusListeners.add(onStatusChange)
 
-  void supabase.realtime.setAuth().catch(() => {
-    if (active) onStatusChange?.('fallback')
-  })
+  const notifyStatus = (status: AppNotificationRealtimeStatus) => {
+    const entry = appNotificationRealtimeEntries.get(topic)
+    if (!entry || !entry.active) return
+    entry.status = status
+    entry.statusListeners.forEach((listener) => listener(status))
+  }
 
   const channel = supabase
     .channel(topic, {
@@ -349,32 +379,67 @@ export function subscribeToAppNotificationSignals({
     })
     .on('broadcast', { event: APP_NOTIFICATION_REALTIME_EVENT }, (payload) => {
       const signal = mapAppNotificationRealtimeSignal(payload)
-      if (signal) onSignal(signal)
+      const entry = appNotificationRealtimeEntries.get(topic)
+      if (!signal || !entry || !entry.active) return
+      entry.signalListeners.forEach((listener) => listener(signal))
     })
 
+  appNotificationRealtimeEntries.set(topic, {
+    topic,
+    channel,
+    signalListeners,
+    statusListeners,
+    status: 'connecting',
+    active: true,
+  })
+
+  onStatusChange?.('connecting')
+
+  void supabase.realtime.setAuth().catch(() => {
+    notifyStatus('fallback')
+  })
+
   channel.subscribe((status) => {
-    if (!active) return
+    const entry = appNotificationRealtimeEntries.get(topic)
+    if (!entry || !entry.active) return
 
     if (status === 'SUBSCRIBED') {
-      onStatusChange?.('connected')
+      notifyStatus('connected')
       return
     }
 
     if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-      onStatusChange?.('fallback')
+      notifyStatus('fallback')
       return
     }
 
-    onStatusChange?.('connecting')
+    notifyStatus('connecting')
   })
 
   return {
     topic,
     unsubscribe: () => {
-      active = false
-      void supabase.removeChannel(channel)
+      releaseAppNotificationRealtimeEntry(topic, onSignal, onStatusChange)
     },
   }
+}
+
+function releaseAppNotificationRealtimeEntry(
+  topic: string,
+  onSignal: AppNotificationSignalListener,
+  onStatusChange?: AppNotificationStatusListener,
+) {
+  const entry = appNotificationRealtimeEntries.get(topic)
+  if (!entry) return
+
+  entry.signalListeners.delete(onSignal)
+  if (onStatusChange) entry.statusListeners.delete(onStatusChange)
+
+  if (entry.signalListeners.size > 0) return
+
+  entry.active = false
+  appNotificationRealtimeEntries.delete(topic)
+  void supabase.removeChannel(entry.channel)
 }
 
 function mapSummary(row: NotificationSummaryRow | null): AppNotificationSummary {
@@ -453,7 +518,9 @@ function mapPreference(row: NotificationPreferenceRow): AppNotificationPreferenc
   }
 }
 
-function mapScenarioContract(row: NotificationScenarioContractRow): AppNotificationScenarioContract {
+function mapScenarioContract(
+  row: NotificationScenarioContractRow,
+): AppNotificationScenarioContract {
   return {
     scenarioKey: row.scenario_key,
     scenarioStatus: row.scenario_status,

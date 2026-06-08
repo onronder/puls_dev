@@ -479,4 +479,63 @@ describe('app notification data adapter', () => {
     subscription.unsubscribe()
     expect(realtimeClient.removeChannel).toHaveBeenCalledWith(channel)
   })
+
+  it('shares one tenant realtime channel across multiple subscribers', () => {
+    let broadcastHandler: (payload: unknown) => void = () => {}
+    const channel = {
+      on: vi.fn(
+        (_type: string, _filter: Record<string, string>, handler: (payload: unknown) => void) => {
+          broadcastHandler = handler
+          return channel
+        },
+      ),
+      subscribe: vi.fn(() => channel),
+    }
+    const onSignalA = vi.fn()
+    const onSignalB = vi.fn()
+    const onStatusA = vi.fn()
+    const onStatusB = vi.fn()
+
+    realtimeClient.channel.mockReturnValue(channel as never)
+
+    const first = subscribeToAppNotificationSignals({
+      tenantId: 'tenant-1',
+      enabled: true,
+      onSignal: onSignalA,
+      onStatusChange: onStatusA,
+    })
+    const second = subscribeToAppNotificationSignals({
+      tenantId: 'tenant-1',
+      enabled: true,
+      onSignal: onSignalB,
+      onStatusChange: onStatusB,
+    })
+
+    expect(realtimeClient.channel).toHaveBeenCalledTimes(1)
+    expect(realtimeClient.realtime.setAuth).toHaveBeenCalledTimes(1)
+    expect(onStatusB).toHaveBeenLastCalledWith('connecting')
+
+    broadcastHandler({
+      payload: {
+        notification_id: 'notification-1',
+        source_domain: 'connector_runtime',
+        source_event_key: 'connector_job_failed',
+        severity: 'error',
+        occurred_at: '2026-06-07T10:00:00Z',
+      },
+    })
+
+    expect(onSignalA).toHaveBeenCalledWith(
+      expect.objectContaining({ notificationId: 'notification-1' }),
+    )
+    expect(onSignalB).toHaveBeenCalledWith(
+      expect.objectContaining({ notificationId: 'notification-1' }),
+    )
+
+    first.unsubscribe()
+    expect(realtimeClient.removeChannel).not.toHaveBeenCalled()
+
+    second.unsubscribe()
+    expect(realtimeClient.removeChannel).toHaveBeenCalledWith(channel)
+  })
 })
