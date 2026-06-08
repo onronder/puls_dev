@@ -946,7 +946,7 @@
         "runPreview": "Önizleme çalıştır",
         "reviewResults": "Sonuçları incele",
         "openDetails": "Detayları aç",
-        "futureProvider": "Kuruluma kapalı"
+        "futureProvider": "Çok yakında"
       },
       "values": {
         "active": "Aktif",
@@ -1477,7 +1477,7 @@
       "logo": {
         "label": "Logo",
         "description": "Logo ERP bağlantısı için kaynak tipi.",
-        "readiness": "Bu kaynak tipi şu anda kuruluma açık değil."
+        "readiness": "Yakında kuruluma açılacak kaynak tipi."
       },
       "csv_import": {
         "label": "CSV / Excel",
@@ -1487,7 +1487,7 @@
       "custom_api": {
         "label": "Özel API",
         "description": "Müşteriye özel API veya ara servis bağlantısı.",
-        "readiness": "Bu kaynak tipi şu anda kuruluma açık değil."
+        "readiness": "Yakında kuruluma açılacak kaynak tipi."
       }
     },
     "providerCatalog": {
@@ -1503,20 +1503,20 @@
       },
       "methods": {
         "restApi": "REST API",
-        "customerConfirmed": "Kuruluma kapalı",
+        "customerConfirmed": "Çok yakında",
         "fileOrManual": "Dosya / manuel import",
         "customApi": "Özel API"
       },
       "availability": {
         "setupDraftAvailable": "Taslak kuruluma açık",
-        "customerConfirmationRequired": "Kuruluma kapalı",
-        "futureModelReady": "Kuruluma kapalı"
+        "customerConfirmationRequired": "Çok yakında",
+        "futureModelReady": "Çok yakında"
       },
       "recommendedUse": {
         "canias": "Canias kaynaklarını PULS veri modeline güvenli şekilde hazırlamak için kullanılır.",
-        "logo": "Logo için kurulum akışı bu sürümde açık değildir.",
+        "logo": "Logo bağlantı tipi kaynak kataloğunda yer alır; kurulum akışı yakında açılacak.",
         "csv_import": "API erişimi yokken ilk veriyi dosya üzerinden kontrollü almak için kullanılır.",
-        "custom_api": "Özel API için kurulum akışı bu sürümde açık değildir."
+        "custom_api": "Özel API bağlantıları kaynak kataloğunda yer alır; kurulum akışı yakında açılacak."
       }
     },
     "providerPreview": {
@@ -1534,11 +1534,11 @@
       "guardrailTitle": "Canlı bağlantı kapalı",
       "guardrailBody": "Bu adım sadece taslak oluşturur. Kimlik bilgisi saklama, canlı aktarım ve ERP'ye yazma ayrı onay olmadan başlamaz.",
       "persistedSetupHint": "Taslak kaydedilir; sayfa yenilense bile kaldığın yerden devam edebilirsin.",
-      "futureProviderHint": "Bu kaynak tipi şu anda kuruluma açık değil.",
+      "futureProviderHint": "Bu kaynak tipi yakında kuruluma açılacak.",
       "close": "Kapat",
       "startSetup": "Kurulumu başlat",
       "creating": "Kaydediliyor",
-      "futureProvider": "Kuruluma kapalı",
+      "futureProvider": "Çok yakında",
       "adminRequiredAction": "Admin yetkisi gerekir"
     },
     "providerRequirements": {
@@ -1624,7 +1624,7 @@
     "errors": {
       "tenantMissing": "Bu işlem için önce şirket bağlantısının tamamlanması gerekiyor.",
       "adminRequired": "Bağlantı taslağını başlatmak için admin yetkisi gerekir.",
-      "providerUnavailable": "Bu kaynak tipi şu anda kuruluma açık değil.",
+      "providerUnavailable": "Bu kaynak tipi yakında kuruluma açılacak.",
       "sourceMissing": "Önce bir veri kaynağı seçip kurulum taslağını başlat.",
       "credentialHandoffBlocked": "Güvenli referans talebi için önce alan, kaynak kimliği ve eşleştirme adımlarını tamamla.",
       "importBatchMissing": "Bu kaynak için hazır bir dry-run import batch kaydı yok.",

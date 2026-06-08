@@ -1111,16 +1111,24 @@ function ErpPage() {
                   {dataSources.map((source) => {
                     const isSelected = selectedDataSource?.id === source.id
                     const displayName = dataSourceDisplayName(source, t)
+                    const isUnavailableCatalog =
+                      source.sourceKind === 'catalog' && !source.setupAvailable
 
                     return (
                       <button
                         key={source.id}
                         type="button"
                         aria-pressed={isSelected}
-                        onClick={() => setSelectedDataSourceId(source.id)}
+                        aria-disabled={isUnavailableCatalog}
+                        disabled={isUnavailableCatalog}
+                        onClick={() => {
+                          if (!isUnavailableCatalog) setSelectedDataSourceId(source.id)
+                        }}
                         className={cn(
                           'touch-target w-full rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
-                          isSelected
+                          isUnavailableCatalog
+                            ? 'cursor-not-allowed border-[var(--color-border)] bg-[var(--color-bg-surface)] opacity-55'
+                            : isSelected
                             ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] bg-[var(--color-primary-soft)]'
                             : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)]',
                         )}
@@ -1142,7 +1150,9 @@ function ErpPage() {
                                 {displayName}
                               </p>
                               <StatusPill tone={readinessTone(source.readiness)}>
-                                {t(`erp.dataSources.status.${source.status}`)}
+                                {isUnavailableCatalog
+                                  ? t('erp.dataSources.nextActions.futureProvider')
+                                  : t(`erp.dataSources.status.${source.status}`)}
                               </StatusPill>
                               {source.sourceKind === 'connection' ? (
                                 <StatusPill tone={source.active ? 'success' : 'neutral'}>

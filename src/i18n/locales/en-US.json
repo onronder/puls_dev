@@ -946,7 +946,7 @@
         "runPreview": "Run preview",
         "reviewResults": "Review results",
         "openDetails": "Open details",
-        "futureProvider": "Setup closed"
+        "futureProvider": "Coming soon"
       },
       "values": {
         "active": "Active",
@@ -1477,7 +1477,7 @@
       "logo": {
         "label": "Logo",
         "description": "Source type for Logo ERP connections.",
-        "readiness": "This source type is not open for setup right now."
+        "readiness": "This source type will be available soon."
       },
       "csv_import": {
         "label": "CSV / Excel",
@@ -1487,7 +1487,7 @@
       "custom_api": {
         "label": "Custom API",
         "description": "Customer-specific API or intermediate service connection.",
-        "readiness": "This source type is not open for setup right now."
+        "readiness": "This source type will be available soon."
       }
     },
     "providerCatalog": {
@@ -1503,20 +1503,20 @@
       },
       "methods": {
         "restApi": "REST API",
-        "customerConfirmed": "Setup closed",
+        "customerConfirmed": "Coming soon",
         "fileOrManual": "File / manual import",
         "customApi": "Custom API"
       },
       "availability": {
         "setupDraftAvailable": "Setup draft available",
-        "customerConfirmationRequired": "Setup closed",
-        "futureModelReady": "Setup closed"
+        "customerConfirmationRequired": "Coming soon",
+        "futureModelReady": "Coming soon"
       },
       "recommendedUse": {
         "canias": "Use Canias sources to prepare a safe connection to the PULS data model.",
-        "logo": "Setup for Logo is not open in this release.",
+        "logo": "Logo is part of the source catalog; setup will open soon.",
         "csv_import": "Use file transfer to receive first data safely when API access is not available.",
-        "custom_api": "Setup for Custom API is not open in this release."
+        "custom_api": "Custom API is part of the source catalog; setup will open soon."
       }
     },
     "providerPreview": {
@@ -1534,11 +1534,11 @@
       "guardrailTitle": "Live connection is off",
       "guardrailBody": "This step only creates a draft. Credential storage, live transfer, and ERP writes do not start without separate approval.",
       "persistedSetupHint": "The draft is saved, so you can refresh the page and continue from the same point.",
-      "futureProviderHint": "This source type is not open for setup right now.",
+      "futureProviderHint": "This source type will be available soon.",
       "close": "Close",
       "startSetup": "Start setup",
       "creating": "Saving",
-      "futureProvider": "Setup closed",
+      "futureProvider": "Coming soon",
       "adminRequiredAction": "Admin permission required"
     },
     "providerRequirements": {
@@ -1624,7 +1624,7 @@
     "errors": {
       "tenantMissing": "Company setup must be completed before this action can run.",
       "adminRequired": "Admin permission is required to start a connection draft.",
-      "providerUnavailable": "This source type is not open for setup right now.",
+      "providerUnavailable": "This source type will be available soon.",
       "sourceMissing": "Select a data source and start a setup draft first.",
       "credentialHandoffBlocked": "Complete field mapping, source identity, and record matching before requesting a secure reference.",
       "importBatchMissing": "There is no dry-run import batch ready for this source.",
