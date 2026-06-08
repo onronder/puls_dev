@@ -1081,8 +1081,60 @@
         "openPreview": "Go to preview",
         "openSetup": "Open setup details",
         "openDetails": "Open technical details",
+        "openSourceDetails": "Open source details",
+        "openReviewDetails": "Open review details",
+        "openApprovalDetails": "Open approval and worker details",
+        "openActivityDetails": "Track results",
         "showDetails": "Show details",
         "hideDetails": "Hide details"
+      },
+      "steps": {
+        "source": {
+          "title": "Source and access",
+          "description": "The connector source, transfer method, and secure access posture become clear here.",
+          "evidence": "Secret values are not collected or read on this screen; only source selection and secure reference posture are shown."
+        },
+        "fields": {
+          "title": "Map fields",
+          "description": "Source fields are mapped into the canonical PULS employee and organization data model.",
+          "evidence": "Preview and apply cannot progress until mapping and source identity are ready."
+        },
+        "preview": {
+          "title": "Run preview",
+          "description": "Dry-run batch rows are validated and classified as create, update, skip, or error.",
+          "evidence": "This step does not write canonical data; it only produces safe preview and validation results."
+        },
+        "review": {
+          "title": "Review changes",
+          "description": "Preview results become change-set, risk class, blocker, and guarded update evidence.",
+          "evidence": "Review shows which records can proceed safely while destructive or stale risks remain blocked."
+        },
+        "approve": {
+          "title": "Approve and send to worker",
+          "description": "Admin approval and worker queueing pass through separate safety gates.",
+          "evidence": "The browser never runs apply directly; when ready, it only creates a safe worker job."
+        },
+        "activity": {
+          "title": "Track results",
+          "description": "Worker jobs, activity timeline, failure classes, and user notifications are tracked here.",
+          "evidence": "Operation results connect to audit and notification flows without showing credentials or raw payload."
+        }
+      },
+      "metrics": {
+        "source": "Source",
+        "access": "Access",
+        "fields": "Fields",
+        "mappedFields": "Mapped / total",
+        "identities": "Identities",
+        "namespaces": "Source scope",
+        "batch": "Batch",
+        "rows": "Rows",
+        "changes": "Create / update / skip",
+        "blockers": "Blockers",
+        "executor": "Worker mode",
+        "queue": "Queue",
+        "jobs": "Jobs",
+        "worker": "Worker"
       },
       "technicalDetails": {
         "title": "Technical details and audit evidence",

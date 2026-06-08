@@ -18,6 +18,7 @@ import {
   RefreshCw,
   SearchCheck,
   ShieldCheck,
+  type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -98,6 +99,56 @@ type ConnectorActivityEvent = ErpOverview['activityTimeline'][number]
 type ConnectorSyncLevel = ConnectorActivityEvent['level']
 type ConnectorProviderOption = ErpOverview['providerOptions'][number]
 type ConnectorDomainOwnership = ErpOverview['domainOwnership'][number]
+type ConnectorJourneyStepId = 'source' | 'fields' | 'preview' | 'review' | 'approve' | 'activity'
+type ConnectorJourneyMetric = {
+  labelKey: string
+  value: string
+  hint?: string
+}
+type ConnectorJourneyAction = {
+  label: string
+  icon: LucideIcon
+  onClick: () => void
+  variant?: 'default' | 'outline'
+}
+type ConnectorJourneyStep = {
+  id: ConnectorJourneyStepId
+  icon: LucideIcon
+  status: ConnectorStatus
+  titleKey: string
+  descriptionKey: string
+  evidenceKey: string
+  detailTab: ErpWorkbenchTab
+  detailTargetId: string
+  primaryAction: ConnectorJourneyAction
+  metrics: ConnectorJourneyMetric[]
+}
+
+function connectorJourneyStepFromTarget(
+  tab?: ErpWorkbenchTab,
+  targetId?: string,
+): ConnectorJourneyStepId | null {
+  if (targetId?.includes('runtime') || tab === 'activity') return 'activity'
+  if (
+    targetId?.includes('controlled-apply') ||
+    targetId?.includes('rollback-approval') ||
+    targetId?.includes('rollback-worker') ||
+    targetId?.includes('worker-apply')
+  ) {
+    return 'approve'
+  }
+  if (
+    targetId?.includes('apply-readiness') ||
+    targetId?.includes('change-set') ||
+    targetId?.includes('guarded-update')
+  ) {
+    return 'review'
+  }
+  if (targetId?.includes('import-preview') || tab === 'previewApply') return 'preview'
+  if (targetId?.includes('mapping') || tab === 'fields' || tab === 'check') return 'fields'
+  if (tab === 'credentials' || tab === 'setup') return 'source'
+  return null
+}
 
 function readinessTone(status: ConnectorStatus): StatusTone {
   if (status === 'ready') return 'success'
@@ -217,7 +268,11 @@ function ErpPage() {
   const [credentialSheetOpen, setCredentialSheetOpen] = useState(false)
   const [activeWorkbenchTab, setActiveWorkbenchTab] = useState<ErpWorkbenchTab>('setup')
   const [technicalDetailsOpen, setTechnicalDetailsOpen] = useState(false)
+  const [selectedJourneyStepId, setSelectedJourneyStepId] =
+    useState<ConnectorJourneyStepId | null>(null)
   const showWorkbenchTab = (tab: ErpWorkbenchTab, targetId?: string) => {
+    const stepId = connectorJourneyStepFromTarget(tab, targetId)
+    if (stepId) setSelectedJourneyStepId(stepId)
     setTechnicalDetailsOpen(true)
     setActiveWorkbenchTab(tab)
     if (!targetId) return
@@ -231,6 +286,8 @@ function ErpPage() {
     if (!tab) return
 
     const tabTimer = window.setTimeout(() => {
+      const stepId = connectorJourneyStepFromTarget(tab, focus)
+      if (stepId) setSelectedJourneyStepId(stepId)
       setTechnicalDetailsOpen(true)
       setActiveWorkbenchTab(tab)
     }, 0)
@@ -596,42 +653,341 @@ function ErpPage() {
             }
           : null
   const AccessActionIcon = accessAction?.icon
-  const goLiveNextAction = data?.goLivePlan.nextActionKey
-  const journeyAction =
-    goLiveNextAction === 'erp.goLivePlan.nextActions.request_secure_access' &&
-    canRequestCredentialHandoff
-      ? {
-          label: t('erp.journey.actions.requestSecureAccess'),
-          icon: ShieldCheck,
-          onClick: () => setCredentialSheetOpen(true),
-        }
-      : goLiveNextAction === 'erp.goLivePlan.nextActions.complete_field_contract' ||
-          goLiveNextAction === 'erp.goLivePlan.nextActions.complete_data_ownership'
+  const mappedFieldCount = data?.mappings.filter((mapping) => mapping.status === 'mapped').length ?? 0
+  const totalFieldCount = data?.mappings.length ?? 0
+  const previewReady = data?.importPreview.status === 'preview_ready'
+  const reviewPrepared =
+    data?.applyChangeSet.id != null || data?.applyReadiness.status === 'review_requested'
+  const approvalReady =
+    data?.applyExecutionContract.safeToExecute === true ||
+    data?.applyApprovalPolicy.approvalRecordedAt != null ||
+    data?.guardedUpdateRollbackWorkerReadiness.workerHandoffReady === true
+  const currentProviderOption =
+    data?.providerOptions.find((option) => option.id === data.provider.code) ?? null
+  const sourceStatus: ConnectorStatus =
+    data?.credentialBoundary.required === true && data.credentialBoundary.status !== 'ready'
+      ? 'partial'
+      : data && hasSelectedConnector
+        ? 'ready'
+        : 'blocked'
+  const fieldsStatus: ConnectorStatus =
+    totalFieldCount > 0 && mappedFieldCount === totalFieldCount
+      ? 'ready'
+      : mappedFieldCount > 0 || data?.namespaces.length
+        ? 'partial'
+        : 'blocked'
+  const previewStatus: ConnectorStatus = previewReady
+    ? 'ready'
+    : data?.importPreview.action === 'run_dry_run_preview'
+      ? 'partial'
+      : 'blocked'
+  const reviewStatus: ConnectorStatus = data?.applyChangeSet.id
+    ? 'ready'
+    : reviewPrepared || previewReady
+      ? 'partial'
+      : 'blocked'
+  const approveStatus: ConnectorStatus = approvalReady
+    ? 'ready'
+    : data?.applyApprovalPolicy.requestable ||
+        data?.guardedUpdateRollbackApproval.requestable ||
+        data?.guardedUpdateRollbackWorkerReadiness.requestable
+      ? 'partial'
+      : 'blocked'
+  const activityStatus: ConnectorStatus =
+    (data?.runtimeQueue.summary.total ?? 0) > 0
+      ? 'ready'
+      : data?.runtimeQueue.worker.status === 'idle' || data?.runtimeQueue.worker.status === 'running'
+        ? 'partial'
+        : 'blocked'
+  const detailAction = (
+    labelKey: string,
+    tab: ErpWorkbenchTab,
+    targetId: string,
+    icon: LucideIcon = SearchCheck,
+  ): ConnectorJourneyAction => ({
+    label: t(labelKey),
+    icon,
+    variant: 'outline',
+    onClick: () => showWorkbenchTab(tab, targetId),
+  })
+  const applyExecutionAction: ConnectorJourneyAction = canRequestGuardedUpdateApplyJob
+    ? {
+        label: requestApplyExecutionPending
+          ? t('erp.applyExecutionContract.actions.enqueueGuardedUpdate.queuing')
+          : t('erp.applyExecutionContract.actions.enqueueGuardedUpdate.label'),
+        icon: Database,
+        onClick: () => void requestGuardedUpdateApplyJobMutation.mutateAsync(),
+      }
+    : {
+        label: requestApplyExecutionPending
+          ? t('erp.applyExecutionContract.actions.enqueueCreateOnly.queuing')
+          : t('erp.applyExecutionContract.actions.enqueueCreateOnly.label'),
+        icon: Database,
+        onClick: () => void requestCreateOnlyApplyJobMutation.mutateAsync(),
+      }
+  const rollbackExecutionAction: ConnectorJourneyAction = {
+    label: requestRollbackApplyPending
+      ? t('erp.guardedUpdateRollbackWorkerApply.queueing')
+      : t('erp.guardedUpdateRollbackWorkerApply.actions.queue'),
+    icon: RefreshCw,
+    onClick: () => void requestRollbackApplyJobMutation.mutateAsync(),
+  }
+  const approvePrimaryAction: ConnectorJourneyAction = canRecordApplyApproval
+    ? {
+        label: recordApplyApprovalMutation.isPending
+          ? t('erp.applyApprovalPolicy.recording')
+          : t(data?.applyApprovalPolicy.actionLabelKey ?? 'erp.journey.actions.openDetails'),
+        icon: ShieldCheck,
+        onClick: () => void recordApplyApprovalMutation.mutateAsync(),
+      }
+    : canRequestApplyExecutionJob
+      ? applyExecutionAction
+      : canRecordRollbackApproval
         ? {
-            label: t('erp.journey.actions.openFields'),
-            icon: Database,
-            onClick: () => showWorkbenchTab('fields', 'erp-mapping-discovery'),
+            label: recordRollbackApprovalMutation.isPending
+              ? t('erp.guardedUpdateRollbackApproval.recording')
+              : t(data?.guardedUpdateRollbackApproval.actionLabelKey ?? 'erp.journey.actions.openDetails'),
+            icon: ShieldCheck,
+            onClick: () => void recordRollbackApprovalMutation.mutateAsync(),
           }
-        : goLiveNextAction === 'erp.goLivePlan.nextActions.prepare_preview'
+        : canRequestRollbackWorkerReadiness
           ? {
-              label: t('erp.journey.actions.openPreview'),
-              icon: SearchCheck,
-              onClick: () => showWorkbenchTab('previewApply', 'erp-import-preview'),
+              label: requestRollbackWorkerReadinessMutation.isPending
+                ? t('erp.guardedUpdateRollbackWorkerReadiness.generating')
+                : t(
+                    data?.guardedUpdateRollbackWorkerReadiness.actionLabelKey ??
+                      'erp.journey.actions.openDetails',
+                  ),
+              icon: ClipboardCheck,
+              onClick: () => void requestRollbackWorkerReadinessMutation.mutateAsync(),
             }
-          : goLiveNextAction === 'erp.goLivePlan.nextActions.confirm_source_method'
-            ? {
-                label: t('erp.journey.actions.openSetup'),
-                icon: Plug,
-                onClick: () => showWorkbenchTab('setup'),
-              }
-            : data && hasSelectedConnector
+          : canRequestRollbackApplyJob
+            ? rollbackExecutionAction
+            : detailAction('erp.journey.actions.openApprovalDetails', 'previewApply', 'erp-controlled-apply')
+  const journeySteps: ConnectorJourneyStep[] =
+    data && hasSelectedConnector
+      ? [
+          {
+            id: 'source',
+            icon: Plug,
+            status: sourceStatus,
+            titleKey: 'erp.journey.steps.source.title',
+            descriptionKey: 'erp.journey.steps.source.description',
+            evidenceKey: 'erp.journey.steps.source.evidence',
+            detailTab: canRequestCredentialHandoff ? 'credentials' : 'setup',
+            detailTargetId: canRequestCredentialHandoff
+              ? 'erp-access-readiness'
+              : 'erp-setup-details',
+            primaryAction: canRequestCredentialHandoff
               ? {
-                  label: t('erp.journey.actions.openDetails'),
-                  icon: SearchCheck,
-                  onClick: () => setTechnicalDetailsOpen(true),
+                  label: t('erp.journey.actions.requestSecureAccess'),
+                  icon: ShieldCheck,
+                  onClick: () => setCredentialSheetOpen(true),
                 }
-              : null
-  const JourneyActionIcon = journeyAction?.icon
+              : detailAction('erp.journey.actions.openSourceDetails', 'setup', 'erp-setup-details', Plug),
+            metrics: [
+              {
+                labelKey: 'erp.journey.metrics.source',
+                value: data.provider.label,
+                hint: currentProviderOption ? t(currentProviderOption.transferMethodKey) : undefined,
+              },
+              {
+                labelKey: 'erp.journey.metrics.access',
+                value: t(data.credentialBoundary.statusLabelKey),
+              },
+            ],
+          },
+          {
+            id: 'fields',
+            icon: Database,
+            status: fieldsStatus,
+            titleKey: 'erp.journey.steps.fields.title',
+            descriptionKey: 'erp.journey.steps.fields.description',
+            evidenceKey: 'erp.journey.steps.fields.evidence',
+            detailTab: 'fields',
+            detailTargetId: 'erp-mapping-discovery',
+            primaryAction: detailAction(
+              'erp.journey.actions.openFields',
+              'fields',
+              'erp-mapping-discovery',
+              Database,
+            ),
+            metrics: [
+              {
+                labelKey: 'erp.journey.metrics.fields',
+                value: `${mappedFieldCount}/${totalFieldCount}`,
+                hint: t('erp.journey.metrics.mappedFields'),
+              },
+              {
+                labelKey: 'erp.journey.metrics.identities',
+                value: String(data.namespaces.length),
+                hint: t('erp.journey.metrics.namespaces'),
+              },
+            ],
+          },
+          {
+            id: 'preview',
+            icon: SearchCheck,
+            status: previewStatus,
+            titleKey: 'erp.journey.steps.preview.title',
+            descriptionKey: 'erp.journey.steps.preview.description',
+            evidenceKey: 'erp.journey.steps.preview.evidence',
+            detailTab: 'previewApply',
+            detailTargetId: 'erp-import-preview',
+            primaryAction: canRunImportPreview
+              ? {
+                  label: runImportPreviewMutation.isPending
+                    ? t('erp.importPreview.running')
+                    : t(data.importPreview.actionLabelKey),
+                  icon: SearchCheck,
+                  onClick: () => void runImportPreviewMutation.mutateAsync(),
+                }
+              : detailAction(
+                  'erp.journey.actions.openPreview',
+                  'previewApply',
+                  'erp-import-preview',
+                  SearchCheck,
+                ),
+            metrics: [
+              {
+                labelKey: 'erp.journey.metrics.batch',
+                value: data.importPreview.batch
+                  ? t(`erp.importPreview.batchStatus.${data.importPreview.batch.status}`)
+                  : t('erp.importPreview.values.none'),
+              },
+              {
+                labelKey: 'erp.journey.metrics.rows',
+                value: String(data.importPreview.summary.rowCount),
+                hint: t('erp.importPreview.values.dryRunOnly'),
+              },
+            ],
+          },
+          {
+            id: 'review',
+            icon: ClipboardCheck,
+            status: reviewStatus,
+            titleKey: 'erp.journey.steps.review.title',
+            descriptionKey: 'erp.journey.steps.review.description',
+            evidenceKey: 'erp.journey.steps.review.evidence',
+            detailTab: 'previewApply',
+            detailTargetId: data.applyChangeSet.id ? 'erp-apply-change-set' : 'erp-apply-readiness',
+            primaryAction: canRequestApplyReview
+              ? {
+                  label: requestApplyReviewMutation.isPending
+                    ? t('erp.applyReadiness.requesting')
+                    : t(data.applyReadiness.actionLabelKey),
+                  icon: ClipboardCheck,
+                  onClick: () => void requestApplyReviewMutation.mutateAsync(),
+                }
+              : canRequestApplyChangeSet
+                ? {
+                    label: requestApplyChangeSetMutation.isPending
+                      ? t('erp.applyChangeSet.generating')
+                      : t(data.applyChangeSet.actionLabelKey),
+                    icon: ClipboardCheck,
+                    onClick: () => void requestApplyChangeSetMutation.mutateAsync(),
+                  }
+                : canRequestGuardedUpdateEvidence
+                  ? {
+                      label: requestGuardedUpdateEvidenceMutation.isPending
+                        ? t('erp.guardedUpdateEvidence.generating')
+                        : t(data.guardedUpdateEvidence.actionLabelKey),
+                      icon: ShieldCheck,
+                      onClick: () => void requestGuardedUpdateEvidenceMutation.mutateAsync(),
+                    }
+                  : detailAction(
+                      'erp.journey.actions.openReviewDetails',
+                      'previewApply',
+                      data.applyChangeSet.id ? 'erp-apply-change-set' : 'erp-apply-readiness',
+                      ClipboardCheck,
+                    ),
+            metrics: [
+              {
+                labelKey: 'erp.journey.metrics.changes',
+                value: `${data.applyReadiness.summary.createCount}/${data.applyReadiness.summary.updateCount}/${data.applyReadiness.summary.skipCount}`,
+                hint: t('erp.importPreview.values.createUpdateSkip'),
+              },
+              {
+                labelKey: 'erp.journey.metrics.blockers',
+                value: String(data.applyReadiness.summary.blockerCount),
+              },
+            ],
+          },
+          {
+            id: 'approve',
+            icon: ShieldCheck,
+            status: approveStatus,
+            titleKey: 'erp.journey.steps.approve.title',
+            descriptionKey: 'erp.journey.steps.approve.description',
+            evidenceKey: 'erp.journey.steps.approve.evidence',
+            detailTab: 'previewApply',
+            detailTargetId: 'erp-controlled-apply',
+            primaryAction: approvePrimaryAction,
+            metrics: [
+              {
+                labelKey: 'erp.journey.metrics.executor',
+                value: t(
+                  data.applyExecutionContract.executorMode === 'worker_create_only_job'
+                    ? 'erp.applyExecutionContract.values.workerCreateOnlyJob'
+                    : data.applyExecutionContract.executorMode === 'worker_guarded_update_job'
+                      ? 'erp.applyExecutionContract.values.workerGuardedUpdateJob'
+                      : 'erp.applyExecutionContract.values.futureJob',
+                ),
+              },
+              {
+                labelKey: 'erp.journey.metrics.queue',
+                value: data.applyExecutionContract.safeToExecute
+                  ? t('erp.applyExecutionContract.values.enabled')
+                  : t('erp.applyExecutionContract.values.closed'),
+              },
+            ],
+          },
+          {
+            id: 'activity',
+            icon: RefreshCw,
+            status: activityStatus,
+            titleKey: 'erp.journey.steps.activity.title',
+            descriptionKey: 'erp.journey.steps.activity.description',
+            evidenceKey: 'erp.journey.steps.activity.evidence',
+            detailTab: 'activity',
+            detailTargetId: 'erp-runtime-queue',
+            primaryAction: canRequestRuntimePreflight
+              ? {
+                  label: requestRuntimePreflightMutation.isPending
+                    ? t('erp.runtimePreflight.actions.requesting')
+                    : t('erp.runtimePreflight.actions.request'),
+                  icon: SearchCheck,
+                  onClick: () => void requestRuntimePreflightMutation.mutateAsync(),
+                }
+              : detailAction(
+                  'erp.journey.actions.openActivityDetails',
+                  'activity',
+                  'erp-runtime-queue',
+                  RefreshCw,
+                ),
+            metrics: [
+              {
+                labelKey: 'erp.journey.metrics.jobs',
+                value: String(data.runtimeQueue.summary.total),
+                hint: t('erp.runtimeQueue.values.queueSummary', {
+                  queued: data.runtimeQueue.summary.queued,
+                  running: data.runtimeQueue.summary.running,
+                  retrying: data.runtimeQueue.summary.retrying,
+                }),
+              },
+              {
+                labelKey: 'erp.journey.metrics.worker',
+                value: t(data.runtimeQueue.worker.statusLabelKey),
+              },
+            ],
+          },
+        ]
+      : []
+  const defaultJourneyStep =
+    journeySteps.find((step) => step.status !== 'ready') ?? journeySteps[journeySteps.length - 1]
+  const activeJourneyStep =
+    journeySteps.find((step) => step.id === selectedJourneyStepId) ?? defaultJourneyStep
+  const PrimaryStepActionIcon = activeJourneyStep?.primaryAction.icon
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -654,7 +1010,7 @@ function ErpPage() {
       {data && hasSelectedConnector ? (
         <section id="erp-connector-journey" className="mt-6 scroll-mt-6">
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-            <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusPill tone={readinessTone(data.goLivePlan.status)}>
@@ -669,89 +1025,142 @@ function ErpPage() {
                 <h2 className="mt-4 text-2xl font-semibold text-[var(--color-text-primary)]">
                   {t('erp.journey.title')}
                 </h2>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--color-text-muted)]">
                   {t('erp.journey.description')}
                 </p>
-                <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
-                  <div>
-                    <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.journey.labels.source')}
-                    </dt>
-                    <dd className="mt-1 truncate text-sm font-medium text-[var(--color-text-primary)]">
-                      {data.provider.label}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {t('erp.journey.labels.score')}
-                    </dt>
-                    <dd className="mt-1 font-mono text-sm font-semibold text-[var(--color-text-primary)]">
-                      {data.goLivePlan.score}%
-                    </dd>
-                  </div>
-                </dl>
-                <Progress className="mt-3 h-1.5" value={data.goLivePlan.score} />
-                <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    {t('erp.journey.labels.nextAction')}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-primary)]">
-                    {t(data.goLivePlan.nextActionKey)}
-                  </p>
+              </div>
+              <div className="min-w-[180px] rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    {t('erp.journey.labels.score')}
+                  </span>
+                  <span className="font-mono text-lg font-semibold text-[var(--color-text-primary)]">
+                    {data.goLivePlan.score}%
+                  </span>
                 </div>
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  {journeyAction ? (
-                    <Button
+                <Progress className="mt-2 h-1.5" value={data.goLivePlan.score} />
+              </div>
+            </div>
+
+            <ol className="mt-5 grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+              {journeySteps.map((step, index) => {
+                const StepIcon = step.icon
+                const isActive = activeJourneyStep?.id === step.id
+
+                return (
+                  <li key={step.id}>
+                    <button
                       type="button"
-                      className="touch-target w-full sm:w-auto"
-                      onClick={journeyAction.onClick}
+                      aria-current={isActive ? 'step' : undefined}
+                      onClick={() => setSelectedJourneyStepId(step.id)}
+                      className={cn(
+                        'touch-target flex h-full min-h-[128px] w-full flex-col items-start rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
+                        isActive
+                          ? 'border-[color-mix(in_srgb,var(--color-primary)_55%,transparent)] bg-[var(--color-primary-soft)]'
+                          : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] hover:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)]',
+                      )}
                     >
-                      {JourneyActionIcon ? <JourneyActionIcon className="h-4 w-4" /> : null}
-                      {journeyAction.label}
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="touch-target w-full sm:w-auto"
-                    onClick={() => setTechnicalDetailsOpen((open) => !open)}
-                  >
-                    <SearchCheck className="h-4 w-4" />
-                    {technicalDetailsOpen
-                      ? t('erp.journey.actions.hideDetails')
-                      : t('erp.journey.actions.showDetails')}
-                  </Button>
+                      <span className="flex w-full items-center justify-between gap-2">
+                        <span
+                          className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-md',
+                            isActive
+                              ? 'bg-[var(--color-bg-card)] text-[var(--color-primary)]'
+                              : 'bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]',
+                          )}
+                        >
+                          <StepIcon className="h-4 w-4" aria-hidden />
+                        </span>
+                        <span className="font-mono text-xs text-[var(--color-text-muted)]">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </span>
+                      <span className="mt-3 line-clamp-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(step.titleKey)}
+                      </span>
+                      <span className="mt-2">
+                        <StatusPill tone={readinessTone(step.status)}>
+                          {t(`erp.readinessStatus.${step.status}`)}
+                        </StatusPill>
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+
+            {activeJourneyStep ? (
+              <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-4">
+                <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusPill tone={readinessTone(activeJourneyStep.status)}>
+                        {t(`erp.readinessStatus.${activeJourneyStep.status}`)}
+                      </StatusPill>
+                      <span className="rounded-full bg-[var(--color-bg-card)] px-2 py-1 text-xs font-medium text-[var(--color-text-muted)]">
+                        {data.provider.label}
+                      </span>
+                    </div>
+                    <h3 className="mt-3 text-xl font-semibold text-[var(--color-text-primary)]">
+                      {t(activeJourneyStep.titleKey)}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                      {t(activeJourneyStep.descriptionKey)}
+                    </p>
+                    <p className="mt-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 py-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+                      {t(activeJourneyStep.evidenceKey)}
+                    </p>
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        type="button"
+                        variant={activeJourneyStep.primaryAction.variant ?? 'default'}
+                        className="touch-target w-full sm:w-auto"
+                        onClick={activeJourneyStep.primaryAction.onClick}
+                      >
+                        {PrimaryStepActionIcon ? (
+                          <PrimaryStepActionIcon className="h-4 w-4" />
+                        ) : null}
+                        {activeJourneyStep.primaryAction.label}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="touch-target w-full sm:w-auto"
+                        onClick={() =>
+                          showWorkbenchTab(
+                            activeJourneyStep.detailTab,
+                            activeJourneyStep.detailTargetId,
+                          )
+                        }
+                      >
+                        <SearchCheck className="h-4 w-4" />
+                        {t('erp.journey.actions.openDetails')}
+                      </Button>
+                    </div>
+                  </div>
+                  <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                    {activeJourneyStep.metrics.map((metric) => (
+                      <div
+                        key={metric.labelKey}
+                        className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 py-2"
+                      >
+                        <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                          {t(metric.labelKey)}
+                        </dt>
+                        <dd className="mt-1 truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                          {metric.value}
+                        </dd>
+                        {metric.hint ? (
+                          <dd className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+                            {metric.hint}
+                          </dd>
+                        ) : null}
+                      </div>
+                    ))}
+                  </dl>
                 </div>
               </div>
-
-              <ol className="grid gap-2 sm:grid-cols-2">
-                {data.goLivePlan.gaps.map((gap, index) => (
-                  <li
-                    key={gap.id}
-                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs text-[var(--color-text-muted)]">
-                            {String(index + 1).padStart(2, '0')}
-                          </span>
-                          <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
-                            {t(gap.labelKey)}
-                          </p>
-                        </div>
-                        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                          {t(gap.evidenceKey)}
-                        </p>
-                      </div>
-                      <StatusPill tone={readinessTone(gap.status)}>
-                        {t(`erp.readinessStatus.${gap.status}`)}
-                      </StatusPill>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -1422,7 +1831,7 @@ function ErpPage() {
             </TabsList>
           </div>
 
-          <TabsContent value="setup" className="mt-6">
+          <TabsContent id="erp-setup-details" value="setup" className="mt-6 scroll-mt-6">
             <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

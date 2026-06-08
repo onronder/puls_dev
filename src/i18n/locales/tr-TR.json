@@ -1081,8 +1081,60 @@
         "openPreview": "Önizlemeye git",
         "openSetup": "Kurulum detayına git",
         "openDetails": "Teknik detayları aç",
+        "openSourceDetails": "Kaynak detayını aç",
+        "openReviewDetails": "İnceleme detayını aç",
+        "openApprovalDetails": "Onay ve worker detayını aç",
+        "openActivityDetails": "Sonuçları takip et",
         "showDetails": "Detayları göster",
         "hideDetails": "Detayları gizle"
+      },
+      "steps": {
+        "source": {
+          "title": "Kaynak ve erişim",
+          "description": "Connector kaynağı, bağlantı yöntemi ve güvenli erişim durumu burada netleşir.",
+          "evidence": "Secret değeri bu ekranda toplanmaz veya okunmaz; yalnızca güvenli referans durumu ve kaynak seçimi gösterilir."
+        },
+        "fields": {
+          "title": "Alanları eşleştir",
+          "description": "Kaynak alanları PULS'un kanonik çalışan ve organizasyon veri modeliyle eşleşir.",
+          "evidence": "Eşleştirme ve kaynak kimliği tamamlanmadan önizleme veya apply akışı ilerlemez."
+        },
+        "preview": {
+          "title": "Önizleme çalıştır",
+          "description": "Dry-run batch satırları doğrulanır ve yaratma, güncelleme, atlama veya hata sonucu kullanıcıya gösterilir.",
+          "evidence": "Bu adım kanonik veri yazmaz; yalnızca güvenli önizleme ve validasyon sonucunu üretir."
+        },
+        "review": {
+          "title": "Değişiklikleri incele",
+          "description": "Önizleme sonucu change-set, risk sınıfı, blocker ve guarded update kanıtına dönüşür.",
+          "evidence": "Review adımı hangi kayıtların güvenli ilerleyebileceğini gösterir; destructive veya stale riskler bloke kalır."
+        },
+        "approve": {
+          "title": "Onayla ve worker'a gönder",
+          "description": "Admin onayı ve worker kuyruğu ayrı güvenlik kapılarından geçer.",
+          "evidence": "Browser doğrudan apply çalıştırmaz; uygun durumda yalnızca güvenli worker job kuyruğu oluşturulur."
+        },
+        "activity": {
+          "title": "Sonucu takip et",
+          "description": "Worker job, activity timeline, hata sınıfları ve kullanıcı bildirimi sonucu burada izlenir.",
+          "evidence": "Operasyon sonucu audit ve notification akışına bağlanır; credential veya raw payload gösterilmez."
+        }
+      },
+      "metrics": {
+        "source": "Kaynak",
+        "access": "Erişim",
+        "fields": "Alanlar",
+        "mappedFields": "Eşleşen / toplam",
+        "identities": "Kimlikler",
+        "namespaces": "Kaynak kapsamı",
+        "batch": "Batch",
+        "rows": "Satır",
+        "changes": "Yarat / güncelle / atla",
+        "blockers": "Blocker",
+        "executor": "Worker modu",
+        "queue": "Kuyruk",
+        "jobs": "Job",
+        "worker": "Worker"
       },
       "technicalDetails": {
         "title": "Teknik detaylar ve denetim kanıtları",
