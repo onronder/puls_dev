@@ -82,7 +82,10 @@ function PerformansParametreleriPage() {
         subtitle={t('performanceParamsSetup.description')}
       />
 
-      <DemoSourcePill visible={performanceParamsResult?.source === 'demo'} />
+      <DemoSourcePill
+        visible={performanceParamsResult?.source === 'demo'}
+        fallbackReason={performanceParamsResult?.fallbackReason}
+      />
 
       {isLoading ? (
         <div className="-mx-4 mb-6 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">

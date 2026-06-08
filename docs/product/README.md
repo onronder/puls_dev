@@ -861,6 +861,19 @@ PR16.10.10 stabilizes DataSource Manager after the CSV / Excel import and runtim
 | [`src/lib/data/app/notifications.ts`](../../src/lib/data/app/notifications.ts)                                                          | Shared tenant realtime subscription registry for Notification Center signals    |
 | [`scripts/verify-16-10-10-datasource-operational-hardening.sh`](../../scripts/verify-16-10-10-datasource-operational-hardening.sh)      | PR16.10.10 verify gate                                                          |
 
+## PR16.10.11 security and runtime truth hardening
+
+PR16.10.11 closes the remaining trust-surface findings before PR17. It removes the vulnerable SheetJS `xlsx` dependency while keeping XLSX imports on a maintained parser, makes real-data error fallback visibly distinct from normal demo/empty fallback, moves the connector worker loop to safe backoff with bounded jitter, adds service-role header redaction coverage, and brings high dependency audit plus Supabase schema audit into CI.
+
+| Document / artifact                                                                                                                         | Purpose                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [16_10_11_security_runtime_truth_hardening.md](./16_10_11_security_runtime_truth_hardening.md)                                               | PR16.10.11 product/runtime/CI contract, safety boundary, and verification               |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                             | CSV / Excel parser contract using maintained ExcelJS XLSX parsing                       |
+| [`src/components/puls/DemoSourcePill.tsx`](../../src/components/puls/DemoSourcePill.tsx)                                                     | Shared demo indicator with explicit real-data error fallback warning                    |
+| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                         | Connector worker backoff, jitter, and loggable service-role header redaction helpers    |
+| [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)                                                                                | High dependency audit and Supabase schema audit in the quality job                      |
+| [`scripts/verify-16-10-11-security-runtime-truth-hardening.sh`](../../scripts/verify-16-10-11-security-runtime-truth-hardening.sh)          | PR16.10.11 verify gate                                                                  |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

@@ -502,6 +502,12 @@ function MasrafKategorileriPage() {
         visible={
           categoriesResult?.source === 'demo' || readinessResult?.source === 'demo'
         }
+        fallbackReason={
+          categoriesResult?.fallbackReason === 'error' ||
+          readinessResult?.fallbackReason === 'error'
+            ? 'error'
+            : categoriesResult?.fallbackReason ?? readinessResult?.fallbackReason
+        }
       />
 
       {isLoading ? (

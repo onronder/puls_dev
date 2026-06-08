@@ -23,6 +23,10 @@
     "reload": "Refresh page",
     "dashboard": "Go to dashboard"
   },
+  "demoSource": {
+    "errorTitle": "Real data could not be loaded",
+    "errorBody": "This screen is showing sample data right now. Refresh the connection or try again later before making decisions."
+  },
   "auth": {
     "loginTitle": "Sign in",
     "email": "Email",

@@ -1,5 +1,3 @@
-import type * as XLSX from 'xlsx'
-
 export const FILE_IMPORT_TEMPLATE_VERSION = 'v1'
 export const FILE_IMPORT_TIMEZONE = 'Europe/Istanbul'
 export const FILE_IMPORT_MAX_ROWS = 5000
@@ -104,10 +102,11 @@ type ParsedTable = {
   issues: FileImportIssue[]
 }
 
-type WorkbookWithFiles = XLSX.WorkBook & {
-  files?: Record<string, { content?: ArrayBuffer | Uint8Array | string }>
-}
-type XlsxModule = typeof import('xlsx')
+type ExcelCellValue = import('exceljs').CellValue
+type ExcelFormulaValue =
+  | import('exceljs').CellFormulaValue
+  | import('exceljs').CellSharedFormulaValue
+type ExcelWorksheet = import('exceljs').Worksheet
 
 const COMMON_BOOLEAN_TRUE = new Set(['true', '1', 'yes', 'evet', 'aktif', 'active'])
 const COMMON_BOOLEAN_FALSE = new Set(['false', '0', 'no', 'hayir', 'hayır', 'pasif', 'inactive'])
@@ -495,15 +494,12 @@ async function parseCsvFile(file: File): Promise<ParsedTable> {
 }
 
 async function parseXlsxFile(file: File): Promise<ParsedTable> {
-  const XLSX = await import('xlsx')
+  const ExcelJS = (await import('exceljs')).default
   const buffer = await file.arrayBuffer()
-  const workbook = XLSX.read(buffer, {
-    type: 'array',
-    cellDates: true,
-    bookFiles: true,
-  }) as WorkbookWithFiles
-  const firstSheetName = workbook.SheetNames[0]
-  if (!firstSheetName) {
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.load(buffer)
+  const sheet = workbook.worksheets[0]
+  if (!sheet) {
     return {
       rows: [],
       delimiter: null,
@@ -511,88 +507,68 @@ async function parseXlsxFile(file: File): Promise<ParsedTable> {
     }
   }
 
-  const sheet = workbook.Sheets[firstSheetName]
-  const formulaIssues = [
-    ...collectFormulaIssues(sheet, XLSX),
-    ...collectFormulaIssuesFromWorksheetXml(workbook, firstSheetName),
-  ]
-  const rows = XLSX.utils.sheet_to_json<TableCell[]>(sheet, {
-    header: 1,
-    blankrows: false,
-    defval: null,
-    raw: false,
-  })
-
   return {
-    rows,
+    rows: excelWorksheetToRows(sheet),
     delimiter: null,
-    issues: formulaIssues,
+    issues: collectFormulaIssues(sheet),
   }
 }
 
-function collectFormulaIssues(sheet: XLSX.WorkSheet, XLSX: XlsxModule): FileImportIssue[] {
+function collectFormulaIssues(sheet: ExcelWorksheet): FileImportIssue[] {
   const issues: FileImportIssue[] = []
-  const range = XLSX.utils.decode_range(sheet['!ref'] ?? 'A1:A1')
-  for (let row = range.s.r; row <= range.e.r; row += 1) {
-    for (let col = range.s.c; col <= range.e.c; col += 1) {
-      const address = XLSX.utils.encode_cell({ r: row, c: col })
-      const cell = sheet[address] as XLSX.CellObject | undefined
-      if (!cell?.f) continue
-      if (cell.v === undefined || cell.v === null) {
+  sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    row.eachCell({ includeEmpty: false }, (cell) => {
+      const value = cell.value
+      if (!isExcelFormulaValue(value)) return
+      if (value.result === undefined || value.result === null) {
         issues.push({
           level: 'error',
           code: 'XLSX_FORMULA_VALUE_MISSING',
-          rowNumber: row + 1,
-          column: address,
+          rowNumber,
+          column: cell.address,
         })
       }
+    })
+  })
+  return issues
+}
+
+function excelWorksheetToRows(sheet: ExcelWorksheet): TableCell[][] {
+  const rows: TableCell[][] = []
+  const columnCount = sheet.columnCount
+  for (let rowNumber = 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
+    const row = sheet.getRow(rowNumber)
+    const values: TableCell[] = []
+    for (let colNumber = 1; colNumber <= columnCount; colNumber += 1) {
+      values.push(excelCellValueToTableCell(row.getCell(colNumber).value))
+    }
+    if (values.some((value) => normalizeCellText(value) !== null)) {
+      rows.push(values)
     }
   }
-  return issues
+  return rows
 }
 
-function collectFormulaIssuesFromWorksheetXml(
-  workbook: WorkbookWithFiles,
-  sheetName: string,
-): FileImportIssue[] {
-  const sheetMeta = workbook.Workbook?.Sheets?.find((sheet) => sheet.name === sheetName) as
-    | (XLSX.SheetProps & { sheetId?: string | number; sheetid?: string | number })
-    | undefined
-  const sheetId = sheetMeta?.sheetId ?? sheetMeta?.sheetid
-  const content = workbookFileContent(
-    workbook,
-    sheetId ? `xl/worksheets/sheet${sheetId}.xml` : null,
-  )
-  if (!content) return []
-
-  const issues: FileImportIssue[] = []
-  const cellPattern = /<c\b([^>]*)>([\s\S]*?)<\/c>/g
-  for (const match of content.matchAll(cellPattern)) {
-    const attrs = match[1] ?? ''
-    const body = match[2] ?? ''
-    if (!/<f\b/.test(body) || /<v\b/.test(body)) continue
-    const address = /\br="([^"]+)"/.exec(attrs)?.[1]
-    issues.push({
-      level: 'error',
-      code: 'XLSX_FORMULA_VALUE_MISSING',
-      rowNumber: address ? rowNumberFromCellAddress(address) : undefined,
-      column: address,
-    })
+function excelCellValueToTableCell(value: ExcelCellValue): TableCell {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+  if (value instanceof Date) return value
+  if (isExcelFormulaValue(value)) return excelCellValueToTableCell(value.result)
+  if ('text' in value && typeof value.text === 'string') return value.text
+  if ('richText' in value && Array.isArray(value.richText)) {
+    const text = value.richText.map((part) => part.text).join('').trim()
+    return text === '' ? null : text
   }
-  return issues
+  if ('error' in value && typeof value.error === 'string') return value.error
+  return String(value)
 }
 
-function workbookFileContent(workbook: WorkbookWithFiles, path: string | null): string | null {
-  if (!path) return null
-  const content = workbook.files?.[path]?.content
-  if (!content) return null
-  if (typeof content === 'string') return content
-  return new TextDecoder().decode(content)
-}
-
-function rowNumberFromCellAddress(address: string): number | undefined {
-  const match = /\d+/.exec(address)
-  return match ? Number(match[0]) : undefined
+function isExcelFormulaValue(value: ExcelCellValue): value is ExcelFormulaValue {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    ('formula' in value || 'sharedFormula' in value)
+  )
 }
 
 function normalizeTableRows(

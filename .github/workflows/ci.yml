@@ -25,6 +25,8 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm run test
+      - run: pnpm audit --audit-level high
+      - run: pnpm run audit:supabase
       - run: pnpm run build
       - run: pnpm run check-i18n
 

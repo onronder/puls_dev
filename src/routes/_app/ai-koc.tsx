@@ -134,7 +134,10 @@ function AiKocPage() {
         subtitle={t('aiCoachSetup.description')}
       />
 
-      <DemoSourcePill visible={aiCoachResult?.source === 'demo'} />
+      <DemoSourcePill
+        visible={aiCoachResult?.source === 'demo'}
+        fallbackReason={aiCoachResult?.fallbackReason}
+      />
 
       <div className="mb-6 overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--color-ai)_25%,transparent)] bg-[var(--color-ai-soft)] p-5">
         <div className="flex items-start gap-3">
