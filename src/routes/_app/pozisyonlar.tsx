@@ -24,6 +24,7 @@ import {
   createPosition,
   fetchDepartmentsOverviewWithMeta,
   fetchPositionsOverviewWithMeta,
+  invalidateOrgStructureQueries,
   isPositionFormDirty,
   mapPositionMutationError,
   normalizeOrgSetupCode,
@@ -179,8 +180,7 @@ function PozisyonlarPage() {
     },
     onSuccess: () => {
       const wasEdit = sheetMode === 'edit'
-      void queryClient.invalidateQueries({ queryKey: ['positions-overview', user?.id] })
-      void queryClient.invalidateQueries({ queryKey: ['setup-readiness-dashboard', user?.id] })
+      if (user?.id) invalidateOrgStructureQueries(queryClient, user.id)
       resetSheet()
       toast.success(t(wasEdit ? 'orgSetupCrud.position.updated' : 'orgSetupCrud.position.created'))
     },

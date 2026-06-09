@@ -1,11 +1,12 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
-import { captureAppError } from '#/lib/observability/sentry'
+import { captureAppError, type AppErrorContext } from '#/lib/observability/sentry'
 
 import { AppErrorFallback } from './AppErrorFallback'
 
 type AppErrorBoundaryProps = {
   children: ReactNode
+  area?: AppErrorContext['area']
 }
 
 type AppErrorBoundaryState = {
@@ -22,7 +23,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
   componentDidCatch(error: Error, _errorInfo: ErrorInfo): void {
     captureAppError(error, {
       operation: 'react_error_boundary',
-      area: 'route',
+      area: this.props.area ?? 'unknown',
       route: typeof window === 'undefined' ? undefined : window.location.pathname,
     })
   }

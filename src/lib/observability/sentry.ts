@@ -14,7 +14,14 @@ type ObservabilityEnv = {
 
 export type AppErrorContext = {
   operation: string
-  area?: 'connector_setup' | 'connector_runtime' | 'route' | 'data_adapter' | 'auth' | 'unknown'
+  area?:
+    | 'app_route'
+    | 'connector_setup'
+    | 'connector_runtime'
+    | 'route'
+    | 'data_adapter'
+    | 'auth'
+    | 'unknown'
   route?: string
   providerId?: string | null
   source?: 'real' | 'demo'

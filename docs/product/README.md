@@ -909,6 +909,16 @@ PR16.10.14 closes the remaining pre-PR17 workflow trust-surface gaps without cha
 | [`supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql`](../../supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql) | Metadata-only workflow audit triggers and receipt-required server guard |
 | [`scripts/verify-16-10-14-workflow-audit-policy-hardening.sh`](../../scripts/verify-16-10-14-workflow-audit-policy-hardening.sh) | PR16.10.14 verify gate |
 
+## PR16.10.15 Route boundary and HR cache hardening
+
+PR16.10.15 closes the next pre-PR17 reliability debts: page-level route errors no longer take down the authenticated shell, and department/position mutations refresh dependent HR dashboards and employee readiness views.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_10_15_route_boundary_hr_cache_hardening.md](./16_10_15_route_boundary_hr_cache_hardening.md) | PR16.10.15 route boundary/cache contract, safety boundary, and verification |
+| [`src/lib/data/query-invalidation.ts`](../../src/lib/data/query-invalidation.ts) | Shared org-structure cache invalidation helper |
+| [`scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh`](../../scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh) | PR16.10.15 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
