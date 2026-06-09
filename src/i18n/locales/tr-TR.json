@@ -3500,14 +3500,18 @@
       "editTitle": "Departmanı düzenle",
       "readOnlyTitle": "Departman detayı",
       "created": "Departman oluşturuldu",
-      "updated": "Departman güncellendi"
+      "updated": "Departman güncellendi",
+      "deactivated": "Departman pasifleştirildi",
+      "restored": "Departman aktifleştirildi"
     },
     "position": {
       "createTitle": "Yeni pozisyon",
       "editTitle": "Pozisyonu düzenle",
       "readOnlyTitle": "Pozisyon detayı",
       "created": "Pozisyon oluşturuldu",
-      "updated": "Pozisyon güncellendi"
+      "updated": "Pozisyon güncellendi",
+      "deactivated": "Pozisyon pasifleştirildi",
+      "restored": "Pozisyon aktifleştirildi"
     },
     "fields": {
       "name": "Ad",
@@ -3529,6 +3533,38 @@
     },
     "boundary": {
       "sourceReadOnly": "Bu kayıt harici bir kaynağa aittir ve PULS'ta salt okunurdur."
+    },
+    "lifecycle": {
+      "filter": {
+        "ariaLabel": "Kayıt durumuna göre filtrele",
+        "active": "Aktif",
+        "inactive": "Pasif",
+        "all": "Tümü"
+      },
+      "actions": {
+        "deactivate": "Pasifleştir",
+        "restore": "Aktifleştir"
+      },
+      "confirm": {
+        "deactivateDepartment": "Bu departman pasifleştirilsin mi?",
+        "restoreDepartment": "Bu departman aktifleştirilsin mi?",
+        "deactivatePosition": "Bu pozisyon pasifleştirilsin mi?",
+        "restorePosition": "Bu pozisyon aktifleştirilsin mi?"
+      },
+      "errors": {
+        "generic": "Durum değiştirilemedi",
+        "forbidden": "Bu işlem için yönetici yetkisi gerekir",
+        "sourceReadOnly": "Harici kaynaklı kayıtların durumu PULS'ta değiştirilemez",
+        "departmentNotFound": "Departman bulunamadı",
+        "departmentActiveEmployees": "Aktif çalışanı olan departman pasifleştirilemez",
+        "departmentActivePositions": "Aktif pozisyonu olan departman pasifleştirilemez",
+        "departmentParentInactive": "Üst departman aktif olmadan bu departman aktifleştirilemez",
+        "positionNotFound": "Pozisyon bulunamadı",
+        "positionActiveEmployees": "Aktif çalışanı olan pozisyon pasifleştirilemez",
+        "positionDepartmentInactive": "Bağlı departman aktif olmadan bu pozisyon aktifleştirilemez"
+      },
+      "emptyFilterTitle": "Bu durumda kayıt yok",
+      "emptyFilterDescription": "Farklı bir durum filtresi seçebilirsin."
     },
     "discardConfirm": "Kaydedilmemiş değişiklikler silinsin mi?"
   },

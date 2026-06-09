@@ -8,7 +8,10 @@ import {
 } from '#/lib/demo/puls-demo-data'
 import { isOrgEntityEditable } from '#/lib/data/setup/org-entity-source'
 import {
+  applyOrgEntityLifecycleFilter,
   mapDepartmentMutationError,
+  mapDepartmentLifecycleError,
+  mapPositionLifecycleError,
   mapPositionMutationError,
 } from '#/lib/data/core/organization'
 
@@ -58,6 +61,22 @@ describe('organization overview row shape', () => {
   })
 })
 
+describe('applyOrgEntityLifecycleFilter', () => {
+  const rows = [
+    { id: 'active-a', isActive: true },
+    { id: 'inactive-a', isActive: false },
+  ]
+
+  it('filters active, inactive, and all rows', () => {
+    expect(applyOrgEntityLifecycleFilter(rows, 'active').map((row) => row.id)).toEqual(['active-a'])
+    expect(applyOrgEntityLifecycleFilter(rows, 'inactive').map((row) => row.id)).toEqual(['inactive-a'])
+    expect(applyOrgEntityLifecycleFilter(rows, 'all').map((row) => row.id)).toEqual([
+      'active-a',
+      'inactive-a',
+    ])
+  })
+})
+
 describe('mapDepartmentMutationError', () => {
   it('maps source read-only puls code', () => {
     const error = new DataAdapterError({
@@ -103,6 +122,40 @@ describe('mapPositionMutationError', () => {
 
     expect(mapPositionMutationError(error)).toEqual({
       fieldErrors: { departmentId: 'orgSetupCrud.validation.departmentInvalid' },
+    })
+  })
+})
+
+describe('org lifecycle error mapping', () => {
+  it('maps department dependency blockers', () => {
+    const error = new DataAdapterError({
+      code: 'P0001',
+      message:
+        'PULS_ORG_DEPARTMENT_IN_USE_ACTIVE_EMPLOYEES: department has active employees.',
+      source: 'supabase',
+      operation: 'deactivateDepartment',
+      schema: 'puls_core',
+      table: 'departments',
+    })
+
+    expect(mapDepartmentLifecycleError(error)).toEqual({
+      toastKey: 'orgSetupCrud.lifecycle.errors.departmentActiveEmployees',
+    })
+  })
+
+  it('maps position restore blockers', () => {
+    const error = new DataAdapterError({
+      code: 'P0001',
+      message:
+        'PULS_ORG_POSITION_DEPARTMENT_INACTIVE: department must be active before restore.',
+      source: 'supabase',
+      operation: 'restorePosition',
+      schema: 'puls_core',
+      table: 'positions',
+    })
+
+    expect(mapPositionLifecycleError(error)).toEqual({
+      toastKey: 'orgSetupCrud.lifecycle.errors.positionDepartmentInactive',
     })
   })
 })

@@ -976,6 +976,18 @@ PR17.1A starts the Core HR closed-loop series by adding safe row-level audit tri
 
 Verify: [`../../scripts/verify-17-1-a-core-hr-audit-foundation.sh`](../../scripts/verify-17-1-a-core-hr-audit-foundation.sh)
 
+## PR17.1B Core org lifecycle
+
+PR17.1B adds safe soft lifecycle actions for PULS-owned departments and positions. It keeps imported org records read-only, blocks unsafe deactivate/restore cases, and keeps the UI compact with status filtering plus one lifecycle action in the existing edit sheet.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_1_b_core_org_lifecycle.md](./17_1_b_core_org_lifecycle.md) | PR17.1B scope, product contract, non-goals, verification |
+| [`supabase/migrations/20260609130000_puls_core_org_lifecycle_hardening.sql`](../../supabase/migrations/20260609130000_puls_core_org_lifecycle_hardening.sql) | Department and position lifecycle RPC migration |
+| [`scripts/verify-17-1-b-core-org-lifecycle.sh`](../../scripts/verify-17-1-b-core-org-lifecycle.sh) | PR17.1B verify gate |
+
+Verify: [`../../scripts/verify-17-1-b-core-org-lifecycle.sh`](../../scripts/verify-17-1-b-core-org-lifecycle.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

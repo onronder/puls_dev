@@ -37,6 +37,20 @@ export type PositionMutationInput = {
   normHeadcount: number | null
 }
 
+export type OrgEntityLifecycleFilter = 'active' | 'inactive' | 'all'
+
+export type DepartmentLifecycleResult =
+  | { status: 'deactivated'; departmentId: string }
+  | { status: 'restored'; departmentId: string }
+  | { status: 'already_inactive'; departmentId: string }
+  | { status: 'already_active'; departmentId: string }
+
+export type PositionLifecycleResult =
+  | { status: 'deactivated'; positionId: string }
+  | { status: 'restored'; positionId: string }
+  | { status: 'already_inactive'; positionId: string }
+  | { status: 'already_active'; positionId: string }
+
 export type DepartmentMutationErrorMapping = {
   fieldErrors: Partial<Record<DepartmentFieldKey, string>>
   toastKey?: string
@@ -45,6 +59,10 @@ export type DepartmentMutationErrorMapping = {
 export type PositionMutationErrorMapping = {
   fieldErrors: Partial<Record<PositionFieldKey, string>>
   toastKey?: string
+}
+
+export type OrgLifecycleErrorMapping = {
+  toastKey: string
 }
 
 const PULS_DEPARTMENT_ERROR_MAP: Record<string, { field: DepartmentFieldKey; i18nKey: string }> = {
@@ -99,6 +117,28 @@ const PULS_POSITION_ERROR_MAP: Record<string, { field: PositionFieldKey; i18nKey
     field: 'code',
     i18nKey: 'orgSetupCrud.validation.sourceReadOnly',
   },
+}
+
+const PULS_DEPARTMENT_LIFECYCLE_ERROR_MAP: Record<string, string> = {
+  PULS_ORG_LIFECYCLE_FORBIDDEN: 'orgSetupCrud.lifecycle.errors.forbidden',
+  PULS_ORG_DEPARTMENT_NOT_FOUND: 'orgSetupCrud.lifecycle.errors.departmentNotFound',
+  PULS_ORG_DEPARTMENT_SOURCE_READ_ONLY: 'orgSetupCrud.lifecycle.errors.sourceReadOnly',
+  PULS_ORG_DEPARTMENT_IN_USE_ACTIVE_EMPLOYEES:
+    'orgSetupCrud.lifecycle.errors.departmentActiveEmployees',
+  PULS_ORG_DEPARTMENT_IN_USE_ACTIVE_POSITIONS:
+    'orgSetupCrud.lifecycle.errors.departmentActivePositions',
+  PULS_ORG_DEPARTMENT_PARENT_INACTIVE:
+    'orgSetupCrud.lifecycle.errors.departmentParentInactive',
+}
+
+const PULS_POSITION_LIFECYCLE_ERROR_MAP: Record<string, string> = {
+  PULS_ORG_LIFECYCLE_FORBIDDEN: 'orgSetupCrud.lifecycle.errors.forbidden',
+  PULS_ORG_POSITION_NOT_FOUND: 'orgSetupCrud.lifecycle.errors.positionNotFound',
+  PULS_ORG_POSITION_SOURCE_READ_ONLY: 'orgSetupCrud.lifecycle.errors.sourceReadOnly',
+  PULS_ORG_POSITION_IN_USE_ACTIVE_EMPLOYEES:
+    'orgSetupCrud.lifecycle.errors.positionActiveEmployees',
+  PULS_ORG_POSITION_DEPARTMENT_INACTIVE:
+    'orgSetupCrud.lifecycle.errors.positionDepartmentInactive',
 }
 
 function emptyDepartmentsOverview(): DepartmentsOverview {
@@ -369,6 +409,81 @@ export function mapPositionMutationError(error: unknown): PositionMutationErrorM
   return fallback
 }
 
+export function applyOrgEntityLifecycleFilter<T extends { isActive: boolean }>(
+  items: T[],
+  filter: OrgEntityLifecycleFilter,
+): T[] {
+  switch (filter) {
+    case 'active':
+      return items.filter((item) => item.isActive)
+    case 'inactive':
+      return items.filter((item) => !item.isActive)
+    default:
+      return items
+  }
+}
+
+function mapOrgLifecycleError(
+  error: unknown,
+  map: Record<string, string>,
+): OrgLifecycleErrorMapping {
+  const fallback: OrgLifecycleErrorMapping = {
+    toastKey: 'orgSetupCrud.lifecycle.errors.generic',
+  }
+
+  if (!isDataAdapterError(error)) {
+    return fallback
+  }
+
+  const pulsCode = parseRpcErrorCode(error.message)
+  if (pulsCode) {
+    const mapped = map[pulsCode]
+    if (mapped) return { toastKey: mapped }
+  }
+
+  return fallback
+}
+
+export function mapDepartmentLifecycleError(error: unknown): OrgLifecycleErrorMapping {
+  return mapOrgLifecycleError(error, PULS_DEPARTMENT_LIFECYCLE_ERROR_MAP)
+}
+
+export function mapPositionLifecycleError(error: unknown): OrgLifecycleErrorMapping {
+  return mapOrgLifecycleError(error, PULS_POSITION_LIFECYCLE_ERROR_MAP)
+}
+
+function parseDepartmentLifecycleRpcResult(data: unknown): DepartmentLifecycleResult {
+  const row = data as Record<string, unknown>
+  const status = row.status as DepartmentLifecycleResult['status']
+  const departmentId = row.department_id as string
+
+  switch (status) {
+    case 'deactivated':
+    case 'restored':
+    case 'already_inactive':
+    case 'already_active':
+      return { status, departmentId }
+    default:
+      throw new Error(`Unexpected department lifecycle RPC status: ${String(status)}`)
+  }
+}
+
+function parsePositionLifecycleRpcResult(data: unknown): PositionLifecycleResult {
+  const row = data as Record<string, unknown>
+  const status = row.status as PositionLifecycleResult['status']
+  const positionId = row.position_id as string
+
+  switch (status) {
+    case 'deactivated':
+    case 'restored':
+    case 'already_inactive':
+    case 'already_active':
+      return { status, positionId }
+    default:
+      throw new Error(`Unexpected position lifecycle RPC status: ${String(status)}`)
+  }
+}
+
 function buildDepartmentWritePayload(input: DepartmentMutationInput) {
   return {
     name: input.name.trim(),
@@ -443,6 +558,46 @@ export async function updateDepartment(
   }
 }
 
+export async function deactivateDepartment(
+  userId: string,
+  departmentId: string,
+): Promise<DepartmentLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsCore().rpc('deactivate_department', {
+    p_department_id: departmentId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(error, 'deactivateDepartment', 'puls_core', 'departments')
+  }
+
+  return parseDepartmentLifecycleRpcResult(data)
+}
+
+export async function restoreDepartment(
+  userId: string,
+  departmentId: string,
+): Promise<DepartmentLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsCore().rpc('restore_department', {
+    p_department_id: departmentId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(error, 'restoreDepartment', 'puls_core', 'departments')
+  }
+
+  return parseDepartmentLifecycleRpcResult(data)
+}
+
 export async function createPosition(userId: string, input: PositionMutationInput): Promise<void> {
   const ctx = await resolveTenantContext(userId)
   if (!ctx.tenantId) {
@@ -496,4 +651,44 @@ export async function updatePosition(
       table: 'positions',
     })
   }
+}
+
+export async function deactivatePosition(
+  userId: string,
+  positionId: string,
+): Promise<PositionLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsCore().rpc('deactivate_position', {
+    p_position_id: positionId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(error, 'deactivatePosition', 'puls_core', 'positions')
+  }
+
+  return parsePositionLifecycleRpcResult(data)
+}
+
+export async function restorePosition(
+  userId: string,
+  positionId: string,
+): Promise<PositionLifecycleResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsCore().rpc('restore_position', {
+    p_position_id: positionId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(error, 'restorePosition', 'puls_core', 'positions')
+  }
+
+  return parsePositionLifecycleRpcResult(data)
 }
