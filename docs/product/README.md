@@ -1024,6 +1024,18 @@ PR17.2A starts the Workflow Closed Loop track by wiring leave, expense, and appr
 
 Verify: [`../../scripts/verify-17-2-a-workflow-notification-producers.sh`](../../scripts/verify-17-2-a-workflow-notification-producers.sh)
 
+## PR17.2B Workflow closed-loop proof
+
+PR17.2B adds the executable rollback-only proof for the workflow closed loop. The SQL smoke creates leave and expense requests through the existing authenticated RPCs, runs the service-role notification producer, completes approval decisions, checks requester/approver notifications, verifies audit evidence, and rolls the whole transaction back.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_2_b_workflow_closed_loop_proof.md](./17_2_b_workflow_closed_loop_proof.md) | PR17.2B product contract, runtime boundary, non-goals, smoke usage |
+| [`docs/data/17_2_b_workflow_closed_loop_smoke.sql`](../data/17_2_b_workflow_closed_loop_smoke.sql) | Optional rollback-only psql smoke for local or remote development databases |
+| [`scripts/verify-17-2-b-workflow-closed-loop-proof.sh`](../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh) | PR17.2B verify gate |
+
+Verify: [`../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh`](../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
