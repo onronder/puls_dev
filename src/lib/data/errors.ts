@@ -52,6 +52,7 @@ const RPC_ERROR_I18N: Record<string, string> = {
   PULS_INVALID_AMOUNT: 'expense.error.invalidAmount',
   PULS_INVALID_CURRENCY: 'expense.error.invalidCurrency',
   PULS_FUTURE_EXPENSE_DATE: 'expense.error.futureDate',
+  PULS_RECEIPT_REQUIRED: 'expense.error.receiptRequired',
   PULS_APPROVAL_NOT_FOUND: 'approval.error.notFound',
   PULS_APPROVAL_ALREADY_DECIDED: 'approval.error.alreadyDecided',
   PULS_APPROVAL_FORBIDDEN: 'approval.error.forbidden',

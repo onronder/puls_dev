@@ -68,8 +68,6 @@ type FormErrors = {
   date?: string
 }
 
-const POLICY_RECEIPT_THRESHOLD = 2000
-
 function toastAdapterError(
   error: unknown,
   t: ReturnType<typeof useTranslation>['t'],
@@ -170,7 +168,12 @@ function MasrafPage() {
   const [tab, setTab] = useState<ExpenseTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const { data: expenseResult, isLoading, isError, refetch } = useQuery({
+  const {
+    data: expenseResult,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['expense-overview', user?.id],
     queryFn: () => fetchExpenseOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
@@ -359,10 +362,7 @@ function LimitCard({ approved, limit, usedPct, locale, t }: LimitCardProps) {
           {t('expenseSetup.limitUsed', { pct: usedPct })}
         </StatusPill>
       </div>
-      <Progress
-        value={usedPct}
-        className={cn('mt-3 h-2', overThreshold && '[&>div]:bg-warning')}
-      />
+      <Progress value={usedPct} className={cn('mt-3 h-2', overThreshold && '[&>div]:bg-warning')} />
     </div>
   )
 }
@@ -389,7 +389,9 @@ function RecentTab({ claims, locale, t }: RecentTabProps) {
                 <Receipt className="h-[18px] w-[18px]" />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-medium text-foreground">{claim.title}</div>
+                <div className="truncate text-[14px] font-medium text-foreground">
+                  {claim.title}
+                </div>
                 <ClaimCategoryLine
                   category={claim.category}
                   categoryIsActive={claim.categoryIsActive}
@@ -465,10 +467,7 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
       ) : (
         <ul className="mt-3 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
           {approvals.map((approval) => (
-            <li
-              key={approval.id}
-              className="flex flex-wrap items-center gap-3 p-4 sm:flex-nowrap"
-            >
+            <li key={approval.id} className="flex flex-wrap items-center gap-3 p-4 sm:flex-nowrap">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-[12px] font-semibold text-secondary-foreground">
                 {approval.initials}
               </span>
@@ -546,9 +545,7 @@ function CategoriesTab({ limits, locale, t }: CategoriesTabProps) {
       />
       <ul className="mt-3 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
         {limits.map((category) => {
-          const pct = category.limit
-            ? Math.round((category.monthSpent / category.limit) * 100)
-            : 0
+          const pct = category.limit ? Math.round((category.monthSpent / category.limit) * 100) : 0
           const overThreshold = pct > 80
 
           return (
@@ -633,13 +630,24 @@ function ExpenseFormSheet({
   })
 
   const amountNum = parseDecimalAmount(amount)
-  const overPolicy = Number.isFinite(amountNum) && amountNum > POLICY_RECEIPT_THRESHOLD
   const requiredOk = !!category && Number.isFinite(amountNum) && amountNum > 0 && !!expenseDate
+  const selectedCategoryLimit = data?.categoryLimits.find((item) => item.id === category)
+  const receiptRequiredOver = selectedCategoryLimit?.receiptRequiredOver ?? 0
+  const receiptRequired =
+    receiptRequiredOver > 0 && Number.isFinite(amountNum) && amountNum > receiptRequiredOver
+  const categoryLimitExceeded =
+    !!selectedCategoryLimit &&
+    selectedCategoryLimit.limit > 0 &&
+    Number.isFinite(amountNum) &&
+    selectedCategoryLimit.monthSpent + amountNum > selectedCategoryLimit.limit
+  const overPolicy = categoryLimitExceeded || receiptRequired
 
   const categoryLabel =
-    data?.categoryLimits.find((item) => item.id === category)?.name ??
+    selectedCategoryLimit?.name ??
     data?.categories.find((item) => item.id === category)?.label ??
     category
+  const receiptThresholdLabel =
+    receiptRequiredOver > 0 ? formatTry(receiptRequiredOver, locale) : null
 
   function resetForm() {
     setCategory('')
@@ -704,7 +712,9 @@ function ExpenseFormSheet({
             type="submit"
             form="new-expense-form"
             className="min-h-11 flex-1"
-            disabled={isSubmitting || !data || !hasActiveCategories || !canCreate}
+            disabled={
+              isSubmitting || !data || !hasActiveCategories || !canCreate || receiptRequired
+            }
           >
             {isSubmitting ? (
               <>
@@ -765,7 +775,12 @@ function ExpenseFormSheet({
         </FormField>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_110px]">
-          <FormField label={t('expense.form.amount')} htmlFor="expense-amount" required error={errors.amount}>
+          <FormField
+            label={t('expense.form.amount')}
+            htmlFor="expense-amount"
+            required
+            error={errors.amount}
+          >
             <Input
               id="expense-amount"
               inputMode="decimal"
@@ -829,7 +844,10 @@ function ExpenseFormSheet({
           />
         </FormField>
 
-        <FormField label={t('expenseSetup.form.document')} hint={t('expenseSetup.form.documentHint')}>
+        <FormField
+          label={t('expenseSetup.form.document')}
+          hint={t('expenseSetup.form.documentHint')}
+        >
           <button
             type="button"
             disabled
@@ -847,10 +865,19 @@ function ExpenseFormSheet({
             </div>
             <ul className="mt-2 space-y-1.5 text-[13px]">
               <PolicyLine
-                ok={!overPolicy}
+                ok={!categoryLimitExceeded}
                 label={t('expenseSetup.form.policyCategoryLimit', { category: categoryLabel })}
               />
-              <PolicyLine ok={!overPolicy} label={t('expenseSetup.form.policyReceiptRequired')} />
+              <PolicyLine
+                ok={!receiptRequired}
+                label={
+                  receiptThresholdLabel
+                    ? t('expenseSetup.form.policyReceiptRequired', {
+                        threshold: receiptThresholdLabel,
+                      })
+                    : t('expenseSetup.form.policyReceiptNotRequired')
+                }
+              />
               <PolicyLine ok={currency === 'TRY'} label={t('expenseSetup.form.policyCurrency')} />
               <PolicyLine
                 ok
@@ -874,7 +901,11 @@ function ExpenseFormSheet({
               <div>
                 <div className="font-medium">{t('expenseSetup.form.policyWarningTitle')}</div>
                 <div className="text-[12px] opacity-90">
-                  {t('expenseSetup.form.policyWarningDesc')}
+                  {receiptRequired && receiptThresholdLabel
+                    ? t('expenseSetup.form.policyReceiptBlockedDesc', {
+                        threshold: receiptThresholdLabel,
+                      })
+                    : t('expenseSetup.form.policyWarningDesc')}
                 </div>
               </div>
             </div>

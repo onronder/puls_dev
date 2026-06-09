@@ -132,4 +132,14 @@ describe('fromRpcError', () => {
       ),
     ).toBe('requestCreationReadiness.common.policyNotReady')
   })
+
+  it('maps receipt-required expense guard to a user-facing expense message', () => {
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_RECEIPT_REQUIRED: This expense category requires a receipt.',
+        'expense.error.submitFailed',
+        'createExpenseClaim',
+      ),
+    ).toBe('expense.error.receiptRequired')
+  })
 })

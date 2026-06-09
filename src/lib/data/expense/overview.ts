@@ -92,7 +92,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       .limit(20),
     pulsWorkflow()
       .from('expense_categories')
-      .select('id, code, name, monthly_limit')
+      .select('id, code, name, monthly_limit, receipt_required_over')
       .eq('tenant_id', ctx.tenantId)
       .eq('is_active', true)
       .order('name', { ascending: true }),
@@ -109,10 +109,20 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
   ])
 
   if (overviewRow.error) {
-    throw fromSupabaseError(overviewRow.error, 'fetchExpenseOverview', 'puls_calc', 'expense_overview')
+    throw fromSupabaseError(
+      overviewRow.error,
+      'fetchExpenseOverview',
+      'puls_calc',
+      'expense_overview',
+    )
   }
   if (claimsRow.error) {
-    throw fromSupabaseError(claimsRow.error, 'fetchExpenseOverview', 'puls_workflow', 'expense_claims')
+    throw fromSupabaseError(
+      claimsRow.error,
+      'fetchExpenseOverview',
+      'puls_workflow',
+      'expense_claims',
+    )
   }
   if (categoriesRow.error) {
     throw fromSupabaseError(
@@ -199,8 +209,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
   const approvedThisMonth = Number(overview?.approved_this_month_amount ?? 0)
   const monthlyLimit = Number(overview?.monthly_limit ?? 0)
   const topCategoryName = (overview?.top_expense_category as string | null) ?? '—'
-  const topCategoryPct =
-    monthlyLimit > 0 ? Math.round((approvedThisMonth / monthlyLimit) * 100) : 0
+  const topCategoryPct = monthlyLimit > 0 ? Math.round((approvedThisMonth / monthlyLimit) * 100) : 0
 
   const claims: DemoExpenseClaim[] = (claimsRow.data ?? []).map((row) => {
     const categoryJoin = row.expense_categories as ExpenseClaimCategoryJoin
@@ -229,19 +238,26 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
         .eq('employee_id', ctx.employeeId!)
         .eq('category_id', row.id as string)
         .eq('status', 'approved')
-        .gte('expense_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10))
+        .gte(
+          'expense_date',
+          new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+        )
 
       if (error) {
         throw fromSupabaseError(error, 'fetchExpenseOverview', 'puls_workflow', 'expense_claims')
       }
 
-      const monthSpent = (spentRows ?? []).reduce((sum, claim) => sum + Number(claim.amount ?? 0), 0)
+      const monthSpent = (spentRows ?? []).reduce(
+        (sum, claim) => sum + Number(claim.amount ?? 0),
+        0,
+      )
 
       return {
         id: row.id as string,
         name: row.name as string,
         limit: Number(row.monthly_limit ?? 0),
         monthSpent,
+        receiptRequiredOver: Number(row.receipt_required_over ?? 0),
       }
     }),
   )

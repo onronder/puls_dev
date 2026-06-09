@@ -787,6 +787,7 @@
       "invalidAmount": "Tutar 0'dan büyük olmalı.",
       "invalidCurrency": "Para birimi geçersiz.",
       "futureDate": "Masraf tarihi gelecekte olamaz.",
+      "receiptRequired": "Bu tutar için fiş veya belge gerekli. Belge yükleme açıldığında gönderilebilir.",
       "noApprover": "Onaycı bulunamadı.",
       "policyStepUnresolved": "Onay politikası adımı için onaycı çözümlenemedi.",
       "policyNotFound": "Yapılandırılmış onay politikası bulunamadı veya pasif.",
@@ -852,11 +853,13 @@
       "policyTitle": "Politika kontrolü",
       "policyPending": "Zorunlu alanları doldurduktan sonra politika kontrolü görüntülenecek.",
       "policyCategoryLimit": "Kategori limiti · {{category}}",
-      "policyReceiptRequired": "Fiş zorunluluğu (₺2.000 üzeri)",
+      "policyReceiptRequired": "Fiş zorunluluğu · {{threshold}} üzeri",
+      "policyReceiptNotRequired": "Fiş zorunluluğu yok",
       "policyCurrency": "Para birimi · TRY tercih edilir",
       "policyDate": "Tarih · {{date}}",
       "policyWarningTitle": "Politika uyarısı",
-      "policyWarningDesc": "₺2.000 üzeri kalemler için fiş zorunlu ve ek onay gerekir.",
+      "policyWarningDesc": "Bu kalem kategori limitini aşıyor; onay sürecinde uyarı olarak işaretlenecek.",
+      "policyReceiptBlockedDesc": "{{threshold}} üzeri kalemlerde fiş veya belge zorunludur. Belge yükleme açılana kadar bu masraf gönderilemez.",
       "policyOk": "Kalem mevcut harcama politikasıyla uyumlu görünüyor."
     }
   },
