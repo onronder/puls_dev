@@ -4907,8 +4907,8 @@
       "accountNoTenant": "The user must be linked to a company workspace first.",
       "tenantReady": "This session is operating inside a company workspace.",
       "tenantMissing": "Admin settings cannot open until a company workspace is resolved.",
-      "notificationsReady": "In-app notification preferences are managed from the Notifications panel; email and mobile delivery remain closed.",
-      "notificationsPending": "In-app notification preferences are managed from the Notifications panel; email and mobile delivery remain closed.",
+      "notificationsReady": "In-app notification preferences can be managed by source; email and mobile delivery remain closed.",
+      "notificationsPending": "In-app notification preferences can be managed by source; email and mobile delivery remain closed.",
       "notificationsNoTenant": "Notification scope is resolved after the company workspace is linked.",
       "localeReady": "Language and timezone match the current operating scope.",
       "themePending": "The current theme is active; personal theme preference is not stored yet.",
@@ -4956,8 +4956,8 @@
         "title": "Notification preferences",
         "summary": "Email, in-app, and future mobile notifications",
         "action": "Edit",
-        "sheetDescription": "In-app preferences are active inside Notification Center.",
-        "sheetBody": "ERP connection notifications can be personalized from the Notifications panel settings. Email, mobile push, and external delivery remain closed in this phase."
+        "sheetDescription": "Manage in-app notifications for HR workflows and data sources.",
+        "sheetBody": "In-app notification preferences are stored by source. Email, mobile push, and external delivery remain closed in this phase."
       },
       "locale": {
         "title": "Language & region",

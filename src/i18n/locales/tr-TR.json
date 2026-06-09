@@ -4907,8 +4907,8 @@
       "accountNoTenant": "Önce kullanıcı bir şirket alanına bağlanmalı.",
       "tenantReady": "Bu oturum bir şirket alanı içinde çalışıyor.",
       "tenantMissing": "Şirket alanı bulunmadan yönetici ayarları açılamaz.",
-      "notificationsReady": "Uygulama içi bildirim tercihleri Bildirimler panelinden yönetilir; e-posta ve mobil teslimat kapalıdır.",
-      "notificationsPending": "Uygulama içi bildirim tercihleri Bildirimler panelinden yönetilir; e-posta ve mobil teslimat kapalıdır.",
+      "notificationsReady": "Uygulama içi bildirim tercihleri kaynak bazında yönetilebilir; e-posta ve mobil teslimat kapalıdır.",
+      "notificationsPending": "Uygulama içi bildirim tercihleri kaynak bazında yönetilebilir; e-posta ve mobil teslimat kapalıdır.",
       "notificationsNoTenant": "Bildirim kapsamı şirket alanı bağlandıktan sonra belirlenir.",
       "localeReady": "Dil ve saat bölgesi uygulamanın mevcut çalışma kapsamıyla uyumlu.",
       "themePending": "Tema görünümü çalışıyor; kişisel tema seçimi henüz kaydedilmiyor.",
@@ -4956,8 +4956,8 @@
         "title": "Bildirim tercihleri",
         "summary": "E-posta, uygulama içi ve ileride mobil bildirimler",
         "action": "Düzenle",
-        "sheetDescription": "Uygulama içi tercihler Notification Center içinde çalışır.",
-        "sheetBody": "ERP bağlantısı bildirimleri Bildirimler panelindeki ayarlardan kişiselleştirilebilir. E-posta, mobil push ve harici teslimat bu fazda kapalı kalır."
+        "sheetDescription": "İK süreçleri ve veri kaynakları için uygulama içi bildirimleri yönet.",
+        "sheetBody": "Uygulama içi bildirim tercihleri kaynak bazında saklanır. E-posta, mobil push ve harici teslimat bu fazda kapalı kalır."
       },
       "locale": {
         "title": "Dil ve bölge",
