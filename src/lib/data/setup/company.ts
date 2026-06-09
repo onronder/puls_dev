@@ -1,10 +1,58 @@
 import { fetchDemoCompanySetup } from '#/lib/demo/puls-demo-data'
 import type { DemoCompanySetup } from '#/lib/demo/puls-demo-data'
-import { fromSupabaseError } from '#/lib/data/errors'
+import { DataAdapterError, fromSupabaseError, parseRpcErrorCode } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, pulsIntegration, pulsPerformance, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
 export type CompanySetupOverview = DemoCompanySetup
+
+export const COMPANY_PROFILE_NAME_MAX_LENGTH = 120
+export const COMPANY_PROFILE_INDUSTRY_MAX_LENGTH = 80
+
+export const COMPANY_PROFILE_LOCALE_OPTIONS = [
+  { value: 'tr-TR', labelKey: 'companySetup.edit.options.locale.tr' },
+  { value: 'en-US', labelKey: 'companySetup.edit.options.locale.en' },
+] as const
+
+export const COMPANY_PROFILE_TIMEZONE_OPTIONS = [
+  { value: 'Europe/Istanbul', labelKey: 'companySetup.edit.options.timezone.istanbul' },
+  { value: 'Europe/Berlin', labelKey: 'companySetup.edit.options.timezone.berlin' },
+  { value: 'Europe/London', labelKey: 'companySetup.edit.options.timezone.london' },
+  { value: 'Asia/Dubai', labelKey: 'companySetup.edit.options.timezone.dubai' },
+  { value: 'America/New_York', labelKey: 'companySetup.edit.options.timezone.newYork' },
+  { value: 'UTC', labelKey: 'companySetup.edit.options.timezone.utc' },
+] as const
+
+export type CompanyProfileMutationInput = {
+  displayName: string
+  industry: string | null
+  locale: string
+  timezone: string
+}
+
+export type CompanyProfileUpdateResult = {
+  status: 'updated' | 'unchanged'
+  tenantId: string
+  displayName: string
+  industry: string | null
+  locale: string
+  timezone: string
+  changedFields: string[]
+}
+
+export type CompanyProfileMutationErrorMapping = {
+  code: string
+  toastKey: string
+}
+
+const COMPANY_PROFILE_ERROR_I18N: Record<string, string> = {
+  PULS_COMPANY_PROFILE_FORBIDDEN: 'companySetup.edit.errors.forbidden',
+  PULS_COMPANY_PROFILE_NOT_FOUND: 'companySetup.edit.errors.notFound',
+  PULS_COMPANY_PROFILE_INVALID_NAME: 'companySetup.edit.errors.invalidName',
+  PULS_COMPANY_PROFILE_INVALID_INDUSTRY: 'companySetup.edit.errors.invalidIndustry',
+  PULS_COMPANY_PROFILE_INVALID_LOCALE: 'companySetup.edit.errors.invalidLocale',
+  PULS_COMPANY_PROFILE_INVALID_TIMEZONE: 'companySetup.edit.errors.invalidTimezone',
+}
 
 function employeeBand(count: number): string {
   if (count <= 50) return '1-50 çalışan'
@@ -169,4 +217,104 @@ export function fetchCompanySetupOverviewWithMeta(userId: string) {
     fetchDemo: fetchDemoCompanySetup,
     isEmpty: isCompanySetupEmpty,
   })
+}
+
+export function normalizeCompanyProfileInput(
+  input: CompanyProfileMutationInput,
+): CompanyProfileMutationInput {
+  return {
+    displayName: input.displayName.trim(),
+    industry: input.industry?.trim() ? input.industry.trim() : null,
+    locale: input.locale.trim(),
+    timezone: input.timezone.trim(),
+  }
+}
+
+export function isCompanyProfileFormDirty(
+  baseline: CompanyProfileMutationInput,
+  form: CompanyProfileMutationInput,
+): boolean {
+  const normalizedBaseline = normalizeCompanyProfileInput(baseline)
+  const normalizedForm = normalizeCompanyProfileInput(form)
+
+  return (
+    normalizedBaseline.displayName !== normalizedForm.displayName ||
+    normalizedBaseline.industry !== normalizedForm.industry ||
+    normalizedBaseline.locale !== normalizedForm.locale ||
+    normalizedBaseline.timezone !== normalizedForm.timezone
+  )
+}
+
+function parseCompanyProfileUpdateResult(data: unknown): CompanyProfileUpdateResult {
+  const row = (data ?? {}) as Record<string, unknown>
+  const status = row.status === 'unchanged' ? 'unchanged' : 'updated'
+
+  return {
+    status,
+    tenantId: String(row.tenant_id ?? ''),
+    displayName: String(row.trade_name ?? ''),
+    industry: typeof row.industry === 'string' ? row.industry : null,
+    locale: String(row.locale ?? 'tr-TR'),
+    timezone: String(row.timezone ?? 'Europe/Istanbul'),
+    changedFields: Array.isArray(row.changed_fields)
+      ? row.changed_fields.filter((field): field is string => typeof field === 'string')
+      : [],
+  }
+}
+
+export async function updateCompanyProfile(
+  userId: string,
+  input: CompanyProfileMutationInput,
+): Promise<CompanyProfileUpdateResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new DataAdapterError({
+      code: 'PULS_COMPANY_PROFILE_FORBIDDEN',
+      message: 'Tenant context is required.',
+      source: 'adapter',
+      operation: 'updateCompanyProfile',
+      schema: 'puls_core',
+      table: 'tenants',
+      i18nKey: 'companySetup.edit.errors.forbidden',
+    })
+  }
+
+  const normalized = normalizeCompanyProfileInput(input)
+  const { data, error } = await pulsCore().rpc('update_company_profile', {
+    p_trade_name: normalized.displayName,
+    p_industry: normalized.industry,
+    p_locale: normalized.locale,
+    p_timezone: normalized.timezone,
+  })
+
+  if (error) {
+    const code = parseRpcErrorCode(error.message) ?? error.code ?? 'rpc_error'
+    throw new DataAdapterError({
+      code,
+      message: error.message,
+      source: 'rpc',
+      operation: 'updateCompanyProfile',
+      schema: 'puls_core',
+      table: 'tenants',
+      i18nKey: COMPANY_PROFILE_ERROR_I18N[code] ?? 'companySetup.edit.errors.saveFailed',
+    })
+  }
+
+  return parseCompanyProfileUpdateResult(data)
+}
+
+export function mapCompanyProfileMutationError(error: unknown): CompanyProfileMutationErrorMapping {
+  const code =
+    error instanceof DataAdapterError
+      ? error.code
+      : error instanceof Error
+        ? (parseRpcErrorCode(error.message) ?? 'unknown')
+        : 'unknown'
+
+  const toastKey =
+    error instanceof DataAdapterError && error.i18nKey
+      ? error.i18nKey
+      : COMPANY_PROFILE_ERROR_I18N[code] ?? 'companySetup.edit.errors.saveFailed'
+
+  return { code, toastKey }
 }

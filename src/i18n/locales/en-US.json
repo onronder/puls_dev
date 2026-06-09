@@ -3893,6 +3893,37 @@
     "status": {
       "done": "Done",
       "pending": "Pending"
+    },
+    "edit": {
+      "open": "Edit",
+      "save": "Save",
+      "toast": {
+        "saved": "Company information updated.",
+        "unchanged": "No company information changed."
+      },
+      "options": {
+        "locale": {
+          "tr": "Turkish",
+          "en": "English"
+        },
+        "timezone": {
+          "istanbul": "Istanbul",
+          "berlin": "Berlin",
+          "london": "London",
+          "dubai": "Dubai",
+          "newYork": "New York",
+          "utc": "UTC"
+        }
+      },
+      "errors": {
+        "forbidden": "Admin permission is required for this action.",
+        "notFound": "Company profile was not found.",
+        "invalidName": "Company name must be between 2 and 120 characters.",
+        "invalidIndustry": "Sector must be 80 characters or shorter.",
+        "invalidLocale": "Selected language is not supported.",
+        "invalidTimezone": "Selected timezone is not supported.",
+        "saveFailed": "Company information could not be saved."
+      }
     }
   },
   "departments": {
