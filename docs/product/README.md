@@ -942,6 +942,17 @@ PR16.10.17-19 closes the final audit items before PR17: stale leave/expense setu
 | [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts) | Formula-like text warning and CSV export sanitizer |
 | [`scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh`](../../scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh) | PR16.10.17-19 verify gate |
 
+## PR16.10.20 Pre-PR17 CI gate
+
+PR16.10.20 moves the PR16.10.13-19 hardening checks from manual discipline into CI and adds a read-only audit query for tenants that may already have multiple active performance cycles before the lifecycle unique index can be guaranteed.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_10_20_pre_pr17_ci_gate.md](./16_10_20_pre_pr17_ci_gate.md) | PR16.10.20 CI gate and cleanup-readiness contract |
+| [`scripts/verify-pre-pr17.sh`](../../scripts/verify-pre-pr17.sh) | Aggregate verify gate for PR16.10.13-20 |
+| [`docs/data/16_10_20_performance_active_cycle_duplicate_audit.sql`](../data/16_10_20_performance_active_cycle_duplicate_audit.sql) | Read-only duplicate active performance cycle audit query |
+| [`scripts/verify-16-10-20-pre-pr17-ci-gate.sh`](../../scripts/verify-16-10-20-pre-pr17-ci-gate.sh) | PR16.10.20 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
