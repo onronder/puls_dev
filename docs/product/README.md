@@ -953,6 +953,17 @@ PR16.10.20 moves the PR16.10.13-19 hardening checks from manual discipline into 
 | [`docs/data/16_10_20_performance_active_cycle_duplicate_audit.sql`](../data/16_10_20_performance_active_cycle_duplicate_audit.sql) | Read-only duplicate active performance cycle audit query |
 | [`scripts/verify-16-10-20-pre-pr17-ci-gate.sh`](../../scripts/verify-16-10-20-pre-pr17-ci-gate.sh) | PR16.10.20 verify gate |
 
+## PR17.0 Product reality audit & closed-loop roadmap
+
+PR17.0 is the entry-point decision document for PR17. It audits all 19 product routes for the full closed loop (action → backend → audit → notification → AI context), records the risk register, and proposes the PR17.1–17.4 roadmap. Key finding: the backend workflow engine and the notification/AI-context platforms are both real but **not wired together** — the highest-ROI PR17 work is connecting existing infrastructure, starting with an HR workflow notification taxonomy/contract.
+
+| Document | Purpose |
+| --- | --- |
+| [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) | Page-by-page reality audit, risk register, PR17.1–17.4 roadmap, first-5 actions, product decisions |
+| [`docs/data/16_10_20_performance_active_cycle_duplicate_audit.sql`](../data/16_10_20_performance_active_cycle_duplicate_audit.sql) | Referenced data-hygiene query for the PR17.0.x cleanup step |
+
+> Audit document — no verify script (product decision/roadmap, not a code contract).
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
