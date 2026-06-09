@@ -2,7 +2,6 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
-  Bell,
   CalendarDays,
   Check,
   Clock,
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { PageHeader } from '#/components/puls/PageHeader'
@@ -405,19 +403,6 @@ function AiKocPage() {
       </section>
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button
-          type="button"
-          variant="ai"
-          className="touch-target h-11 flex-1"
-          onClick={() =>
-            toast.info(t('aiCoachSetup.notifyToast.title'), {
-              description: t('aiCoachSetup.notifyToast.description'),
-            })
-          }
-        >
-          <Bell className="h-4 w-4" />
-          {t('aiCoachSetup.actions.notifyMe')}
-        </Button>
         <Button type="button" variant="outline" className="touch-target h-11 flex-1" asChild>
           <Link to="/dashboard">
             <ArrowLeft className="h-4 w-4" />

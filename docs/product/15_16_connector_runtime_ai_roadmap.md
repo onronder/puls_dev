@@ -1129,6 +1129,31 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Helper beklenen altı query key'ini invalidate eder.
 - Typecheck, test, lint, i18n, build ve PR16.10.15 verify gate geçer.
 
+### PR16.10.16 - AI Coach Action Truth Hardening
+
+**Ürün değeri:** PR17 AI katmanı açılmadan önce AI Koç sayfası gerçek olmayan aksiyon sözü vermez. Bildirim listesine eklendi gibi kalıcı kayıt iddiası, backend notification/subscription contract'i gelene kadar UI'dan kaldırılır.
+
+**Kapsam:**
+
+- `/ai-koc` teaser sayfasındaki kalıcı kayıt üretmeyen "notify me" aksiyonu kaldırılır.
+- AI Coach notify sheet/toast locale key'leri temizlenir.
+- Sayfa read-only product posture'ını korur; gerçek kalan CTA dashboard navigasyonudur.
+- Verify gate fake notify aksiyonunun geri gelmesini engeller.
+
+**Kapsam dışı:**
+
+- Notification Center ledger veya preference migration'i
+- AI runtime, LLM gateway veya autonomous action
+- AI Coach context-readiness adapter değişikliği
+- Diğer HR sayfaları
+
+**Doğrulama:**
+
+- `/ai-koc` route'u `toast.info`, `sonner` veya notify `Bell` aksiyonu içermez.
+- TR/EN locale dosyalarında AI Coach notify signup/toast key'leri kalmaz.
+- Dashboard navigasyon CTA'sı korunur.
+- Typecheck, test, i18n, build ve PR16.10.16 verify gate geçer.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

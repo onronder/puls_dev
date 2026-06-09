@@ -919,6 +919,16 @@ PR16.10.15 closes the next pre-PR17 reliability debts: page-level route errors n
 | [`src/lib/data/query-invalidation.ts`](../../src/lib/data/query-invalidation.ts) | Shared org-structure cache invalidation helper |
 | [`scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh`](../../scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh) | PR16.10.15 verify gate |
 
+## PR16.10.16 AI Coach action truth hardening
+
+PR16.10.16 removes the non-durable AI Coach "notify me" promise before PR17. The `/ai-koc` teaser stays read-only and does not claim notification signup success without a backend notification/subscription contract.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_10_16_ai_coach_action_truth_hardening.md](./16_10_16_ai_coach_action_truth_hardening.md) | PR16.10.16 product-truth contract, safety boundary, and verification |
+| [`src/routes/_app/ai-koc.tsx`](../../src/routes/_app/ai-koc.tsx) | AI Coach teaser with only real navigation CTA |
+| [`scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh`](../../scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh) | PR16.10.16 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

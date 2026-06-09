@@ -5076,25 +5076,7 @@
       }
     },
     "actions": {
-      "notifyMe": "Notify me",
       "backToDashboard": "Back to dashboard"
-    },
-    "notifySheet": {
-      "title": "Notify me",
-      "description": "Sign up to be notified when AI Coach opens after the pilot.",
-      "mvpBadge": "Read-only",
-      "submit": "Subscribe",
-      "fields": {
-        "email": "Email"
-      },
-      "placeholders": {
-        "email": "you@company.com"
-      },
-      "hint": "You will receive email and in-app notification when ready."
-    },
-    "notifyToast": {
-      "title": "Added to notification list",
-      "description": "You will be notified by email when AI Coach launches."
     }
   },
   "ai": {

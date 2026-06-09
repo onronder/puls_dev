@@ -5076,25 +5076,7 @@
       }
     },
     "actions": {
-      "notifyMe": "Beni bilgilendir",
       "backToDashboard": "Dashboard'a dön"
-    },
-    "notifySheet": {
-      "title": "Beni bilgilendir",
-      "description": "AI Koç pilot sonrası açıldığında bildirim almak için kaydol.",
-      "mvpBadge": "Salt okunur",
-      "submit": "Kaydol",
-      "fields": {
-        "email": "E-posta"
-      },
-      "placeholders": {
-        "email": "ornek@sirket.com"
-      },
-      "hint": "Hazır olduğunda e-posta ve uygulama bildirimi gönderilecek."
-    },
-    "notifyToast": {
-      "title": "Bildirim listesine eklendi",
-      "description": "AI Koç açıldığında e-posta ile bilgilendirileceksin."
     }
   },
   "ai": {
