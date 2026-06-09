@@ -874,6 +874,20 @@ PR16.10.11 closes the remaining trust-surface findings before PR17. It removes t
 | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)                                                                                | High dependency audit and CI-secret-backed Supabase schema audit in the quality job     |
 | [`scripts/verify-16-10-11-security-runtime-truth-hardening.sh`](../../scripts/verify-16-10-11-security-runtime-truth-hardening.sh)          | PR16.10.11 verify gate                                                                  |
 
+## PR16.10.12 DataSource Manager structure hardening
+
+PR16.10.12 keeps the DataSource Manager product journey unchanged while reducing the `/verikaynaklari` route from a god component into route orchestration plus focused presentation modules. Source inventory, technical details, and shared UI mapping now have explicit component boundaries and targeted tests.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_10_12_datasource_manager_structure.md](./16_10_12_datasource_manager_structure.md) | PR16.10.12 product/frontend structure contract, scope, and verification |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx) | DataSource Manager route orchestration, data loading, mutations, and sheet wiring |
+| [`src/components/data-sources/DataSourceManagerSection.tsx`](../../src/components/data-sources/DataSourceManagerSection.tsx) | Source inventory and selected-source summary presentation |
+| [`src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx`](../../src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx) | Existing technical audit sheet isolated from route orchestration |
+| [`src/components/data-sources/dataSourceUi.tsx`](../../src/components/data-sources/dataSourceUi.tsx) | Shared DataSource Manager tab, tone, icon, and display helpers |
+| [`src/components/data-sources/dataSourceUi.test.tsx`](../../src/components/data-sources/dataSourceUi.test.tsx) | Helper regression coverage for journey mapping and display fallbacks |
+| [`scripts/verify-16-10-12-datasource-manager-structure.sh`](../../scripts/verify-16-10-12-datasource-manager-structure.sh) | PR16.10.12 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
