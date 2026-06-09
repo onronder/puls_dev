@@ -1047,6 +1047,19 @@ PR17.2C connects the existing in-app notification preference RPCs to `/ayarlar`.
 
 Verify: [`../../scripts/verify-17-2-c-settings-notification-preferences.sh`](../../scripts/verify-17-2-c-settings-notification-preferences.sh)
 
+## PR17.2D Workflow notification dispatch boundary
+
+PR17.2D closes the R11 connector-dependency gap by emitting live leave and expense workflow notifications from database workflow events. The generic app notification emitter remains service-role only; a workflow-only internal emitter plus metadata-only triggers deliver approval/requester notifications in the same transaction as the workflow mutation.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_2_d_workflow_notification_dispatch_boundary.md](./17_2_d_workflow_notification_dispatch_boundary.md) | PR17.2D product contract, runtime boundary, non-goals, verification |
+| [`supabase/migrations/20260610100000_puls_workflow_notification_dispatch_boundary.sql`](../../supabase/migrations/20260610100000_puls_workflow_notification_dispatch_boundary.sql) | Connector-independent workflow notification dispatch migration |
+| [`scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../scripts/verify-17-2-d-workflow-notification-dispatch.sh) | PR17.2D verify gate |
+| [`scripts/verify-pr17.sh`](../../scripts/verify-pr17.sh) | Aggregate PR17 verify gate wired into CI |
+
+Verify: [`../../scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../scripts/verify-17-2-d-workflow-notification-dispatch.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

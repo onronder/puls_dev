@@ -15,6 +15,7 @@
     "format": "prettier --check .",
     "check-i18n": "node scripts/check-i18n.mjs",
     "verify:pre-pr17": "bash scripts/verify-pre-pr17.sh",
+    "verify:pr17": "bash scripts/verify-pr17.sh",
     "audit:supabase": "node scripts/audit-supabase-schema.mjs",
     "test": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
