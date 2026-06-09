@@ -1060,6 +1060,19 @@ PR17.2D closes the R11 connector-dependency gap by emitting live leave and expen
 
 Verify: [`../../scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../scripts/verify-17-2-d-workflow-notification-dispatch.sh)
 
+## PR17.2 planned follow-ups
+
+PR17.2A-D closes the notification delivery edge, not the entire workflow product surface. The remaining workflow closed-loop work is intentionally split so the team does not mark the product complete while upload, OCR, browser e2e, or AI context are still missing.
+
+| Planned slice | Purpose |
+| --- | --- |
+| PR17.2E Workflow E2E Baseline & Reconcile Contract | Prove leave/expense request → approve → notify → audit through a browser or equivalent full-stack smoke; cover multi-step approval. Reconcile/backfill duplicate-safety is already structurally guaranteed (shared dedupe key + unique constraint + `ON CONFLICT DO NOTHING`), so this slice locks it with a regression-guard test rather than treating it as an open risk. |
+| PR17.2F Document/Evidence Upload Foundation | Open evidence upload for leave, expense, and contract documents with storage, RLS, metadata, audit, size/type policy, notification impact, and clear UI behavior. |
+| PR17.2G OCR & Human Review Evidence | Add OCR/extraction for expense receipts as safe evidence with confidence, human review, audit, and no automatic canonical write without approval. |
+| PR17.4 AI context feed handoff | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant. |
+
+Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 6.
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
