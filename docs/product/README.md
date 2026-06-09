@@ -929,6 +929,19 @@ PR16.10.16 removes the non-durable AI Coach "notify me" promise before PR17 and 
 | [`src/routes/_app/ai-koc.tsx`](../../src/routes/_app/ai-koc.tsx) | Chat-first AI Coach teaser with disabled prompts/composer and real navigation CTA |
 | [`scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh`](../../scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh) | PR16.10.16 verify gate |
 
+## PR16.10.17-19 Pre-PR17 hardening closure
+
+PR16.10.17-19 closes the final audit items before PR17: stale leave/expense setup selections are blocked, performance cycles get a server-enforced lifecycle, persona switch audit writes to one deterministic target, and file import warns on formula-like text while providing safe CSV export sanitization.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_10_17_18_19_pre_pr17_hardening.md](./16_10_17_18_19_pre_pr17_hardening.md) | PR16.10.17-19 scope, safety boundary, and acceptance |
+| [`supabase/migrations/20260609100000_puls_performance_cycle_lifecycle_hardening.sql`](../../supabase/migrations/20260609100000_puls_performance_cycle_lifecycle_hardening.sql) | Server-enforced performance cycle lifecycle and active-cycle guard |
+| [`src/lib/data/setup/request-creation-readiness.ts`](../../src/lib/data/setup/request-creation-readiness.ts) | Leave and expense setup readiness blockers for stale selected targets |
+| [`src/lib/persona.ts`](../../src/lib/persona.ts) | Deterministic persona switch audit target |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts) | Formula-like text warning and CSV export sanitizer |
+| [`scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh`](../../scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh) | PR16.10.17-19 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

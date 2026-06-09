@@ -6,6 +6,7 @@ import {
   inferFileImportScopeFromFileName,
   parseFileImport,
   parseFileImportPackage,
+  sanitizeFileImportCsvExportValue,
 } from '#/lib/data/setup/file-import-contract'
 
 type ExcelWorksheet = import('exceljs').Worksheet
@@ -134,10 +135,32 @@ describe('file import contract', () => {
     )
   })
 
-  it('infers scope from the PULS filename contract', () => {
-    expect(inferFileImportScopeFromFileName('puls_departments_v1_20260608.csv')).toBe(
+  it('keeps formula-like text values but flags them for safe export handling', async () => {
+    const result = await parseFileImport(
+      csvFile('puls_departments_v1_20260608.csv', 'code,name\nD-001,=1+1\n'),
       'departments',
     )
+
+    expect(result.ok).toBe(true)
+    expect(result.rows[0]?.payload.name).toBe('=1+1')
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: 'FORMULA_LIKE_TEXT_VALUE',
+        level: 'warning',
+        rowNumber: 2,
+        column: 'name',
+      }),
+    )
+  })
+
+  it('sanitizes formula-like values when import values are exported as CSV later', () => {
+    expect(sanitizeFileImportCsvExportValue('=cmd')).toBe("'=cmd")
+    expect(sanitizeFileImportCsvExportValue('  @risk')).toBe("'  @risk")
+    expect(sanitizeFileImportCsvExportValue('Ayşe Öz')).toBe('Ayşe Öz')
+  })
+
+  it('infers scope from the PULS filename contract', () => {
+    expect(inferFileImportScopeFromFileName('puls_departments_v1_20260608.csv')).toBe('departments')
     expect(inferFileImportScopeFromFileName('Calisanlar06082026.csv')).toBeNull()
   })
 

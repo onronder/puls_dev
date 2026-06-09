@@ -1661,6 +1661,7 @@
         "REQUIRED_VALUE_MISSING": "Zorunlu değer boş.",
         "EXTERNAL_ID_MISSING": "Kaynak kayıt kimliği için zorunlu kod boş.",
         "NULL_LITERAL_NORMALIZED": "NULL ifadesi boş değer olarak işlendi.",
+        "FORMULA_LIKE_TEXT_VALUE": "Bu metin dışa aktarılırsa formül gibi yorumlanabilir; export sırasında güvenli hale getirilecek.",
         "INVALID_EMAIL": "E-posta biçimi geçerli değil.",
         "INVALID_BOOLEAN": "Boolean değer true/false, yes/no veya 1/0 olmalı.",
         "INVALID_INTEGER": "Tam sayı biçimi geçerli değil.",

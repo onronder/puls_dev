@@ -1,70 +1,84 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { resolvePersonaForUser } from '#/lib/persona'
+import { logPersonaSwitch } from '#/lib/persona'
 
-type QueryResult = {
-  data: unknown
-  error: null
-}
-
-const queryResults = new Map<string, QueryResult>()
-
-vi.mock('#/lib/supabase', () => {
-  function makeQuery(key: string) {
-    const chain = {
-      select: vi.fn(() => chain),
-      eq: vi.fn(() => chain),
-      order: vi.fn(() => chain),
-      limit: vi.fn(() => chain),
-      maybeSingle: vi.fn(async () => queryResults.get(key) ?? { data: null, error: null }),
-    }
-    return chain
-  }
-
-  return {
-    supabase: {
-      schema: vi.fn((schemaName: string) => ({
-        from: vi.fn((tableName: string) => makeQuery(`${schemaName}.${tableName}`)),
-      })),
-      from: vi.fn((tableName: string) => makeQuery(`public.${tableName}`)),
-    },
-  }
+const supabaseMock = vi.hoisted(() => {
+  const insert = vi.fn()
+  const schemaFrom = vi.fn(() => ({ insert }))
+  const schema = vi.fn(() => ({ from: schemaFrom }))
+  const from = vi.fn(() => ({ insert }))
+  return { insert, schemaFrom, schema, from }
 })
 
-describe('resolvePersonaForUser', () => {
+vi.mock('#/lib/supabase', () => ({
+  supabase: {
+    schema: supabaseMock.schema,
+    from: supabaseMock.from,
+  },
+}))
+
+describe('logPersonaSwitch', () => {
   beforeEach(() => {
-    queryResults.clear()
+    supabaseMock.insert.mockReset()
+    supabaseMock.schemaFrom.mockClear()
+    supabaseMock.schema.mockClear()
+    supabaseMock.from.mockClear()
   })
 
-  it('uses puls_core employee links before legacy public membership', async () => {
-    queryResults.set('puls_core.employees', {
-      data: { persona_role: 'superadmin', tenant_id: 'core-tenant-1' },
-      error: null,
-    })
-    queryResults.set('public.user_tenants', {
-      data: { tenant_id: 'legacy-tenant-1', is_default: true },
-      error: null,
+  it('writes persona switches only to puls_audit.audit_logs', async () => {
+    supabaseMock.insert.mockResolvedValue({ error: null })
+
+    await logPersonaSwitch({
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+      persona: 'manager',
     })
 
-    await expect(resolvePersonaForUser('user-1')).resolves.toEqual({
-      personaRole: 'superadmin',
-      tenantId: 'core-tenant-1',
-    })
+    expect(supabaseMock.schema).toHaveBeenCalledWith('puls_audit')
+    expect(supabaseMock.schemaFrom).toHaveBeenCalledWith('audit_logs')
+    expect(supabaseMock.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenant_id: 'tenant-1',
+        actor_id: 'user-1',
+        action: 'persona_switch',
+      }),
+    )
+    expect(supabaseMock.from).not.toHaveBeenCalled()
   })
 
-  it('keeps legacy public role fallback when no puls_core employee is linked', async () => {
-    queryResults.set('public.user_tenants', {
-      data: { tenant_id: 'legacy-tenant-1', is_default: true },
-      error: null,
-    })
-    queryResults.set('public.user_roles', {
-      data: { role: 'admin' },
-      error: null,
+  it('does not fall back to legacy audit schemas when puls_audit rejects the write', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    supabaseMock.insert.mockResolvedValue({ error: { message: 'rls denied' } })
+
+    await logPersonaSwitch({
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+      persona: 'employee',
     })
 
-    await expect(resolvePersonaForUser('user-2')).resolves.toEqual({
-      personaRole: 'hr_admin',
-      tenantId: 'legacy-tenant-1',
+    expect(supabaseMock.schema).toHaveBeenCalledTimes(1)
+    expect(supabaseMock.from).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith(
+      'Persona switch audit failed on puls_audit.audit_logs.',
+      expect.objectContaining({ message: 'rls denied' }),
+    )
+
+    warn.mockRestore()
+  })
+
+  it('skips the audit write when tenant context is missing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await logPersonaSwitch({
+      userId: 'user-1',
+      tenantId: null,
+      persona: 'manager',
     })
+
+    expect(supabaseMock.schema).not.toHaveBeenCalled()
+    expect(supabaseMock.from).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith('Persona switch audit skipped: tenant context is missing.')
+
+    warn.mockRestore()
   })
 })

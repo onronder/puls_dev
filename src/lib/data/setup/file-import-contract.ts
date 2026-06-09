@@ -111,6 +111,7 @@ type ExcelWorksheet = import('exceljs').Worksheet
 const COMMON_BOOLEAN_TRUE = new Set(['true', '1', 'yes', 'evet', 'aktif', 'active'])
 const COMMON_BOOLEAN_FALSE = new Set(['false', '0', 'no', 'hayir', 'hayır', 'pasif', 'inactive'])
 const NULL_LITERALS = new Set(['null', '(null)'])
+const CSV_FORMULA_PREFIXES = new Set(['=', '+', '-', '@'])
 const FILE_IMPORT_SCOPE_ORDER: FileImportScopeId[] = [
   'legal_entities',
   'locations',
@@ -551,12 +552,16 @@ function excelWorksheetToRows(sheet: ExcelWorksheet): TableCell[][] {
 
 function excelCellValueToTableCell(value: ExcelCellValue): TableCell {
   if (value === null || value === undefined) return null
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    return value
   if (value instanceof Date) return value
   if (isExcelFormulaValue(value)) return excelCellValueToTableCell(value.result)
   if ('text' in value && typeof value.text === 'string') return value.text
   if ('richText' in value && Array.isArray(value.richText)) {
-    const text = value.richText.map((part) => part.text).join('').trim()
+    const text = value.richText
+      .map((part) => part.text)
+      .join('')
+      .trim()
     return text === '' ? null : text
   }
   if ('error' in value && typeof value.error === 'string') return value.error
@@ -565,9 +570,7 @@ function excelCellValueToTableCell(value: ExcelCellValue): TableCell {
 
 function isExcelFormulaValue(value: ExcelCellValue): value is ExcelFormulaValue {
   return (
-    value !== null &&
-    typeof value === 'object' &&
-    ('formula' in value || 'sharedFormula' in value)
+    value !== null && typeof value === 'object' && ('formula' in value || 'sharedFormula' in value)
   )
 }
 
@@ -742,7 +745,17 @@ function parseCellValue(
     return null
   }
 
-  if (column.type === 'text') return normalizedText
+  if (column.type === 'text') {
+    if (isFormulaLikeCsvExportValue(normalizedText)) {
+      issues.push({
+        level: 'warning',
+        code: 'FORMULA_LIKE_TEXT_VALUE',
+        rowNumber,
+        column: column.key,
+      })
+    }
+    return normalizedText
+  }
   if (column.type === 'email') {
     const email = normalizedText.toLocaleLowerCase('tr-TR')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -897,6 +910,16 @@ function fileExtension(fileName: string): 'csv' | 'xlsx' | null {
 
 function isBlockedHeader(normalizedHeader: string): boolean {
   return BLOCKED_HEADER_PATTERNS.some((pattern) => normalizedHeader.includes(pattern))
+}
+
+export function isFormulaLikeCsvExportValue(value: string): boolean {
+  const trimmedLeft = value.replace(/^[\s\uFEFF]+/u, '')
+  const first = trimmedLeft[0]
+  return first ? CSV_FORMULA_PREFIXES.has(first) : false
+}
+
+export function sanitizeFileImportCsvExportValue(value: string): string {
+  return isFormulaLikeCsvExportValue(value) ? `'${value}` : value
 }
 
 function escapeCsvValue(value: string): string {

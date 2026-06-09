@@ -99,6 +99,10 @@ export async function logPersonaSwitch(params: {
   persona: string
 }): Promise<void> {
   const { userId, tenantId, persona } = params
+  if (!tenantId) {
+    console.warn('Persona switch audit skipped: tenant context is missing.')
+    return
+  }
 
   const auditPayload = {
     tenant_id: tenantId,
@@ -115,21 +119,7 @@ export async function logPersonaSwitch(params: {
 
   if (!pulsAuditError) return
 
-  const { error: legacyAuditError } = await supabase
-    .schema('audit')
-    .from('audit_logs')
-    .insert(auditPayload)
-
-  if (!legacyAuditError) return
-
-  await supabase.from('audit_log').insert({
-    tenant_id: tenantId,
-    actor_user_id: userId,
-    action: 'persona_switch',
-    resource_type: 'persona',
-    resource_id: userId,
-    metadata: { persona, source: 'PersonaTogglePill' },
-  })
+  console.warn('Persona switch audit failed on puls_audit.audit_logs.', pulsAuditError)
 }
 
 export { MANAGER_LIKE_ROLES }

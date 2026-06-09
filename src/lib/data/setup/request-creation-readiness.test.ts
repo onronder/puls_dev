@@ -20,7 +20,8 @@ const readyFlags = {
 }
 
 function assignment(
-  overrides: Partial<EmployeeAssignmentReadinessEmployee> & Pick<EmployeeAssignmentReadinessEmployee, 'id'>,
+  overrides: Partial<EmployeeAssignmentReadinessEmployee> &
+    Pick<EmployeeAssignmentReadinessEmployee, 'id'>,
 ): EmployeeAssignmentReadinessEmployee {
   return {
     displayName: 'Test Employee',
@@ -169,6 +170,19 @@ describe('buildExpenseCreationReadiness', () => {
     expect(result.warnings).toContain('policy_unbound')
     assertNoForbiddenBlockers(result.blockers)
   })
+
+  it('blocks a selected expense category that is no longer active', () => {
+    const result = buildExpenseCreationReadiness({
+      activeCategoryCount: 1,
+      assignment: assignment({ id: 'e1' }),
+      policyTargets: [readyPolicyTarget],
+      selectedCategoryId: 'inactive-cat',
+    })
+
+    expect(result.canCreate).toBe(false)
+    expect(result.blockers).toContain('invalid_expense_category')
+    assertNoForbiddenBlockers(result.blockers)
+  })
 })
 
 describe('buildLeaveCreationReadiness', () => {
@@ -218,6 +232,19 @@ describe('buildLeaveCreationReadiness', () => {
     })
 
     expect(result.blockers).toContain('assignment_partial')
+    assertNoForbiddenBlockers(result.blockers)
+  })
+
+  it('blocks a selected leave type that is no longer active', () => {
+    const result = buildLeaveCreationReadiness({
+      activeLeaveTypeCount: 1,
+      assignment: assignment({ id: 'e1' }),
+      policyTargets: [readyPolicyTarget],
+      selectedLeaveTypeId: 'inactive-leave-type',
+    })
+
+    expect(result.canCreate).toBe(false)
+    expect(result.blockers).toContain('invalid_leave_type')
     assertNoForbiddenBlockers(result.blockers)
   })
 })
