@@ -1036,6 +1036,17 @@ PR17.2B adds the executable rollback-only proof for the workflow closed loop. Th
 
 Verify: [`../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh`](../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh)
 
+## PR17.2C Settings notification preferences
+
+PR17.2C connects the existing in-app notification preference RPCs to `/ayarlar`. The notification settings sheet now lets users manage HR workflow and data source notification preferences without adding new producers, external delivery, Railway code, or database migrations.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_2_c_settings_notification_preferences.md](./17_2_c_settings_notification_preferences.md) | PR17.2C product contract, runtime boundary, non-goals, verification |
+| [`scripts/verify-17-2-c-settings-notification-preferences.sh`](../../scripts/verify-17-2-c-settings-notification-preferences.sh) | PR17.2C verify gate |
+
+Verify: [`../../scripts/verify-17-2-c-settings-notification-preferences.sh`](../../scripts/verify-17-2-c-settings-notification-preferences.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
