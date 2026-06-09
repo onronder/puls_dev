@@ -45,6 +45,16 @@ do
   require_pattern "$AGGREGATE_SCRIPT" "$script"
 done
 
+for script in \
+  "scripts/verify-16-10-13-datasource-technical-details-split.sh" \
+  "scripts/verify-16-10-14-workflow-audit-policy-hardening.sh" \
+  "$AGGREGATE_SCRIPT"
+do
+  if grep -Fq "rg " "$script"; then
+    fail "$script must not require ripgrep in CI"
+  fi
+done
+
 require_pattern "$AUDIT_SQL" "puls_performance.performance_cycles"
 require_pattern "$AUDIT_SQL" "status::TEXT = 'active'"
 require_pattern "$AUDIT_SQL" "HAVING COUNT(*) > 1"
