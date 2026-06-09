@@ -3500,14 +3500,18 @@
       "editTitle": "Edit department",
       "readOnlyTitle": "Department details",
       "created": "Department created",
-      "updated": "Department updated"
+      "updated": "Department updated",
+      "deactivated": "Department deactivated",
+      "restored": "Department restored"
     },
     "position": {
       "createTitle": "New position",
       "editTitle": "Edit position",
       "readOnlyTitle": "Position details",
       "created": "Position created",
-      "updated": "Position updated"
+      "updated": "Position updated",
+      "deactivated": "Position deactivated",
+      "restored": "Position restored"
     },
     "fields": {
       "name": "Name",
@@ -3529,6 +3533,38 @@
     },
     "boundary": {
       "sourceReadOnly": "This record is owned by an external source and is read-only in PULS."
+    },
+    "lifecycle": {
+      "filter": {
+        "ariaLabel": "Filter records by status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "all": "All"
+      },
+      "actions": {
+        "deactivate": "Deactivate",
+        "restore": "Restore"
+      },
+      "confirm": {
+        "deactivateDepartment": "Deactivate this department?",
+        "restoreDepartment": "Restore this department?",
+        "deactivatePosition": "Deactivate this position?",
+        "restorePosition": "Restore this position?"
+      },
+      "errors": {
+        "generic": "Could not change status",
+        "forbidden": "This action requires admin access",
+        "sourceReadOnly": "External-source records cannot be changed in PULS",
+        "departmentNotFound": "Department was not found",
+        "departmentActiveEmployees": "Departments with active employees cannot be deactivated",
+        "departmentActivePositions": "Departments with active positions cannot be deactivated",
+        "departmentParentInactive": "The parent department must be active before this department can be restored",
+        "positionNotFound": "Position was not found",
+        "positionActiveEmployees": "Positions with active employees cannot be deactivated",
+        "positionDepartmentInactive": "The linked department must be active before this position can be restored"
+      },
+      "emptyFilterTitle": "No records in this status",
+      "emptyFilterDescription": "Choose another status filter."
     },
     "discardConfirm": "Discard unsaved changes?"
   },

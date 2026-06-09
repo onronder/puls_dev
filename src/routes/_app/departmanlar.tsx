@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Building2, Loader2, Lock, Plus, Save, UserCheck, UserMinus, Users } from 'lucide-react'
+import { Building2, Loader2, Lock, Plus, Power, RotateCcw, Save, UserCheck, UserMinus, Users } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -13,6 +13,7 @@ import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
+import { Segmented } from '#/components/puls/Segmented'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
@@ -21,17 +22,22 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  applyOrgEntityLifecycleFilter,
   createDepartment,
+  deactivateDepartment,
   fetchDepartmentsOverviewWithMeta,
   invalidateOrgStructureQueries,
   isDepartmentFormDirty,
+  mapDepartmentLifecycleError,
   mapDepartmentMutationError,
   normalizeOrgSetupCode,
+  restoreDepartment,
   updateDepartment,
   validateDepartmentForm,
   type DepartmentFieldKey,
   type DepartmentFormFields,
   type DepartmentsOverview,
+  type OrgEntityLifecycleFilter,
   type OrgSetupEntitySource,
 } from '#/lib/data'
 import { cn } from '#/lib/utils'
@@ -103,6 +109,7 @@ function DepartmanlarPage() {
   const [departmentForm, setDepartmentForm] = useState<DepartmentFormFields>(EMPTY_DEPARTMENT_FORM)
   const [formBaseline, setFormBaseline] = useState<DepartmentFormFields | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<DepartmentFieldKey, string>>>({})
+  const [lifecycleFilter, setLifecycleFilter] = useState<OrgEntityLifecycleFilter>('active')
 
   const { data: departmentsResult, isLoading } = useQuery({
     queryKey: ['departments-overview', user?.id],
@@ -147,9 +154,41 @@ function DepartmanlarPage() {
   })
 
   const departments = data?.departments ?? []
+  const filteredDepartments = applyOrgEntityLifecycleFilter(departments, lifecycleFilter)
   const isEmpty = !isLoading && departments.length === 0
+  const isFilterEmpty = !isLoading && departments.length > 0 && filteredDepartments.length === 0
   const isReadOnly = sheetMode === 'readonly'
   const isDirty = formBaseline ? isDepartmentFormDirty(departmentForm, formBaseline) : false
+
+  const lifecycleMutation = useMutation({
+    mutationFn: ({
+      department,
+      action,
+    }: {
+      department: DepartmentRow
+      action: 'deactivate' | 'restore'
+    }) => {
+      if (!user?.id) throw new Error('Missing user context')
+      return action === 'deactivate'
+        ? deactivateDepartment(user.id, department.id)
+        : restoreDepartment(user.id, department.id)
+    },
+    onSuccess: (_result, variables) => {
+      if (user?.id) invalidateOrgStructureQueries(queryClient, user.id)
+      resetSheet()
+      toast.success(
+        t(
+          variables.action === 'deactivate'
+            ? 'orgSetupCrud.department.deactivated'
+            : 'orgSetupCrud.department.restored',
+        ),
+      )
+    },
+    onError: (error) => {
+      const mapped = mapDepartmentLifecycleError(error)
+      toast.error(t(mapped.toastKey))
+    },
+  })
 
   function resetSheet() {
     setSheetOpen(false)
@@ -191,6 +230,17 @@ function DepartmanlarPage() {
     event.preventDefault()
     if (isReadOnly) return
     saveMutation.mutate(departmentForm)
+  }
+
+  function handleDepartmentLifecycleAction() {
+    if (!editingDepartment || isReadOnly || isDirty) return
+    const action = editingDepartment.isActive ? 'deactivate' : 'restore'
+    const confirmKey =
+      action === 'deactivate'
+        ? 'orgSetupCrud.lifecycle.confirm.deactivateDepartment'
+        : 'orgSetupCrud.lifecycle.confirm.restoreDepartment'
+    if (!window.confirm(t(confirmKey))) return
+    lifecycleMutation.mutate({ department: editingDepartment, action })
   }
 
   function translateFieldError(field: DepartmentFieldKey): string | undefined {
@@ -253,12 +303,31 @@ function DepartmanlarPage() {
 
       <section>
         <SectionHeader title={t('departments.sections.list')} />
+        <div className="mt-3 max-w-md">
+          <Segmented
+            ariaLabel={t('orgSetupCrud.lifecycle.filter.ariaLabel')}
+            value={lifecycleFilter}
+            onChange={setLifecycleFilter}
+            options={[
+              { value: 'active', label: t('orgSetupCrud.lifecycle.filter.active') },
+              { value: 'inactive', label: t('orgSetupCrud.lifecycle.filter.inactive') },
+              { value: 'all', label: t('orgSetupCrud.lifecycle.filter.all') },
+            ]}
+          />
+        </div>
         {isEmpty ? (
           <EmptyState
             className="mt-3"
             icon={Building2}
             title={t('orgSetupReadiness.empty.departmentsTitle')}
             description={t('orgSetupReadiness.empty.departments')}
+          />
+        ) : isFilterEmpty ? (
+          <EmptyState
+            className="mt-3"
+            icon={Building2}
+            title={t('orgSetupCrud.lifecycle.emptyFilterTitle')}
+            description={t('orgSetupCrud.lifecycle.emptyFilterDescription')}
           />
         ) : (
           <>
@@ -271,7 +340,7 @@ function DepartmanlarPage() {
                 </div>
               ) : (
                 <DataList
-                  items={departments.map((department) => ({
+                  items={filteredDepartments.map((department) => ({
                     id: department.id,
                     title: department.name,
                     subtitle: [
@@ -316,7 +385,7 @@ function DepartmanlarPage() {
                         <Skeleton className="ml-auto h-7 w-24 rounded-full" />
                       </li>
                     ))
-                  : departments.map((department) => (
+                  : filteredDepartments.map((department) => (
                       <li key={department.id}>
                         <button
                           type="button"
@@ -385,6 +454,30 @@ function DepartmanlarPage() {
             <div className="flex items-center gap-2">
               <OrgEntitySourcePill source={editingDepartment.source} />
               <ActiveStatusPill isActive={editingDepartment.isActive} />
+            </div>
+          ) : null}
+
+          {editingDepartment && !isReadOnly ? (
+            <div className="flex justify-start border-t border-[var(--color-border)] pt-4">
+              <Button
+                type="button"
+                variant={editingDepartment.isActive ? 'outline' : 'default'}
+                disabled={isDirty || saveMutation.isPending || lifecycleMutation.isPending}
+                onClick={handleDepartmentLifecycleAction}
+              >
+                {lifecycleMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                ) : editingDepartment.isActive ? (
+                  <Power className="mr-2 h-4 w-4" aria-hidden />
+                ) : (
+                  <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
+                )}
+                {t(
+                  editingDepartment.isActive
+                    ? 'orgSetupCrud.lifecycle.actions.deactivate'
+                    : 'orgSetupCrud.lifecycle.actions.restore',
+                )}
+              </Button>
             </div>
           ) : null}
 

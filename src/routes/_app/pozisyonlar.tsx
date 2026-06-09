@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Briefcase, ClipboardList, Loader2, Lock, Plus, Save } from 'lucide-react'
+import { Briefcase, ClipboardList, Loader2, Lock, Plus, Power, RotateCcw, Save } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -13,6 +13,7 @@ import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
+import { Segmented } from '#/components/puls/Segmented'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
@@ -21,15 +22,20 @@ import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  applyOrgEntityLifecycleFilter,
   createPosition,
+  deactivatePosition,
   fetchDepartmentsOverviewWithMeta,
   fetchPositionsOverviewWithMeta,
   invalidateOrgStructureQueries,
   isPositionFormDirty,
+  mapPositionLifecycleError,
   mapPositionMutationError,
   normalizeOrgSetupCode,
+  restorePosition,
   updatePosition,
   validatePositionForm,
+  type OrgEntityLifecycleFilter,
   type OrgSetupEntitySource,
   type PositionFieldKey,
   type PositionFormFields,
@@ -108,6 +114,7 @@ function PozisyonlarPage() {
   const [positionForm, setPositionForm] = useState<PositionFormFields>(EMPTY_POSITION_FORM)
   const [formBaseline, setFormBaseline] = useState<PositionFormFields | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<PositionFieldKey, string>>>({})
+  const [lifecycleFilter, setLifecycleFilter] = useState<OrgEntityLifecycleFilter>('active')
 
   const { data: positionsResult, isLoading } = useQuery({
     queryKey: ['positions-overview', user?.id],
@@ -193,10 +200,42 @@ function PozisyonlarPage() {
   })
 
   const positions = data?.positions ?? []
+  const filteredPositions = applyOrgEntityLifecycleFilter(positions, lifecycleFilter)
   const isEmpty = !isLoading && positions.length === 0
+  const isFilterEmpty = !isLoading && positions.length > 0 && filteredPositions.length === 0
   const isReadOnly = sheetMode === 'readonly'
   const isDirty = formBaseline ? isPositionFormDirty(positionForm, formBaseline) : false
   const showTemplateMetrics = data?.showsTemplateMetrics ?? false
+
+  const lifecycleMutation = useMutation({
+    mutationFn: ({
+      position,
+      action,
+    }: {
+      position: PositionRow
+      action: 'deactivate' | 'restore'
+    }) => {
+      if (!user?.id) throw new Error('Missing user context')
+      return action === 'deactivate'
+        ? deactivatePosition(user.id, position.id)
+        : restorePosition(user.id, position.id)
+    },
+    onSuccess: (_result, variables) => {
+      if (user?.id) invalidateOrgStructureQueries(queryClient, user.id)
+      resetSheet()
+      toast.success(
+        t(
+          variables.action === 'deactivate'
+            ? 'orgSetupCrud.position.deactivated'
+            : 'orgSetupCrud.position.restored',
+        ),
+      )
+    },
+    onError: (error) => {
+      const mapped = mapPositionLifecycleError(error)
+      toast.error(t(mapped.toastKey))
+    },
+  })
 
   function resetSheet() {
     setSheetOpen(false)
@@ -238,6 +277,17 @@ function PozisyonlarPage() {
     event.preventDefault()
     if (isReadOnly) return
     saveMutation.mutate(positionForm)
+  }
+
+  function handlePositionLifecycleAction() {
+    if (!editingPosition || isReadOnly || isDirty) return
+    const action = editingPosition.isActive ? 'deactivate' : 'restore'
+    const confirmKey =
+      action === 'deactivate'
+        ? 'orgSetupCrud.lifecycle.confirm.deactivatePosition'
+        : 'orgSetupCrud.lifecycle.confirm.restorePosition'
+    if (!window.confirm(t(confirmKey))) return
+    lifecycleMutation.mutate({ position: editingPosition, action })
   }
 
   function translateFieldError(field: PositionFieldKey): string | undefined {
@@ -296,12 +346,31 @@ function PozisyonlarPage() {
 
       <section>
         <SectionHeader title={t('positions.sections.list')} />
+        <div className="mt-3 max-w-md">
+          <Segmented
+            ariaLabel={t('orgSetupCrud.lifecycle.filter.ariaLabel')}
+            value={lifecycleFilter}
+            onChange={setLifecycleFilter}
+            options={[
+              { value: 'active', label: t('orgSetupCrud.lifecycle.filter.active') },
+              { value: 'inactive', label: t('orgSetupCrud.lifecycle.filter.inactive') },
+              { value: 'all', label: t('orgSetupCrud.lifecycle.filter.all') },
+            ]}
+          />
+        </div>
         {isEmpty ? (
           <EmptyState
             className="mt-3"
             icon={Briefcase}
             title={t('orgSetupReadiness.empty.positionsTitle')}
             description={t('orgSetupReadiness.empty.positions')}
+          />
+        ) : isFilterEmpty ? (
+          <EmptyState
+            className="mt-3"
+            icon={Briefcase}
+            title={t('orgSetupCrud.lifecycle.emptyFilterTitle')}
+            description={t('orgSetupCrud.lifecycle.emptyFilterDescription')}
           />
         ) : (
           <>
@@ -314,7 +383,7 @@ function PozisyonlarPage() {
                 </div>
               ) : (
                 <DataList
-                  items={positions.map((position) => ({
+                  items={filteredPositions.map((position) => ({
                     id: position.id,
                     title: position.name,
                     subtitle: [position.code ?? '—', position.department].join(' · '),
@@ -356,7 +425,7 @@ function PozisyonlarPage() {
                         <Skeleton className="ml-auto h-7 w-24 rounded-full" />
                       </li>
                     ))
-                  : positions.map((position) => (
+                  : filteredPositions.map((position) => (
                       <li key={position.id}>
                         <button
                           type="button"
@@ -458,6 +527,30 @@ function PozisyonlarPage() {
             <div className="flex items-center gap-2">
               <OrgEntitySourcePill source={editingPosition.source} />
               <ActiveStatusPill isActive={editingPosition.isActive} />
+            </div>
+          ) : null}
+
+          {editingPosition && !isReadOnly ? (
+            <div className="flex justify-start border-t border-[var(--color-border)] pt-4">
+              <Button
+                type="button"
+                variant={editingPosition.isActive ? 'outline' : 'default'}
+                disabled={isDirty || saveMutation.isPending || lifecycleMutation.isPending}
+                onClick={handlePositionLifecycleAction}
+              >
+                {lifecycleMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                ) : editingPosition.isActive ? (
+                  <Power className="mr-2 h-4 w-4" aria-hidden />
+                ) : (
+                  <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
+                )}
+                {t(
+                  editingPosition.isActive
+                    ? 'orgSetupCrud.lifecycle.actions.deactivate'
+                    : 'orgSetupCrud.lifecycle.actions.restore',
+                )}
+              </Button>
             </div>
           ) : null}
 
