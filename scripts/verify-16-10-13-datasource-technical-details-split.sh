@@ -27,13 +27,13 @@ require_file() {
 require_contains() {
   local file="$1"
   local needle="$2"
-  rg -F "$needle" "$file" >/dev/null || fail "$file does not contain: $needle"
+  grep -Fq "$needle" "$file" || fail "$file does not contain: $needle"
 }
 
 require_not_contains() {
   local file="$1"
   local needle="$2"
-  if rg -F "$needle" "$file" >/dev/null; then
+  if grep -Fq "$needle" "$file"; then
     fail "$file must not contain: $needle"
   fi
 }
@@ -98,7 +98,7 @@ for target_id in \
   "erp-credential-boundary" \
   "erp-mapping-discovery" \
   "erp-runtime-queue"; do
-  rg -F "id=\"${target_id}\"" src/components/data-sources >/dev/null || \
+  grep -RFq "id=\"${target_id}\"" src/components/data-sources || \
     fail "deep-link target ${target_id} is missing from data-source components"
 done
 

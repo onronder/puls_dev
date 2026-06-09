@@ -27,13 +27,13 @@ require_file() {
 require_pattern() {
   local file="$1"
   local pattern="$2"
-  rg -q "$pattern" "$file" || fail "missing pattern in $file: $pattern"
+  grep -Fq "$pattern" "$file" || fail "missing pattern in $file: $pattern"
 }
 
 reject_pattern() {
   local file="$1"
   local pattern="$2"
-  if rg -q "$pattern" "$file"; then
+  if grep -Fq "$pattern" "$file"; then
     fail "forbidden pattern in $file: $pattern"
   fi
 }

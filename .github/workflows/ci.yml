@@ -33,6 +33,7 @@ jobs:
         run: pnpm run audit:supabase
       - run: pnpm run build
       - run: pnpm run check-i18n
+      - run: pnpm run verify:pre-pr17
 
   playwright:
     runs-on: ubuntu-latest
