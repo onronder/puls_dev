@@ -1,9 +1,10 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertCircle,
   Briefcase,
   Building2,
+  Loader2,
   Mail,
   Search,
   UserCheck,
@@ -11,8 +12,9 @@ import {
   Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { EmptyState } from '#/components/puls/EmptyState'
 import { MetricCard } from '#/components/puls/MetricCard'
@@ -28,14 +30,21 @@ import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
   applyEmployeeAssignmentReadinessFilter,
+  fetchEmployeeAssignmentEditOptions,
   fetchEmployeeAssignmentReadiness,
   fetchEmployeesOverview,
+  invalidateOrgStructureQueries,
+  mapEmployeeAssignmentMutationError,
+  updateEmployeeAssignment,
+  type EmployeeAssignmentEditOptions,
   type EmployeeAssignmentEntityRef,
+  type EmployeeAssignmentMutationInput,
   type EmployeeAssignmentManagerRef,
   type EmployeeAssignmentReadinessEmployee,
   type EmployeeAssignmentReadinessFilter,
   type EmployeeAssignmentReadinessStatus,
 } from '#/lib/data'
+import { isSetupAdmin } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/calisanlar')({
@@ -194,15 +203,96 @@ function assignmentDetailValue(
   return label
 }
 
+function nullableSelectValue(value: string | null): string {
+  return value ?? ''
+}
+
+function selectValueToNullable(value: string): string | null {
+  return value.trim() ? value : null
+}
+
+function employeeToAssignmentForm(
+  employee: EmployeeAssignmentReadinessEmployee,
+): EmployeeAssignmentMutationInput {
+  return {
+    departmentId: employee.department?.id ?? null,
+    positionId: employee.position?.id ?? null,
+    costCenterId: employee.costCenter?.id ?? null,
+    managerEmployeeId: employee.manager?.id ?? null,
+  }
+}
+
+function hasAssignmentFormChanges(
+  employee: EmployeeAssignmentReadinessEmployee,
+  form: EmployeeAssignmentMutationInput,
+): boolean {
+  const baseline = employeeToAssignmentForm(employee)
+  return (
+    baseline.departmentId !== form.departmentId ||
+    baseline.positionId !== form.positionId ||
+    baseline.costCenterId !== form.costCenterId ||
+    baseline.managerEmployeeId !== form.managerEmployeeId
+  )
+}
+
+function AssignmentSelect({
+  label,
+  value,
+  onChange,
+  placeholder,
+  options,
+  disabled,
+}: {
+  label: string
+  value: string | null
+  onChange: (value: string | null) => void
+  placeholder: string
+  options: Array<{ id: string; label: string }>
+  disabled?: boolean
+}) {
+  return (
+    <label className="block min-w-0">
+      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+        {label}
+      </span>
+      <select
+        value={nullableSelectValue(value)}
+        disabled={disabled}
+        onChange={(event) => onChange(selectValueToNullable(event.target.value))}
+        className="h-11 w-full min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 text-base text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] disabled:opacity-60"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function buildAssignmentOptionLabel(name: string, code: string | null): string {
+  return code ? `${name} · ${code}` : name
+}
+
 function CalisanlarPage() {
   const { t } = useTranslation()
-  const { user, activePersona } = useAuth()
+  const { user, activePersona, personaRole } = useAuth()
+  const queryClient = useQueryClient()
 
   const [readinessFilter, setReadinessFilter] = useState<EmployeeAssignmentReadinessFilter>('all')
   const [departmentFilter, setDepartmentFilter] = useState('')
   const [positionFilter, setPositionFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+  const [assignmentEditing, setAssignmentEditing] = useState(false)
+  const [assignmentForm, setAssignmentForm] = useState<EmployeeAssignmentMutationInput>({
+    departmentId: null,
+    positionId: null,
+    costCenterId: null,
+    managerEmployeeId: null,
+  })
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['employee-assignment-readiness', user?.id],
@@ -214,6 +304,40 @@ function CalisanlarPage() {
     queryKey: ['employees-overview-leave', user?.id],
     queryFn: () => fetchEmployeesOverview(user!.id),
     enabled: Boolean(user?.id) && activePersona === 'manager',
+  })
+
+  const { data: assignmentOptions } = useQuery({
+    queryKey: ['employee-assignment-edit-options', user?.id],
+    queryFn: () => fetchEmployeeAssignmentEditOptions(user!.id),
+    enabled: Boolean(user?.id) && activePersona === 'manager' && isSetupAdmin(personaRole),
+  })
+
+  const assignmentMutation = useMutation({
+    mutationFn: ({
+      employeeId,
+      input,
+    }: {
+      employeeId: string
+      input: EmployeeAssignmentMutationInput
+    }) => updateEmployeeAssignment(user!.id, employeeId, input),
+    onSuccess: (result) => {
+      if (user?.id) {
+        invalidateOrgStructureQueries(queryClient, user.id)
+        void queryClient.invalidateQueries({ queryKey: ['employee-assignment-edit-options', user.id] })
+      }
+      setAssignmentEditing(false)
+      toast.success(
+        t(
+          result.status === 'unchanged'
+            ? 'employeeAssignmentReadiness.edit.unchanged'
+            : 'employeeAssignmentReadiness.edit.saved',
+        ),
+      )
+    },
+    onError: (error) => {
+      const mapped = mapEmployeeAssignmentMutationError(error)
+      toast.error(t(mapped.toastKey))
+    },
   })
 
   const employees = useMemo(() => data?.employees ?? [], [data?.employees])
@@ -267,6 +391,65 @@ function CalisanlarPage() {
     if (!selectedEmployee?.email || !leaveOverview) return null
     return leaveOverview.byEmail[selectedEmployee.email.toLowerCase()] ?? null
   }, [selectedEmployee, leaveOverview])
+
+  const canEditSelectedAssignment =
+    Boolean(selectedEmployee?.canEditAssignment) && isSetupAdmin(personaRole)
+  const canOpenAssignmentEdit = canEditSelectedAssignment && Boolean(assignmentOptions)
+
+  const editOptions: EmployeeAssignmentEditOptions = assignmentOptions ?? {
+    departments: [],
+    positions: [],
+    costCenters: [],
+    managers: [],
+  }
+
+  const positionOptionsForForm = useMemo(() => {
+    return editOptions.positions.filter(
+      (position) =>
+        !assignmentForm.departmentId ||
+        position.departmentId === null ||
+        position.departmentId === assignmentForm.departmentId,
+    )
+  }, [editOptions.positions, assignmentForm.departmentId])
+
+  const managerOptionsForForm = useMemo(() => {
+    return editOptions.managers.filter((manager) => manager.id !== selectedEmployee?.id)
+  }, [editOptions.managers, selectedEmployee?.id])
+
+  const canSubmitAssignment =
+    Boolean(selectedEmployee) &&
+    canEditSelectedAssignment &&
+    !assignmentMutation.isPending &&
+    hasAssignmentFormChanges(selectedEmployee!, assignmentForm)
+
+  const updateAssignmentForm = (patch: Partial<EmployeeAssignmentMutationInput>) => {
+    setAssignmentForm((current) => ({ ...current, ...patch }))
+  }
+
+  const handleDepartmentAssignmentChange = (departmentId: string | null) => {
+    setAssignmentForm((current) => {
+      const currentPosition = editOptions.positions.find((position) => position.id === current.positionId)
+      return {
+        ...current,
+        departmentId,
+        positionId:
+          currentPosition?.departmentId &&
+          departmentId &&
+          currentPosition.departmentId !== departmentId
+            ? null
+            : current.positionId,
+      }
+    })
+  }
+
+  const handleAssignmentSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!selectedEmployee || !canSubmitAssignment) return
+    assignmentMutation.mutate({
+      employeeId: selectedEmployee.id,
+      input: assignmentForm,
+    })
+  }
 
   const resetFilters = () => {
     setReadinessFilter('all')
@@ -480,7 +663,11 @@ function CalisanlarPage() {
                 <EmployeeRow
                   key={employee.id}
                   employee={employee}
-                  onSelect={() => setSelectedEmployeeId(employee.id)}
+                  onSelect={() => {
+                    setSelectedEmployeeId(employee.id)
+                    setAssignmentForm(employeeToAssignmentForm(employee))
+                    setAssignmentEditing(false)
+                  }}
                 />
               ))}
             </ul>
@@ -491,10 +678,52 @@ function CalisanlarPage() {
       <SheetShell
         open={Boolean(selectedEmployee)}
         onOpenChange={(open) => {
-          if (!open) setSelectedEmployeeId(null)
+          if (!open) {
+            setSelectedEmployeeId(null)
+            setAssignmentEditing(false)
+          }
         }}
         title={selectedEmployee?.displayName ?? ''}
         description={selectedEmployee?.email ?? t('employeesSetup.detail.description')}
+        footer={
+          selectedEmployee ? (
+            assignmentEditing ? (
+              <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="touch-target"
+                  disabled={assignmentMutation.isPending}
+                  onClick={() => {
+                    setAssignmentForm(employeeToAssignmentForm(selectedEmployee))
+                    setAssignmentEditing(false)
+                  }}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  form="employee-assignment-form"
+                  className="touch-target"
+                  disabled={!canSubmitAssignment}
+                >
+                  {assignmentMutation.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                  ) : null}
+                  {t('employeeAssignmentReadiness.edit.save')}
+                </Button>
+              </div>
+            ) : canOpenAssignmentEdit ? (
+              <Button
+                type="button"
+                className="touch-target w-full sm:w-auto"
+                onClick={() => setAssignmentEditing(true)}
+              >
+                {t('employeeAssignmentReadiness.edit.open')}
+              </Button>
+            ) : undefined
+          ) : undefined
+        }
       >
         {selectedEmployee ? (
           <div className="space-y-5">
@@ -505,41 +734,105 @@ function CalisanlarPage() {
               <StatusPill tone={readinessPillTone(selectedEmployee.readiness.status)}>
                 {t(`employeeAssignmentReadiness.status.${selectedEmployee.readiness.status}`)}
               </StatusPill>
+              <StatusPill
+                tone={
+                  selectedEmployee.source === 'puls'
+                    ? 'success'
+                    : selectedEmployee.source === 'erp'
+                      ? 'warning'
+                      : 'neutral'
+                }
+              >
+                {t(`orgSetupReadiness.source.${selectedEmployee.source}`)}
+              </StatusPill>
             </div>
 
-            <DetailRow
-              icon={Building2}
-              label={t('employeeAssignmentReadiness.labels.department')}
-              value={assignmentDetailValue(
-                selectedEmployee.department,
-                t('employeeAssignmentReadiness.labels.departmentMissing'),
-              )}
-            />
-            <DetailRow
-              icon={Briefcase}
-              label={t('employeeAssignmentReadiness.labels.position')}
-              value={assignmentDetailValue(
-                selectedEmployee.position,
-                t('employeeAssignmentReadiness.labels.positionMissing'),
-              )}
-            />
-            <DetailRow
-              icon={Wallet}
-              label={t('employeeAssignmentReadiness.labels.costCenter')}
-              value={assignmentDetailValue(
-                selectedEmployee.costCenter,
-                t('employeeAssignmentReadiness.labels.costCenterMissing'),
-              )}
-            />
-            <DetailRow
-              icon={UserCheck}
-              label={t('employeeAssignmentReadiness.labels.manager')}
-              value={assignmentDetailValue(
-                selectedEmployee.manager,
-                t('employeeAssignmentReadiness.labels.managerMissing'),
-                'displayName',
-              )}
-            />
+            {assignmentEditing ? (
+              <form id="employee-assignment-form" className="space-y-4" onSubmit={handleAssignmentSubmit}>
+                <AssignmentSelect
+                  label={t('employeeAssignmentReadiness.labels.department')}
+                  value={assignmentForm.departmentId}
+                  onChange={handleDepartmentAssignmentChange}
+                  placeholder={t('employeeAssignmentReadiness.edit.placeholders.department')}
+                  options={editOptions.departments.map((department) => ({
+                    id: department.id,
+                    label: buildAssignmentOptionLabel(department.name, department.code),
+                  }))}
+                  disabled={assignmentMutation.isPending}
+                />
+                <AssignmentSelect
+                  label={t('employeeAssignmentReadiness.labels.position')}
+                  value={assignmentForm.positionId}
+                  onChange={(positionId) => updateAssignmentForm({ positionId })}
+                  placeholder={t('employeeAssignmentReadiness.edit.placeholders.position')}
+                  options={positionOptionsForForm.map((position) => ({
+                    id: position.id,
+                    label: buildAssignmentOptionLabel(position.name, position.code),
+                  }))}
+                  disabled={assignmentMutation.isPending}
+                />
+                <AssignmentSelect
+                  label={t('employeeAssignmentReadiness.labels.costCenter')}
+                  value={assignmentForm.costCenterId}
+                  onChange={(costCenterId) => updateAssignmentForm({ costCenterId })}
+                  placeholder={t('employeeAssignmentReadiness.edit.placeholders.costCenter')}
+                  options={editOptions.costCenters.map((costCenter) => ({
+                    id: costCenter.id,
+                    label: buildAssignmentOptionLabel(costCenter.name, costCenter.code),
+                  }))}
+                  disabled={assignmentMutation.isPending}
+                />
+                <AssignmentSelect
+                  label={t('employeeAssignmentReadiness.labels.manager')}
+                  value={assignmentForm.managerEmployeeId}
+                  onChange={(managerEmployeeId) => updateAssignmentForm({ managerEmployeeId })}
+                  placeholder={t('employeeAssignmentReadiness.edit.placeholders.manager')}
+                  options={managerOptionsForForm.map((manager) => ({
+                    id: manager.id,
+                    label: manager.email
+                      ? `${manager.displayName} · ${manager.email}`
+                      : manager.displayName,
+                  }))}
+                  disabled={assignmentMutation.isPending}
+                />
+              </form>
+            ) : (
+              <>
+                <DetailRow
+                  icon={Building2}
+                  label={t('employeeAssignmentReadiness.labels.department')}
+                  value={assignmentDetailValue(
+                    selectedEmployee.department,
+                    t('employeeAssignmentReadiness.labels.departmentMissing'),
+                  )}
+                />
+                <DetailRow
+                  icon={Briefcase}
+                  label={t('employeeAssignmentReadiness.labels.position')}
+                  value={assignmentDetailValue(
+                    selectedEmployee.position,
+                    t('employeeAssignmentReadiness.labels.positionMissing'),
+                  )}
+                />
+                <DetailRow
+                  icon={Wallet}
+                  label={t('employeeAssignmentReadiness.labels.costCenter')}
+                  value={assignmentDetailValue(
+                    selectedEmployee.costCenter,
+                    t('employeeAssignmentReadiness.labels.costCenterMissing'),
+                  )}
+                />
+                <DetailRow
+                  icon={UserCheck}
+                  label={t('employeeAssignmentReadiness.labels.manager')}
+                  value={assignmentDetailValue(
+                    selectedEmployee.manager,
+                    t('employeeAssignmentReadiness.labels.managerMissing'),
+                    'displayName',
+                  )}
+                />
+              </>
+            )}
             <DetailRow
               icon={Mail}
               label={t('employeesSetup.detail.email')}
@@ -576,9 +869,19 @@ function CalisanlarPage() {
               </div>
             ) : null}
 
-            <p className="text-xs text-[var(--color-text-muted)]">
-              {t('employeeAssignmentReadiness.boundary.erpNoWrite')}
-            </p>
+            {!assignmentEditing ? (
+              <p className="text-xs text-[var(--color-text-muted)]">
+                {t(
+                  canEditSelectedAssignment
+                    ? 'employeeAssignmentReadiness.boundary.pulsWritable'
+                    : selectedEmployee.source !== 'puls'
+                      ? 'employeeAssignmentReadiness.boundary.sourceReadOnly'
+                      : selectedEmployee.isActive
+                        ? 'employeeAssignmentReadiness.boundary.permissionReadOnly'
+                        : 'employeeAssignmentReadiness.boundary.inactiveReadOnly',
+                )}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </SheetShell>

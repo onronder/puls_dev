@@ -3782,8 +3782,38 @@
       "managerMissing": "No manager"
     },
     "boundary": {
-      "readOnly": "This view audits employee assignments; editing flows will open in a later release.",
-      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP."
+      "readOnly": "Audit employee assignments and update PULS-owned records.",
+      "erpNoWrite": "PULS does not modify ERP master data; the source system remains finance/ERP.",
+      "pulsWritable": "This employee is PULS-owned; assignment changes are stored with safe audit evidence.",
+      "sourceReadOnly": "This employee is owned by an external source and is read-only in PULS.",
+      "permissionReadOnly": "HR admin permission is required to change assignments.",
+      "inactiveReadOnly": "Inactive employee assignments cannot be changed from this screen."
+    },
+    "edit": {
+      "open": "Edit assignments",
+      "save": "Save assignments",
+      "saved": "Assignments saved.",
+      "unchanged": "No assignment changes.",
+      "placeholders": {
+        "department": "Select department",
+        "position": "Select position",
+        "costCenter": "Select cost center",
+        "manager": "Select manager"
+      },
+      "errors": {
+        "forbidden": "HR admin permission is required to change this assignment.",
+        "notFound": "Employee record was not found.",
+        "sourceReadOnly": "External-source employees cannot be changed in PULS.",
+        "inactiveEmployee": "Inactive employee assignments cannot be changed from this screen.",
+        "invalidDepartment": "The selected department is inactive or does not belong to this company.",
+        "invalidPosition": "The selected position is inactive or does not belong to this company.",
+        "positionDepartmentMismatch": "The position must belong to the selected department.",
+        "invalidCostCenter": "The selected cost center is inactive or does not belong to this company.",
+        "selfManager": "An employee cannot report to themselves.",
+        "invalidManager": "The selected manager is inactive or does not belong to this company.",
+        "managerCycle": "This manager assignment would create a reporting cycle.",
+        "generic": "Assignments could not be saved. Please try again."
+      }
     }
   },
   "requestCreationReadiness": {

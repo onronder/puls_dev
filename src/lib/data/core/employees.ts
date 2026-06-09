@@ -3,7 +3,11 @@ import {
   fetchDemoEmployeesOverview,
 } from '#/lib/demo/puls-demo-data'
 import type { DemoEmployeeStatus, DemoEmployeesOverview } from '#/lib/demo/puls-demo-data'
-import { fromSupabaseError } from '#/lib/data/errors'
+import {
+  fromSupabaseError,
+  isDataAdapterError,
+  parseRpcErrorCode,
+} from '#/lib/data/errors'
 import { pulsCalc, pulsCore, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
@@ -53,6 +57,27 @@ export type EmployeeRowForList = {
 export type EmployeesOverview = DemoEmployeesOverview
 export type { DemoEmployeeStatus }
 
+export type EmployeeAssignmentMutationInput = {
+  departmentId: string | null
+  positionId: string | null
+  costCenterId: string | null
+  managerEmployeeId: string | null
+}
+
+export type EmployeeAssignmentUpdateResult = {
+  status: 'updated' | 'unchanged'
+  employeeId: string
+  departmentId: string | null
+  positionId: string | null
+  costCenterId: string | null
+  managerEmployeeId: string | null
+}
+
+export type EmployeeAssignmentErrorMapping = {
+  code: string
+  toastKey: string
+}
+
 export function isActiveEmployeeStatus(status: string | null | undefined): boolean {
   return status === 'active'
 }
@@ -86,6 +111,47 @@ export function mapEmployeeRow(
     managerName: managerEmployeeId ? (lookups.managerNameMap.get(managerEmployeeId) ?? null) : null,
     personaRole: row.persona_role ?? null,
     hireDate: row.hire_date ?? null,
+  }
+}
+
+const EMPLOYEE_ASSIGNMENT_ERROR_KEYS: Record<string, string> = {
+  PULS_EMPLOYEE_ASSIGNMENT_FORBIDDEN: 'employeeAssignmentReadiness.edit.errors.forbidden',
+  PULS_EMPLOYEE_ASSIGNMENT_NOT_FOUND: 'employeeAssignmentReadiness.edit.errors.notFound',
+  PULS_EMPLOYEE_ASSIGNMENT_SOURCE_READ_ONLY: 'employeeAssignmentReadiness.edit.errors.sourceReadOnly',
+  PULS_EMPLOYEE_ASSIGNMENT_INACTIVE_EMPLOYEE: 'employeeAssignmentReadiness.edit.errors.inactiveEmployee',
+  PULS_EMPLOYEE_ASSIGNMENT_INVALID_DEPARTMENT: 'employeeAssignmentReadiness.edit.errors.invalidDepartment',
+  PULS_EMPLOYEE_ASSIGNMENT_INVALID_POSITION: 'employeeAssignmentReadiness.edit.errors.invalidPosition',
+  PULS_EMPLOYEE_ASSIGNMENT_POSITION_DEPARTMENT_MISMATCH:
+    'employeeAssignmentReadiness.edit.errors.positionDepartmentMismatch',
+  PULS_EMPLOYEE_ASSIGNMENT_INVALID_COST_CENTER:
+    'employeeAssignmentReadiness.edit.errors.invalidCostCenter',
+  PULS_EMPLOYEE_ASSIGNMENT_SELF_MANAGER: 'employeeAssignmentReadiness.edit.errors.selfManager',
+  PULS_EMPLOYEE_ASSIGNMENT_INVALID_MANAGER: 'employeeAssignmentReadiness.edit.errors.invalidManager',
+  PULS_EMPLOYEE_ASSIGNMENT_MANAGER_CYCLE: 'employeeAssignmentReadiness.edit.errors.managerCycle',
+}
+
+function parseEmployeeAssignmentUpdateResult(data: unknown): EmployeeAssignmentUpdateResult {
+  const row = (data ?? {}) as Record<string, unknown>
+  return {
+    status: row.status === 'unchanged' ? 'unchanged' : 'updated',
+    employeeId: String(row.employee_id ?? ''),
+    departmentId: (row.department_id as string | null | undefined) ?? null,
+    positionId: (row.position_id as string | null | undefined) ?? null,
+    costCenterId: (row.cost_center_id as string | null | undefined) ?? null,
+    managerEmployeeId: (row.manager_employee_id as string | null | undefined) ?? null,
+  }
+}
+
+export function mapEmployeeAssignmentMutationError(error: unknown): EmployeeAssignmentErrorMapping {
+  const message = isDataAdapterError(error)
+    ? error.message
+    : error instanceof Error
+      ? error.message
+      : ''
+  const code = parseRpcErrorCode(message) ?? 'unknown'
+  return {
+    code,
+    toastKey: EMPLOYEE_ASSIGNMENT_ERROR_KEYS[code] ?? 'employeeAssignmentReadiness.edit.errors.generic',
   }
 }
 
@@ -271,6 +337,31 @@ async function fetchRealEmployeeList(userId: string): Promise<EmployeeListItem[]
 async function fetchRealEmployeeListStats(userId: string): Promise<EmployeeListStats> {
   const items = await fetchRealEmployeeList(userId)
   return buildEmployeeListStats(items)
+}
+
+export async function updateEmployeeAssignment(
+  userId: string,
+  employeeId: string,
+  input: EmployeeAssignmentMutationInput,
+): Promise<EmployeeAssignmentUpdateResult> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    throw new Error('Missing tenant context')
+  }
+
+  const { data, error } = await pulsCore().rpc('update_employee_assignment', {
+    p_employee_id: employeeId,
+    p_department_id: input.departmentId,
+    p_position_id: input.positionId,
+    p_cost_center_id: input.costCenterId,
+    p_manager_employee_id: input.managerEmployeeId,
+  })
+
+  if (error) {
+    throw fromSupabaseError(error, 'updateEmployeeAssignment', 'puls_core', 'employees')
+  }
+
+  return parseEmployeeAssignmentUpdateResult(data)
 }
 
 export function fetchEmployeesOverviewWithMeta(userId: string) {

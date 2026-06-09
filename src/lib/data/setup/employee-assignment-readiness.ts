@@ -2,6 +2,11 @@ import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCore, resolveTenantContext } from '#/lib/data/client'
 import { fetchDemoEmployeeAssignmentReadiness } from '#/lib/demo/puls-demo-data'
 import { resolveAdapterDataWithMeta, type DataResult } from '#/lib/data/result'
+import {
+  isOrgEntityEditable,
+  mapOrgEntitySource,
+  type OrgSetupEntitySource,
+} from '#/lib/data/setup/org-entity-source'
 
 export type EmployeeAssignmentReadinessStatus =
   | 'ready'
@@ -49,6 +54,8 @@ export type EmployeeAssignmentReadinessEmployee = {
   email: string | null
   employeeNumber: string | null
   isActive: boolean
+  source: OrgSetupEntitySource
+  canEditAssignment: boolean
   department: EmployeeAssignmentEntityRef | null
   position: EmployeeAssignmentEntityRef | null
   costCenter: EmployeeAssignmentEntityRef | null
@@ -73,6 +80,23 @@ export type EmployeeAssignmentReadinessSummary = {
 export type EmployeeAssignmentReadinessOverview = {
   employees: EmployeeAssignmentReadinessEmployee[]
   summary: EmployeeAssignmentReadinessSummary
+}
+
+export type EmployeeAssignmentDepartmentOption = EmployeeAssignmentEntityRef
+
+export type EmployeeAssignmentPositionOption = EmployeeAssignmentEntityRef & {
+  departmentId: string | null
+}
+
+export type EmployeeAssignmentCostCenterOption = EmployeeAssignmentEntityRef
+
+export type EmployeeAssignmentManagerOption = EmployeeAssignmentManagerRef
+
+export type EmployeeAssignmentEditOptions = {
+  departments: EmployeeAssignmentDepartmentOption[]
+  positions: EmployeeAssignmentPositionOption[]
+  costCenters: EmployeeAssignmentCostCenterOption[]
+  managers: EmployeeAssignmentManagerOption[]
 }
 
 export type CostCenterAssignmentRow = {
@@ -241,6 +265,7 @@ type EmployeeRow = {
   email: string | null
   employee_code: string | null
   employment_status: string
+  external_source: string | null
   department_id: string | null
   position_id: string | null
   manager_employee_id: string | null
@@ -494,6 +519,7 @@ async function buildEmployeeAssignmentReadinessFromRows(
       manager,
     })
     const status = computeEmployeeAssignmentReadiness(flags, { isActiveEmployee })
+    const source = mapOrgEntitySource(row.external_source)
 
     return {
       id: row.id,
@@ -501,6 +527,8 @@ async function buildEmployeeAssignmentReadinessFromRows(
       email: row.email,
       employeeNumber: row.employee_code,
       isActive: isActiveEmployee,
+      source,
+      canEditAssignment: isOrgEntityEditable(source) && isActiveEmployee,
       department,
       position,
       costCenter,
@@ -517,7 +545,7 @@ async function fetchEmployeeRowsForReadiness(
   let query = pulsCore()
     .from('employees')
     .select(
-      'id, full_name, email, employee_code, employment_status, department_id, position_id, manager_employee_id',
+      'id, full_name, email, employee_code, employment_status, external_source, department_id, position_id, manager_employee_id',
     )
     .eq('tenant_id', tenantId)
 
@@ -539,6 +567,130 @@ async function fetchEmployeeRowsForReadiness(
   }
 
   return (employeeRows ?? []) as EmployeeRow[]
+}
+
+function sortByName<T extends { name: string }>(rows: T[]): T[] {
+  return [...rows].sort((left, right) => left.name.localeCompare(right.name, 'tr'))
+}
+
+function sortManagers(rows: EmployeeAssignmentManagerOption[]): EmployeeAssignmentManagerOption[] {
+  return [...rows].sort((left, right) => left.displayName.localeCompare(right.displayName, 'tr'))
+}
+
+async function fetchRealEmployeeAssignmentEditOptions(
+  userId: string,
+): Promise<EmployeeAssignmentEditOptions> {
+  const ctx = await resolveTenantContext(userId)
+  if (!ctx.tenantId) {
+    return {
+      departments: [],
+      positions: [],
+      costCenters: [],
+      managers: [],
+    }
+  }
+
+  const [departmentsResult, positionsResult, costCentersResult, managersResult] = await Promise.all([
+    pulsCore()
+      .from('departments')
+      .select('id, name, code, is_active')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+    pulsCore()
+      .from('positions')
+      .select('id, name, code, department_id, is_active')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+    pulsCore()
+      .from('cost_centers')
+      .select('id, name, code, is_active')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('is_active', true)
+      .order('name', { ascending: true }),
+    pulsCore()
+      .from('employees')
+      .select('id, full_name, email, employment_status')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('employment_status', 'active')
+      .order('full_name', { ascending: true }),
+  ])
+
+  if (departmentsResult.error) {
+    throw fromSupabaseError(
+      departmentsResult.error,
+      'fetchEmployeeAssignmentEditOptions',
+      'puls_core',
+      'departments',
+    )
+  }
+  if (positionsResult.error) {
+    throw fromSupabaseError(
+      positionsResult.error,
+      'fetchEmployeeAssignmentEditOptions',
+      'puls_core',
+      'positions',
+    )
+  }
+  if (costCentersResult.error) {
+    throw fromSupabaseError(
+      costCentersResult.error,
+      'fetchEmployeeAssignmentEditOptions',
+      'puls_core',
+      'cost_centers',
+    )
+  }
+  if (managersResult.error) {
+    throw fromSupabaseError(
+      managersResult.error,
+      'fetchEmployeeAssignmentEditOptions',
+      'puls_core',
+      'employees',
+    )
+  }
+
+  return {
+    departments: sortByName(
+      (departmentsResult.data ?? []).map((row) => ({
+        id: row.id as string,
+        name: row.name as string,
+        code: (row.code as string | null) ?? null,
+        isActive: Boolean(row.is_active),
+      })),
+    ),
+    positions: sortByName(
+      (positionsResult.data ?? []).map((row) => ({
+        id: row.id as string,
+        name: row.name as string,
+        code: (row.code as string | null) ?? null,
+        departmentId: (row.department_id as string | null) ?? null,
+        isActive: Boolean(row.is_active),
+      })),
+    ),
+    costCenters: sortByName(
+      (costCentersResult.data ?? []).map((row) => ({
+        id: row.id as string,
+        name: row.name as string,
+        code: (row.code as string | null) ?? null,
+        isActive: Boolean(row.is_active),
+      })),
+    ),
+    managers: sortManagers(
+      (managersResult.data ?? []).map((row) => ({
+        id: row.id as string,
+        displayName: (row.full_name as string | null) ?? '—',
+        email: (row.email as string | null) ?? null,
+        isActive: row.employment_status === 'active',
+      })),
+    ),
+  }
+}
+
+export async function fetchEmployeeAssignmentEditOptions(
+  userId: string,
+): Promise<EmployeeAssignmentEditOptions> {
+  return fetchRealEmployeeAssignmentEditOptions(userId)
 }
 
 async function fetchRealEmployeeAssignmentReadiness(

@@ -988,6 +988,18 @@ PR17.1B adds safe soft lifecycle actions for PULS-owned departments and position
 
 Verify: [`../../scripts/verify-17-1-b-core-org-lifecycle.sh`](../../scripts/verify-17-1-b-core-org-lifecycle.sh)
 
+## PR17.1C Employee assignment edit
+
+PR17.1C lets admins update PULS-owned active employee assignments from the existing `/calisanlar` detail sheet. The server RPC validates tenant/admin authority, source ownership, active references, department-position compatibility, reporting cycles, and writes metadata-only audit evidence while imported employees remain read-only.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_1_c_employee_assignment_edit.md](./17_1_c_employee_assignment_edit.md) | PR17.1C scope, product contract, non-goals, verification |
+| [`supabase/migrations/20260609140000_puls_core_employee_assignment_edit.sql`](../../supabase/migrations/20260609140000_puls_core_employee_assignment_edit.sql) | Employee assignment edit RPC migration |
+| [`scripts/verify-17-1-c-employee-assignment-edit.sh`](../../scripts/verify-17-1-c-employee-assignment-edit.sh) | PR17.1C verify gate |
+
+Verify: [`../../scripts/verify-17-1-c-employee-assignment-edit.sh`](../../scripts/verify-17-1-c-employee-assignment-edit.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
