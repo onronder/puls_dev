@@ -3893,6 +3893,37 @@
     "status": {
       "done": "Tamam",
       "pending": "Bekliyor"
+    },
+    "edit": {
+      "open": "Düzenle",
+      "save": "Kaydet",
+      "toast": {
+        "saved": "Şirket bilgileri güncellendi.",
+        "unchanged": "Şirket bilgilerinde değişiklik yok."
+      },
+      "options": {
+        "locale": {
+          "tr": "Türkçe",
+          "en": "İngilizce"
+        },
+        "timezone": {
+          "istanbul": "İstanbul",
+          "berlin": "Berlin",
+          "london": "Londra",
+          "dubai": "Dubai",
+          "newYork": "New York",
+          "utc": "UTC"
+        }
+      },
+      "errors": {
+        "forbidden": "Bu işlemi yapmak için yönetici yetkisi gerekiyor.",
+        "notFound": "Şirket profili bulunamadı.",
+        "invalidName": "Şirket adı 2-120 karakter arasında olmalı.",
+        "invalidIndustry": "Sektör 80 karakterden uzun olamaz.",
+        "invalidLocale": "Seçilen dil desteklenmiyor.",
+        "invalidTimezone": "Seçilen timezone desteklenmiyor.",
+        "saveFailed": "Şirket bilgileri kaydedilemedi."
+      }
     }
   },
   "departments": {

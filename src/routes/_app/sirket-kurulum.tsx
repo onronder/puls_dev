@@ -1,7 +1,9 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, Building2, CheckCircle2, Clock, Plug } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AlertCircle, Building2, CheckCircle2, Clock, Loader2, Plug } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 import { SetupRouteGuard } from '#/components/auth/SetupRouteGuard'
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
@@ -10,17 +12,28 @@ import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
+import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
 import {
+  COMPANY_PROFILE_INDUSTRY_MAX_LENGTH,
+  COMPANY_PROFILE_LOCALE_OPTIONS,
+  COMPANY_PROFILE_NAME_MAX_LENGTH,
+  COMPANY_PROFILE_TIMEZONE_OPTIONS,
   fetchCompanySetupOverviewWithMeta,
   fetchSetupReadinessDashboard,
+  isCompanyProfileFormDirty,
+  mapCompanyProfileMutationError,
+  normalizeCompanyProfileInput,
+  updateCompanyProfile,
   type CompanySetupOverview,
+  type CompanyProfileMutationInput,
   type SetupReadinessIssue,
   type SetupReadinessSection,
   type SetupReadinessSeverity,
 } from '#/lib/data'
+import { isSetupAdmin } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/sirket-kurulum')({
@@ -116,6 +129,15 @@ function formatGeneratedAt(value: string, locale: string): string {
   }
 }
 
+function overviewToCompanyProfileForm(data: CompanySetupOverview): CompanyProfileMutationInput {
+  return {
+    displayName: data.name === '—' ? '' : data.name,
+    industry: data.sector === '—' ? null : data.sector,
+    locale: data.language,
+    timezone: data.timezone,
+  }
+}
+
 const COMPANY_FIELD_COUNT = 7
 const CHECKLIST_SKELETON_COUNT = 4
 const DASHBOARD_SECTION_SKELETON_COUNT = 7
@@ -172,7 +194,12 @@ function SetupReadinessSectionRow({ section }: { section: SetupReadinessSection 
 
 function SirketKurulumPage() {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const { user, personaRole, activePersona } = useAuth()
+  const [profileEditing, setProfileEditing] = useState(false)
+  const [profileForm, setProfileForm] = useState<CompanyProfileMutationInput | null>(null)
+  const [profileBaseline, setProfileBaseline] = useState<CompanyProfileMutationInput | null>(null)
+
   const { data: companySetupResult, isLoading } = useQuery({
     queryKey: ['company-setup-overview', user?.id],
     queryFn: () => fetchCompanySetupOverviewWithMeta(user!.id),
@@ -187,7 +214,44 @@ function SirketKurulumPage() {
     enabled: Boolean(user?.id),
   })
 
+  const companyProfileMutation = useMutation({
+    mutationFn: async (form: CompanyProfileMutationInput) =>
+      updateCompanyProfile(user!.id, normalizeCompanyProfileInput(form)),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ['company-setup-overview', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['setup-readiness-dashboard', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['settings-overview', user?.id] })
+      setProfileEditing(false)
+      setProfileForm(null)
+      setProfileBaseline(null)
+      toast.success(
+        t(
+          result.status === 'unchanged'
+            ? 'companySetup.edit.toast.unchanged'
+            : 'companySetup.edit.toast.saved',
+        ),
+      )
+    },
+    onError: (error) => {
+      const mapped = mapCompanyProfileMutationError(error)
+      toast.error(t(mapped.toastKey))
+    },
+  })
+
   const languageLabel = data ? formatLocaleLanguage(data.language, i18n.language) : ''
+  const canEditCompanyProfile =
+    Boolean(data) &&
+    companySetupResult?.source !== 'demo' &&
+    activePersona === 'manager' &&
+    isSetupAdmin(personaRole)
+  const canSubmitCompanyProfile =
+    Boolean(profileForm) &&
+    Boolean(profileBaseline) &&
+    isCompanyProfileFormDirty(profileBaseline!, profileForm!) &&
+    normalizeCompanyProfileInput(profileForm!).displayName.length >= 2 &&
+    normalizeCompanyProfileInput(profileForm!).displayName.length <= COMPANY_PROFILE_NAME_MAX_LENGTH &&
+    (normalizeCompanyProfileInput(profileForm!).industry?.length ?? 0) <= COMPANY_PROFILE_INDUSTRY_MAX_LENGTH &&
+    !companyProfileMutation.isPending
 
   const companyFields = data
     ? [
@@ -200,6 +264,45 @@ function SirketKurulumPage() {
         { label: t('companySetup.fields.package'), value: data.package },
       ]
     : []
+
+  function startProfileEdit() {
+    if (!data) return
+    const form = overviewToCompanyProfileForm(data)
+    setProfileForm(form)
+    setProfileBaseline(form)
+    setProfileEditing(true)
+  }
+
+  function cancelProfileEdit() {
+    setProfileEditing(false)
+    setProfileForm(null)
+    setProfileBaseline(null)
+  }
+
+  function updateProfileForm(fields: Partial<CompanyProfileMutationInput>) {
+    setProfileForm((current) => (current ? { ...current, ...fields } : current))
+  }
+
+  function handleCompanyProfileSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!profileForm) return
+
+    const normalized = normalizeCompanyProfileInput(profileForm)
+    if (
+      normalized.displayName.length < 2 ||
+      normalized.displayName.length > COMPANY_PROFILE_NAME_MAX_LENGTH
+    ) {
+      toast.error(t('companySetup.edit.errors.invalidName'))
+      return
+    }
+
+    if ((normalized.industry?.length ?? 0) > COMPANY_PROFILE_INDUSTRY_MAX_LENGTH) {
+      toast.error(t('companySetup.edit.errors.invalidIndustry'))
+      return
+    }
+
+    companyProfileMutation.mutate(normalized)
+  }
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -254,22 +357,114 @@ function SirketKurulumPage() {
       ) : null}
 
       <section className="mb-6">
-        <SectionHeader title={t('companySetup.sections.companyInfo')} />
-        <dl className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-          {isLoading
-            ? Array.from({ length: COMPANY_FIELD_COUNT }, (_, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[200px_1fr] sm:items-center sm:gap-3"
+        <SectionHeader
+          title={t('companySetup.sections.companyInfo')}
+          action={
+            canEditCompanyProfile && !profileEditing ? (
+              <Button type="button" variant="outline" size="sm" onClick={startProfileEdit}>
+                {t('companySetup.edit.open')}
+              </Button>
+            ) : undefined
+          }
+        />
+        {profileEditing && profileForm ? (
+          <form
+            id="company-profile-form"
+            className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4"
+            onSubmit={handleCompanyProfileSubmit}
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <label className="block min-w-0">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {t('companySetup.fields.name')}
+                </span>
+                <Input
+                  value={profileForm.displayName}
+                  maxLength={COMPANY_PROFILE_NAME_MAX_LENGTH}
+                  disabled={companyProfileMutation.isPending}
+                  onChange={(event) => updateProfileForm({ displayName: event.target.value })}
+                />
+              </label>
+              <label className="block min-w-0">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {t('companySetup.fields.sector')}
+                </span>
+                <Input
+                  value={profileForm.industry ?? ''}
+                  maxLength={COMPANY_PROFILE_INDUSTRY_MAX_LENGTH}
+                  disabled={companyProfileMutation.isPending}
+                  onChange={(event) => updateProfileForm({ industry: event.target.value })}
+                />
+              </label>
+              <label className="block min-w-0">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {t('companySetup.fields.language')}
+                </span>
+                <select
+                  value={profileForm.locale}
+                  disabled={companyProfileMutation.isPending}
+                  onChange={(event) => updateProfileForm({ locale: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 text-base text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                 >
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-4 w-full max-w-xs" />
-                </div>
-              ))
-            : companyFields.map((field) => (
-                <InfoRow key={field.label} label={field.label} value={field.value} />
-              ))}
-        </dl>
+                  {COMPANY_PROFILE_LOCALE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block min-w-0">
+                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {t('companySetup.fields.timezone')}
+                </span>
+                <select
+                  value={profileForm.timezone}
+                  disabled={companyProfileMutation.isPending}
+                  onChange={(event) => updateProfileForm({ timezone: event.target.value })}
+                  className="h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 text-base text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                >
+                  {COMPANY_PROFILE_TIMEZONE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={companyProfileMutation.isPending}
+                onClick={cancelProfileEdit}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={!canSubmitCompanyProfile}>
+                {companyProfileMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                ) : null}
+                {t('companySetup.edit.save')}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <dl className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+            {isLoading
+              ? Array.from({ length: COMPANY_FIELD_COUNT }, (_, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-[200px_1fr] sm:items-center sm:gap-3"
+                  >
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-4 w-full max-w-xs" />
+                  </div>
+                ))
+              : companyFields.map((field) => (
+                  <InfoRow key={field.label} label={field.label} value={field.value} />
+                ))}
+          </dl>
+        )}
       </section>
 
       <section className="mb-6">

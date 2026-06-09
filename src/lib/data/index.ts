@@ -304,9 +304,20 @@ export {
 } from '#/lib/data/setup/erp'
 
 export {
+  COMPANY_PROFILE_INDUSTRY_MAX_LENGTH,
+  COMPANY_PROFILE_LOCALE_OPTIONS,
+  COMPANY_PROFILE_NAME_MAX_LENGTH,
+  COMPANY_PROFILE_TIMEZONE_OPTIONS,
   fetchCompanySetupOverview,
   fetchCompanySetupOverviewWithMeta,
+  isCompanyProfileFormDirty,
+  mapCompanyProfileMutationError,
+  normalizeCompanyProfileInput,
+  updateCompanyProfile,
   type CompanySetupOverview,
+  type CompanyProfileMutationErrorMapping,
+  type CompanyProfileMutationInput,
+  type CompanyProfileUpdateResult,
 } from '#/lib/data/setup/company'
 
 export {

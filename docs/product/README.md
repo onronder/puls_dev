@@ -1000,6 +1000,18 @@ PR17.1C lets admins update PULS-owned active employee assignments from the exist
 
 Verify: [`../../scripts/verify-17-1-c-employee-assignment-edit.sh`](../../scripts/verify-17-1-c-employee-assignment-edit.sh)
 
+## PR17.1D Company profile edit
+
+PR17.1D opens the smallest useful `/sirket-kurulum` write loop: setup admins can update the company display name, sector, default language, and timezone through one audited RPC while tax ID, plan, package, connector, and readiness data remain read-only.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_1_d_company_profile_edit.md](./17_1_d_company_profile_edit.md) | PR17.1D scope, product contract, non-goals, verification |
+| [`supabase/migrations/20260609150000_puls_core_company_profile_edit.sql`](../../supabase/migrations/20260609150000_puls_core_company_profile_edit.sql) | Company profile edit RPC migration |
+| [`scripts/verify-17-1-d-company-profile-edit.sh`](../../scripts/verify-17-1-d-company-profile-edit.sh) | PR17.1D verify gate |
+
+Verify: [`../../scripts/verify-17-1-d-company-profile-edit.sh`](../../scripts/verify-17-1-d-company-profile-edit.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
