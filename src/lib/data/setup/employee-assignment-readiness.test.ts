@@ -27,6 +27,8 @@ function employee(
     email: 'test@example.com',
     employeeNumber: 'E-001',
     isActive: true,
+    source: 'puls',
+    canEditAssignment: true,
     department: { id: 'd1', name: 'Engineering', code: 'eng', isActive: true },
     position: { id: 'p1', name: 'Engineer', code: 'eng', isActive: true },
     costCenter: { id: 'cc1', name: 'HQ', code: 'HQ', isActive: true },

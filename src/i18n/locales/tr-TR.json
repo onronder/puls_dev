@@ -3782,8 +3782,38 @@
       "managerMissing": "Yönetici yok"
     },
     "boundary": {
-      "readOnly": "Bu görünüm çalışan atamalarını denetlemek içindir; düzenleme akışı ayrı adımda açılacaktır.",
-      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır."
+      "readOnly": "Çalışan atamalarını denetle ve PULS kayıtları için güncelle.",
+      "erpNoWrite": "PULS ERP ana verisine yazmaz; kaynak sistem finans/ERP tarafında kalır.",
+      "pulsWritable": "Bu çalışan PULS kaydıdır; atama değişiklikleri güvenli denetim kaydıyla saklanır.",
+      "sourceReadOnly": "Bu çalışan harici bir kaynaktan gelir ve PULS'ta salt okunurdur.",
+      "permissionReadOnly": "Atama değişikliği için İK admin yetkisi gerekir.",
+      "inactiveReadOnly": "Pasif çalışan atamaları bu ekrandan değiştirilemez."
+    },
+    "edit": {
+      "open": "Atamaları düzenle",
+      "save": "Atamaları kaydet",
+      "saved": "Atamalar kaydedildi.",
+      "unchanged": "Atamalarda değişiklik yok.",
+      "placeholders": {
+        "department": "Departman seç",
+        "position": "Pozisyon seç",
+        "costCenter": "Masraf merkezi seç",
+        "manager": "Yönetici seç"
+      },
+      "errors": {
+        "forbidden": "Bu atamayı değiştirmek için İK admin yetkisi gerekir.",
+        "notFound": "Çalışan kaydı bulunamadı.",
+        "sourceReadOnly": "Harici kaynaklı çalışanlar PULS'ta değiştirilemez.",
+        "inactiveEmployee": "Pasif çalışan atamaları bu ekrandan değiştirilemez.",
+        "invalidDepartment": "Seçilen departman aktif değil veya bu şirkete ait değil.",
+        "invalidPosition": "Seçilen pozisyon aktif değil veya bu şirkete ait değil.",
+        "positionDepartmentMismatch": "Pozisyon seçilen departmana bağlı olmalı.",
+        "invalidCostCenter": "Seçilen masraf merkezi aktif değil veya bu şirkete ait değil.",
+        "selfManager": "Çalışan kendisinin yöneticisi olamaz.",
+        "invalidManager": "Seçilen yönetici aktif değil veya bu şirkete ait değil.",
+        "managerCycle": "Bu yönetici ataması raporlama döngüsü oluşturur.",
+        "generic": "Atamalar kaydedilemedi. Lütfen tekrar deneyin."
+      }
     }
   },
   "requestCreationReadiness": {
