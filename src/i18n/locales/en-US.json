@@ -141,6 +141,10 @@
         "connectorRuntime": {
           "title": "ERP connection",
           "description": "In-app notifications from ERP connection, job queue, apply, and rollback processes."
+        },
+        "workflow": {
+          "title": "HR workflows",
+          "description": "In-app notifications from leave, expense, and approval workflows."
         }
       },
       "inbox": {
@@ -177,6 +181,7 @@
     },
     "source": {
       "connector_runtime": "ERP connection",
+      "puls_workflow": "HR workflow",
       "app_notification_center": "Notification Center"
     },
     "safeSummary": {
@@ -210,7 +215,19 @@
       "field_value_readback": "Field value readback",
       "snapshot_payload_readback": "Snapshot payload readback",
       "external_delivery_enabled": "External delivery",
-      "notification_realtime_enabled": "Realtime"
+      "notification_realtime_enabled": "Realtime",
+      "workflow_module": "Workflow module",
+      "workflow_status": "Workflow status",
+      "approval_status": "Approval status",
+      "approval_request_id": "Approval request ID",
+      "leave_request_id": "Leave request ID",
+      "expense_claim_id": "Expense claim ID",
+      "requester_employee_id": "Requester employee ID",
+      "approver_employee_id": "Approver employee ID",
+      "step_order": "Approval step",
+      "policy_status": "Policy status",
+      "target": "Notification target",
+      "notification_window_days": "Notification window"
     },
     "connectorRuntime": {
       "jobFailed": {
@@ -252,6 +269,32 @@
       "rollbackWorkerReady": {
         "title": "Rollback is ready to run",
         "body": "Safety checks passed. The rollback can now be queued."
+      }
+    },
+    "workflow": {
+      "leaveApprovalRequested": {
+        "title": "Leave request needs approval",
+        "body": "A leave request was assigned to you for approval. Open the leave workflow to decide."
+      },
+      "expenseApprovalRequested": {
+        "title": "Expense request needs approval",
+        "body": "An expense request was assigned to you for approval. Open the expense workflow to decide."
+      },
+      "leaveApproved": {
+        "title": "Your leave request was approved",
+        "body": "Your leave request was approved. You can review the details from the leave page."
+      },
+      "leaveRejected": {
+        "title": "Your leave request was rejected",
+        "body": "Your leave request has been decided. You can review the details from the leave page."
+      },
+      "expenseApproved": {
+        "title": "Your expense request was approved",
+        "body": "Your expense request was approved. You can review the details from the expense page."
+      },
+      "expenseRejected": {
+        "title": "Your expense request was rejected",
+        "body": "Your expense request has been decided. You can review the details from the expense page."
       }
     }
   },

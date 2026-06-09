@@ -141,6 +141,10 @@
         "connectorRuntime": {
           "title": "ERP bağlantısı",
           "description": "ERP bağlantısı, iş kuyruğu, uygulama ve geri alma süreçlerinden gelen uygulama içi bildirimler."
+        },
+        "workflow": {
+          "title": "İK süreçleri",
+          "description": "İzin, masraf ve onay akışlarından gelen uygulama içi bildirimler."
         }
       },
       "inbox": {
@@ -177,6 +181,7 @@
     },
     "source": {
       "connector_runtime": "ERP bağlantısı",
+      "puls_workflow": "İK süreci",
       "app_notification_center": "Bildirim merkezi"
     },
     "safeSummary": {
@@ -210,7 +215,19 @@
       "field_value_readback": "Field value readback",
       "snapshot_payload_readback": "Snapshot payload readback",
       "external_delivery_enabled": "External delivery",
-      "notification_realtime_enabled": "Realtime"
+      "notification_realtime_enabled": "Realtime",
+      "workflow_module": "Süreç modülü",
+      "workflow_status": "Süreç durumu",
+      "approval_status": "Onay durumu",
+      "approval_request_id": "Onay talebi ID",
+      "leave_request_id": "İzin talebi ID",
+      "expense_claim_id": "Masraf talebi ID",
+      "requester_employee_id": "Talep sahibi ID",
+      "approver_employee_id": "Onaylayan ID",
+      "step_order": "Onay adımı",
+      "policy_status": "Politika durumu",
+      "target": "Bildirim hedefi",
+      "notification_window_days": "Bildirim penceresi"
     },
     "connectorRuntime": {
       "jobFailed": {
@@ -252,6 +269,32 @@
       "rollbackWorkerReady": {
         "title": "Geri alma çalıştırmaya hazır",
         "body": "Güvenlik kontrolleri geçti. Geri alma işlemi sıraya alınabilir."
+      }
+    },
+    "workflow": {
+      "leaveApprovalRequested": {
+        "title": "Onay bekleyen izin talebi var",
+        "body": "Bir izin talebi senin onayına atandı. İzin sürecini açıp kararı verebilirsin."
+      },
+      "expenseApprovalRequested": {
+        "title": "Onay bekleyen masraf talebi var",
+        "body": "Bir masraf talebi senin onayına atandı. Masraf sürecini açıp kararı verebilirsin."
+      },
+      "leaveApproved": {
+        "title": "İzin talebin onaylandı",
+        "body": "İzin talebin onaylandı. Detayı izin ekranından kontrol edebilirsin."
+      },
+      "leaveRejected": {
+        "title": "İzin talebin reddedildi",
+        "body": "İzin talebin sonuçlandı. Detayı izin ekranından kontrol edebilirsin."
+      },
+      "expenseApproved": {
+        "title": "Masraf talebin onaylandı",
+        "body": "Masraf talebin onaylandı. Detayı masraf ekranından kontrol edebilirsin."
+      },
+      "expenseRejected": {
+        "title": "Masraf talebin reddedildi",
+        "body": "Masraf talebin sonuçlandı. Detayı masraf ekranından kontrol edebilirsin."
       }
     }
   },
