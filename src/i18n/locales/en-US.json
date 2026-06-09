@@ -787,6 +787,7 @@
       "invalidAmount": "Amount must be greater than zero.",
       "invalidCurrency": "Invalid currency.",
       "futureDate": "Expense date cannot be in the future.",
+      "receiptRequired": "This amount requires a receipt or attachment. It can be submitted when document upload is available.",
       "noApprover": "No approver could be resolved.",
       "policyStepUnresolved": "No approver could be resolved for the approval policy step.",
       "policyNotFound": "The configured approval policy was not found or is inactive.",
@@ -852,11 +853,13 @@
       "policyTitle": "Policy check",
       "policyPending": "Fill required fields to see the policy check.",
       "policyCategoryLimit": "Category limit · {{category}}",
-      "policyReceiptRequired": "Receipt required (over ₺2,000)",
+      "policyReceiptRequired": "Receipt requirement · over {{threshold}}",
+      "policyReceiptNotRequired": "No receipt requirement",
       "policyCurrency": "Currency · TRY preferred",
       "policyDate": "Date · {{date}}",
       "policyWarningTitle": "Policy warning",
-      "policyWarningDesc": "Items over ₺2,000 require a receipt and additional approval.",
+      "policyWarningDesc": "This item exceeds the category limit and will be marked as a policy warning.",
+      "policyReceiptBlockedDesc": "Items over {{threshold}} require a receipt or attachment. This expense cannot be submitted until document upload is available.",
       "policyOk": "This item appears compliant with the expense policy."
     }
   },

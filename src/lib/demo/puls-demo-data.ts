@@ -79,6 +79,7 @@ export type DemoExpenseCategoryLimit = {
   name: string
   limit: number
   monthSpent: number
+  receiptRequiredOver: number
 }
 
 export type DemoExpenseApproval = {
@@ -342,12 +343,12 @@ const demoExpenseOverview: DemoExpenseOverview = {
     { id: 'other', label: 'Diğer' },
   ],
   categoryLimits: [
-    { id: 'travel', name: 'Seyahat', limit: 5000, monthSpent: 3400 },
-    { id: 'food', name: 'Yemek', limit: 2000, monthSpent: 820 },
-    { id: 'lodging', name: 'Konaklama', limit: 6000, monthSpent: 3200 },
-    { id: 'software', name: 'Yazılım', limit: 3000, monthSpent: 1500 },
-    { id: 'transport', name: 'Ulaşım', limit: 1500, monthSpent: 720 },
-    { id: 'other', name: 'Diğer', limit: 1000, monthSpent: 0 },
+    { id: 'travel', name: 'Seyahat', limit: 5000, monthSpent: 3400, receiptRequiredOver: 2000 },
+    { id: 'food', name: 'Yemek', limit: 2000, monthSpent: 820, receiptRequiredOver: 0 },
+    { id: 'lodging', name: 'Konaklama', limit: 6000, monthSpent: 3200, receiptRequiredOver: 2000 },
+    { id: 'software', name: 'Yazılım', limit: 3000, monthSpent: 1500, receiptRequiredOver: 1000 },
+    { id: 'transport', name: 'Ulaşım', limit: 1500, monthSpent: 720, receiptRequiredOver: 0 },
+    { id: 'other', name: 'Diğer', limit: 1000, monthSpent: 0, receiptRequiredOver: 0 },
   ],
   pendingApprovals: [
     {
@@ -887,7 +888,9 @@ const demoApprovalPoliciesOverview: DemoApprovalPolicyOverviewItem[] = [
   },
 ]
 
-export async function fetchDemoApprovalPoliciesOverview(): Promise<DemoApprovalPolicyOverviewItem[]> {
+export async function fetchDemoApprovalPoliciesOverview(): Promise<
+  DemoApprovalPolicyOverviewItem[]
+> {
   return demoApprovalPoliciesOverview
 }
 
@@ -1041,7 +1044,11 @@ export async function fetchDemoExpenseCategoriesOverview(): Promise<DemoExpenseC
   return demoExpenseCategoriesOverview
 }
 
-export type DemoCostCenterReadinessStatus = 'export_ready' | 'needs_mapping' | 'puls_only' | 'inactive'
+export type DemoCostCenterReadinessStatus =
+  | 'export_ready'
+  | 'needs_mapping'
+  | 'puls_only'
+  | 'inactive'
 
 export type DemoCostCenterReadinessItem = {
   id: string

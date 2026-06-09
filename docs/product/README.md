@@ -899,6 +899,16 @@ PR16.10.13 finishes the DataSource Manager structure cleanup by turning the isol
 | [`src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx`](../../src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx) | Preview/apply tab composition |
 | [`scripts/verify-16-10-13-datasource-technical-details-split.sh`](../../scripts/verify-16-10-13-datasource-technical-details-split.sh) | PR16.10.13 verify gate |
 
+## PR16.10.14 Workflow audit and policy hardening
+
+PR16.10.14 closes the remaining pre-PR17 workflow trust-surface gaps without changing the DataSource Manager journey. Leave, expense, and approval rows now emit metadata-only tenant-bound audit evidence, while `/masraf` receipt policy uses the category contract and the server RPC blocks receipt-required submissions until document upload exists.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_10_14_workflow_audit_policy_hardening.md](./16_10_14_workflow_audit_policy_hardening.md) | PR16.10.14 workflow audit/policy contract, safety boundary, and verification |
+| [`supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql`](../../supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql) | Metadata-only workflow audit triggers and receipt-required server guard |
+| [`scripts/verify-16-10-14-workflow-audit-policy-hardening.sh`](../../scripts/verify-16-10-14-workflow-audit-policy-hardening.sh) | PR16.10.14 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

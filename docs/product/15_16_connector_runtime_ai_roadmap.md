@@ -1076,6 +1076,33 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - Deep-link target id'leri korunur.
 - Typecheck, test, lint, i18n, build ve PR16.10.13 verify gate geçer.
 
+### PR16.10.14 - Workflow Audit & Policy Hardening
+
+**Ürün değeri:** PR17 closed-loop HR fazına geçmeden önce izin, masraf ve onay kayıtları güvenli audit izi üretir; masraf fiş eşiği browser sabiti olmaktan çıkar ve server RPC tarafından zorlanır.
+
+**Kapsam:**
+
+- `leave_requests`, `expense_claims`, `approval_requests` için metadata-only audit trigger.
+- Audit metadata yalnızca güvenli alanları taşır: status, approval step, policy id, parent id, requester/approver id ve operation.
+- `create_expense_claim` receipt-required kategorileri server-side bloke eder.
+- `/masraf` kategori contract'ından `receipt_required_over` okur; hard-coded receipt threshold kaldırılır.
+- TR/EN kullanıcı hatası ve verify gate eklenir.
+
+**Kapsam dışı:**
+
+- Document upload implementation
+- Connector runtime veya DataSource Manager behavior değişikliği
+- Notification delivery değişikliği
+- PR17 sayfa productization
+
+**Doğrulama:**
+
+- Workflow audit trigger'ları ve helper function'ları migration'da bulunur.
+- Browser-side `POLICY_RECEIPT_THRESHOLD` kalmaz.
+- `receipt_required_over` expense overview adapter'ından geçer.
+- `PULS_RECEIPT_REQUIRED` RPC, adapter error map ve i18n contract'ında görünür.
+- Typecheck, test, lint, i18n, build ve PR16.10.14 verify gate geçer.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.
