@@ -964,6 +964,18 @@ PR17.0 is the entry-point decision document for PR17. It audits all 19 product r
 
 > Audit document — no verify script (product decision/roadmap, not a code contract).
 
+## PR17.1A Core HR audit foundation
+
+PR17.1A starts the Core HR closed-loop series by adding safe row-level audit triggers for the existing mutable org and performance records. It keeps the product surface unchanged while making department, position, employee, and performance-cycle changes visible in `puls_audit.audit_logs` through metadata-only payloads.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_1_a_core_hr_audit_foundation.md](./17_1_a_core_hr_audit_foundation.md) | PR17.1A scope, metadata contract, non-goals, verification |
+| [`supabase/migrations/20260609120000_puls_core_hr_audit_foundation.sql`](../../supabase/migrations/20260609120000_puls_core_hr_audit_foundation.sql) | Core HR and performance row audit trigger migration |
+| [`scripts/verify-17-1-a-core-hr-audit-foundation.sh`](../../scripts/verify-17-1-a-core-hr-audit-foundation.sh) | PR17.1A verify gate |
+
+Verify: [`../../scripts/verify-17-1-a-core-hr-audit-foundation.sh`](../../scripts/verify-17-1-a-core-hr-audit-foundation.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |
