@@ -1012,6 +1012,18 @@ PR17.1D opens the smallest useful `/sirket-kurulum` write loop: setup admins can
 
 Verify: [`../../scripts/verify-17-1-d-company-profile-edit.sh`](../../scripts/verify-17-1-d-company-profile-edit.sh)
 
+## PR17.2A Workflow notification producers
+
+PR17.2A starts the Workflow Closed Loop track by wiring leave, expense, and approval records into Notification Center through the existing service-role producer orchestrator. It does not add Railway code, external delivery, provider calls, raw payload readback, or browser-side ledger writes.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_2_a_workflow_notification_producers.md](./17_2_a_workflow_notification_producers.md) | PR17.2A event taxonomy, producer boundary, safe summary contract, non-goals |
+| [`supabase/migrations/20260609160000_puls_workflow_notification_producers.sql`](../../supabase/migrations/20260609160000_puls_workflow_notification_producers.sql) | Workflow notification producer migration |
+| [`scripts/verify-17-2-a-workflow-notification-producers.sh`](../../scripts/verify-17-2-a-workflow-notification-producers.sh) | PR17.2A verify gate |
+
+Verify: [`../../scripts/verify-17-2-a-workflow-notification-producers.sh`](../../scripts/verify-17-2-a-workflow-notification-producers.sh)
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

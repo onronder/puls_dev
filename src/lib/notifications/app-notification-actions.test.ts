@@ -104,6 +104,52 @@ describe('app notification actions', () => {
     expect(action.canExportIssueCsv).toBe(false)
   })
 
+  it('routes workflow leave approval notifications to the leave process', () => {
+    const action = resolveAppNotificationAction(
+      notification({
+        sourceDomain: 'puls_workflow',
+        sourceEventKey: 'leave_approval_requested',
+        sourceTable: 'puls_workflow.approval_requests',
+        titleKey: 'notifications.workflow.leaveApprovalRequested.title',
+        bodyKey: 'notifications.workflow.leaveApprovalRequested.body',
+        routeHint: 'workflow.leave',
+        actionKey: 'review_workflow_approval',
+        severity: 'warning',
+      }),
+    )
+
+    expect(action.primaryAction).toMatchObject({
+      exactTarget: true,
+      target: {
+        to: '/izin',
+      },
+    })
+    expect(action.canExportIssueCsv).toBe(false)
+  })
+
+  it('routes workflow expense decision notifications to the expense process', () => {
+    const action = resolveAppNotificationAction(
+      notification({
+        sourceDomain: 'puls_workflow',
+        sourceEventKey: 'expense_claim_rejected',
+        sourceTable: 'puls_workflow.expense_claims',
+        titleKey: 'notifications.workflow.expenseRejected.title',
+        bodyKey: 'notifications.workflow.expenseRejected.body',
+        routeHint: 'workflow.expense',
+        actionKey: 'view_workflow_request',
+        severity: 'info',
+      }),
+    )
+
+    expect(action.primaryAction).toMatchObject({
+      exactTarget: true,
+      target: {
+        to: '/masraf',
+      },
+    })
+    expect(action.canExportIssueCsv).toBe(false)
+  })
+
   it('uses CSV export instead of a vague route for unknown ERP error notifications', () => {
     const action = resolveAppNotificationAction(
       notification({

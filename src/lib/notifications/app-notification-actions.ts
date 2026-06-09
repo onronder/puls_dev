@@ -19,6 +19,9 @@ export type AppNotificationActionTarget =
   | {
       to: '/dashboard'
     }
+  | {
+      to: '/izin' | '/masraf'
+    }
 
 export type AppNotificationPrimaryAction = {
   kind: 'route'
@@ -135,6 +138,49 @@ const connectorRuntimeRouteHintTargets: Record<string, ConnectorRuntimeTarget> =
   },
 }
 
+type WorkflowActionTarget = {
+  to: '/izin' | '/masraf'
+  exactTarget: boolean
+}
+
+const workflowEventTargets: Record<string, WorkflowActionTarget> = {
+  leave_approval_requested: {
+    to: '/izin',
+    exactTarget: true,
+  },
+  leave_request_approved: {
+    to: '/izin',
+    exactTarget: true,
+  },
+  leave_request_rejected: {
+    to: '/izin',
+    exactTarget: true,
+  },
+  expense_approval_requested: {
+    to: '/masraf',
+    exactTarget: true,
+  },
+  expense_claim_approved: {
+    to: '/masraf',
+    exactTarget: true,
+  },
+  expense_claim_rejected: {
+    to: '/masraf',
+    exactTarget: true,
+  },
+}
+
+const workflowRouteHintTargets: Record<string, WorkflowActionTarget> = {
+  'workflow.leave': {
+    to: '/izin',
+    exactTarget: false,
+  },
+  'workflow.expense': {
+    to: '/masraf',
+    exactTarget: false,
+  },
+}
+
 const issueSeverities = new Set(['critical', 'error'])
 
 function isIssueNotification(notification: AppNotification) {
@@ -149,6 +195,13 @@ function resolveConnectorRuntimeTarget(notification: AppNotification): Connector
   return (
     connectorRuntimeEventTargets[notification.sourceEventKey] ??
     (notification.routeHint ? connectorRuntimeRouteHintTargets[notification.routeHint] : null)
+  )
+}
+
+function resolveWorkflowTarget(notification: AppNotification): WorkflowActionTarget | null {
+  return (
+    workflowEventTargets[notification.sourceEventKey] ??
+    (notification.routeHint ? workflowRouteHintTargets[notification.routeHint] : null)
   )
 }
 
@@ -172,6 +225,31 @@ export function resolveAppNotificationAction(
               tab: target.tab,
               focus: target.focus,
             },
+          },
+          exactTarget: target.exactTarget,
+        },
+        canExportIssueCsv,
+        exportFileName,
+      }
+    }
+
+    return {
+      primaryAction: null,
+      canExportIssueCsv,
+      exportFileName,
+    }
+  }
+
+  if (notification.sourceDomain === 'puls_workflow') {
+    const target = resolveWorkflowTarget(notification)
+
+    if (target) {
+      return {
+        primaryAction: {
+          kind: 'route',
+          labelKey: 'notifications.center.goToProcess',
+          target: {
+            to: target.to,
           },
           exactTarget: target.exactTarget,
         },

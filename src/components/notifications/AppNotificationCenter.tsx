@@ -78,6 +78,12 @@ const preferenceScopes = [
     labelKey: 'notifications.preferences.scopes.connectorRuntime.title',
     descriptionKey: 'notifications.preferences.scopes.connectorRuntime.description',
   },
+  {
+    sourceDomain: 'puls_workflow',
+    sourceEventKey: 'all',
+    labelKey: 'notifications.preferences.scopes.workflow.title',
+    descriptionKey: 'notifications.preferences.scopes.workflow.description',
+  },
 ] as const
 
 const preferenceSeverityOptions: AppNotificationSeverity[] = [
@@ -114,6 +120,17 @@ const safeSummaryFields = [
   'snapshot_payload_readback',
   'external_delivery_enabled',
   'notification_realtime_enabled',
+  'workflow_module',
+  'workflow_status',
+  'approval_status',
+  'approval_request_id',
+  'leave_request_id',
+  'expense_claim_id',
+  'requester_employee_id',
+  'approver_employee_id',
+  'step_order',
+  'policy_status',
+  'target',
 ]
 
 type NotificationMuteMode = 'none' | 'one_hour' | 'one_day' | 'existing'
@@ -229,6 +246,7 @@ function formatSafeValue(value: unknown) {
 }
 
 type NotificationPreferencesPanelProps = {
+  scopes: readonly NotificationPreferenceScope[]
   scope: NotificationPreferenceScope
   preference: AppNotificationPreference | null
   draft: NotificationPreferenceDraft
@@ -237,6 +255,7 @@ type NotificationPreferencesPanelProps = {
   saving: boolean
   resetting: boolean
   onBack: () => void
+  onScopeChange: (scope: NotificationPreferenceScope) => void
   onDraftChange: (draft: NotificationPreferenceDraft) => void
   onSave: () => void
   onReset: () => void
@@ -244,6 +263,7 @@ type NotificationPreferencesPanelProps = {
 }
 
 function NotificationPreferencesPanel({
+  scopes,
   scope,
   preference,
   draft,
@@ -252,6 +272,7 @@ function NotificationPreferencesPanel({
   saving,
   resetting,
   onBack,
+  onScopeChange,
   onDraftChange,
   onSave,
   onReset,
@@ -325,12 +346,35 @@ function NotificationPreferencesPanel({
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                 {t('notifications.preferences.sourceScope')}
               </p>
-              <h3 className="mt-1 text-base font-semibold text-[var(--color-text-primary)]">
-                {t(scope.labelKey)}
-              </h3>
-              <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-                {t(scope.descriptionKey)}
-              </p>
+              <div className="mt-3 grid gap-2">
+                {scopes.map((candidate) => {
+                  const selected =
+                    candidate.sourceDomain === scope.sourceDomain &&
+                    candidate.sourceEventKey === scope.sourceEventKey
+
+                  return (
+                    <button
+                      key={`${candidate.sourceDomain}:${candidate.sourceEventKey}`}
+                      type="button"
+                      aria-pressed={selected}
+                      className={cn(
+                        'rounded-lg border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]',
+                        selected
+                          ? 'border-[var(--color-border-strong)] bg-[var(--color-primary-soft)]'
+                          : 'border-[var(--color-border)] bg-[var(--color-bg-surface)] hover:border-[var(--color-border-strong)]',
+                      )}
+                      onClick={() => onScopeChange(candidate)}
+                    >
+                      <span className="block text-sm font-semibold text-[var(--color-text-primary)]">
+                        {t(candidate.labelKey)}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-[var(--color-text-muted)]">
+                        {t(candidate.descriptionKey)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
             </section>
 
             <section className="space-y-3 border-b border-[var(--color-border)] pb-4">
@@ -808,9 +852,10 @@ export function AppNotificationCenter() {
   const [filter, setFilter] = useState<NotificationCenterFilter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [preferencesOpen, setPreferencesOpen] = useState(false)
+  const [preferenceScopeIndex, setPreferenceScopeIndex] = useState(0)
   const [preferenceDraft, setPreferenceDraft] = useState<NotificationPreferenceDraft | null>(null)
   const [realtimeStatus, setRealtimeStatus] = useState<AppNotificationRealtimeStatus>('disabled')
-  const preferenceScope = preferenceScopes[0]
+  const preferenceScope = preferenceScopes[preferenceScopeIndex] ?? preferenceScopes[0]
 
   const summaryQuery = useQuery({
     queryKey: ['app-notifications', 'summary'],
@@ -961,6 +1006,14 @@ export function AppNotificationCenter() {
       void navigate({ to: '/verikaynaklari', search: target.search })
       return
     }
+    if (target.to === '/izin') {
+      void navigate({ to: '/izin' })
+      return
+    }
+    if (target.to === '/masraf') {
+      void navigate({ to: '/masraf' })
+      return
+    }
     void navigate({ to: '/dashboard' })
   }
 
@@ -1098,6 +1151,7 @@ export function AppNotificationCenter() {
             />
           ) : preferencesOpen ? (
             <NotificationPreferencesPanel
+              scopes={preferenceScopes}
               scope={preferenceScope}
               preference={activePreference}
               draft={currentPreferenceDraft}
@@ -1106,6 +1160,18 @@ export function AppNotificationCenter() {
               saving={upsertPreferenceMutation.isPending}
               resetting={clearPreferenceMutation.isPending}
               onBack={handlePreferencesBack}
+              onScopeChange={(nextScope) => {
+                const nextIndex = preferenceScopes.findIndex(
+                  (candidate) =>
+                    candidate.sourceDomain === nextScope.sourceDomain &&
+                    candidate.sourceEventKey === nextScope.sourceEventKey,
+                )
+
+                if (nextIndex >= 0) {
+                  setPreferenceScopeIndex(nextIndex)
+                  setPreferenceDraft(null)
+                }
+              }}
               onDraftChange={setPreferenceDraft}
               onSave={handlePreferenceSave}
               onReset={() => clearPreferenceMutation.mutate()}
