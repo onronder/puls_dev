@@ -32,6 +32,30 @@ if grep -q "Bell" src/routes/_app/ai-koc.tsx; then
   fail "AI Coach notify Bell action must not return without a real backend contract"
 fi
 
+for forbidden in \
+  "useQuery" \
+  "fetchAiCoachOverviewWithMeta" \
+  "SectionHeader" \
+  "ContextDomain" \
+  "runtimeEvidence" \
+  "guardrails" \
+  "capabilities" \
+  "readiness"
+do
+  if grep -q "$forbidden" src/routes/_app/ai-koc.tsx; then
+    fail "AI Coach page must stay chat-first and not render technical readiness content: $forbidden"
+  fi
+done
+
+grep -q "aiCoachSetup.chat.prompts" src/routes/_app/ai-koc.tsx \
+  || fail "AI Coach must render disabled example prompt chips"
+
+grep -q "Textarea" src/routes/_app/ai-koc.tsx \
+  || fail "AI Coach must keep a chat composer surface"
+
+grep -q "disabled" src/routes/_app/ai-koc.tsx \
+  || fail "AI Coach chat surface must remain disabled until a real backend contract exists"
+
 for key in notifyMe notifySheet notifyToast; do
   if grep -q "\"$key\"" src/i18n/locales/tr-TR.json src/i18n/locales/en-US.json; then
     fail "AI Coach fake notify locale key remains: $key"

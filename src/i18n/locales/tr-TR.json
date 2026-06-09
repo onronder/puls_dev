@@ -4870,6 +4870,22 @@
       "title": "AI Coach",
       "description": "Pilot sonrası açılacak. Aktif sohbet henüz yok; aşağıda neler yapacağını ve hazırlık durumunu görebilirsin."
     },
+    "chat": {
+      "title": "AI Koç sohbeti",
+      "status": "Canlı sohbet henüz kapalı",
+      "assistantMessage": "Merhaba, burada izin, masraf, performans ve kariyer sorularını tek sohbet ekranından yanıtlayacağım.",
+      "promptGroup": "Örnek AI Koç soruları",
+      "prompts": {
+        "today": "Bugün nelere dikkat etmeliyim?",
+        "leave": "İzin bakiyemi ve uygun tarihleri özetle",
+        "expense": "Masraf politikamı açıkla",
+        "performance": "Performans döneminde risk var mı?"
+      },
+      "inputLabel": "AI Koç mesajı",
+      "inputPlaceholder": "AI Koç yakında aktif olacak",
+      "disabledHint": "Sohbet açıldığında bu alandan soru sorabileceksin.",
+      "send": "Gönder"
+    },
     "sections": {
       "capabilities": "Neler yapacak",
       "privacy": "Gizlilik",

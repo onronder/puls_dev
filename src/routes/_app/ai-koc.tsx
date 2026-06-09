@@ -1,35 +1,12 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import {
-  ArrowLeft,
-  CalendarDays,
-  Check,
-  Clock,
-  GraduationCap,
-  Lock,
-  Receipt,
-  Shield,
-  Sparkles,
-  Target,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { ArrowLeft, Send, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { PageHeader } from '#/components/puls/PageHeader'
-import { SectionHeader } from '#/components/puls/SectionHeader'
 import { StatusPill } from '#/components/puls/StatusPill'
 import { Button } from '#/components/ui/button'
-import { Skeleton } from '#/components/ui/skeleton'
+import { Textarea } from '#/components/ui/textarea'
 import i18n from '#/i18n'
-import { useAuth } from '#/lib/auth'
-import {
-  fetchAiCoachOverviewWithMeta,
-  type AiCoachContextDomain,
-  type AiCoachOverview,
-} from '#/lib/data'
-import { productPostureLabelKey } from '#/lib/data/ai-coach/context-readiness'
-import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/ai-koc')({
   head: () => ({
@@ -44,85 +21,18 @@ export const Route = createFileRoute('/_app/ai-koc')({
   component: AiKocPage,
 })
 
-const CAPABILITY_ICONS: Record<string, LucideIcon> = {
-  a1: CalendarDays,
-  a2: Receipt,
-  a3: Target,
-  a4: GraduationCap,
-}
-
-function CapabilityIcon({ capability }: { capability: AiCoachOverview['capabilities'][number] }) {
-  const Icon = CAPABILITY_ICONS[capability.id] ?? Sparkles
-
-  return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ai-soft)] text-[var(--color-ai)]">
-      <Icon className="h-4 w-4" />
-    </span>
-  )
-}
-
-function ReadinessStatus({
-  status,
-  label,
-}: {
-  status: AiCoachOverview['readiness'][number]['status']
-  label: string
-}) {
-  const isDone = status === 'done'
-
-  return (
-    <span className="flex shrink-0 items-center gap-2">
-      <span
-        className={cn(
-          'flex h-7 w-7 items-center justify-center rounded-full',
-          isDone
-            ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
-            : 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]',
-        )}
-        aria-hidden
-      >
-        {isDone ? <Check className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-      </span>
-      <span className="text-xs font-medium text-[var(--color-text-secondary)]">{label}</span>
-    </span>
-  )
-}
-
-function ContextDomainStatusPill({ status }: { status: AiCoachContextDomain['status'] }) {
-  const { t } = useTranslation()
-
-  const tone =
-    status === 'ready' ? 'success' : status === 'partial' ? 'warning' : ('neutral' as const)
-
-  return (
-    <StatusPill tone={tone}>{t(`aiCoachSetup.contextDomains.status.${status}`)}</StatusPill>
-  )
-}
-
-function formatEvidenceValue(value: number | string | boolean): string {
-  if (typeof value === 'boolean') return value ? '✓' : '—'
-  return String(value)
-}
-
-function ProductPosturePill({ posture }: { posture: AiCoachOverview['productPosture'] }) {
-  const { t } = useTranslation()
-  return <StatusPill tone="ai">{t(productPostureLabelKey(posture))}</StatusPill>
-}
+const PROMPT_KEYS = [
+  'aiCoachSetup.chat.prompts.today',
+  'aiCoachSetup.chat.prompts.leave',
+  'aiCoachSetup.chat.prompts.expense',
+  'aiCoachSetup.chat.prompts.performance',
+] as const
 
 function AiKocPage() {
   const { t } = useTranslation()
-  const { user } = useAuth()
-
-  const { data: aiCoachResult, isLoading } = useQuery({
-    queryKey: ['ai-coach-overview', user?.id],
-    queryFn: () => fetchAiCoachOverviewWithMeta(user!.id),
-    enabled: Boolean(user?.id),
-  })
-
-  const data = aiCoachResult?.data
 
   return (
-    <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
+    <main className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-4xl flex-col p-4 md:p-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
         {t('aiCoachSetup.eyebrow')}
       </p>
@@ -132,284 +42,71 @@ function AiKocPage() {
         subtitle={t('aiCoachSetup.description')}
       />
 
-      <DemoSourcePill
-        visible={aiCoachResult?.source === 'demo'}
-        fallbackReason={aiCoachResult?.fallbackReason}
-      />
-
-      <div className="mb-6 overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--color-ai)_25%,transparent)] bg-[var(--color-ai-soft)] p-5">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--color-ai)_15%,transparent)] text-[var(--color-ai)]">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold text-[var(--color-ai)]">
-                {t('aiCoachSetup.hero.title')}
+      <section className="mt-4 flex min-h-[520px] flex-1 flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-ai-soft)] text-[var(--color-ai)]">
+              <Sparkles className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h2 className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                {t('aiCoachSetup.chat.title')}
               </h2>
-              <StatusPill tone="ai">{t('common.soon')}</StatusPill>
-              <StatusPill tone="neutral">{t('ai.teaser.badge')}</StatusPill>
-              {!isLoading && data?.productPosture ? (
-                <ProductPosturePill posture={data.productPosture} />
-              ) : null}
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
-              {t('aiCoachSetup.hero.description')}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <section className="mb-6">
-        <SectionHeader title={t('aiCoachSetup.sections.contextReadiness')} />
-        <ul className="mt-3 grid gap-3 lg:grid-cols-2">
-          {isLoading
-            ? Array.from({ length: 8 }, (_, index) => (
-                <Skeleton key={index} className="h-36 rounded-xl" />
-              ))
-            : (data?.contextDomains ?? []).map((domain) => (
-                <li
-                  key={domain.id}
-                  className="min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold">{t(domain.titleKey)}</div>
-                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                        {t(domain.descriptionKey)}
-                      </p>
-                    </div>
-                    <ContextDomainStatusPill status={domain.status} />
-                  </div>
-                  <ul className="mt-3 space-y-1">
-                    {domain.evidence.map((item) => (
-                      <li
-                        key={`${domain.id}-${item.labelKey}`}
-                        className="flex items-center justify-between gap-2 text-xs text-[var(--color-text-secondary)]"
-                      >
-                        <span>{t(item.labelKey)}</span>
-                        <span className="font-medium tabular-nums text-[var(--color-text-primary)]">
-                          {formatEvidenceValue(item.value)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-3 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
-                    {t(domain.guardrailKey)}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="mt-2 h-auto justify-start p-0 text-xs text-[var(--color-primary)] hover:bg-transparent hover:text-[var(--color-primary-bright)]"
-                    asChild
-                  >
-                    <Link to={domain.route}>{domain.route}</Link>
-                  </Button>
-                </li>
-              ))}
-        </ul>
-      </section>
-
-      <section className="mb-6">
-        <SectionHeader title={t('aiCoachSetup.sections.runtimeEvidence')} />
-        {isLoading ? (
-          <div className="mt-3 grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-            <Skeleton className="h-64 rounded-xl" />
-            <Skeleton className="h-64 rounded-xl" />
-          </div>
-        ) : (
-          <div className="mt-3 grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 className="text-sm font-semibold">
-                    {t('aiCoachSetup.runtimeEvidence.title')}
-                  </h2>
-                  <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                    {t('aiCoachSetup.runtimeEvidence.description')}
-                  </p>
-                </div>
-                <StatusPill tone="ai">
-                  {data?.runtimeEvidence.sourceDisclosureRequired
-                    ? t('aiCoachSetup.runtimeEvidence.sourceDisclosureRequired')
-                    : t('aiCoachSetup.guardrails.pending')}
-                </StatusPill>
-              </div>
-              <ul className="mt-4 divide-y divide-[var(--color-border)] overflow-hidden rounded-lg border border-[var(--color-border)]">
-                {(data?.runtimeEvidence.signals ?? []).map((signal) => (
-                  <li key={signal.id} className="grid gap-3 p-3 sm:grid-cols-[1fr_auto]">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold">{t(signal.labelKey)}</span>
-                        <ContextDomainStatusPill status={signal.status} />
-                      </div>
-                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                        {t(signal.disclosureKey)}
-                      </p>
-                      <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-                        {t('aiCoachSetup.runtimeEvidence.sourcePrefix')}{' '}
-                        {t(signal.sourceKey)}
-                      </p>
-                    </div>
-                    <span className="text-right text-lg font-semibold tabular-nums">
-                      {formatEvidenceValue(signal.value)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <h2 className="text-sm font-semibold">
-                {t('aiCoachSetup.runtimeEvidence.taxonomyTitle')}
-              </h2>
-              <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                {t('aiCoachSetup.runtimeEvidence.taxonomyDescription')}
+              <p className="truncate text-xs text-[var(--color-text-muted)]">
+                {t('aiCoachSetup.chat.status')}
               </p>
-              <div className="mt-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                  {t('aiCoachSetup.runtimeEvidence.allowedTitle')}
-                </div>
-                <ul className="mt-2 space-y-2">
-                  {(data?.runtimeEvidence.allowedSuggestionActions ?? []).map((action) => (
-                    <li key={action} className="flex items-start gap-2 text-xs">
-                      <Check
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-success)]"
-                        aria-hidden
-                      />
-                      <span>{t(`aiCoachSetup.runtimeEvidence.allowed.${action}`)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                  {t('aiCoachSetup.runtimeEvidence.forbiddenTitle')}
-                </div>
-                <ul className="mt-2 space-y-2">
-                  {(data?.runtimeEvidence.forbiddenActions ?? []).map((action) => (
-                    <li key={action} className="flex items-start gap-2 text-xs">
-                      <Lock
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-warning)]"
-                        aria-hidden
-                      />
-                      <span>{t(`aiCoachSetup.runtimeEvidence.forbidden.${action}`)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
           </div>
-        )}
-      </section>
+          <StatusPill tone="ai">{t('common.soon')}</StatusPill>
+        </div>
 
-      <section className="mb-6">
-        <SectionHeader title={t('aiCoachSetup.sections.guardrails')} />
-        <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-          {isLoading
-            ? Array.from({ length: 7 }, (_, index) => (
-                <li key={index} className="flex items-center gap-3 p-4">
-                  <Skeleton className="h-7 w-7 rounded-full" />
-                  <Skeleton className="h-4 w-56" />
-                </li>
-              ))
-            : (data?.guardrails ?? []).map((guardrail) => (
-                <li
-                  key={guardrail.id}
-                  className="flex min-h-[52px] flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium">
-                    <Lock className="h-4 w-4 text-[var(--color-primary)]" aria-hidden />
-                    {t(guardrail.labelKey)}
-                  </span>
-                  <ReadinessStatus
-                    status={guardrail.status === 'enforced' ? 'done' : 'pending'}
-                    label={
-                      guardrail.status === 'enforced'
-                        ? t('aiCoachSetup.guardrails.enforced')
-                        : t('aiCoachSetup.guardrails.pending')
-                    }
-                  />
-                </li>
-              ))}
-        </ul>
-      </section>
+        <div className="flex flex-1 flex-col justify-end gap-5 p-4 md:p-6">
+          <div className="max-w-[88%] rounded-xl rounded-bl-sm border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-sm leading-relaxed text-[var(--color-text-primary)]">
+            {t('aiCoachSetup.chat.assistantMessage')}
+          </div>
 
-      <section className="mb-6">
-        <SectionHeader title={t('aiCoachSetup.sections.capabilities')} />
-        <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-          {isLoading
-            ? Array.from({ length: 4 }, (_, index) => (
-                <Skeleton key={index} className="h-24 rounded-xl" />
-              ))
-            : (data?.capabilities ?? []).map((capability) => (
-                <li
-                  key={capability.id}
-                  className="min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <CapabilityIcon capability={capability} />
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold">{t(capability.titleKey)}</div>
-                      <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                        {t(capability.descKey)}
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              ))}
-        </ul>
-      </section>
+          <div className="flex flex-wrap gap-2" aria-label={t('aiCoachSetup.chat.promptGroup')}>
+            {PROMPT_KEYS.map((promptKey) => (
+              <button
+                key={promptKey}
+                type="button"
+                disabled
+                className="touch-target rounded-full border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-3 py-2 text-left text-xs font-medium text-[var(--color-text-secondary)] disabled:opacity-70"
+              >
+                {t(promptKey)}
+              </button>
+            ))}
+          </div>
 
-      <section className="mb-6">
-        <SectionHeader title={t('aiCoachSetup.sections.privacy')} />
-        <div className="mt-3 flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
-            <Shield className="h-[18px] w-[18px]" />
-          </span>
-          <p className="text-sm leading-relaxed text-[var(--color-text-primary)]">
-            {t('aiCoachSetup.privacy.body')}
-          </p>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-3">
+            <Textarea
+              disabled
+              rows={2}
+              aria-label={t('aiCoachSetup.chat.inputLabel')}
+              placeholder={t('aiCoachSetup.chat.inputPlaceholder')}
+              className="min-h-[76px] resize-none border-0 bg-transparent px-0 py-0 focus-visible:ring-0"
+            />
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-[var(--color-text-muted)]">
+                {t('aiCoachSetup.chat.disabledHint')}
+              </p>
+              <Button type="button" variant="ai" disabled className="h-10 sm:w-28">
+                <Send className="h-4 w-4" aria-hidden />
+                {t('aiCoachSetup.chat.send')}
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="mb-6">
-        <SectionHeader title={t('aiCoachSetup.sections.readiness')} />
-        <ul className="mt-3 divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
-          {isLoading
-            ? Array.from({ length: 3 }, (_, index) => (
-                <li key={index} className="flex items-center gap-3 p-4">
-                  <Skeleton className="h-7 w-7 rounded-full" />
-                  <Skeleton className="h-4 w-48" />
-                </li>
-              ))
-            : (data?.readiness ?? []).map((item) => {
-                const statusLabel =
-                  item.status === 'done'
-                    ? t('aiCoachSetup.readiness.done')
-                    : t('aiCoachSetup.readiness.pending')
-
-                return (
-                  <li
-                    key={item.id}
-                    className="flex min-h-[52px] flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <span className="text-sm font-medium">{t(item.labelKey)}</span>
-                    <ReadinessStatus status={item.status} label={statusLabel} />
-                  </li>
-                )
-              })}
-        </ul>
-      </section>
-
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Button type="button" variant="outline" className="touch-target h-11 flex-1" asChild>
+      <div className="mt-4">
+        <Button type="button" variant="outline" className="touch-target h-11" asChild>
           <Link to="/dashboard">
             <ArrowLeft className="h-4 w-4" />
             {t('aiCoachSetup.actions.backToDashboard')}
           </Link>
         </Button>
       </div>
-    </div>
+    </main>
   )
 }

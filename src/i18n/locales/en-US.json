@@ -4870,6 +4870,22 @@
       "title": "AI Coach",
       "description": "Opening after the pilot. Active chat is not available yet; see what it will do and readiness status below."
     },
+    "chat": {
+      "title": "AI Coach chat",
+      "status": "Live chat is not open yet",
+      "assistantMessage": "Hi, I will answer leave, expense, performance, and career questions from one simple chat screen.",
+      "promptGroup": "Example AI Coach questions",
+      "prompts": {
+        "today": "What should I pay attention to today?",
+        "leave": "Summarize my leave balance and suitable dates",
+        "expense": "Explain my expense policy",
+        "performance": "Is there a performance-cycle risk?"
+      },
+      "inputLabel": "AI Coach message",
+      "inputPlaceholder": "AI Coach will be active soon",
+      "disabledHint": "When chat opens, you will ask questions from here.",
+      "send": "Send"
+    },
     "sections": {
       "capabilities": "What it will do",
       "privacy": "Privacy",

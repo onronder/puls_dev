@@ -1131,13 +1131,14 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 
 ### PR16.10.16 - AI Coach Action Truth Hardening
 
-**Ürün değeri:** PR17 AI katmanı açılmadan önce AI Koç sayfası gerçek olmayan aksiyon sözü vermez. Bildirim listesine eklendi gibi kalıcı kayıt iddiası, backend notification/subscription contract'i gelene kadar UI'dan kaldırılır.
+**Ürün değeri:** PR17 AI katmanı açılmadan önce AI Koç sayfası gerçek olmayan aksiyon sözü vermez ve teknik hazırlık panosu gibi görünmez. Sayfa, canlı sohbet açılana kadar sade bir chat teaser yüzeyi olarak kalır.
 
 **Kapsam:**
 
 - `/ai-koc` teaser sayfasındaki kalıcı kayıt üretmeyen "notify me" aksiyonu kaldırılır.
 - AI Coach notify sheet/toast locale key'leri temizlenir.
-- Sayfa read-only product posture'ını korur; gerçek kalan CTA dashboard navigasyonudur.
+- Hazırlık/kanıt/guardrail bölümleri UI'dan kaldırılır.
+- Sayfa read-only chat yüzeyi, pasif örnek promptlar, pasif composer ve dashboard navigasyonu ile kalır.
 - Verify gate fake notify aksiyonunun geri gelmesini engeller.
 
 **Kapsam dışı:**
@@ -1150,6 +1151,8 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 **Doğrulama:**
 
 - `/ai-koc` route'u `toast.info`, `sonner` veya notify `Bell` aksiyonu içermez.
+- `/ai-koc` route'u AI readiness data fetch veya teknik hazırlık bölümü render etmez.
+- Chat yüzeyi pasif promptlar ve pasif composer ile görünür.
 - TR/EN locale dosyalarında AI Coach notify signup/toast key'leri kalmaz.
 - Dashboard navigasyon CTA'sı korunur.
 - Typecheck, test, i18n, build ve PR16.10.16 verify gate geçer.

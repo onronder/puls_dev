@@ -121,18 +121,24 @@ for banned_demo_type in DemoAiCoachOverview DemoAiCoachCapability DemoAiCoachRea
 done
 
 # Route checks
-if ! grep -Fq "aiCoachSetup.sections.contextReadiness" <<< "$ROUTE"; then
-  echo "FAIL: route missing context readiness section"
+if ! grep -Fq "aiCoachSetup.chat.prompts" <<< "$ROUTE"; then
+  echo "FAIL: route must expose the chat-first teaser prompt surface"
   exit 1
 fi
-if ! grep -Fq "aiCoachSetup.sections.guardrails" <<< "$ROUTE"; then
-  echo "FAIL: route missing guardrails section"
+if ! grep -Fq "Textarea" <<< "$ROUTE"; then
+  echo "FAIL: route must keep the AI Coach chat composer surface"
   exit 1
 fi
-if ! grep -Fq "productPostureLabelKey" <<< "$ROUTE"; then
-  echo "FAIL: route must map productPosture via productPostureLabelKey helper"
-  exit 1
-fi
+for hidden_technical_section in \
+  "aiCoachSetup.sections.contextReadiness" \
+  "aiCoachSetup.sections.guardrails" \
+  "aiCoachSetup.sections.runtimeEvidence" \
+  "productPostureLabelKey"; do
+  if grep -Fq "$hidden_technical_section" <<< "$ROUTE"; then
+    echo "FAIL: route must not render technical AI readiness notebook content: $hidden_technical_section"
+    exit 1
+  fi
+done
 
 chat_bans=(
   "chat.completions"
