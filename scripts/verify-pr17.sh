@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="${1:-$(pwd)}"
+cd "$ROOT_DIR"
+
+scripts=(
+  "scripts/verify-17-1-a-core-hr-audit-foundation.sh"
+  "scripts/verify-17-1-b-core-org-lifecycle.sh"
+  "scripts/verify-17-1-c-employee-assignment-edit.sh"
+  "scripts/verify-17-1-d-company-profile-edit.sh"
+  "scripts/verify-17-2-a-workflow-notification-producers.sh"
+  "scripts/verify-17-2-b-workflow-closed-loop-proof.sh"
+  "scripts/verify-17-2-c-settings-notification-preferences.sh"
+  "scripts/verify-17-2-d-workflow-notification-dispatch.sh"
+)
+
+for script in "${scripts[@]}"; do
+  bash "$script" "$ROOT_DIR"
+done
+
+echo "verify-pr17: OK"

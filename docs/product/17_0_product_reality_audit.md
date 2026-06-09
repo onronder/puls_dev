@@ -1,7 +1,7 @@
 # PR17.0 — Product Reality Audit & Closed-Loop HR Gap Map
 
 > **Durum:** Resmi PR17.0 ürün karar dokümanı / yol haritası (kod contract'ı değil; verify-script gerektirmez).
-> **Tarih:** 2026-06-09 · **Rev 3** (envanter 17→19: `/ai-koc` + `/profil` eklendi, `/menu` + `/erp` kapsam-dışı işaretlendi; notification ifadesi `file_import_uploaded` producer'ıyla hizalandı; R2 inceltildi — AI context zemini var; `docs/product/17_0_product_reality_audit.md`'ye taşındı)
+> **Tarih:** 2026-06-10 · **Rev 5** (PR17.2D eklendi — R11 connector-bağımlı notification teslimatı KAPANDI; PR17 verify aggregator CI'a bağlandı). Önceki: Rev 4 (PR17.1A-D + PR17.2A-C re-audit).
 > **Kapsam:** Read-only denetim. Kod değiştirilmedi.
 > **Yöntem:** 19 ürün route'u (~10.000 satır UI), 74 migration, data adapter'lar, RLS/RPC kontratları, audit trigger'ları, notification ledger'ı ve AI context yüzeyleri okundu. 6 paralel keşif ajanı + hedefli backend doğrulamaları.
 > **Önkoşul bağlam:** PR16.10.13-20 tamamlandı (DataSource split, runtime hardening, audit/policy guard'ları, CI verify gate). Hedef: connector-bağımsız, kapalı devre AI HR App ürünleşmesi (PR17).
@@ -10,9 +10,25 @@
 
 ## 0. Executive Summary
 
-**Tek cümlelik gerçek:** PULS'un *gerçek bir backend workflow motoru* (RPC + RLS + audit trigger + approver resolver) **ve** *gerçek bir notification platformu* (11 migration'lık ledger + center + realtime) var — **ama ikisi birbirine bağlı değil.** İzin/masraf onayı audit'e yazıyor, fakat hiçbir bildirim üretmiyor; mevcut producer'lar connector/runtime + file import (`file_import_uploaded`, `import_apply_rollback_*`) yüzeyinde, **HR workflow producer'ı yok.** AI context yüzeyi de hiçbir HR mutation'ından beslenmiyor.
+> ### 🔄 Rev 5 güncel durum (PR17.1A-D + PR17.2A-D sonrası)
+>
+> Aşağıdaki §0-§6 metni **PR17 öncesi** durumu anlatır (tarihsel referans). PR17.1 ve PR17.2 dilimleri landıktan sonra yapılan re-audit'in sonuçları:
+>
+> | Risk / hedef | PR | Yeni durum | Kanıt |
+> |---|---|---|---|
+> | **R3** org/performans audit yok | 17.1A | ✅ **KAPANDI** | `puls_core.{departments,positions,employees}` + `performance_cycles` audit trigger → `puls_audit.audit_logs` (mig 20260609120000) |
+> | departman/pozisyon soft-delete yok | 17.1B | ✅ **KAPANDI** | `deactivate/restore_{department,position}` RPC + bağımlılık guard'ları + UI (mig 20260609130000) |
+> | **R10** çalışan atama düzeltme yok | 17.1C | ✅ **KAPANDI** | `update_employee_assignment` RPC, server-validated + audited + ERP-source korumalı; calisanlar.tsx gerçek form (mig 20260609140000) |
+> | şirket profili kilitli | 17.1D | ✅ **KAPANDI** | `update_company_profile` RPC (ad/sektör/dil/tz), audited; sirket-kurulum.tsx gerçek form (mig 20260609150000) |
+> | **R1** HR workflow notification | 17.2A/B/C/D | ✅ **KAPANDI** | Producer + 6-olay taxonomy + prefs UI + live DB dispatch tamam; teslimat connector worker beklemez |
+> | **R7** workflow e2e | 17.2B | 🟡 **KISMİ** | SQL rollback-only smoke eklendi; tarayıcı e2e + connector-bağımsız teslimat hâlâ yok |
+> | **R11** connector-bağımlı bildirim teslimatı | 17.2D | ✅ **KAPANDI** | Workflow row triggers same-transaction notification dispatch yapar; `run_app_notification_producers` backfill/reconcile yolu olarak kalır |
+>
+> **Net:** PR17.1 Core HR closed-loop **gerçekten kapandı** (audit + lifecycle + edit, hepsi server-validated/audited). PR17.2 notification platformu artık **connector-bağımsız canlı teslimat** yapar: workflow event trigger'ları notification ledger'a metadata-only kayıt düşer, mevcut producer orchestrator ise backfill/reconcile yolu olarak kalır. Sıradaki açıklar: tarayıcı e2e (R7), AI context feed (R2) ve STUB ailesi (PR17.3/17.4).
 
-Senin tanımladığın tam döngü — **oluştur → gönder → onayla → audit → notification → AI context** — şu an **hiçbir sayfada uçtan uca kapalı değil.** En güçlü sayfalar (izin, masraf) bile `audit` kenarında duruyor; `notification` ve `AI context` kenarları sistemik olarak eksik.
+**Tek cümlelik gerçek:** PULS'un *gerçek backend workflow motoru* (RPC + RLS + audit trigger + approver resolver) ve *gerçek notification platformu* artık HR workflow için bağlı; izin/masraf submit ve decision event'leri connector beklemeden Notification Center'a düşer. **AI context yüzeyi hâlâ HR mutation'larından beslenmiyor.**
+
+Senin tanımladığın tam döngü — **oluştur → gönder → onayla → audit → notification → AI context** — izin ve masraf için artık notification kenarına kadar ilerledi. Kalan sistemik açık **AI context** ve bunu tarayıcı e2e ile kanıtlama katmanı.
 
 ### Sayfa kategorileri
 
@@ -27,11 +43,11 @@ Senin tanımladığın tam döngü — **oluştur → gönder → onayla → aud
 
 ### Üç sistemik açık
 
-1. **Notification kenarı HR workflow'unda kopuk (HIGH).** Ledger/center/realtime hazır (`puls_app_notification_*` ×11 migration) ve **connector/runtime + file import (import-apply) producer'ları çalışıyor** (`import_apply_rollback_*`, `reference_revoked`, `verification_*`). Eksik olan: **HR workflow producer'ı** — izin/masraf/performans/org mutation'larının hiçbiri bildirim üretmiyor. → Onay bekleyen yönetici haberdar olmuyor; onaylanan çalışana haber gitmiyor. (Ayrıca notification *preferences* RPC'si — `upsert_app_notification_preference` — mevcut ama `/ayarlar` UI'ına bağlı değil.)
+1. ✅ **Notification kenarı HR workflow'unda bağlı (Rev5).** Ledger/center/realtime hazır; connector/runtime + file import producer'ları çalışıyor; PR17.2A-D ile HR workflow producer, preferences UI ve connector-bağımsız live dispatch tamamlandı. Kalan notification işi artık e2e ve gelecek kanalların ürün kararıdır.
 2. **AI context kenarı kopuk (HIGH).** `src/lib/data/ai-coach/` var ama hiçbir HR sayfasından beslenmiyor; `/ai-koc` PR16.10.16'da dürüst "coming soon" teaser'a indirildi.
-3. **Audit trigger kapsamı dar (MEDIUM).** Audit trigger'ları **sadece `puls_workflow.*`** tablolarında (leave_requests, expense_claims, approval_requests). `puls_core.departments/positions/employees` ve `puls_performance.performance_cycles` mutation'larında **audit yok** — yalnızca validation trigger'ı var.
+3. **STUB/productization ailesi açık (MEDIUM).** Sözleşmeler, performans parametreleri, kariyer, eğitim ve iş-değerleme hâlâ gerçek kapalı döngü ürün yüzeyi değil; PR17.3'ün ana yükü burada.
 
-**Ortalama readiness: ~56/100** (19 ürün route'u; `/menu` ve `/erp redirect` kapsam dışı). İlk turdaki ~64 yalnız 13 ana sayfa içindi — STUB ailesi eklenince düştü. Backend gerçeklik katmanı güçlü; ürün katmanı yarım, STUB ailesi ortalamayı aşağı çekiyor.
+**Ortalama readiness: ~60/100** (Rev4; 19 route, Rev3'te ~56). PR17.1 Core HR dilimleri (departman/pozisyon/çalışan/şirket + audit) skorları belirgin yükseltti; STUB ailesi (sözleşme/performans-param/kariyer/eğitim/iş-değerleme) hâlâ ortalamayı aşağı çekiyor — PR17.3'ün konusu.
 
 ---
 
@@ -40,22 +56,22 @@ Senin tanımladığın tam döngü — **oluştur → gönder → onayla → aud
 | # | Sayfa | Hedef kullanıcı | UI gerçekliği | Backend | Closed-loop | Connector bağımsız | Skor |
 |---|---|---|---|---|---|---|---|
 | 1 | `/dashboard` | Hepsi | Read-only + navigasyon; demo fallback | `puls_calc.*` SELECT, RLS ✓ | ❌ (yönlendirir) | MEDIUM | **75** |
-| 2 | `/calisanlar` | Manager/HR | Read-only liste + detay sheet; düzenleme yok | `puls_core.employees` SELECT; self-update only | ❌ (atama düzeltilemiyor) | MEDIUM-HIGH | **65** |
-| 3 | `/departmanlar` | HR admin | **Gerçek CREATE/UPDATE**; ERP kaydı kilitli; delete yok | `puls_core.departments` + guardrail trigger ✓ | 🟡 Partial (audit/notif yok) | **YES** | **72** |
-| 4 | `/pozisyonlar` | HR admin | **Gerçek CREATE/UPDATE**; norm headcount, dept FK | `puls_core.positions` + guardrail trigger ✓ | 🟡 Partial | **YES** | **71** |
-| 5 | `/sirket-kurulum` | Admin/HR | Read-only checklist + readiness; alanlar kilitli | `puls_core.tenants` + `setup_readiness_summary` SELECT | ❌ (özet/navigasyon) | MEDIUM | **68** |
-| 6 | `/izin` | Employee + Manager | **Tam workflow**: oluştur→onayla; approver UI var; **belge upload disabled** | `create_leave_request` / `decide_approval_request` RPC, SECURITY DEFINER, RLS + audit ✓ | 🟡 Backend kapalı, **notif+AI yok** | MEDIUM | **82**¹ |
+| 2 | `/calisanlar` | Manager/HR | **Rev4:** gerçek atama edit formu (dept/poz/cc/manager); ERP kaydı read-only | `update_employee_assignment` RPC + audit ✓ (PR17.1C) | 🟡 Partial (edit kapalı, salt-okuma değil) | **YES** | ~~65~~ **80** |
+| 3 | `/departmanlar` | HR admin | **Gerçek CREATE/UPDATE** + **Rev4:** deactivate/restore lifecycle | `puls_core.departments` + guardrail + **audit trigger + lifecycle RPC** ✓ (PR17.1A/B) | ✅ Kapalı (CRUD+lifecycle+audit) | **YES** | ~~72~~ **85** |
+| 4 | `/pozisyonlar` | HR admin | **Gerçek CREATE/UPDATE** + **Rev4:** deactivate/restore lifecycle | `puls_core.positions` + guardrail + **audit trigger + lifecycle RPC** ✓ (PR17.1A/B) | ✅ Kapalı (CRUD+lifecycle+audit) | **YES** | ~~71~~ **84** |
+| 5 | `/sirket-kurulum` | Admin/HR | Read-only checklist + **Rev4:** şirket profili edit formu (ad/sektör/dil/tz) | `update_company_profile` RPC + audit ✓ (PR17.1D); tax/legal read-only | 🟡 Partial (profil editable, checklist read-only) | MEDIUM | ~~68~~ **80** |
+| 6 | `/izin` | Employee + Manager | **Tam workflow**: oluştur→onayla; approver UI; **belge upload disabled** | `create/decide` RPC + audit ✓; **Rev5:** same-transaction notification dispatch ✓ | 🟡 Backend+notification tamam; AI yok, browser e2e eksik | MEDIUM | ~~82~~ **85**¹ |
 | 7 | `/izin-tanimlari` | HR admin | **Tam lifecycle**: create/update/deactivate/restore + audit history + policy binding | `leave_types` RLS (admin-write) + lifecycle audit | 🟡 Setup mutation | MEDIUM | **80**¹ |
-| 8 | `/masraf` | Employee + Manager | **Tam workflow** + server receipt policy; **upload disabled, OCR "soon"** | `create_expense_claim` / `decide_approval_request` RPC; `PULS_RECEIPT_REQUIRED` ✓ | 🟡 Backend kapalı, **notif+AI yok** | MEDIUM | **80**¹ |
+| 8 | `/masraf` | Employee + Manager | **Tam workflow** + server receipt policy; **upload disabled, OCR "soon"** | `create/decide` RPC; `PULS_RECEIPT_REQUIRED` ✓; **Rev5:** same-transaction notification dispatch ✓ | 🟡 Backend+notification tamam; AI yok, browser e2e eksik | MEDIUM | ~~80~~ **83**¹ |
 | 9 | `/masraf-kategorileri` | HR admin | **Tam lifecycle** + cost-center readiness (read-only) + routing warnings | `expense_categories` RLS + lifecycle audit | 🟡 Setup mutation | MEDIUM (cost-center ERP köprüsü) | **78**¹ |
 | 10 | `/sozlesmeler` | HR/Employee | **STUB** — upload disabled ("outside pilot scope"), reminder "coming soon" | `puls_workflow.contracts` (`metadata_only=TRUE` CHECK), RLS ✓ | ❌ STUB | MEDIUM | **25** |
-| 11 | `/performans` | Manager | **Gerçek create + status transition**; DB lifecycle trigger + tek-active index; **close UI yok** | `performance_cycles` + `enforce_performance_cycle_lifecycle()` ✓ | 🟡 Partial (close UI yok, audit/notif yok) | **YES** | **72** |
+| 11 | `/performans` | Manager | **Gerçek create + status transition**; DB lifecycle trigger + tek-active index; **close UI yok** | `performance_cycles` + lifecycle ✓; **Rev4:** audit trigger eklendi (PR17.1A) | 🟡 Partial (close UI yok, notif yok; audit artık var) | **YES** | ~~72~~ **75** |
 | 12 | `/performans-parametreleri` | HR admin | **STUB** — Edit disabled (gerekçesiz), display-only; seed-only | `competency_templates`/`kpi_weights`/`score_bands` SELECT, RLS ✓ | ❌ STUB | YES | **15** |
 | 13 | `/verikaynaklari` | Connector admin | **Tam connector loop** (create→preview→apply→rollback); hardened | `erp_*` + worker RPC, credential boundary, audit ✓ | ✅ Kapalı (connector domeni) | N/A | **82** |
 | 14 | `/kariyer` | Employee/Manager | **STUB** — "Create Plan" sheet açar ama submit disabled; AI Coach disabled; demo seed | `puls_core.employees` + `puls_performance.career_profiles`/`training_needs` SELECT, RLS ✓ | ❌ STUB | MEDIUM (development plan demo-hardcoded) | **25** |
 | 15 | `/egitim` | Employee/Manager | **STUB** — buton/handler yok; demo seed; "school teaser" coming-soon | `puls_performance.training_needs` SELECT, RLS ✓ | ❌ STUB | YES | **20** |
 | 16 | `/is-degerleme` | HR admin | **STUB (backend dahil)** — `fetchRealJobEvaluationOverview()` her zaman boş döner | **Gerçek backend yok** — yalnız demo fixture | ❌ STUB | N/A (backend yok) | **15** |
-| 17 | `/ayarlar` | Hepsi | Read-only — tüm aksiyonlar disabled ("view-only for now"); gerçek veri okur | `puls_calc`/`puls_integration`/`puls_audit` SELECT, RLS ✓; **notif prefs RPC var ama UI'a bağlı değil** | 🟡 Partial (read-only) | MEDIUM | **45** |
+| 17 | `/ayarlar` | Hepsi | **Rev4:** notification preferences paneli bağlı (gerçek upsert/clear mutation); diğer alanlar read-only | `puls_calc`/`puls_integration`/`puls_audit` SELECT; **`upsert/clear AppNotificationPreference` wired** (PR17.2C) | 🟡 Partial (notif prefs editable) | MEDIUM | ~~45~~ **70** |
 | 18 | `/ai-koc` | Hepsi | **Dürüst teaser** (PR16.10.16) — composer disabled, "soon" pill; mesaj hiçbir yere gitmiyor | **AI context altyapısı production-ready ama UI'a/LLM'e bağlı değil**: 9 domain snapshot + runtime evidence contract + allowed/forbidden actions (context-readiness.ts) | ❌ (PR17.4 yüzeyi) | MEDIUM | **15** |
 | 19 | `/profil` | Hepsi | Read-only dashboard; edit/security disabled; **gerçek logout** + persona-switch audit | `puls_core.employees` + `puls_calc.*` SELECT, RLS ✓; logout `signOut()`; `logPersonaSwitch()` audit | 🟡 Partial (logout) | HIGH | **72** |
 
@@ -182,13 +198,13 @@ Approver resolution server-side: manager → HR → superadmin (RPC.sql:47-106).
 RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_insert` (owner-only) (migration 20260523160000:655-699). **Audit trigger** `puls_workflow_leave_requests_audit_row` AFTER INSERT/UPDATE/DELETE (migration 20260609070000:142-148).
 
 **5. Eksik full-stack işler:**
-- **Notification: YOK** — submit'te yöneticiye, decide'da talep sahibine bildirim üretilmiyor (doğrulandı: `decide_approval_request` RPC'sinde notif çağrısı yok; mevcut producer'lar connector/runtime + file import, HR workflow producer'ı yok).
+- **Notification: TAMAM (Rev5)** — approval request insert ve leave/expense decision status update event'leri aynı transaction içinde Notification Center'a düşer; existing producer orchestrator backfill/reconcile yolu olarak kalır.
 - **AI context: YOK** — izin verisi ai-coach'a beslenmiyor.
 - Multi-step approval şema-hazır (`approval_policy_steps`, `result.final` handle ediliyor 441-456) ama **test edilmemiş**, fiilen tek-step.
 - Belge upload disabled.
 - **e2e yok** (adapter unit testleri var: requests.test.ts, overview.test.ts).
 
-**6. Closed-loop:** 🟡 Backend kapalı (create→route→approve→balance→audit hepsi gerçek+persist), ama **notification + AI context kenarları yok** → senin tam tanımına göre yarım.
+**6. Closed-loop:** 🟡 Backend + notification kapalı (create→route→approve→balance→audit→notification gerçek+persist), ama **AI context** ve tarayıcı e2e kenarı yok.
 **7. Connector bağımsız:** MEDIUM — saf PULS tablolar; sadece leave_type kurulumu gerekiyor.
 **9. Skor:** **82/100** (backend kalitesi 92; notif+AI+e2e+upload eksiği için tempolu).
 **10. Faz:** PR17.2.
@@ -426,16 +442,17 @@ RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_i
 
 | ID | Risk | Şiddet | Kanıt | Etki |
 |---|---|---|---|---|
-| **R1** | **HR workflow notification producer'ı yok.** Ledger + connector/runtime + file import (import-apply) producer'ları hazır; HR workflow producer'ı eksik. Ayrıca notif *preferences* RPC'si mevcut ama UI'a bağlı değil. | **HIGH** | Çalışan producer'lar: `import_apply_rollback_*`, `reference_revoked`, `verification_*` (migration 20260606190000 + orchestrator `first_producer_enabled: 'connector_runtime'`); `decide_approval_request` RPC'de notif çağrısı yok (doğrulandı); `upsertAppNotificationPreference` RPC var ama ayarlar.tsx çağırmıyor (notifications.ts:168-200) | Yönetici onay bekleyeni göremez; çalışan kararı öğrenemez. "Closed-loop" iddiası fiilen yarım. |
+| **R1** | ✅ **KAPANDI (Rev5 — PR17.2A/B/C/D).** HR workflow notification platformu + live dispatch tamam: producer + taxonomy + prefs UI + same-transaction workflow triggers bağlı. | **HIGH→CLOSED** | Producer `refresh_workflow_app_notifications()` + 6 olay; prefs UI bağlı; PR17.2D trigger dispatch (`approval_requests` insert, `leave_requests/expense_claims` status update) aynı dedupe key'leriyle ledger'a yazar. | Onay bekleyen yönetici ve karar sonucu bekleyen requester connector worker beklemeden Notification Center'da görünür. |
 | **R2** | **AI context zemini var ama UI'a/LLM'e bağlı değil ve mutation'dan beslenmiyor.** Read-only snapshot altyapısı (9 domain + runtime evidence contract + guardrail) hazır; eksik olan: LLM wiring, UI bağlantısı, mutation→context canlı besleme. | **MEDIUM→HIGH** | `context-readiness.ts` 32 domain count + allowed/forbidden actions (420-503) var ama `ai-koc.tsx` import etmiyor; snapshot pasif telemetri (mutation'dan beslenmiyor) | PR17.4 zemini mevcut (iyi haber) ama LLM + canlı besleme yapılmadan AI HR App boş kalır. |
-| **R3** | **Org + performans CRUD audit bırakmıyor.** | **MEDIUM** | Audit trigger yalnız `puls_workflow.*` (migration 20260609070000:142-160); `puls_core.departments/positions`, `performance_cycles` audit'siz | Kim departman/cycle değiştirdi izlenemez; compliance açığı. |
+| **R3** | ✅ **KAPANDI (Rev4 — PR17.1A).** `puls_core.departments/positions/employees` + `puls_performance.performance_cycles` üzerine AFTER INSERT/UPDATE/DELETE audit trigger eklendi. | **MEDIUM** | `write_core_hr_row_audit_log()` + `write_performance_row_audit_log()` → `puls_audit.audit_logs`, allow-list metadata (PII yok), SECURITY DEFINER + REVOKE authenticated/anon (migration 20260609120000:253-301) | Org/performans değişiklikleri artık izlenebilir; compliance açığı kapandı. |
 | **R4** | **2 tam STUB sayfa yanlış vaat veriyor.** | **MEDIUM** | sozlesmeler upload disabled (143-144), performans-parametreleri Edit disabled gerekçesiz (153) | Kullanıcı "burada iş yapılır" sanıyor; disabled buton gerekçesiz. |
 | **R5** | **Multi-step approval şema-hazır ama test edilmemiş, fiilen tek-step.** | **MEDIUM** | `approval_policy_steps` var, `result.final` handle (izin.tsx:441-456) ama e2e yok | Çok adımlı onay üretimde ilk kez patlayabilir. |
 | **R6** | **Performans cycle "close" aksiyonu UI'da yok.** | **MEDIUM** | `active→closed` sadece API; performans.tsx'te buton yok | Cycle başlatılıp bitirilemiyor — döngü yarım. |
-| **R7** | **Tam kapalı döngü HR workflow e2e testi yok.** Adapter unit testleri ve role-matrix var; uçtan uca request→approve→audit senaryosu yok. | **MEDIUM** | `e2e/` yalnız smoke + role-matrix + ui-stabilization; adapter `.test.ts`'ler mevcut ama workflow loop'u mock'suz uçtan uca kapsamıyor | Çok adımlı/persist eden workflow regresyona açık. |
+| **R7** | 🟡 **KISMİ (Rev5).** SQL rollback-only smoke var; PR17.2D live dispatch'i connector'dan ayırdı. Kalan: tarayıcı/UI e2e ve multi-step approval e2e. | **MEDIUM** | `docs/data/17_2_b_workflow_closed_loop_smoke.sql`; PR17.2D migration trigger dispatch contract. | Workflow mantığı korunuyor; gerçek tarayıcı akışı ve multi-step varyantları hâlâ test edilmeli. |
 | **R8** | **Belge upload her yerde disabled** (izin 870, masraf 860, sözleşmeler 143). | **MEDIUM** | `<button disabled>` + "coming soon" | Gerçek HR'da masraf fişi/izin belgesi zorunlu; pilot dışı. |
 | **R9** | **§2.8 borcu açık:** çoklu-active cycle'lı tenant index'siz kaldı. | **LOW** | PR16.10.20 audit SQL eklendi (docs/data/16_10_20_..._duplicate_audit.sql) ama cleanup migration yok | Eski kirli veri trigger'la korunuyor ama temizlenmedi. |
-| **R10** | **calisanlar atama düzeltme yok.** | **LOW** | Manager readiness görüyor, düzeltemiyor ("ERP no-write" 579-581) | Tanı var, tedavi yok. |
+| **R10** | ✅ **KAPANDI (Rev4 — PR17.1C).** `update_employee_assignment` RPC (dept/pozisyon/cost-center/manager) — server-validated, audited, admin-only, ERP-source read-only korunuyor. UI'da gerçek edit formu. | **LOW** | RPC `update_employee_assignment` (migration 20260609140000): admin guard, ERP `external_source` bloğu (70-73), cycle/aktiflik validation, audit (276-308); calisanlar.tsx gerçek form + mutation (445-452, 716-798) | Tanı + tedavi tamam (yalnız PULS-kaynaklı aktif çalışanlar). |
+| **R11** | ✅ **KAPANDI (Rev5 — PR17.2D).** Workflow notification teslimatı connector worker'a bağımlı değil. | **HIGH→CLOSED** | `puls_workflow_approval_requests_notification_dispatch`, `puls_workflow_leave_requests_notification_dispatch`, `puls_workflow_expense_claims_notification_dispatch`; internal workflow-only emitter browser rollerine kapalı. | Connector hiç çalışmayan tenant'ta da izin/masraf bildirimleri workflow transaction içinde üretilir. |
 
 ---
 
@@ -475,11 +492,13 @@ RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_i
 
 ## 5. İlk Yapılacak 5 İş
 
-1. **Notification taxonomy/contract'ı netleştir** (R1, PR17.2 önkoşulu). Producer kodu yazmadan önce: **olay adları** (ör. `leave_request_submitted`, `leave_request_decided`, `expense_claim_submitted`...), **alıcı rolleri** (talep sahibi / yönetici / HR), **dedupe key** (idempotency — mevcut hardening deseniyle uyumlu), **route hint** (bildirim hangi sayfaya götürür), **kullanıcı dili** (i18n key stratejisi), **AI context'e taşınacak güvenli alanlar** (PII/raw payload taşımadan). Bu sözleşme tüm PR17.2'yi belirler.
-2. **HR workflow notification producer'larını bağla** (R1, PR17.2). Ledger/center/realtime + connector/file-import producer deseni hazır; eksik tek şey `create_leave_request`/`create_expense_claim`/`decide_approval_request` RPC'lerinin HR olayını emit etmesi + ayarlar prefs UI'ının mevcut RPC'ye bağlanması. **En yüksek ROI** — mevcut altyapıyı gerçek değere çevirir.
-3. **izin + masraf için tam kapalı döngü workflow e2e** (request→approve→notify→audit) (R5, R7). Workflow'u kilitler, multi-step'i doğrular.
-4. **`puls_core.*` ve `performance_cycles` audit trigger'ları** ekle — `puls_workflow` deseni zaten var, kopyala (R3).
-5. **STUB sayfalar için ürün kararı + dürüst konumlama** — performans "close cycle" UI (R6) ve sozlesmeler/performans-parametreleri/is-degerleme için "ürünleştir mi, pilot-dışı mı" kararı (R4, R8, §6).
+> **Rev4 not:** İlk turun 1-4. maddeleri (notification taxonomy, producer, audit trigger'ları, Core HR edit) **tamamlandı** (PR17.1A-D + 17.2A-C). Aşağıdaki liste re-audit sonrası güncellendi. Orijinal liste tarihsel referans için §5-arşiv'de.
+
+1. **Tarayıcı/UI e2e** (R7). SQL smoke ve live DB dispatch var; gerçek UI akışı (request→inbox'ta görünme→approve→requester bildirimi) ve multi-step (R5) hâlâ doğrulanmalı.
+2. **AI context'i mutation'dan beslemeye başla** (R2, PR17.4 zemini). `context-readiness.ts` snapshot'ı hazır; izin/masraf/performans mutation'larını canlı besle + `ai-koc.tsx`'i adapter'a bağla.
+3. **performans "close cycle" UI** (R6). Audit artık var (R3 kapandı); eksik tek şey `active→closed` UI butonu + notif.
+4. **STUB ailesi ürün kararı** — sözleşmeler/performans-parametreleri/iş-değerleme/kariyer/eğitim: "ürünleştir mi, pilot-dışı mı" (R4, R8, §6). is-degerleme'nin backend'i sıfırdan.
+5. **Belge upload scope kararı** (R8). İzin/masraf/sözleşme upload'ları ya storage+RLS ile açılmalı ya da production UI'da disabled beklenti yaratmayacak şekilde sadeleştirilmeli.
 
 ---
 
@@ -499,17 +518,17 @@ RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_i
 
 ## 7. Net Sonuç
 
-Backend gerçeklik katmanı (RPC, RLS, audit trigger, lifecycle guard, server validation) PR16.10 turlarıyla gerçekten sağlamlaştı — bu, çoğu MVP'nin sahip olmadığı bir zemin. Ama ürün **iki sistemik kenarda yarım:** hazır notification platformu workflow'a bağlı değil ve AI context hiçbir şeyden beslenmiyor.
+Backend gerçeklik katmanı (RPC, RLS, audit trigger, lifecycle guard, server validation) PR16.10 ve PR17.1/17.2 turlarıyla gerçekten sağlamlaştı — bu, çoğu MVP'nin sahip olmadığı bir zemin. Kalan büyük ürün kenarı: AI context hâlâ HR mutation'larından beslenmiyor ve tarayıcı e2e kanıtı tamamlanmadı.
 
-PR17'nin en yüksek getirili işi yeni özellik değil — **zaten var olan iki altyapıyı (notification ledger + AI context) gerçek HR mutation'larına bağlamak.** Bu yapıldığında "connector-bağımsız kapalı devre AI HR App" iddiası ilk kez fiilen doğru olur.
+PR17'nin sıradaki en yüksek getirili işi yeni yüzey eklemek değil — **mevcut AI context altyapısını gerçek HR mutation'larına bağlamak** ve izin/masraf kapalı döngüsünü tarayıcı e2e ile kanıtlamak.
 
 ---
 
 ### Ek: Doğrulama komutları (bu denetimde çalıştırıldı)
 
 ```
-# Notification: mevcut producer'lar connector/runtime + file-import;
-# HR workflow producer'ı yok.
+# Notification: Rev5 sonrası connector/runtime + file-import producer'larına ek olarak
+# HR workflow live dispatch trigger'ları var.
 # NOT: file_import_uploaded producer'ı *notification*-isimli olmayan bir migration'da
 # (puls_integration_file_import_contract), bu yüzden TÜM .sql migration'larda ara:
 grep -rhniE "source_event_key" supabase/migrations/*.sql \
@@ -518,14 +537,14 @@ grep -rhniE "source_event_key" supabase/migrations/*.sql \
 #   import_apply_rollback_{approval_recorded,preview_ready,worker_ready}
 #   ('all' ve 'source_event_key' regex gürültüsü)
 #   Ek credential producer'ları (farklı alan adı): reference_revoked, verification_{failed,succeeded}
-#   Hepsi connector/file-import yüzeyinde; leave/expense/performance producer YOK
+#   Rev5 ayrıca workflow trigger dispatch'i ekler; producer orchestrator backfill/reconcile olarak kalır.
 
 # Audit trigger kapsamı
 grep -rn "TRIGGER.*audit" supabase/migrations/20260609070000_*.sql
 # → yalnız puls_workflow leave_requests / expense_claims / approval_requests
 
-# decide_approval_request RPC'sinde notif çağrısı
+# Workflow notification live dispatch trigger'ları
 grep -niE "notif|enqueue.*notif|app_notification" \
-  supabase/migrations/20260524110000_puls_workflow_rpc.sql
-# → (boş) — onay kararı bildirim üretmiyor
+  supabase/migrations/20260610100000_puls_workflow_notification_dispatch_boundary.sql
+# → approval_requests insert + leave/expense decision status update dispatch
 ```
