@@ -1,4 +1,7 @@
-import type { ApprovalPolicyBindingInfo, ApprovalPolicyBindingStatus } from '#/lib/data/workflow/policy-binding-readiness'
+import type {
+  ApprovalPolicyBindingInfo,
+  ApprovalPolicyBindingStatus,
+} from '#/lib/data/workflow/policy-binding-readiness'
 import { applyExpenseCategoryLifecycleFilter } from '#/lib/data/setup/expense-categories'
 import { applyLeaveTypeLifecycleFilter } from '#/lib/data/setup/leave-types'
 import { fetchExpenseCategoriesOverview } from '#/lib/data/setup/expense-categories'
@@ -23,6 +26,8 @@ export type RequestCreationDomain = 'expense' | 'leave'
 export type RequestCreationBlocker =
   | 'no_active_expense_categories'
   | 'no_active_leave_types'
+  | 'invalid_expense_category'
+  | 'invalid_leave_type'
   | 'missing_cost_center'
   | 'inactive_assignment_reference'
   | 'assignment_partial'
@@ -74,6 +79,8 @@ const BLOCKER_PRECEDENCE: RequestCreationBlocker[] = [
   'inactive_assignment_reference',
   'assignment_partial',
   'missing_cost_center',
+  'invalid_expense_category',
+  'invalid_leave_type',
   'no_active_expense_categories',
   'no_active_leave_types',
   'unknown',
@@ -174,6 +181,13 @@ export function buildExpenseCreationReadiness(
   if (input.activeCategoryCount === 0) {
     blockers.push('no_active_expense_categories')
   }
+  if (
+    input.selectedCategoryId &&
+    input.activeCategoryCount > 0 &&
+    !input.policyTargets.some((target) => target.id === input.selectedCategoryId)
+  ) {
+    blockers.push('invalid_expense_category')
+  }
 
   applyAssignmentReadiness({
     domain: 'expense',
@@ -208,6 +222,13 @@ export function buildLeaveCreationReadiness(
 
   if (input.activeLeaveTypeCount === 0) {
     blockers.push('no_active_leave_types')
+  }
+  if (
+    input.selectedLeaveTypeId &&
+    input.activeLeaveTypeCount > 0 &&
+    !input.policyTargets.some((target) => target.id === input.selectedLeaveTypeId)
+  ) {
+    blockers.push('invalid_leave_type')
   }
 
   applyAssignmentReadiness({
@@ -318,6 +339,12 @@ export function getRequestCreationBlockerI18nKey(
   }
   if (blocker === 'no_active_leave_types') {
     return 'requestCreationReadiness.leave.noActiveLeaveTypes'
+  }
+  if (blocker === 'invalid_expense_category') {
+    return 'requestCreationReadiness.expense.invalidCategory'
+  }
+  if (blocker === 'invalid_leave_type') {
+    return 'requestCreationReadiness.leave.invalidLeaveType'
   }
   if (blocker === 'inactive_assignment_reference') {
     return 'requestCreationReadiness.common.inactiveAssignmentReference'

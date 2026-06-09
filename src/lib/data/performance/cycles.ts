@@ -34,6 +34,14 @@ export type PerformanceCycleValidationErrors = {
 }
 
 const CYCLE_STATUSES: PerformansCycle['status'][] = ['draft', 'active', 'closed']
+const PERFORMANCE_CYCLE_STATUS_TRANSITIONS: Record<
+  PerformansCycle['status'],
+  PerformansCycle['status'][]
+> = {
+  draft: ['active'],
+  active: ['closed'],
+  closed: [],
+}
 
 function isIsoDateString(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -85,6 +93,14 @@ export function validatePerformanceCycleInput(
       status,
     },
   }
+}
+
+export function canTransitionPerformanceCycleStatus(
+  currentStatus: PerformansCycle['status'],
+  nextStatus: PerformansCycle['status'],
+): boolean {
+  if (currentStatus === nextStatus) return true
+  return PERFORMANCE_CYCLE_STATUS_TRANSITIONS[currentStatus]?.includes(nextStatus) ?? false
 }
 
 function invalidCycleRow(message: string): DataAdapterError {
@@ -150,7 +166,12 @@ async function fetchRealPerformanceCycles(userId: string): Promise<PerformansCyc
     .order('starts_at', { ascending: false })
 
   if (error) {
-    throw fromSupabaseError(error, 'fetchPerformanceCycles', 'puls_performance', 'performance_cycles')
+    throw fromSupabaseError(
+      error,
+      'fetchPerformanceCycles',
+      'puls_performance',
+      'performance_cycles',
+    )
   }
 
   return (data ?? []).map((row) => parsePerformanceCycleRow(row))
@@ -215,7 +236,10 @@ export async function createPerformanceCycle(
 
     const ctx = await resolveTenantContext(userId)
     if (!ctx.tenantId) {
-      return { data: null, error: adapterError('createPerformanceCycle', 'no_tenant').toUserMessage() }
+      return {
+        data: null,
+        error: adapterError('createPerformanceCycle', 'no_tenant').toUserMessage(),
+      }
     }
 
     const { data, error } = await pulsPerformance()
@@ -231,7 +255,12 @@ export async function createPerformanceCycle(
       .single()
 
     if (error) {
-      throw fromSupabaseError(error, 'createPerformanceCycle', 'puls_performance', 'performance_cycles')
+      throw fromSupabaseError(
+        error,
+        'createPerformanceCycle',
+        'puls_performance',
+        'performance_cycles',
+      )
     }
 
     return { data: parsePerformanceCycleMutationResult(data), error: null }
@@ -248,7 +277,10 @@ export async function updatePerformanceCycle(
   try {
     const ctx = await resolveTenantContext(userId)
     if (!ctx.tenantId) {
-      return { data: null, error: adapterError('updatePerformanceCycle', 'no_tenant').toUserMessage() }
+      return {
+        data: null,
+        error: adapterError('updatePerformanceCycle', 'no_tenant').toUserMessage(),
+      }
     }
 
     const payload: Record<string, unknown> = {}
@@ -258,10 +290,16 @@ export async function updatePerformanceCycle(
     if (patch.ends_at != null) payload.ends_at = patch.ends_at
 
     if (Object.keys(payload).length === 0) {
-      return { data: null, error: adapterError('updatePerformanceCycle', 'empty_patch').toUserMessage() }
+      return {
+        data: null,
+        error: adapterError('updatePerformanceCycle', 'empty_patch').toUserMessage(),
+      }
     }
 
-    if (payload.status != null && !CYCLE_STATUSES.includes(payload.status as PerformansCycle['status'])) {
+    if (
+      payload.status != null &&
+      !CYCLE_STATUSES.includes(payload.status as PerformansCycle['status'])
+    ) {
       return { data: null, error: validationErrorMessage() }
     }
 
@@ -285,6 +323,36 @@ export async function updatePerformanceCycle(
       return { data: null, error: validationErrorMessage() }
     }
 
+    if (payload.status != null) {
+      const { data: currentRow, error: currentError } = await pulsPerformance()
+        .from('performance_cycles')
+        .select('status')
+        .eq('tenant_id', ctx.tenantId)
+        .eq('id', cycleId)
+        .single()
+
+      if (currentError) {
+        throw fromSupabaseError(
+          currentError,
+          'updatePerformanceCycle',
+          'puls_performance',
+          'performance_cycles',
+        )
+      }
+
+      const currentStatus = currentRow.status as PerformansCycle['status']
+      const nextStatus = payload.status as PerformansCycle['status']
+      if (!canTransitionPerformanceCycleStatus(currentStatus, nextStatus)) {
+        return {
+          data: null,
+          error: adapterError(
+            'updatePerformanceCycle',
+            'invalid_status_transition',
+          ).toUserMessage(),
+        }
+      }
+    }
+
     const { data, error } = await pulsPerformance()
       .from('performance_cycles')
       .update(payload)
@@ -294,7 +362,12 @@ export async function updatePerformanceCycle(
       .single()
 
     if (error) {
-      throw fromSupabaseError(error, 'updatePerformanceCycle', 'puls_performance', 'performance_cycles')
+      throw fromSupabaseError(
+        error,
+        'updatePerformanceCycle',
+        'puls_performance',
+        'performance_cycles',
+      )
     }
 
     return { data: parsePerformanceCycleMutationResult(data), error: null }

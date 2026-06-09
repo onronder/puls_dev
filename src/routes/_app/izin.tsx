@@ -176,7 +176,12 @@ function IzinPage() {
   const [tab, setTab] = useState<LeaveTab>('mine')
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const { data: leaveOverviewResult, isLoading, isError, refetch } = useQuery({
+  const {
+    data: leaveOverviewResult,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['leave-overview', user?.id],
     queryFn: () => fetchLeaveOverviewWithMeta(user!.id),
     enabled: Boolean(user?.id),
@@ -281,7 +286,12 @@ function IzinPage() {
           </div>
 
           {activeTab === 'mine' ? (
-            <MineTab upcoming={data.upcoming} requests={data.requests} locale={i18n.language} t={t} />
+            <MineTab
+              upcoming={data.upcoming}
+              requests={data.requests}
+              locale={i18n.language}
+              t={t}
+            />
           ) : null}
 
           {activeTab === 'approvals' ? (
@@ -468,10 +478,7 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
       ) : (
         <ul className="mt-3 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
           {approvals.map((approval) => (
-            <li
-              key={approval.id}
-              className="flex flex-wrap items-center gap-3 p-4 sm:flex-nowrap"
-            >
+            <li key={approval.id} className="flex flex-wrap items-center gap-3 p-4 sm:flex-nowrap">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-[12px] font-semibold text-secondary-foreground">
                 {approval.initials}
               </span>
@@ -604,10 +611,10 @@ function LeaveFormSheet({
     })
   }, [creationContext, leaveTypeId])
 
+  const selectedLeaveType = data?.leaveTypes.find((item) => item.id === leaveTypeId)
   const resolvedLeaveType =
-    data?.leaveTypes.find((item) => item.id === leaveTypeId) ??
-    data?.leaveTypes.find((item) => item.id === defaultLeaveTypeId) ??
-    data?.leaveTypes[0]
+    selectedLeaveType ??
+    (!leaveTypeId ? data?.leaveTypes.find((item) => item.id === defaultLeaveTypeId) : undefined)
 
   const createMutation = useMutation({
     mutationFn: (payload: Parameters<typeof createLeaveRequest>[1]) => {

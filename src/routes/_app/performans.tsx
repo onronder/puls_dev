@@ -644,7 +644,7 @@ function PerformansPage() {
                   variant="outline"
                   size="sm"
                   className="touch-target shrink-0"
-                  disabled={statusMutation.isPending}
+                  disabled={statusMutation.isPending || Boolean(activeCycle)}
                   onClick={() =>
                     void statusMutation.mutateAsync({ id: cycle.id, status: 'active' })
                   }

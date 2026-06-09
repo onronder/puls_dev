@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { DataAdapterError } from '#/lib/data/errors'
 import {
+  canTransitionPerformanceCycleStatus,
   normalizePerformanceCycleName,
   parsePerformanceCycleMutationResult,
   parsePerformanceCycleRow,
@@ -121,5 +122,21 @@ describe('parsePerformanceCycleMutationResult', () => {
 
   it('rejects non-object mutation payload', () => {
     expect(() => parsePerformanceCycleMutationResult(null)).toThrow(DataAdapterError)
+  })
+})
+
+describe('canTransitionPerformanceCycleStatus', () => {
+  it('allows stable no-op status updates', () => {
+    expect(canTransitionPerformanceCycleStatus('draft', 'draft')).toBe(true)
+    expect(canTransitionPerformanceCycleStatus('active', 'active')).toBe(true)
+    expect(canTransitionPerformanceCycleStatus('closed', 'closed')).toBe(true)
+  })
+
+  it('allows only draft to active and active to closed lifecycle moves', () => {
+    expect(canTransitionPerformanceCycleStatus('draft', 'active')).toBe(true)
+    expect(canTransitionPerformanceCycleStatus('active', 'closed')).toBe(true)
+    expect(canTransitionPerformanceCycleStatus('draft', 'closed')).toBe(false)
+    expect(canTransitionPerformanceCycleStatus('active', 'draft')).toBe(false)
+    expect(canTransitionPerformanceCycleStatus('closed', 'active')).toBe(false)
   })
 })

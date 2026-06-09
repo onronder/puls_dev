@@ -1661,6 +1661,7 @@
         "REQUIRED_VALUE_MISSING": "A required value is empty.",
         "EXTERNAL_ID_MISSING": "The required source record code is empty.",
         "NULL_LITERAL_NORMALIZED": "The NULL literal was handled as an empty value.",
+        "FORMULA_LIKE_TEXT_VALUE": "This text can be interpreted as a formula when exported; exports will make it safe.",
         "INVALID_EMAIL": "Email format is invalid.",
         "INVALID_BOOLEAN": "Boolean values must be true/false, yes/no, or 1/0.",
         "INVALID_INTEGER": "Integer format is invalid.",

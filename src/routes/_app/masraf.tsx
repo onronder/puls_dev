@@ -632,6 +632,7 @@ function ExpenseFormSheet({
   const amountNum = parseDecimalAmount(amount)
   const requiredOk = !!category && Number.isFinite(amountNum) && amountNum > 0 && !!expenseDate
   const selectedCategoryLimit = data?.categoryLimits.find((item) => item.id === category)
+  const selectedCategoryIsAvailable = !category || Boolean(selectedCategoryLimit)
   const receiptRequiredOver = selectedCategoryLimit?.receiptRequiredOver ?? 0
   const receiptRequired =
     receiptRequiredOver > 0 && Number.isFinite(amountNum) && amountNum > receiptRequiredOver
@@ -667,6 +668,9 @@ function ExpenseFormSheet({
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextErrors = validateExpenseForm(category, amount, expenseDate, t)
+    if (!selectedCategoryIsAvailable) {
+      nextErrors.category = t('requestCreationReadiness.expense.invalidCategory')
+    }
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
@@ -713,7 +717,12 @@ function ExpenseFormSheet({
             form="new-expense-form"
             className="min-h-11 flex-1"
             disabled={
-              isSubmitting || !data || !hasActiveCategories || !canCreate || receiptRequired
+              isSubmitting ||
+              !data ||
+              !hasActiveCategories ||
+              !canCreate ||
+              !selectedCategoryIsAvailable ||
+              receiptRequired
             }
           >
             {isSubmitting ? (
