@@ -23,6 +23,7 @@ import { useAuth } from '#/lib/auth'
 import {
   createDepartment,
   fetchDepartmentsOverviewWithMeta,
+  invalidateOrgStructureQueries,
   isDepartmentFormDirty,
   mapDepartmentMutationError,
   normalizeOrgSetupCode,
@@ -133,8 +134,7 @@ function DepartmanlarPage() {
     },
     onSuccess: () => {
       const wasEdit = sheetMode === 'edit'
-      void queryClient.invalidateQueries({ queryKey: ['departments-overview', user?.id] })
-      void queryClient.invalidateQueries({ queryKey: ['setup-readiness-dashboard', user?.id] })
+      if (user?.id) invalidateOrgStructureQueries(queryClient, user.id)
       resetSheet()
       toast.success(t(wasEdit ? 'orgSetupCrud.department.updated' : 'orgSetupCrud.department.created'))
     },

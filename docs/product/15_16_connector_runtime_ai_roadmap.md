@@ -1103,6 +1103,32 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - `PULS_RECEIPT_REQUIRED` RPC, adapter error map ve i18n contract'ında görünür.
 - Typecheck, test, lint, i18n, build ve PR16.10.14 verify gate geçer.
 
+### PR16.10.15 - Route Boundary & HR Cache Hardening
+
+**Ürün değeri:** PR17 öncesi uygulama kabuğu daha dayanıklı hale gelir; tek sayfa render hatası tüm authenticated shell'i düşürmez ve org structure değişiklikleri bağlı HR ekranlarında stale veri bırakmaz.
+
+**Kapsam:**
+
+- Root error boundary korunur; `_app` route outlet'i ayrıca `AppErrorBoundary` ile sarılır.
+- Route boundary pathname değişiminde resetlenir.
+- Departman ve pozisyon create/update başarılarında ortak org structure invalidation helper çalışır.
+- Helper departmanlar, pozisyonlar, çalışan readiness, çalışan izin görünümü, dashboard ve setup readiness cache'lerini temizler.
+- Verify gate ve helper unit testi eklenir.
+
+**Kapsam dışı:**
+
+- DB migration
+- Connector runtime, DataSource Manager, notification veya worker davranışı
+- Departman/pozisyon mutation payload değişikliği
+- Görünür ürün metni değişikliği
+
+**Doğrulama:**
+
+- Root boundary ve route boundary birlikte bulunur.
+- Departman/pozisyon sayfaları `invalidateOrgStructureQueries` kullanır.
+- Helper beklenen altı query key'ini invalidate eder.
+- Typecheck, test, lint, i18n, build ve PR16.10.15 verify gate geçer.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

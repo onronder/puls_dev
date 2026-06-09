@@ -58,6 +58,8 @@ export {
   type DataAdapterErrorFields,
 } from '#/lib/data/errors'
 
+export { invalidateOrgStructureQueries } from '#/lib/data/query-invalidation'
+
 export {
   mapContractStatusTone,
   mapExpenseClaimStatusTone,
