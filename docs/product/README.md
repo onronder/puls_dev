@@ -888,6 +888,17 @@ PR16.10.12 keeps the DataSource Manager product journey unchanged while reducing
 | [`src/components/data-sources/dataSourceUi.test.tsx`](../../src/components/data-sources/dataSourceUi.test.tsx) | Helper regression coverage for journey mapping and display fallbacks |
 | [`scripts/verify-16-10-12-datasource-manager-structure.sh`](../../scripts/verify-16-10-12-datasource-manager-structure.sh) | PR16.10.12 verify gate |
 
+## PR16.10.13 DataSource technical details split
+
+PR16.10.13 finishes the DataSource Manager structure cleanup by turning the isolated technical audit sheet into a shell plus focused tab and section modules. Product behavior, connector execution, canonical writes, credentials, notifications, and visible copy remain unchanged.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [16_10_13_datasource_technical_details_split.md](./16_10_13_datasource_technical_details_split.md) | PR16.10.13 frontend structure contract, scope, and verification |
+| [`src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx`](../../src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx) | Technical sheet shell and tab router |
+| [`src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx`](../../src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx) | Preview/apply tab composition |
+| [`scripts/verify-16-10-13-datasource-technical-details-split.sh`](../../scripts/verify-16-10-13-datasource-technical-details-split.sh) | PR16.10.13 verify gate |
+
 ## Related packs
 
 | Pack                    | Entry point                                                                                      |

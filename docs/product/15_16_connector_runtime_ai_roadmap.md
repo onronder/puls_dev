@@ -1049,6 +1049,33 @@ PR16.10.0 implements provider-independent connector access readiness before any 
 - `dataSourceUi` journey/fallback/scope helper testleri geçer.
 - Typecheck, lint, i18n, build ve PR16.10.12 verify gate geçer.
 
+### PR16.10.13 - DataSource technical details split
+
+**Ürün değeri:** PR16.10.12 ile route'tan ayrılan teknik denetim sheet'i de sürdürülebilir bileşen sınırlarına ayrılır. Admin deneyimi aynı kalır; teknik kanıtlar hâlâ gelişmiş panelin içinde kalır.
+
+**Kapsam:**
+
+- `DataSourceTechnicalDetailsSheet` yalnızca sheet shell + tab router olur.
+- Setup, kontrol, credentials, fields, activity ve preview/apply tabları ayrı component'lere taşınır.
+- Preview/apply içindeki import, readiness, change-set, guarded update, rollback ve controlled apply section'ları ayrı modüllere bölünür.
+- Sheet prop yüzeyi `permissions` ve `mutations` gruplarıyla küçültülür.
+- Verify gate dosya boyutu ve split invariant'larını denetler.
+
+**Kapsam dışı:**
+
+- DB migration
+- Connector execution veya canonical write davranışı
+- Credential, raw payload, provider API veya notification behavior değişikliği
+- HR workflow audit/policy enforcement
+
+**Doğrulama:**
+
+- Technical sheet 200 satırın altında kalır.
+- Preview/apply tab composer 120 satırın altında kalır.
+- Hiçbir technical details section modülü 700 satırı geçmez.
+- Deep-link target id'leri korunur.
+- Typecheck, test, lint, i18n, build ve PR16.10.13 verify gate geçer.
+
 ### PR16.11 - AI Operational Recommendations
 
 **Ürün değeri:** HR AI, yalnızca sayfa içi teaser değil; operasyonel verilerden öneri üreten vazgeçilmez bir süreç katmanı haline gelir.

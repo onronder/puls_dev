@@ -1153,36 +1153,40 @@ function ErpPage() {
           activeWorkbenchTab={activeWorkbenchTab}
           setActiveWorkbenchTab={setActiveWorkbenchTab}
           showWorkbenchTab={showWorkbenchTab}
-          canManageConnectors={canManageConnectors}
-          canRunImportPreview={canRunImportPreview}
-          canRequestApplyReview={canRequestApplyReview}
-          canRequestApplyChangeSet={canRequestApplyChangeSet}
-          canRequestGuardedUpdateEvidence={canRequestGuardedUpdateEvidence}
-          canRecordRollbackApproval={canRecordRollbackApproval}
-          canRequestRollbackWorkerReadiness={canRequestRollbackWorkerReadiness}
-          canRequestRollbackApplyJob={canRequestRollbackApplyJob}
-          requestRollbackApplyPending={requestRollbackApplyPending}
-          canRecordApplyApproval={canRecordApplyApproval}
-          canRequestApplyExecutionJob={canRequestApplyExecutionJob}
-          requestApplyExecutionPending={requestApplyExecutionPending}
-          canRequestGuardedUpdateApplyJob={canRequestGuardedUpdateApplyJob}
-          canRequestCredentialHandoff={canRequestCredentialHandoff}
-          canRequestRuntimePreflight={canRequestRuntimePreflight}
           credentialSheetOpen={credentialSheetOpen}
           setCredentialSheetOpen={setCredentialSheetOpen}
-          runPreflightMutation={runPreflightMutation}
-          runImportPreviewMutation={runImportPreviewMutation}
-          requestApplyReviewMutation={requestApplyReviewMutation}
-          requestApplyChangeSetMutation={requestApplyChangeSetMutation}
-          requestGuardedUpdateEvidenceMutation={requestGuardedUpdateEvidenceMutation}
-          recordApplyApprovalMutation={recordApplyApprovalMutation}
-          recordRollbackApprovalMutation={recordRollbackApprovalMutation}
-          requestRollbackWorkerReadinessMutation={requestRollbackWorkerReadinessMutation}
-          requestRollbackApplyJobMutation={requestRollbackApplyJobMutation}
-          requestCreateOnlyApplyJobMutation={requestCreateOnlyApplyJobMutation}
-          requestGuardedUpdateApplyJobMutation={requestGuardedUpdateApplyJobMutation}
-          requestCredentialHandoffMutation={requestCredentialHandoffMutation}
-          requestRuntimePreflightMutation={requestRuntimePreflightMutation}
+          permissions={{
+            canManageConnectors,
+            canRunImportPreview,
+            canRequestApplyReview,
+            canRequestApplyChangeSet,
+            canRequestGuardedUpdateEvidence,
+            canRecordRollbackApproval,
+            canRequestRollbackWorkerReadiness,
+            canRequestRollbackApplyJob,
+            requestRollbackApplyPending,
+            canRecordApplyApproval,
+            canRequestApplyExecutionJob,
+            requestApplyExecutionPending,
+            canRequestGuardedUpdateApplyJob,
+            canRequestCredentialHandoff,
+            canRequestRuntimePreflight,
+          }}
+          mutations={{
+            runPreflight: runPreflightMutation,
+            runImportPreview: runImportPreviewMutation,
+            requestApplyReview: requestApplyReviewMutation,
+            requestApplyChangeSet: requestApplyChangeSetMutation,
+            requestGuardedUpdateEvidence: requestGuardedUpdateEvidenceMutation,
+            recordApplyApproval: recordApplyApprovalMutation,
+            recordRollbackApproval: recordRollbackApprovalMutation,
+            requestRollbackWorkerReadiness: requestRollbackWorkerReadinessMutation,
+            requestRollbackApplyJob: requestRollbackApplyJobMutation,
+            requestCreateOnlyApplyJob: requestCreateOnlyApplyJobMutation,
+            requestGuardedUpdateApplyJob: requestGuardedUpdateApplyJobMutation,
+            requestCredentialHandoff: requestCredentialHandoffMutation,
+            requestRuntimePreflight: requestRuntimePreflightMutation,
+          }}
         />
       ) : null}
     </div>
