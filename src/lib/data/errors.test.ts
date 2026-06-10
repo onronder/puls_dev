@@ -142,4 +142,48 @@ describe('fromRpcError', () => {
       ),
     ).toBe('expense.error.receiptRequired')
   })
+
+  it('maps workflow evidence RPC guards to evidence upload messages', () => {
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_EVIDENCE_UPLOAD_EXPIRED: Evidence upload intent has expired.',
+        'workflowEvidence.error.uploadFailed',
+        'uploadWorkflowEvidenceFile',
+      ),
+    ).toBe('workflowEvidence.error.expired')
+
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_EVIDENCE_STORAGE_SIZE_UNVERIFIED: Uploaded storage object size metadata could not be verified.',
+        'workflowEvidence.error.uploadFailed',
+        'uploadWorkflowEvidenceFile',
+      ),
+    ).toBe('workflowEvidence.error.storageSizeUnverified')
+
+    expect(
+      mapRpcErrorToI18nKey(
+        'PULS_EVIDENCE_STORAGE_SIZE_MISMATCH: Uploaded storage object size does not match the upload intent.',
+        'workflowEvidence.error.uploadFailed',
+        'uploadWorkflowEvidenceFile',
+      ),
+    ).toBe('workflowEvidence.error.storageSizeMismatch')
+  })
+
+  it('wraps workflow evidence RPC errors without exposing raw SQL text', () => {
+    const error = fromRpcError(
+      {
+        code: 'P0001',
+        message:
+          'PULS_EVIDENCE_UPLOAD_METADATA_MISMATCH: Finalized file metadata must match the upload intent.',
+        details: '',
+        hint: '',
+      } as import('@supabase/supabase-js').PostgrestError,
+      'uploadWorkflowEvidenceFile',
+      'workflowEvidence.error.uploadFailed',
+    )
+
+    expect(error.i18nKey).toBe('workflowEvidence.error.metadataMismatch')
+    expect(error.message).toBe('workflowEvidence.error.metadataMismatch')
+    expect(error.message).not.toContain('Finalized file metadata')
+  })
 })

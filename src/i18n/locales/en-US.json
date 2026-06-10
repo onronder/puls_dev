@@ -41,7 +41,16 @@
       "required": "Upload a document for this action.",
       "uploadFailed": "Could not upload the document.",
       "attachFailed": "Could not attach the document to the record.",
-      "adminRequired": "Manager access is required to upload contract documents."
+      "adminRequired": "Manager access is required to upload contract documents.",
+      "notFound": "The evidence upload record could not be found.",
+      "forbidden": "You do not have access to this evidence upload.",
+      "statusInvalid": "This evidence upload cannot be completed at this stage.",
+      "expired": "The evidence upload expired. Choose the file again.",
+      "metadataMismatch": "The file metadata does not match the upload record.",
+      "hashMismatch": "The file integrity metadata does not match the upload record.",
+      "storageMissing": "The uploaded file could not be found in storage.",
+      "storageSizeUnverified": "The uploaded file size could not be verified.",
+      "storageSizeMismatch": "The uploaded file size does not match the upload record."
     }
   },
   "auth": {
