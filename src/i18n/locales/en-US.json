@@ -32,6 +32,8 @@
     "uploading": "Uploading…",
     "ready": "Ready",
     "remove": "Remove file",
+    "view": "Open document",
+    "viewFile": "Open {{file}}",
     "requiredHint": "Supported file · max {{size}} · required",
     "optionalHint": "Supported file · max {{size}}",
     "error": {
@@ -50,7 +52,8 @@
       "hashMismatch": "The file integrity metadata does not match the upload record.",
       "storageMissing": "The uploaded file could not be found in storage.",
       "storageSizeUnverified": "The uploaded file size could not be verified.",
-      "storageSizeMismatch": "The uploaded file size does not match the upload record."
+      "storageSizeMismatch": "The uploaded file size does not match the upload record.",
+      "viewFailed": "Could not create a document viewing link."
     }
   },
   "auth": {

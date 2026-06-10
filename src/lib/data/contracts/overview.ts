@@ -8,11 +8,16 @@ import type {
 import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
+import {
+  fetchWorkflowEvidenceAttachments,
+  type WorkflowEvidenceAttachment,
+} from '#/lib/data/workflow/evidence'
 
 export type ContractEvidenceSummary = {
   fileCount: number
   latestFileName: string | null
   latestFileSizeBytes: number | null
+  evidence: WorkflowEvidenceAttachment[]
 }
 
 export type ContractItem = DemoContractItem & ContractEvidenceSummary
@@ -40,13 +45,6 @@ export type ContractRowInput = {
   risk_band?: string | null
   employeeName?: string | null
   employees?: { full_name?: string } | null
-}
-
-type ContractFileRow = {
-  contract_id: string
-  file_name?: string | null
-  file_size_bytes?: number | null
-  created_at?: string | null
 }
 
 export type MapContractRowOptions = {
@@ -104,6 +102,7 @@ export function mapContractRow(
     fileCount: 0,
     latestFileName: null,
     latestFileSizeBytes: null,
+    evidence: [],
   }
 
   return {
@@ -206,41 +205,17 @@ async function fetchRealContractsOverview(userId: string): Promise<ContractsOver
     )
   }
 
-  let evidenceMap = new Map<string, ContractEvidenceSummary>()
-  if (contractIds.length > 0) {
-    const { data: fileRows, error: fileError } = await pulsWorkflow()
-      .from('contract_files')
-      .select('contract_id, file_name, file_size_bytes, created_at')
-      .eq('tenant_id', ctx.tenantId)
-      .order('created_at', { ascending: false })
-      .in('contract_id', contractIds)
-
-    if (fileError) {
-      throw fromSupabaseError(
-        fileError,
-        'fetchContractsOverview',
-        'puls_workflow',
-        'contract_files',
-      )
-    }
-
-    evidenceMap = new Map()
-    for (const row of (fileRows ?? []) as ContractFileRow[]) {
-      const existing = evidenceMap.get(row.contract_id) ?? {
-        fileCount: 0,
-        latestFileName: null,
-        latestFileSizeBytes: null,
-      }
-      evidenceMap.set(row.contract_id, {
-        fileCount: existing.fileCount + 1,
-        latestFileName: existing.latestFileName ?? row.file_name ?? null,
-        latestFileSizeBytes:
-          existing.latestFileSizeBytes ??
-          (row.file_size_bytes === null || row.file_size_bytes === undefined
-            ? null
-            : Number(row.file_size_bytes)),
-      })
-    }
+  const evidenceByContractId = await fetchWorkflowEvidenceAttachments('contract', contractIds)
+  const evidenceMap = new Map<string, ContractEvidenceSummary>()
+  for (const contractId of contractIds) {
+    const evidence = evidenceByContractId.get(contractId) ?? []
+    const latest = evidence[0]
+    evidenceMap.set(contractId, {
+      fileCount: evidence.length,
+      latestFileName: latest?.fileName ?? null,
+      latestFileSizeBytes: latest?.fileSizeBytes ?? null,
+      evidence,
+    })
   }
 
   const contracts = contractRows.map((row) =>
@@ -279,6 +254,7 @@ export function fetchContractsOverviewWithMeta(userId: string) {
           fileCount: 0,
           latestFileName: null,
           latestFileSizeBytes: null,
+          evidence: [],
         })),
       }
     },
@@ -299,6 +275,7 @@ export async function fetchContractsOverview(userId: string): Promise<ContractsO
           fileCount: 0,
           latestFileName: null,
           latestFileSizeBytes: null,
+          evidence: [],
         })),
       }
     },

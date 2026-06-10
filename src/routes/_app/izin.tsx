@@ -25,6 +25,7 @@ import { SectionHeader } from '#/components/puls/SectionHeader'
 import { Segmented } from '#/components/puls/Segmented'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
+import { WorkflowEvidenceViewActions } from '#/components/puls/WorkflowEvidenceViewActions'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Progress } from '#/components/ui/progress'
@@ -415,6 +416,11 @@ function MineTab({ upcoming, requests, locale, t }: MineTabProps) {
                       </span>
                     ) : null}
                   </div>
+                  <WorkflowEvidenceViewActions
+                    items={request.evidence}
+                    compact
+                    className="mt-2"
+                  />
                 </div>
                 <StatusPill tone={leaveStatusTone(request.status)}>
                   {t(`leave.status.${request.status}`)}
@@ -498,6 +504,11 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
                     {approval.businessDays} {t('common.days')}
                   </span>
                 </div>
+                <WorkflowEvidenceViewActions
+                  items={approval.evidence}
+                  compact
+                  className="mt-2"
+                />
               </div>
               <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
                 <Button

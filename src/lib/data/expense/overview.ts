@@ -8,8 +8,18 @@ import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
+import {
+  fetchWorkflowEvidenceAttachments,
+  type WorkflowEvidenceAttachment,
+} from '#/lib/data/workflow/evidence'
 
-export type ExpenseOverview = DemoExpenseOverview
+export type ExpenseOverview = Omit<DemoExpenseOverview, 'claims' | 'pendingApprovals'> & {
+  claims: (DemoExpenseClaim & { evidence: WorkflowEvidenceAttachment[] })[]
+  pendingApprovals: (DemoExpenseApproval & { evidence: WorkflowEvidenceAttachment[] })[]
+}
+
+type ExpenseClaimWithEvidence = ExpenseOverview['claims'][number]
+type ExpenseApprovalWithEvidence = ExpenseOverview['pendingApprovals'][number]
 
 export type ExpenseClaimCategoryJoin = {
   name?: string
@@ -204,6 +214,13 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       : new Map<string, { name: string; isActive: boolean }>()
 
   const claimById = new Map((claimRows.data ?? []).map((row) => [row.id as string, row]))
+  const evidenceByClaimId = await fetchWorkflowEvidenceAttachments(
+    'expense',
+    uniqueNonNullIds([
+      ...(claimsRow.data ?? []).map((row) => row.id as string | null),
+      ...(claimRows.data ?? []).map((row) => row.id as string | null),
+    ]),
+  )
 
   const overview = overviewRow.data
   const approvedThisMonth = Number(overview?.approved_this_month_amount ?? 0)
@@ -211,7 +228,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
   const topCategoryName = (overview?.top_expense_category as string | null) ?? '—'
   const topCategoryPct = monthlyLimit > 0 ? Math.round((approvedThisMonth / monthlyLimit) * 100) : 0
 
-  const claims: DemoExpenseClaim[] = (claimsRow.data ?? []).map((row) => {
+  const claims: ExpenseClaimWithEvidence[] = (claimsRow.data ?? []).map((row) => {
     const categoryJoin = row.expense_categories as ExpenseClaimCategoryJoin
     const mapped = mapClaimCategoryFromJoin(categoryJoin)
 
@@ -224,6 +241,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       currency: (row.currency as string | null) ?? 'TRY',
       expenseDate: row.expense_date as string,
       status: row.status as DemoExpenseClaim['status'],
+      evidence: evidenceByClaimId.get(row.id as string) ?? [],
     }
   })
 
@@ -262,7 +280,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
     }),
   )
 
-  const pendingApprovals: DemoExpenseApproval[] = approvalRows.flatMap((row) => {
+  const pendingApprovals: ExpenseApprovalWithEvidence[] = approvalRows.flatMap((row) => {
     const claim = claimById.get(row.expense_claim_id as string)
     if (!claim) return []
 
@@ -282,6 +300,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
         amount: Number(claim.amount ?? 0),
         expenseDate: claim.expense_date as string,
         currency: (claim.currency as string | null) ?? undefined,
+        evidence: evidenceByClaimId.get(claim.id as string) ?? [],
       },
     ]
   })
@@ -308,7 +327,17 @@ export async function fetchExpenseOverview(userId: string): Promise<ExpenseOverv
   return resolveAdapterData({
     operation: 'fetchExpenseOverview',
     fetchReal: () => fetchRealExpenseOverview(userId),
-    fetchDemo: fetchDemoExpenseOverview,
+    fetchDemo: async () => {
+      const demo = await fetchDemoExpenseOverview()
+      return {
+        ...demo,
+        claims: demo.claims.map((claim) => ({ ...claim, evidence: [] })),
+        pendingApprovals: demo.pendingApprovals.map((approval) => ({
+          ...approval,
+          evidence: [],
+        })),
+      }
+    },
     isEmpty: isExpenseOverviewEmpty,
   })
 }
@@ -317,7 +346,17 @@ export function fetchExpenseOverviewWithMeta(userId: string) {
   return resolveAdapterDataWithMeta({
     operation: 'fetchExpenseOverview',
     fetchReal: () => fetchRealExpenseOverview(userId),
-    fetchDemo: fetchDemoExpenseOverview,
+    fetchDemo: async () => {
+      const demo = await fetchDemoExpenseOverview()
+      return {
+        ...demo,
+        claims: demo.claims.map((claim) => ({ ...claim, evidence: [] })),
+        pendingApprovals: demo.pendingApprovals.map((approval) => ({
+          ...approval,
+          evidence: [],
+        })),
+      }
+    },
     isEmpty: isExpenseOverviewEmpty,
   })
 }

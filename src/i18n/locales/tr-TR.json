@@ -32,6 +32,8 @@
     "uploading": "Yükleniyor…",
     "ready": "Hazır",
     "remove": "Dosyayı kaldır",
+    "view": "Belgeyi aç",
+    "viewFile": "{{file}} dosyasını aç",
     "requiredHint": "Desteklenen dosya · en fazla {{size}} · zorunlu",
     "optionalHint": "Desteklenen dosya · en fazla {{size}}",
     "error": {
@@ -50,7 +52,8 @@
       "hashMismatch": "Dosya bütünlük bilgisi yükleme kaydıyla eşleşmiyor.",
       "storageMissing": "Yüklenen dosya storage içinde bulunamadı.",
       "storageSizeUnverified": "Yüklenen dosyanın gerçek boyutu doğrulanamadı.",
-      "storageSizeMismatch": "Yüklenen dosyanın gerçek boyutu yükleme kaydıyla eşleşmiyor."
+      "storageSizeMismatch": "Yüklenen dosyanın gerçek boyutu yükleme kaydıyla eşleşmiyor.",
+      "viewFailed": "Belge görüntüleme bağlantısı oluşturulamadı."
     }
   },
   "auth": {

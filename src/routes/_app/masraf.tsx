@@ -25,6 +25,7 @@ import { SectionHeader } from '#/components/puls/SectionHeader'
 import { Segmented } from '#/components/puls/Segmented'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
+import { WorkflowEvidenceViewActions } from '#/components/puls/WorkflowEvidenceViewActions'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Progress } from '#/components/ui/progress'
@@ -403,6 +404,11 @@ function RecentTab({ claims, locale, t }: RecentTabProps) {
                   locale={locale}
                   t={t}
                 />
+                <WorkflowEvidenceViewActions
+                  items={claim.evidence}
+                  compact
+                  className="mt-2"
+                />
               </div>
               <div className="flex w-[110px] shrink-0 flex-col items-end gap-1">
                 <div className="text-[14px] font-semibold tabular text-foreground">
@@ -486,6 +492,11 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
                   expenseDate={approval.expenseDate}
                   locale={locale}
                   t={t}
+                />
+                <WorkflowEvidenceViewActions
+                  items={approval.evidence}
+                  compact
+                  className="mt-2"
                 />
               </div>
               <div className="shrink-0 text-right">
