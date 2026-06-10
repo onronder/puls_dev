@@ -41,7 +41,16 @@
       "required": "Bu işlem için belge yüklenmeli.",
       "uploadFailed": "Belge yüklenemedi.",
       "attachFailed": "Belge kayda bağlanamadı.",
-      "adminRequired": "Sözleşme belgesi yüklemek için yönetici yetkisi gerekli."
+      "adminRequired": "Sözleşme belgesi yüklemek için yönetici yetkisi gerekli.",
+      "notFound": "Belge yükleme kaydı bulunamadı.",
+      "forbidden": "Bu belge yükleme kaydına erişim yetkin yok.",
+      "statusInvalid": "Belge bu aşamada tamamlanamaz.",
+      "expired": "Belge yükleme süresi doldu. Dosyayı yeniden seç.",
+      "metadataMismatch": "Dosya bilgileri yükleme kaydıyla eşleşmiyor.",
+      "hashMismatch": "Dosya bütünlük bilgisi yükleme kaydıyla eşleşmiyor.",
+      "storageMissing": "Yüklenen dosya storage içinde bulunamadı.",
+      "storageSizeUnverified": "Yüklenen dosyanın gerçek boyutu doğrulanamadı.",
+      "storageSizeMismatch": "Yüklenen dosyanın gerçek boyutu yükleme kaydıyla eşleşmiyor."
     }
   },
   "auth": {

@@ -1074,15 +1074,16 @@ Verify: [`../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/
 
 ## PR17.2F Workflow evidence upload foundation
 
-PR17.2F is split so the evidence trust boundary lands before browser workflow changes.
+PR17.2F is split so the evidence trust boundary lands before browser workflow changes and finalization is hardened before OCR/human review.
 
 | Slice                                                                                          | Purpose                                                                                                                                               |
 | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [PR17.2F Workflow Evidence Upload Foundation](./17_2_f_workflow_evidence_upload_foundation.md) | Shared contract for workflow evidence upload, split into backend boundary and product flow slices.                                                    |
+| [PR17.2F Workflow Evidence Upload Foundation](./17_2_f_workflow_evidence_upload_foundation.md) | Shared contract for workflow evidence upload, split into backend boundary, product flow, and finalization hardening slices.                            |
 | PR17.2F1 Backend Boundary                                                                      | Private storage bucket, staging upload table, intent/finalize RPCs, domain metadata RLS hardening, contract evidence attach, and metadata-only audit. |
 | [PR17.2F2 Product Flow](./17_2_f2_workflow_evidence_product_flow.md)                           | Leave/expense/contract upload UI, submit-with-evidence RPCs, compact file chips, and required-evidence server enforcement.                            |
+| [PR17.2F3 Evidence Finalization Hardening](./17_2_f3_evidence_finalization_hardening.md)        | Finalize verifies actual storage object size metadata, localizes evidence RPC errors, and keeps OCR/human review separate.                             |
 
-Verify: [`../../scripts/verify-17-2-f2-workflow-evidence-product-flow.sh`](../../scripts/verify-17-2-f2-workflow-evidence-product-flow.sh)
+Verify: [`../../scripts/verify-17-2-f3-evidence-finalization-hardening.sh`](../../scripts/verify-17-2-f3-evidence-finalization-hardening.sh)
 
 ## PR17.2 planned follow-ups
 
@@ -1092,10 +1093,11 @@ PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/r
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PR17.2F1 Evidence Upload Backend Boundary | Completed storage/RLS/RPC/audit foundation without changing visible forms.                                                                        |
 | PR17.2F2 Evidence Upload Product Flow     | Completed leave, expense, and contract upload UI flows against the backend foundation.                                                            |
+| PR17.2F3 Evidence Finalization Hardening  | Completed actual storage object size verification and evidence RPC error localization before OCR/human review.                                    |
 | PR17.2G OCR & Human Review Evidence       | Add OCR/extraction for expense receipts as safe evidence with confidence, human review, audit, and no automatic canonical write without approval. |
 | PR17.4 AI context feed handoff            | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant.               |
 
-Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 9.
+Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 10.
 
 ## Related packs
 
