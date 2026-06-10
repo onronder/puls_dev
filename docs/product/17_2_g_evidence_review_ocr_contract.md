@@ -127,6 +127,16 @@ G2A enqueue decision:
 - The service-role enqueue RPC exists only for rollback smoke, future worker integration, and controlled operations.
 - Production enqueue waits for G2B/G4 guardrails: tenant-level OCR flag, quota/cost controls, and a deployed worker posture.
 
+G2B worker decision:
+
+- The worker lives in `services/workflow-evidence-worker`, not in `services/erp-connector`.
+- The worker is disabled by default and has no Railway deployment file in G2B.
+- The worker may download private `workflow-evidence` objects through service-role Storage headers to compute `server_sha256`.
+- Provider class is limited to `disabled` or `mock`; both record `external_call: false`.
+- No production enqueue is added in G2B.
+- No canonical expense field is changed by the worker.
+- Real provider evaluation remains G4.
+
 Job state recommendation:
 
 - `not_requested`

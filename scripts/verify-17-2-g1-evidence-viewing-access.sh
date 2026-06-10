@@ -118,7 +118,7 @@ require_pattern "$DOC" 'No `getPublicUrl`'
 require_pattern "$DOC" "Evidence view compliance audit"
 require_pattern "$G_DOC" "PR17.2G1 — Evidence Viewing Access"
 require_pattern "$README" "17_2_g1_evidence_viewing_access.md"
-require_pattern "$AUDIT" "Rev 13"
+require_pattern "$AUDIT" "Rev 14"
 require_pattern "$AUDIT" "17.2G1"
 require_pattern "$AUDIT" "✅ Tamamlandı"
 require_pattern "$VERIFY_PR17" "verify-17-2-g1-evidence-viewing-access.sh"

@@ -1,0 +1,13 @@
+{
+  "name": "@puls/workflow-evidence-worker",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.3",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types src/index.ts",
+    "dev": "node --watch --experimental-strip-types src/index.ts"
+  }
+}
