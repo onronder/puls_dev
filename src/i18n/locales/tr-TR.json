@@ -36,6 +36,65 @@
     "viewFile": "{{file}} dosyasını aç",
     "requiredHint": "Desteklenen dosya · en fazla {{size}} · zorunlu",
     "optionalHint": "Desteklenen dosya · en fazla {{size}}",
+    "ocr": {
+      "title": "Fiş okuma",
+      "boundary": "Yalnızca öneridir; masraf değerleri otomatik değişmez.",
+      "confidence": "Güven {{value}}",
+      "provider": "Kaynak {{provider}}",
+      "duplicate": "Olası mükerrer",
+      "noSuggestions": "Henüz alan önerisi yok.",
+      "reviewedAt": "{{value}} tarihinde incelendi",
+      "notePlaceholder": "Gerekirse kısa bir inceleme notu ekle.",
+      "status": {
+        "not_ready": "İstenmedi",
+        "pending_review": "İnceleme gerekli",
+        "accepted": "Kabul edildi",
+        "corrected": "Düzeltildi",
+        "rejected": "Reddedildi",
+        "needs_new_document": "Yeni belge gerekli"
+      },
+      "actions": {
+        "accept": "Kabul et",
+        "corrected": "Düzelt",
+        "reject": "Reddet",
+        "needsNewDocument": "Yeni belge"
+      },
+      "fields": {
+        "amount": "Tutar",
+        "currency": "Para birimi",
+        "expense_date": "Tarih",
+        "category_label": "Kategori",
+        "merchant_name": "İşyeri",
+        "vat_included": "KDV dahil"
+      },
+      "flags": {
+        "duplicate_suspected": "Mükerrer",
+        "human_review_required": "İnceleme gerekli",
+        "provider_disabled": "Provider kapalı",
+        "mock_provider": "Mock sonuç",
+        "worker_processing_failed": "İşleme hatası",
+        "low_confidence": "Düşük güven",
+        "amount_mismatch": "Tutar uyumsuz",
+        "date_mismatch": "Tarih uyumsuz",
+        "currency_mismatch": "Para birimi uyumsuz"
+      },
+      "toast": {
+        "accepted": "OCR incelemesi kabul edildi.",
+        "corrected": "OCR incelemesi düzeltme ile kaydedildi.",
+        "rejected": "OCR incelemesi reddedildi.",
+        "needs_new_document": "Yeni belge talebi kaydedildi."
+      },
+      "error": {
+        "reviewFailed": "OCR incelemesi kaydedilemedi.",
+        "statusInvalid": "OCR inceleme kararı geçerli değil.",
+        "fieldsInvalid": "Düzeltilen OCR alanlarına izin verilmiyor.",
+        "noteTooLong": "İnceleme notu çok uzun.",
+        "correctionRequired": "Düzeltme kaydetmeden önce not ekle.",
+        "notFound": "OCR sonucu bulunamadı.",
+        "forbidden": "Bu OCR sonucunu inceleme yetkin yok.",
+        "alreadyRecorded": "Bu OCR sonucu daha önce incelenmiş."
+      }
+    },
     "error": {
       "authRequired": "Belge yüklemek için çalışan kaydı gerekli.",
       "fileType": "Bu dosya türü desteklenmiyor.",

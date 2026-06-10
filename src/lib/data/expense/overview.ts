@@ -9,13 +9,21 @@ import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 import {
+  fetchExpenseReceiptOcrReviews,
   fetchWorkflowEvidenceAttachments,
+  type ExpenseReceiptOcrReview,
   type WorkflowEvidenceAttachment,
 } from '#/lib/data/workflow/evidence'
 
 export type ExpenseOverview = Omit<DemoExpenseOverview, 'claims' | 'pendingApprovals'> & {
-  claims: (DemoExpenseClaim & { evidence: WorkflowEvidenceAttachment[] })[]
-  pendingApprovals: (DemoExpenseApproval & { evidence: WorkflowEvidenceAttachment[] })[]
+  claims: (DemoExpenseClaim & {
+    evidence: WorkflowEvidenceAttachment[]
+    ocrReviews: ExpenseReceiptOcrReview[]
+  })[]
+  pendingApprovals: (DemoExpenseApproval & {
+    evidence: WorkflowEvidenceAttachment[]
+    ocrReviews: ExpenseReceiptOcrReview[]
+  })[]
 }
 
 type ExpenseClaimWithEvidence = ExpenseOverview['claims'][number]
@@ -221,6 +229,16 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       ...(claimRows.data ?? []).map((row) => row.id as string | null),
     ]),
   )
+  const allEvidence = Array.from(evidenceByClaimId.values()).flat()
+  const ocrReviewsByReceiptId = await fetchExpenseReceiptOcrReviews(
+    allEvidence.map((evidence) => evidence.id),
+  )
+
+  function getOcrReviewsForClaim(claimId: string): ExpenseReceiptOcrReview[] {
+    return (evidenceByClaimId.get(claimId) ?? []).flatMap(
+      (evidence) => ocrReviewsByReceiptId.get(evidence.id) ?? [],
+    )
+  }
 
   const overview = overviewRow.data
   const approvedThisMonth = Number(overview?.approved_this_month_amount ?? 0)
@@ -242,6 +260,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
       expenseDate: row.expense_date as string,
       status: row.status as DemoExpenseClaim['status'],
       evidence: evidenceByClaimId.get(row.id as string) ?? [],
+      ocrReviews: getOcrReviewsForClaim(row.id as string),
     }
   })
 
@@ -301,6 +320,7 @@ async function fetchRealExpenseOverview(userId: string): Promise<ExpenseOverview
         expenseDate: claim.expense_date as string,
         currency: (claim.currency as string | null) ?? undefined,
         evidence: evidenceByClaimId.get(claim.id as string) ?? [],
+        ocrReviews: getOcrReviewsForClaim(claim.id as string),
       },
     ]
   })
@@ -331,10 +351,11 @@ export async function fetchExpenseOverview(userId: string): Promise<ExpenseOverv
       const demo = await fetchDemoExpenseOverview()
       return {
         ...demo,
-        claims: demo.claims.map((claim) => ({ ...claim, evidence: [] })),
+        claims: demo.claims.map((claim) => ({ ...claim, evidence: [], ocrReviews: [] })),
         pendingApprovals: demo.pendingApprovals.map((approval) => ({
           ...approval,
           evidence: [],
+          ocrReviews: [],
         })),
       }
     },
@@ -350,10 +371,11 @@ export function fetchExpenseOverviewWithMeta(userId: string) {
       const demo = await fetchDemoExpenseOverview()
       return {
         ...demo,
-        claims: demo.claims.map((claim) => ({ ...claim, evidence: [] })),
+        claims: demo.claims.map((claim) => ({ ...claim, evidence: [], ocrReviews: [] })),
         pendingApprovals: demo.pendingApprovals.map((approval) => ({
           ...approval,
           evidence: [],
+          ocrReviews: [],
         })),
       }
     },

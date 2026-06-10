@@ -81,6 +81,16 @@ const RPC_ERROR_I18N: Record<string, string> = {
   PULS_EVIDENCE_STORAGE_SIZE_UNVERIFIED: 'workflowEvidence.error.storageSizeUnverified',
   PULS_EVIDENCE_STORAGE_SIZE_MISMATCH: 'workflowEvidence.error.storageSizeMismatch',
   PULS_EVIDENCE_CONTRACT_MISMATCH: 'workflowEvidence.error.attachFailed',
+  PULS_OCR_REVIEW_RESULT_REQUIRED: 'workflowEvidence.ocr.error.reviewFailed',
+  PULS_OCR_REVIEW_STATUS_INVALID: 'workflowEvidence.ocr.error.statusInvalid',
+  PULS_OCR_REVIEW_FIELDS_INVALID: 'workflowEvidence.ocr.error.fieldsInvalid',
+  PULS_OCR_REVIEW_NOTE_TOO_LONG: 'workflowEvidence.ocr.error.noteTooLong',
+  PULS_OCR_REVIEW_FIELDS_NOT_ALLOWED: 'workflowEvidence.ocr.error.fieldsInvalid',
+  PULS_OCR_REVIEW_CORRECTION_REQUIRED: 'workflowEvidence.ocr.error.correctionRequired',
+  PULS_OCR_REVIEW_RESULT_NOT_FOUND: 'workflowEvidence.ocr.error.notFound',
+  PULS_OCR_REVIEW_FORBIDDEN: 'workflowEvidence.ocr.error.forbidden',
+  PULS_OCR_REVIEW_ALREADY_RECORDED: 'workflowEvidence.ocr.error.alreadyRecorded',
+  PULS_OCR_JOB_NOT_FOUND: 'workflowEvidence.ocr.error.reviewFailed',
 }
 
 const OPERATION_AWARE_RPC_ERROR_I18N: Record<
