@@ -1,7 +1,7 @@
 # PR17.0 — Product Reality Audit & Closed-Loop HR Gap Map
 
 > **Durum:** Resmi PR17.0 ürün karar dokümanı / yol haritası (kod contract'ı değil; verify-script gerektirmez).
-> **Tarih:** 2026-06-10 · **Rev 6** (PR17.2E/F/G planı eklendi — PR17.2D notification dispatch'i kapattı, fakat workflow ürünleşmesi e2e, belge upload ve OCR/evidence fazları açık kalır). Önceki: Rev 5 (PR17.2D + PR17 verify aggregator).
+> **Tarih:** 2026-06-10 · **Rev 7** (PR17.2E DB-boundary workflow e2e + reconcile regression guard eklendi — PR17.2F/G belge upload ve OCR/evidence fazları açık kalır). Önceki: Rev 6 (PR17.2E/F/G planı).
 > **Kapsam:** Read-only denetim. Kod değiştirilmedi.
 > **Yöntem:** 19 ürün route'u (~10.000 satır UI), 74 migration, data adapter'lar, RLS/RPC kontratları, audit trigger'ları, notification ledger'ı ve AI context yüzeyleri okundu. 6 paralel keşif ajanı + hedefli backend doğrulamaları.
 > **Önkoşul bağlam:** PR16.10.13-20 tamamlandı (DataSource split, runtime hardening, audit/policy guard'ları, CI verify gate). Hedef: connector-bağımsız, kapalı devre AI HR App ürünleşmesi (PR17).
@@ -10,7 +10,7 @@
 
 ## 0. Executive Summary
 
-> ### 🔄 Rev 6 güncel durum (PR17.1A-D + PR17.2A-D sonrası, PR17.2E/F/G planı)
+> ### 🔄 Rev 7 güncel durum (PR17.1A-D + PR17.2A-E sonrası, PR17.2F/G planı)
 >
 > Aşağıdaki §0-§6 metni **PR17 öncesi** durumu anlatır (tarihsel referans). PR17.1 ve PR17.2 dilimleri landıktan sonra yapılan re-audit'in sonuçları:
 >
@@ -21,18 +21,18 @@
 > | **R10** çalışan atama düzeltme yok | 17.1C | ✅ **KAPANDI** | `update_employee_assignment` RPC, server-validated + audited + ERP-source korumalı; calisanlar.tsx gerçek form (mig 20260609140000) |
 > | şirket profili kilitli | 17.1D | ✅ **KAPANDI** | `update_company_profile` RPC (ad/sektör/dil/tz), audited; sirket-kurulum.tsx gerçek form (mig 20260609150000) |
 > | **R1** HR workflow notification | 17.2A/B/C/D | ✅ **KAPANDI** | Producer + 6-olay taxonomy + prefs UI + live DB dispatch tamam; teslimat connector worker beklemez |
-> | **R7** workflow e2e | 17.2B/D | 🟡 **KISMİ** | SQL rollback-only smoke ve live dispatch var; tarayıcı e2e + multi-step approval kanıtı hâlâ yok |
+> | **R7** workflow e2e | 17.2B/D/E | 🟡 **KISMİ** | DB-boundary rollback-only smoke artık live dispatch + reconcile no-duplicate guard'ı kanıtlar; gerçek tarayıcı UI e2e ve tenant'ta multi-step policy yoksa zorunlu multi-step kanıtı hâlâ ürün/QA kuyruğudur |
 > | **R11** connector-bağımlı bildirim teslimatı | 17.2D | ✅ **KAPANDI** | Workflow row triggers same-transaction notification dispatch yapar; `run_app_notification_producers` backfill/reconcile yolu olarak kalır |
 > | **R8** belge/evidence upload | Plan: 17.2F/G | 🔴 **AÇIK** | İzin/masraf/sözleşme upload UI'ları hâlâ disabled; OCR yalnız teaser/gelecek iş |
 >
-> **Net:** PR17.1 Core HR closed-loop **gerçekten kapandı** (audit + lifecycle + edit, hepsi server-validated/audited). PR17.2 notification platformu artık **connector-bağımsız canlı teslimat** yapar: workflow event trigger'ları notification ledger'a metadata-only kayıt düşer, mevcut producer orchestrator ise backfill/reconcile yolu olarak kalır. Bu, workflow ürününün bittiği anlamına gelmez. PR17.2'nin açık kalan productization işleri: tarayıcı e2e + multi-step kanıtı (17.2E), belge/evidence upload foundation (17.2F), OCR/extraction + insan onayı (17.2G), AI context feed (R2) ve STUB ailesi (PR17.3/17.4).
+> **Net:** PR17.1 Core HR closed-loop **gerçekten kapandı** (audit + lifecycle + edit, hepsi server-validated/audited). PR17.2 notification platformu artık **connector-bağımsız canlı teslimat** yapar: workflow event trigger'ları notification ledger'a metadata-only kayıt düşer, mevcut producer orchestrator ise duplicate-safe backfill/reconcile yolu olarak kalır. PR17.2E bu sözleşmeyi `docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql` ile kilitledi. Bu, workflow ürününün bittiği anlamına gelmez. PR17.2'nin açık kalan productization işleri: belge/evidence upload foundation (17.2F), OCR/extraction + insan onayı (17.2G), gerçek tarayıcı UX e2e, AI context feed (R2) ve STUB ailesi (PR17.3/17.4).
 
-> #### PR17.2 alt faz kararı (Rev6)
+> #### PR17.2 alt faz kararı (Rev7)
 >
 > | Faz | Amaç | Durum |
 > |---|---|---|
 > | **17.2A-D** | Workflow notification taxonomy, producer, preferences ve connector-bağımsız live dispatch | ✅ Tamamlandı |
-> | **17.2E — Workflow E2E Baseline & Reconcile Contract** | İzin/masraf request→approve→notify→audit akışını tarayıcı veya eşdeğer full-stack smoke ile kanıtla; multi-step approval'ı kapsa. Reconcile/backfill duplicate-safety **zaten yapısal olarak garanti** (PR17.2A scan + 17.2D trigger aynı dedupe key + `UNIQUE(tenant_id,dedupe_key)` + `ON CONFLICT DO NOTHING`) — açık risk değil, regression-guard testiyle kilitlenir | ⏭ Sıradaki küçük PR |
+> | **17.2E — Workflow E2E Baseline & Reconcile Contract** | İzin/masraf request→approve→notify→audit akışını eşdeğer full-stack DB-boundary smoke ile kanıtla; producer reconcile/backfill'in duplicate yaratmadığını regression guard ile kilitle | ✅ Tamamlandı |
 > | **17.2F — Document/Evidence Upload Foundation** | İzin eki, masraf fişi ve sözleşme belgesi için storage, RLS, metadata, audit, size/type policy ve notification etkisini kur | 🔴 Açık |
 > | **17.2G — OCR & Human Review Evidence** | Masraf fişi gibi belgelerden tutar/tarih/vendor çıkarımı, confidence skoru, insan onayı ve canonical kayda güvenli bağlama | 🔴 Açık |
 
@@ -53,7 +53,7 @@ Senin tanımladığın tam döngü — **oluştur → gönder → onayla → aud
 
 ### Üç sistemik açık
 
-1. ✅ **Notification kenarı HR workflow'unda bağlı (Rev5/6).** Ledger/center/realtime hazır; connector/runtime + file import producer'ları çalışıyor; PR17.2A-D ile HR workflow producer, preferences UI ve connector-bağımsız live dispatch tamamlandı. Kalan notification işi artık e2e, reconcile/backfill kanıtı ve gelecek kanalların ürün kararıdır.
+1. ✅ **Notification kenarı HR workflow'unda bağlı (Rev5/6/7).** Ledger/center/realtime hazır; connector/runtime + file import producer'ları çalışıyor; PR17.2A-D ile HR workflow producer, preferences UI ve connector-bağımsız live dispatch tamamlandı. PR17.2E, live dispatch + reconcile/backfill duplicate-safety contract'ını DB-boundary rollback-only smoke ile kilitledi. Kalan notification işi artık gerçek tarayıcı UX e2e ve gelecek kanalların ürün kararıdır.
 2. **Belge/evidence kenarı açık (HIGH).** İzin eki, masraf fişi ve sözleşme dokümanı UI'da disabled; OCR teaser var ama storage/RLS/audit/review contract yok. PR17.2F/G bunu kapatmadan workflow ürünü tamamlanmış sayılmaz.
 3. **AI context kenarı kopuk (HIGH).** `src/lib/data/ai-coach/` var ama hiçbir HR sayfasından beslenmiyor; `/ai-koc` PR16.10.16'da dürüst "coming soon" teaser'a indirildi.
 4. **STUB/productization ailesi açık (MEDIUM).** Sözleşmeler, performans parametreleri, kariyer, eğitim ve iş-değerleme hâlâ gerçek kapalı döngü ürün yüzeyi değil; PR17.3'ün ana yükü burada.
@@ -459,8 +459,8 @@ RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_i
 | **R4** | **2 tam STUB sayfa yanlış vaat veriyor.** | **MEDIUM** | sozlesmeler upload disabled (143-144), performans-parametreleri Edit disabled gerekçesiz (153) | Kullanıcı "burada iş yapılır" sanıyor; disabled buton gerekçesiz. |
 | **R5** | **Multi-step approval şema-hazır ama test edilmemiş, fiilen tek-step.** | **MEDIUM** | `approval_policy_steps` var, `result.final` handle (izin.tsx:441-456) ama e2e yok | Çok adımlı onay üretimde ilk kez patlayabilir. |
 | **R6** | **Performans cycle "close" aksiyonu UI'da yok.** | **MEDIUM** | `active→closed` sadece API; performans.tsx'te buton yok | Cycle başlatılıp bitirilemiyor — döngü yarım. |
-| **R7** | 🟡 **KISMİ (Rev6).** SQL rollback-only smoke var; PR17.2D live dispatch'i connector'dan ayırdı. Kalan: tarayıcı/UI e2e ve multi-step approval e2e. (Reconcile/backfill duplicate-safety yapısal olarak garanti — açık risk değil; 17.2E'de regression-guard testiyle kilitlenir.) | **MEDIUM** | `docs/data/17_2_b_workflow_closed_loop_smoke.sql`; PR17.2D migration trigger dispatch contract; ortak dedupe key + `UNIQUE(tenant_id,dedupe_key)`. | Workflow mantığı korunuyor; gerçek tarayıcı akışı ve multi-step varyantları hâlâ test edilmeli. |
-| **R8** | 🔴 **AÇIK (Rev6).** Belge/evidence upload her yerde disabled (izin 870, masraf 860, sözleşmeler 143); OCR yalnız teaser. | **MEDIUM→HIGH** | `<button disabled>` + "coming soon"; masraf OCR UI fonksiyonel değil. | Gerçek HR'da masraf fişi/izin belgesi/sözleşme dokümanı kritik evidence'tır. PR17.2F/G kapanmadan workflow ürünü tamamlanmış sayılmaz. |
+| **R7** | 🟡 **KISMİ (Rev7).** DB-boundary e2e + live dispatch + reconcile duplicate guard tamamlandı. Kalan: gerçek tarayıcı/UI e2e ve tenant'ta multi-step policy yoksa zorunlu multi-step kanıtı. | **MEDIUM** | `docs/data/17_2_b_workflow_closed_loop_smoke.sql`; `docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql`; PR17.2D trigger dispatch contract; ortak dedupe key + `UNIQUE(tenant_id,dedupe_key)`. | Workflow backend sözleşmesi korunuyor; gerçek tarayıcı akışı hâlâ QA/productization kuyruğu. |
+| **R8** | 🔴 **AÇIK (Rev7).** Belge/evidence upload her yerde disabled (izin 870, masraf 860, sözleşmeler 143); OCR yalnız teaser. | **MEDIUM→HIGH** | `<button disabled>` + "coming soon"; masraf OCR UI fonksiyonel değil. | Gerçek HR'da masraf fişi/izin belgesi/sözleşme dokümanı kritik evidence'tır. PR17.2F/G kapanmadan workflow ürünü tamamlanmış sayılmaz. |
 | **R9** | **§2.8 borcu açık:** çoklu-active cycle'lı tenant index'siz kaldı. | **LOW** | PR16.10.20 audit SQL eklendi (docs/data/16_10_20_..._duplicate_audit.sql) ama cleanup migration yok | Eski kirli veri trigger'la korunuyor ama temizlenmedi. |
 | **R10** | ✅ **KAPANDI (Rev4 — PR17.1C).** `update_employee_assignment` RPC (dept/pozisyon/cost-center/manager) — server-validated, audited, admin-only, ERP-source read-only korunuyor. UI'da gerçek edit formu. | **LOW** | RPC `update_employee_assignment` (migration 20260609140000): admin guard, ERP `external_source` bloğu (70-73), cycle/aktiflik validation, audit (276-308); calisanlar.tsx gerçek form + mutation (445-452, 716-798) | Tanı + tedavi tamam (yalnız PULS-kaynaklı aktif çalışanlar). |
 | **R11** | ✅ **KAPANDI (Rev5 — PR17.2D).** Workflow notification teslimatı connector worker'a bağımlı değil. | **HIGH→CLOSED** | `puls_workflow_approval_requests_notification_dispatch`, `puls_workflow_leave_requests_notification_dispatch`, `puls_workflow_expense_claims_notification_dispatch`; internal workflow-only emitter browser rollerine kapalı. | Connector hiç çalışmayan tenant'ta da izin/masraf bildirimleri workflow transaction içinde üretilir. |
@@ -480,8 +480,8 @@ RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_i
 - **Full-stack her madde:** UI form + RPC/constraint + RLS + audit + adapter test.
 
 ### PR17.2 — Workflow Closed Loop *(en yüksek ROI — backend zaten hazır)*
-- ✅ **17.2A-D tamamlandı:** Notification taxonomy/contract, HR workflow producer, settings notification preferences ve connector-bağımsız live dispatch. `create_*` / `decide_approval_request` akışı artık Notification Center'a aynı transaction içinde metadata-only kayıt üretir; connector producer reconcile/backfill olarak kalır.
-- **17.2E — Workflow E2E Baseline & Reconcile Contract:** request→approve→notify→audit akışını izin ve masraf için tarayıcı veya eşdeğer full-stack smoke ile doğrula; multi-step approval varyantını kanıtla. Reconcile/backfill duplicate-safety yapısal olarak garanti (ortak dedupe key + unique constraint + `ON CONFLICT DO NOTHING`) — bu fazda regression-guard testiyle kilitlenir, açık doğruluk sorusu değil (R5, R7).
+- ✅ **17.2A-E tamamlandı:** Notification taxonomy/contract, HR workflow producer, settings notification preferences, connector-bağımsız live dispatch ve DB-boundary e2e/reconcile guard. `create_*` / `decide_approval_request` akışı artık Notification Center'a aynı transaction içinde metadata-only kayıt üretir; connector producer duplicate-safe reconcile/backfill olarak kalır.
+- **Gerçek tarayıcı e2e notu:** PR17.2E eşdeğer full-stack DB-boundary smoke'u kilitledi. Ürünün görsel/UX browser e2e'si ayrı QA kuyruğudur; document upload/OCR öncesi workflow backend doğruluğunun açık riski değildir.
 - **17.2F — Document/Evidence Upload Foundation:** belge upload'ı en az izin+masraf için aç; sözleşme dokümanı aynı storage/RLS/audit modeliyle uyumlu olmalı. Kapsam: storage bucket, metadata table/RPC, RLS, size/type limit, audit, notification, disabled UI kaldırma/gizleme kararı (R8).
 - **17.2G — OCR & Human Review Evidence:** masraf fişi gibi belgelerden tutar/tarih/vendor çıkarımı, confidence skoru, insan onayı, safe metadata ve canonical claim/request bağını kur. OCR sonucu otomatik canonical write yapmamalı; insan onayı ve audit gerekir.
 - **AI context feed kancası:** Workflow mutation, notification ve evidence event'lerini AI context'e güvenli özet olarak besle; LLM/AI Coach wiring PR17.4'te ürünleşir.
@@ -502,11 +502,11 @@ RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_i
 
 ## 5. İlk Yapılacak 5 İş
 
-> **Rev6 not:** Notification taxonomy, producer, preferences UI, connector-bağımsız dispatch, audit trigger'ları ve Core HR edit işleri tamamlandı (PR17.1A-D + 17.2A-D). Aşağıdaki liste artık "workflow ürünü bitti" varsaymadan kalan productization kenarlarını sıralar. Orijinal liste tarihsel referans için §5-arşiv'de.
+> **Rev7 not:** Notification taxonomy, producer, preferences UI, connector-bağımsız dispatch, DB-boundary e2e/reconcile guard, audit trigger'ları ve Core HR edit işleri tamamlandı (PR17.1A-D + 17.2A-E). Aşağıdaki liste artık "workflow ürünü bitti" varsaymadan kalan productization kenarlarını sıralar. Orijinal liste tarihsel referans için §5-arşiv'de.
 
-1. **PR17.2E — Workflow E2E Baseline & Reconcile Contract** (R7). SQL smoke ve live DB dispatch var; gerçek UI akışı (request→inbox'ta görünme→approve→requester bildirimi) ve multi-step (R5) hâlâ doğrulanmalı. Reconcile/backfill duplicate-safety yapısal olarak garanti — regression-guard testiyle kilitle, sıfırdan kanıt değil.
-2. **PR17.2F — Document/Evidence Upload Foundation** (R8). İzin/masraf/sözleşme upload'ları ya storage+RLS+metadata+audit+notification modeliyle açılmalı ya da production UI'da disabled beklenti yaratmayacak şekilde sadeleştirilmeli.
-3. **PR17.2G — OCR & Human Review Evidence** (R8). Masraf fişi OCR/extraction yalnızca öneri/evidence üretmeli; canonical yazım insan onayı ve audit olmadan olmamalı.
+1. **PR17.2F — Document/Evidence Upload Foundation** (R8). İzin/masraf/sözleşme upload'ları ya storage+RLS+metadata+audit+notification modeliyle açılmalı ya da production UI'da disabled beklenti yaratmayacak şekilde sadeleştirilmeli.
+2. **PR17.2G — OCR & Human Review Evidence** (R8). Masraf fişi OCR/extraction yalnızca öneri/evidence üretmeli; canonical yazım insan onayı ve audit olmadan olmamalı.
+3. **Gerçek browser/UX e2e** (R7). PR17.2E DB-boundary e2e'yi kapattı; ürün QA için request→Notification Center→approve→requester notification akışı Playwright/auth persona ile ayrıca yürütülmeli.
 4. **AI context'i mutation/evidence event'lerinden beslemeye başla** (R2, PR17.4 zemini). `context-readiness.ts` snapshot'ı hazır; izin/masraf/performans mutation'larını ve upload/OCR evidence özetlerini canlı besle + `ai-koc.tsx`'i adapter'a bağla.
 5. **PR17.3 ürün kararları:** performans "close cycle" UI (R6) ve STUB ailesi — sözleşmeler/performans-parametreleri/iş-değerleme/kariyer/eğitim: "ürünleştir mi, pilot-dışı mı" (R4, R8, §6).
 
@@ -516,12 +516,12 @@ RLS: `leave_requests_select` (tenant + admin/owner/manager) ve `leave_requests_i
 
 > Bunlar geliştirme değil, **ürün** kararları — kodla çözülemez.
 
-1. **Belge upload PR17 scope'unda mı?** İzin belgesi / masraf fişi gerçek HR'da çoğu zaman zorunlu. Rev6 önerisi: evet, PR17.2F olarak ele alınmalı. Kapsam: storage + virus/format/size policy + RLS + metadata + audit + notification. Hayırsa: disabled butonları **gizle** (gerekçesiz disabled buton kötü UX).
+1. **Belge upload PR17 scope'unda mı?** İzin belgesi / masraf fişi gerçek HR'da çoğu zaman zorunlu. Rev7 önerisi: evet, PR17.2F olarak ele alınmalı. Kapsam: storage + virus/format/size policy + RLS + metadata + audit + notification. Hayırsa: disabled butonları **gizle** (gerekçesiz disabled buton kötü UX).
 2. **Notification kanalı sadece in-app mi, e-posta/push de mi?** Ledger in-app hazır. Manager onay bildirimini e-postayla da almalı mı? Producer tasarımını ve PR17.2 boyutunu belirler.
 3. **Multi-step approval gerçekten gerekiyor mu, yoksa tek-step (manager→HR fallback) yeter mi?** Şema multi-step destekliyor ama hiç kullanılmıyor. Pilot tek-step ise, multi-step'i e2e+UI yükünden çıkar.
 4. **performans-parametreleri ve sozlesmeler: ürün mü, seed-only mı?** Parametreler onboarding'de seed ediliyorsa in-app editor'e gerek yok — dürüstçe "read-only, kurulumda tanımlanır" de. Karar verilmezse 15/100 stub kalır.
 5. **calisanlar düzenlenebilir mi, yoksa ERP system-of-record mı?** "ERP no-write" bir mimari karar. Connector-bağımsız ürün hedefin varsa, PULS-kaynaklı çalışanlar **düzenlenebilir** olmalı — aksi halde connector olmadan çalışan yönetilemez.
-6. **AI Coach ne zaman gerçek olur — PR17'de mi, sonra mı?** Veri zemini (R2) yoksa AI katmanı boş. PR17.2E/F/G'de workflow, notification ve evidence event'lerini context'e beslemeye başlamazsan PR17.4 başlayamaz.
+6. **AI Coach ne zaman gerçek olur — PR17'de mi, sonra mı?** Veri zemini (R2) yoksa AI katmanı boş. PR17.2F/G'de evidence event'lerini, PR17.4'te workflow/notification/evidence özetlerini güvenli context'e beslemeden AI Coach gerçek ürün katmanına geçemez.
 7. **STUB ailesi (kariyer / egitim / is-degerleme) ve teaser (ai-koc) PR17 scope'unda mı?** Hepsi denetlendi (§2.14-2.16, §2.18); en kritik karar **is-degerleme** — gerçek backend'i hiç yok (`fetchRealJobEvaluationOverview()` boş döner), yani "ürünleştir" demek schema+RPC+RLS sıfırdan demek. `/ai-koc` ise zemini hazır teaser (PR17.4). Her biri için: ürünleştir (roadmap'e faz) mi, yoksa menü görünürlüğünü kıs / "pilot dışı" işaretle mi? Karar verilmezse demo-seed stub olarak kalırlar.
 
 ---

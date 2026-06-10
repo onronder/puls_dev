@@ -1060,18 +1060,29 @@ PR17.2D closes the R11 connector-dependency gap by emitting live leave and expen
 
 Verify: [`../../scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../scripts/verify-17-2-d-workflow-notification-dispatch.sh)
 
+## PR17.2E Workflow E2E baseline and reconcile contract
+
+PR17.2E turns the planned workflow e2e/reconcile guard into a rollback-only database-boundary proof. The smoke creates leave and expense workflow records through the browser-facing RPCs, observes live trigger notifications before producer execution, then runs the service-role producer as reconcile/backfill and asserts that no duplicate notification rows are inserted.
+
+| Document / artifact | Purpose |
+| --- | --- |
+| [17_2_e_workflow_e2e_reconcile_contract.md](./17_2_e_workflow_e2e_reconcile_contract.md) | PR17.2E product contract, reconcile boundary, non-goals, smoke usage |
+| [`docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql`](../data/17_2_e_workflow_e2e_reconcile_smoke.sql) | Optional rollback-only psql smoke for local or remote development databases |
+| [`scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh) | PR17.2E verify gate wired into the aggregate PR17 verifier |
+
+Verify: [`../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh)
+
 ## PR17.2 planned follow-ups
 
-PR17.2A-D closes the notification delivery edge, not the entire workflow product surface. The remaining workflow closed-loop work is intentionally split so the team does not mark the product complete while upload, OCR, browser e2e, or AI context are still missing.
+PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/reconcile guard. It still does not complete the workflow product surface: document upload, OCR/human review, richer browser journeys, and AI context feed remain intentionally separate slices.
 
 | Planned slice | Purpose |
 | --- | --- |
-| PR17.2E Workflow E2E Baseline & Reconcile Contract | Prove leave/expense request → approve → notify → audit through a browser or equivalent full-stack smoke; cover multi-step approval. Reconcile/backfill duplicate-safety is already structurally guaranteed (shared dedupe key + unique constraint + `ON CONFLICT DO NOTHING`), so this slice locks it with a regression-guard test rather than treating it as an open risk. |
 | PR17.2F Document/Evidence Upload Foundation | Open evidence upload for leave, expense, and contract documents with storage, RLS, metadata, audit, size/type policy, notification impact, and clear UI behavior. |
 | PR17.2G OCR & Human Review Evidence | Add OCR/extraction for expense receipts as safe evidence with confidence, human review, audit, and no automatic canonical write without approval. |
 | PR17.4 AI context feed handoff | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant. |
 
-Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 6.
+Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 7.
 
 ## Related packs
 
