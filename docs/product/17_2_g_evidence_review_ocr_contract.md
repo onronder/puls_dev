@@ -90,6 +90,11 @@ Non-goals:
 
 Goal: define safe, provider-agnostic OCR/extraction records for expense receipts only.
 
+PR17.2G2 is split:
+
+- **G2A — DB contract:** workflow-owned queue/result/event tables and service-role-only queue RPCs. No production enqueue path, worker, provider SDK, or external call.
+- **G2B — Worker skeleton:** disabled-by-default worker package that reads private storage, computes server-side content hash, and exercises the G2A RPC contract without selecting a paid OCR provider.
+
 Scope:
 
 1. Add `expense_receipt_ocr_jobs` and `expense_receipt_ocr_results`, or equivalent workflow-owned tables.
@@ -114,6 +119,13 @@ Scope:
    - provider class/name/version/reference,
    - estimated or actual cost metadata.
 11. Avoid raw OCR text by default. If raw text is needed later, it must have explicit retention, RLS, and redaction rules.
+
+G2A enqueue decision:
+
+- No trigger should enqueue when `expense_receipts` rows are inserted.
+- No browser/authenticated role should enqueue.
+- The service-role enqueue RPC exists only for rollback smoke, future worker integration, and controlled operations.
+- Production enqueue waits for G2B/G4 guardrails: tenant-level OCR flag, quota/cost controls, and a deployed worker posture.
 
 Job state recommendation:
 
