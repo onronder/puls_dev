@@ -9,7 +9,19 @@ import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsCore, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
 
-export type ContractsOverview = DemoContractsOverview
+export type ContractEvidenceSummary = {
+  fileCount: number
+  latestFileName: string | null
+  latestFileSizeBytes: number | null
+}
+
+export type ContractItem = DemoContractItem & ContractEvidenceSummary
+
+export type ContractsOverviewWithEvidence = Omit<DemoContractsOverview, 'contracts'> & {
+  contracts: ContractItem[]
+}
+
+export type ContractsOverview = ContractsOverviewWithEvidence
 
 const CONTRACT_TYPE_KEYS: Record<string, string> = {
   employment: 'contractsSetup.types.indefinite',
@@ -28,6 +40,13 @@ export type ContractRowInput = {
   risk_band?: string | null
   employeeName?: string | null
   employees?: { full_name?: string } | null
+}
+
+type ContractFileRow = {
+  contract_id: string
+  file_name?: string | null
+  file_size_bytes?: number | null
+  created_at?: string | null
 }
 
 export type MapContractRowOptions = {
@@ -73,11 +92,19 @@ export function mapContractRiskStatus({
   return 'ok'
 }
 
-export function mapContractRow(row: ContractRowInput, options?: MapContractRowOptions): DemoContractItem {
+export function mapContractRow(
+  row: ContractRowInput,
+  options?: MapContractRowOptions & { evidence?: ContractEvidenceSummary },
+): ContractItem {
   const employeeName = row.employeeName ?? row.employees?.full_name ?? '—'
   const contractType = row.contract_type
   const signatureStatus = row.signature_status ?? null
   const endDate = row.end_date ?? null
+  const evidence = options?.evidence ?? {
+    fileCount: 0,
+    latestFileName: null,
+    latestFileSizeBytes: null,
+  }
 
   return {
     id: row.id,
@@ -93,6 +120,7 @@ export function mapContractRow(row: ContractRowInput, options?: MapContractRowOp
       endDate,
       now: options?.now,
     }),
+    ...evidence,
   }
 }
 
@@ -144,10 +172,16 @@ async function fetchRealContractsOverview(userId: string): Promise<ContractsOver
     )
   }
   if (contractsRow.error) {
-    throw fromSupabaseError(contractsRow.error, 'fetchContractsOverview', 'puls_workflow', 'contracts')
+    throw fromSupabaseError(
+      contractsRow.error,
+      'fetchContractsOverview',
+      'puls_workflow',
+      'contracts',
+    )
   }
 
   const contractRows = (contractsRow.data ?? []) as ContractRowInput[]
+  const contractIds = contractRows.map((row) => row.id)
   const employeeIds = [
     ...new Set(contractRows.map((row) => row.employee_id).filter(Boolean) as string[]),
   ]
@@ -172,11 +206,53 @@ async function fetchRealContractsOverview(userId: string): Promise<ContractsOver
     )
   }
 
+  let evidenceMap = new Map<string, ContractEvidenceSummary>()
+  if (contractIds.length > 0) {
+    const { data: fileRows, error: fileError } = await pulsWorkflow()
+      .from('contract_files')
+      .select('contract_id, file_name, file_size_bytes, created_at')
+      .eq('tenant_id', ctx.tenantId)
+      .order('created_at', { ascending: false })
+      .in('contract_id', contractIds)
+
+    if (fileError) {
+      throw fromSupabaseError(
+        fileError,
+        'fetchContractsOverview',
+        'puls_workflow',
+        'contract_files',
+      )
+    }
+
+    evidenceMap = new Map()
+    for (const row of (fileRows ?? []) as ContractFileRow[]) {
+      const existing = evidenceMap.get(row.contract_id) ?? {
+        fileCount: 0,
+        latestFileName: null,
+        latestFileSizeBytes: null,
+      }
+      evidenceMap.set(row.contract_id, {
+        fileCount: existing.fileCount + 1,
+        latestFileName: existing.latestFileName ?? row.file_name ?? null,
+        latestFileSizeBytes:
+          existing.latestFileSizeBytes ??
+          (row.file_size_bytes === null || row.file_size_bytes === undefined
+            ? null
+            : Number(row.file_size_bytes)),
+      })
+    }
+  }
+
   const contracts = contractRows.map((row) =>
-    mapContractRow({
-      ...row,
-      employeeName: row.employee_id ? employeeNameMap.get(row.employee_id) : null,
-    }),
+    mapContractRow(
+      {
+        ...row,
+        employeeName: row.employee_id ? employeeNameMap.get(row.employee_id) : null,
+      },
+      {
+        evidence: evidenceMap.get(row.id),
+      },
+    ),
   )
 
   const pendingSignatureCount = contracts.filter((row) => row.signed === 'pending').length
@@ -194,7 +270,18 @@ export function fetchContractsOverviewWithMeta(userId: string) {
   return resolveAdapterDataWithMeta({
     operation: 'fetchContractsOverview',
     fetchReal: () => fetchRealContractsOverview(userId),
-    fetchDemo: fetchDemoContractsOverview,
+    fetchDemo: async () => {
+      const demo = await fetchDemoContractsOverview()
+      return {
+        ...demo,
+        contracts: demo.contracts.map((contract) => ({
+          ...contract,
+          fileCount: 0,
+          latestFileName: null,
+          latestFileSizeBytes: null,
+        })),
+      }
+    },
     isEmpty: (data) => data.contracts.length === 0,
   })
 }
@@ -203,7 +290,18 @@ export async function fetchContractsOverview(userId: string): Promise<ContractsO
   return resolveAdapterData({
     operation: 'fetchContractsOverview',
     fetchReal: () => fetchRealContractsOverview(userId),
-    fetchDemo: fetchDemoContractsOverview,
+    fetchDemo: async () => {
+      const demo = await fetchDemoContractsOverview()
+      return {
+        ...demo,
+        contracts: demo.contracts.map((contract) => ({
+          ...contract,
+          fileCount: 0,
+          latestFileName: null,
+          latestFileSizeBytes: null,
+        })),
+      }
+    },
     isEmpty: (data) => data.contracts.length === 0,
   })
 }

@@ -27,6 +27,23 @@
     "errorTitle": "Gerçek veri yüklenemedi",
     "errorBody": "Bu ekran şu anda örnek veri gösteriyor. Karar vermeden önce bağlantıyı yenile veya daha sonra tekrar dene."
   },
+  "workflowEvidence": {
+    "choose": "Dosya seç",
+    "uploading": "Yükleniyor…",
+    "ready": "Hazır",
+    "remove": "Dosyayı kaldır",
+    "requiredHint": "Desteklenen dosya · en fazla {{size}} · zorunlu",
+    "optionalHint": "Desteklenen dosya · en fazla {{size}}",
+    "error": {
+      "authRequired": "Belge yüklemek için çalışan kaydı gerekli.",
+      "fileType": "Bu dosya türü desteklenmiyor.",
+      "fileSize": "Dosya boyutu izin verilen sınırı aşıyor.",
+      "required": "Bu işlem için belge yüklenmeli.",
+      "uploadFailed": "Belge yüklenemedi.",
+      "attachFailed": "Belge kayda bağlanamadı.",
+      "adminRequired": "Sözleşme belgesi yüklemek için yönetici yetkisi gerekli."
+    }
+  },
   "auth": {
     "loginTitle": "Giriş Yap",
     "email": "E-posta",
@@ -676,7 +693,7 @@
       "balanceAfterHint": "Hafta sonu/tatil kuralı Canias API erişimi açılınca hesaplanacak.",
       "dateError": "Geçerli bir tarih aralığı seçin.",
       "approverAuto": "Onay yöneticinize otomatik yönlendirilecek.",
-      "documentRequiredHint": "Belge yükleme özelliği yakında. Şimdilik bu izin türü için talep oluşturulamaz."
+      "documentRequiredHint": "Bu izin türü için belge yüklenmeli."
     },
     "empty": {
       "history": "Henüz izin kaydı yok."
@@ -742,7 +759,7 @@
       "approver": "Onaycı",
       "approverHint": "Talep bu kişiye iletilir.",
       "document": "Belge",
-      "documentHint": "PDF veya görsel · opsiyonel",
+      "documentHint": "PDF, PNG veya JPG · en fazla 10 MB",
       "documentTeaser": "Dosya seç veya sürükle bırak",
       "startRequired": "Başlangıç tarihi gerekli.",
       "endRequired": "Bitiş tarihi gerekli.",
@@ -813,8 +830,8 @@
       "description": "Açıklama",
       "descriptionPlaceholder": "İş amacı ve detay",
       "receipt": "Fiş / belge",
-      "receiptHint": "Fiş yükleme yakında; şimdilik manuel giriş yapabilirsin.",
-      "receiptPlaceholder": "Fiş fotoğrafla veya yükle (yakında)"
+      "receiptHint": "Fiş veya belge yükleyebilirsin.",
+      "receiptPlaceholder": "Fiş veya belge yükle"
     },
     "empty": {
       "list": "Henüz masraf kaydı yok."
@@ -830,7 +847,7 @@
       "invalidAmount": "Tutar 0'dan büyük olmalı.",
       "invalidCurrency": "Para birimi geçersiz.",
       "futureDate": "Masraf tarihi gelecekte olamaz.",
-      "receiptRequired": "Bu tutar için fiş veya belge gerekli. Belge yükleme açıldığında gönderilebilir.",
+      "receiptRequired": "Bu tutar için fiş veya belge gerekli.",
       "noApprover": "Onaycı bulunamadı.",
       "policyStepUnresolved": "Onay politikası adımı için onaycı çözümlenemedi.",
       "policyNotFound": "Yapılandırılmış onay politikası bulunamadı veya pasif.",
@@ -891,7 +908,7 @@
       "amountPositive": "Tutar 0'dan büyük olmalı.",
       "dateRequired": "Tarih gerekli.",
       "document": "Fiş / belge",
-      "documentHint": "JPG, PNG veya PDF · opsiyonel",
+      "documentHint": "JPG, PNG veya PDF · en fazla 10 MB",
       "documentTeaser": "Belge yükle",
       "policyTitle": "Politika kontrolü",
       "policyPending": "Zorunlu alanları doldurduktan sonra politika kontrolü görüntülenecek.",
@@ -902,7 +919,7 @@
       "policyDate": "Tarih · {{date}}",
       "policyWarningTitle": "Politika uyarısı",
       "policyWarningDesc": "Bu kalem kategori limitini aşıyor; onay sürecinde uyarı olarak işaretlenecek.",
-      "policyReceiptBlockedDesc": "{{threshold}} üzeri kalemlerde fiş veya belge zorunludur. Belge yükleme açılana kadar bu masraf gönderilemez.",
+      "policyReceiptBlockedDesc": "{{threshold}} üzeri kalemlerde fiş veya belge zorunludur.",
       "policyOk": "Kalem mevcut harcama politikasıyla uyumlu görünüyor."
     }
   },
@@ -4684,7 +4701,7 @@
       "selfDescription": "Organizasyonda sözleşme kayıtları var; çalışan görünümünde yalnızca hesabınla eşleşen kayıtlar listelenir."
     },
     "boundary": {
-      "metadataOnly": "Bu ekran sözleşme özetlerini gösterir; belge yükleme ve hatırlatıcı kaydı henüz açık değil."
+      "metadataOnly": "Bu ekran sözleşme özetlerini ve bağlı belge metadata'sını gösterir; dosya içerikleri private storage'da kalır."
     },
     "columns": {
       "employee": "Çalışan",
@@ -4713,11 +4730,11 @@
       "upload": "Belge yükle",
       "viewDetail": "Detayı görüntüle",
       "setReminder": "Hatırlatıcı kur",
-      "uploadUnavailable": "Belge yükleme pilot kapsamı dışında."
+      "uploadUnavailable": "Belge yükleme yetkin yok."
     },
     "uploadSheet": {
       "title": "Belge yükle",
-      "description": "Sözleşme belgesi yükleme akışı pilot sonrası açılacak.",
+      "description": "Seçili sözleşme için PDF belgesini private storage'a yükle.",
       "mvpBadge": "Salt okunur",
       "submit": "Yükle",
       "fields": {
@@ -4728,7 +4745,10 @@
       "placeholders": {
         "employee": "Çalışan seç",
         "type": "Tip seç",
-        "file": "PDF veya DOCX"
+        "file": "PDF"
+      },
+      "toast": {
+        "success": "Sözleşme belgesi yüklendi."
       }
     },
     "detailSheet": {
@@ -4740,8 +4760,11 @@
         "start": "Başlangıç",
         "end": "Bitiş",
         "signature": "İmza durumu",
-        "risk": "Risk durumu"
-      }
+        "risk": "Risk durumu",
+        "document": "Belge"
+      },
+      "documentCount": "{{count}} belge",
+      "noDocument": "Belge yüklenmemiş."
     },
     "reminderSheet": {
       "title": "Hatırlatıcı kur",

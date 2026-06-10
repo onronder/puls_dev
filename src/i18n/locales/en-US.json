@@ -27,6 +27,23 @@
     "errorTitle": "Real data could not be loaded",
     "errorBody": "This screen is showing sample data right now. Refresh the connection or try again later before making decisions."
   },
+  "workflowEvidence": {
+    "choose": "Choose file",
+    "uploading": "Uploading…",
+    "ready": "Ready",
+    "remove": "Remove file",
+    "requiredHint": "Supported file · max {{size}} · required",
+    "optionalHint": "Supported file · max {{size}}",
+    "error": {
+      "authRequired": "An employee record is required to upload evidence.",
+      "fileType": "This file type is not supported.",
+      "fileSize": "The file exceeds the allowed size.",
+      "required": "Upload a document for this action.",
+      "uploadFailed": "Could not upload the document.",
+      "attachFailed": "Could not attach the document to the record.",
+      "adminRequired": "Manager access is required to upload contract documents."
+    }
+  },
   "auth": {
     "loginTitle": "Sign in",
     "email": "Email",
@@ -676,7 +693,7 @@
       "balanceAfterHint": "Weekend/holiday rules will be calculated in Phase 2.",
       "dateError": "Select a valid date range.",
       "approverAuto": "Your request will be routed to your manager automatically.",
-      "documentRequiredHint": "Document upload is coming soon. This leave type cannot be submitted yet."
+      "documentRequiredHint": "This leave type requires a document."
     },
     "empty": {
       "history": "No leave records yet."
@@ -742,7 +759,7 @@
       "approver": "Approver",
       "approverHint": "The request will be sent to this person.",
       "document": "Attachment",
-      "documentHint": "PDF or image · optional",
+      "documentHint": "PDF, PNG, or JPG · max 10 MB",
       "documentTeaser": "Choose file or drag and drop",
       "startRequired": "Start date is required.",
       "endRequired": "End date is required.",
@@ -813,8 +830,8 @@
       "description": "Description",
       "descriptionPlaceholder": "Business purpose and details",
       "receipt": "Receipt",
-      "receiptHint": "Receipt upload coming soon; enter details manually for now.",
-      "receiptPlaceholder": "Take or upload receipt (coming soon)"
+      "receiptHint": "Upload a receipt or attachment.",
+      "receiptPlaceholder": "Upload receipt or attachment"
     },
     "empty": {
       "list": "No expense records yet."
@@ -830,7 +847,7 @@
       "invalidAmount": "Amount must be greater than zero.",
       "invalidCurrency": "Invalid currency.",
       "futureDate": "Expense date cannot be in the future.",
-      "receiptRequired": "This amount requires a receipt or attachment. It can be submitted when document upload is available.",
+      "receiptRequired": "This amount requires a receipt or attachment.",
       "noApprover": "No approver could be resolved.",
       "policyStepUnresolved": "No approver could be resolved for the approval policy step.",
       "policyNotFound": "The configured approval policy was not found or is inactive.",
@@ -891,7 +908,7 @@
       "amountPositive": "Amount must be greater than zero.",
       "dateRequired": "Date is required.",
       "document": "Receipt / attachment",
-      "documentHint": "JPG, PNG, or PDF · optional",
+      "documentHint": "JPG, PNG, or PDF · max 10 MB",
       "documentTeaser": "Upload document",
       "policyTitle": "Policy check",
       "policyPending": "Fill required fields to see the policy check.",
@@ -902,7 +919,7 @@
       "policyDate": "Date · {{date}}",
       "policyWarningTitle": "Policy warning",
       "policyWarningDesc": "This item exceeds the category limit and will be marked as a policy warning.",
-      "policyReceiptBlockedDesc": "Items over {{threshold}} require a receipt or attachment. This expense cannot be submitted until document upload is available.",
+      "policyReceiptBlockedDesc": "Items over {{threshold}} require a receipt or attachment.",
       "policyOk": "This item appears compliant with the expense policy."
     }
   },
@@ -4684,7 +4701,7 @@
       "selfDescription": "The organization has contract records; employee view only lists records linked to your account."
     },
     "boundary": {
-      "metadataOnly": "This screen shows contract summaries; document upload and reminder saving are not enabled yet."
+      "metadataOnly": "This screen shows contract summaries and attached document metadata; file contents stay in private storage."
     },
     "columns": {
       "employee": "Employee",
@@ -4713,11 +4730,11 @@
       "upload": "Upload document",
       "viewDetail": "View details",
       "setReminder": "Set reminder",
-      "uploadUnavailable": "Document upload is outside pilot scope."
+      "uploadUnavailable": "You are not allowed to upload documents."
     },
     "uploadSheet": {
       "title": "Upload document",
-      "description": "Contract document upload will open after the pilot.",
+      "description": "Upload the selected contract PDF to private storage.",
       "mvpBadge": "Read-only",
       "submit": "Upload",
       "fields": {
@@ -4728,7 +4745,10 @@
       "placeholders": {
         "employee": "Select employee",
         "type": "Select type",
-        "file": "PDF or DOCX"
+        "file": "PDF"
+      },
+      "toast": {
+        "success": "Contract document uploaded."
       }
     },
     "detailSheet": {
@@ -4740,8 +4760,11 @@
         "start": "Start",
         "end": "End",
         "signature": "Signature status",
-        "risk": "Risk status"
-      }
+        "risk": "Risk status",
+        "document": "Document"
+      },
+      "documentCount": "{{count}} document",
+      "noDocument": "No document uploaded."
     },
     "reminderSheet": {
       "title": "Set reminder",

@@ -6,7 +6,6 @@ import {
   CalendarPlus,
   Check,
   CheckCircle2,
-  FileUp,
   Inbox,
   Info,
   Loader2,
@@ -19,6 +18,7 @@ import { toast } from 'sonner'
 
 import { RequestCreationReadinessBanners } from '#/components/puls/RequestCreationReadinessBanners'
 import { EmptyState } from '#/components/puls/EmptyState'
+import { EvidenceUploadField } from '#/components/puls/EvidenceUploadField'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -35,12 +35,15 @@ import { useAuth } from '#/lib/auth'
 import {
   buildLeaveCreationReadiness,
   createLeaveRequest,
+  createLeaveRequestWithEvidence,
   decideApprovalRequest,
   fetchLeaveOverviewWithMeta,
   fetchRequestCreationReadiness,
   isDataAdapterError,
+  uploadWorkflowEvidenceFile,
   type LeaveOverview,
   type LeaveStatus,
+  type WorkflowEvidenceUpload,
 } from '#/lib/data'
 import { countBusinessDays } from '#/lib/format'
 import { cn } from '#/lib/utils'
@@ -61,6 +64,7 @@ type FormErrors = {
   startDate?: string
   endDate?: string
   halfDay?: string
+  document?: string
 }
 
 function toastAdapterError(
@@ -594,6 +598,7 @@ function LeaveFormSheet({
   const [delegate, setDelegate] = useState('')
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
+  const [evidenceUpload, setEvidenceUpload] = useState<WorkflowEvidenceUpload | null>(null)
 
   const { data: creationContext } = useQuery({
     queryKey: ['request-creation-readiness', 'leave', userId],
@@ -619,6 +624,9 @@ function LeaveFormSheet({
   const createMutation = useMutation({
     mutationFn: (payload: Parameters<typeof createLeaveRequest>[1]) => {
       if (!userId) throw new Error('missing user')
+      if (payload.evidenceUploadId) {
+        return createLeaveRequestWithEvidence(userId, payload)
+      }
       return createLeaveRequest(userId, payload)
     },
     onSuccess: () => {
@@ -628,6 +636,20 @@ function LeaveFormSheet({
     },
     onError: (error) => {
       toastAdapterError(error, t, 'leave.error.submitFailed')
+    },
+  })
+
+  const evidenceUploadMutation = useMutation({
+    mutationFn: (file: File) => {
+      if (!userId) throw new Error('missing user')
+      return uploadWorkflowEvidenceFile(userId, { domain: 'leave', file })
+    },
+    onSuccess: (result) => {
+      setEvidenceUpload(result)
+      setErrors((current) => ({ ...current, document: undefined }))
+    },
+    onError: (error) => {
+      toastAdapterError(error, t, 'workflowEvidence.error.uploadFailed')
     },
   })
 
@@ -648,6 +670,8 @@ function LeaveFormSheet({
     setHalfDay(false)
     setDelegate('')
     setDescription('')
+    setEvidenceUpload(null)
+    evidenceUploadMutation.reset()
     setErrors({})
   }
 
@@ -661,9 +685,12 @@ function LeaveFormSheet({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!resolvedLeaveType || requiresDocument) return
+    if (!resolvedLeaveType) return
 
     const nextErrors = validateLeaveForm(startDate, endDate, halfDay, t)
+    if (requiresDocument && !evidenceUpload) {
+      nextErrors.document = t('workflowEvidence.error.required')
+    }
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
@@ -680,10 +707,12 @@ function LeaveFormSheet({
       halfDay,
       delegateEmployeeId: delegate || null,
       description: description.trim() || null,
+      evidenceUploadId: evidenceUpload?.evidenceUploadId ?? null,
     })
   }
 
   const isSubmitting = createMutation.isPending
+  const isEvidenceUploading = evidenceUploadMutation.isPending
   const canCreate = readiness?.canCreate ?? false
 
   return (
@@ -713,7 +742,8 @@ function LeaveFormSheet({
               creationContext === undefined ||
               !hasActiveLeaveTypes ||
               !resolvedLeaveType ||
-              requiresDocument ||
+              isEvidenceUploading ||
+              (requiresDocument && !evidenceUpload) ||
               halfDayBlocked ||
               !canCreate
             }
@@ -742,15 +772,18 @@ function LeaveFormSheet({
               <button
                 key={type.id}
                 type="button"
-                onClick={() => setLeaveTypeId(type.id)}
+                onClick={() => {
+                  setLeaveTypeId(type.id)
+                  setEvidenceUpload(null)
+                  evidenceUploadMutation.reset()
+                  setErrors((current) => ({ ...current, document: undefined }))
+                }}
                 aria-pressed={leaveTypeId === type.id}
-                disabled={type.requiresDocument}
                 className={cn(
                   'min-h-11 rounded-md border text-[13px] font-medium transition-colors',
                   leaveTypeId === type.id
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border bg-card text-foreground hover:bg-accent',
-                  type.requiresDocument && 'cursor-not-allowed opacity-50',
                 )}
               >
                 {type.label}
@@ -763,13 +796,6 @@ function LeaveFormSheet({
             </p>
           ) : null}
         </FormField>
-
-        {requiresDocument ? (
-          <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning-soft p-3 text-[13px] text-warning">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div className="text-[12px]">{t('leave.form.documentRequiredHint')}</div>
-          </div>
-        ) : null}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <FormField
@@ -866,16 +892,28 @@ function LeaveFormSheet({
           />
         </FormField>
 
-        <FormField label={t('leaveSetup.form.document')} hint={t('leaveSetup.form.documentHint')}>
-          <button
-            type="button"
-            disabled
-            className="flex min-h-[80px] w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-surface-2 px-4 py-4 text-[13px] text-muted-foreground opacity-70"
+        {requiresDocument ? (
+          <FormField
+            label={t('leaveSetup.form.document')}
+            hint={t('leaveSetup.form.documentHint')}
+            required
           >
-            <FileUp className="h-4 w-4" />
-            {t('leaveSetup.form.documentTeaser')}
-          </button>
-        </FormField>
+            <EvidenceUploadField
+              id="leave-evidence-file"
+              domain="leave"
+              value={evidenceUpload}
+              required
+              disabled={isSubmitting}
+              isUploading={isEvidenceUploading}
+              error={errors.document}
+              onUpload={(file) => evidenceUploadMutation.mutate(file)}
+              onRemove={() => {
+                setEvidenceUpload(null)
+                setErrors((current) => ({ ...current, document: undefined }))
+              }}
+            />
+          </FormField>
+        ) : null}
 
         {isAnnualType && startDate && endDate ? (
           <div

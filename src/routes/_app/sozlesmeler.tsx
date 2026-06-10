@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   Bell,
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 
 import { DataList } from '#/components/puls/DataList'
 import { EmptyState } from '#/components/puls/EmptyState'
+import { EvidenceUploadField } from '#/components/puls/EvidenceUploadField'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { PageHeader } from '#/components/puls/PageHeader'
@@ -25,8 +26,17 @@ import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import i18n from '#/i18n'
 import { useAuth } from '#/lib/auth'
-import { fetchContractsOverviewWithMeta, type ContractsOverview } from '#/lib/data'
+import {
+  attachContractFileEvidence,
+  fetchContractsOverviewWithMeta,
+  isDataAdapterError,
+  uploadWorkflowEvidenceFile,
+  type ContractsOverview,
+  type WorkflowEvidenceUpload,
+} from '#/lib/data'
+import { isSetupAdmin } from '#/lib/setup-access'
 import { cn } from '#/lib/utils'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_app/sozlesmeler')({
   head: () => ({
@@ -73,10 +83,13 @@ function EmployeeAvatar({ initials }: { initials: string }) {
 
 function SozlesmelerPage() {
   const { t, i18n: i18nInstance } = useTranslation()
-  const { user, activePersona } = useAuth()
+  const { user, activePersona, personaRole } = useAuth()
+  const queryClient = useQueryClient()
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [detailSheetOpen, setDetailSheetOpen] = useState(false)
+  const [uploadSheetOpen, setUploadSheetOpen] = useState(false)
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false)
+  const [uploadedEvidence, setUploadedEvidence] = useState<WorkflowEvidenceUpload | null>(null)
 
   const { data: contractsOverviewResult, isLoading } = useQuery({
     queryKey: ['contracts-overview', user?.id],
@@ -101,6 +114,8 @@ function SozlesmelerPage() {
     )
   }, [data, selectedContractId])
 
+  const canUploadContracts = activePersona === 'manager' && isSetupAdmin(personaRole)
+
   const formatEndDate = (contract: ContractsOverview['contracts'][number]) =>
     contract.endDate
       ? formatContractDate(contract.endDate, i18nInstance.language)
@@ -121,11 +136,47 @@ function SozlesmelerPage() {
     setDetailSheetOpen(true)
   }
 
+  const openUploadSheet = (contractId?: string) => {
+    const id = contractId ?? selectedContract?.id
+    if (!id) return
+    setSelectedContractId(id)
+    setUploadedEvidence(null)
+    setUploadSheetOpen(true)
+  }
+
   const openReminderSheet = () => {
     if (selectedContract) {
       setReminderSheetOpen(true)
     }
   }
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user?.id || !selectedContract) throw new Error('missing contract upload context')
+      const evidence = await uploadWorkflowEvidenceFile(user.id, {
+        domain: 'contract',
+        file,
+        subjectId: selectedContract.id,
+      })
+      await attachContractFileEvidence(user.id, selectedContract.id, evidence.evidenceUploadId)
+      return evidence
+    },
+    onSuccess: (evidence) => {
+      setUploadedEvidence(evidence)
+      if (user?.id) {
+        void queryClient.invalidateQueries({ queryKey: ['contracts-overview', user.id] })
+      }
+      toast.success(t('contractsSetup.uploadSheet.toast.success'))
+      setUploadSheetOpen(false)
+    },
+    onError: (error) => {
+      if (isDataAdapterError(error) && error.i18nKey) {
+        toast.error(t(error.i18nKey))
+        return
+      }
+      toast.error(t('workflowEvidence.error.uploadFailed'))
+    },
+  })
 
   return (
     <div className="mx-auto max-w-5xl overflow-x-hidden p-4 md:p-8">
@@ -137,15 +188,17 @@ function SozlesmelerPage() {
         title={t('contractsSetup.title')}
         subtitle={t('contractsSetup.description')}
         actions={
-          <Button
-            type="button"
-            className="touch-target w-full sm:w-auto"
-            disabled
-            title={t('contractsSetup.actions.uploadUnavailable')}
-          >
-            <Upload className="h-4 w-4" />
-            {t('contractsSetup.actions.upload')}
-          </Button>
+          canUploadContracts ? (
+            <Button
+              type="button"
+              className="touch-target w-full sm:w-auto"
+              disabled={!selectedContract}
+              onClick={() => openUploadSheet()}
+            >
+              <Upload className="h-4 w-4" />
+              {t('contractsSetup.actions.upload')}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -237,62 +290,65 @@ function SozlesmelerPage() {
             <div>{t('contractsSetup.columns.risk')}</div>
           </div>
           <ul className="divide-y divide-[var(--color-border)]">
-            {isLoading
-              ? Array.from({ length: CONTRACT_SKELETON_COUNT }, (_, index) => (
-                  <li
-                    key={index}
-                    className={cn('grid items-center gap-3 px-4 py-3', CONTRACT_TABLE_GRID_COLS)}
-                  >
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-6 w-16 rounded-full" />
-                    <Skeleton className="h-6 w-24 rounded-full" />
-                  </li>
-                ))
-              : isEmptyList ? (
-                  <li className="px-4 py-6">
-                    <EmptyState
-                      icon={FileText}
-                      title={t(emptyTitleKey)}
-                      description={t(emptyDescriptionKey)}
-                    />
+            {isLoading ? (
+              Array.from({ length: CONTRACT_SKELETON_COUNT }, (_, index) => (
+                <li
+                  key={index}
+                  className={cn('grid items-center gap-3 px-4 py-3', CONTRACT_TABLE_GRID_COLS)}
+                >
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </li>
+              ))
+            ) : isEmptyList ? (
+              <li className="px-4 py-6">
+                <EmptyState
+                  icon={FileText}
+                  title={t(emptyTitleKey)}
+                  description={t(emptyDescriptionKey)}
+                />
+              </li>
+            ) : (
+              (data?.contracts ?? []).map((contract) => {
+                const isSelected = selectedContract?.id === contract.id
+
+                return (
+                  <li key={contract.id}>
+                    <button
+                      type="button"
+                      onClick={() => openDetailSheet(contract.id)}
+                      className={cn(
+                        'grid w-full min-w-0 touch-target items-center gap-3 px-4 py-3 text-left transition-colors',
+                        CONTRACT_TABLE_GRID_COLS,
+                        isSelected
+                          ? 'bg-[var(--color-primary-soft)]'
+                          : 'hover:bg-[var(--color-bg-elevated)]',
+                      )}
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <EmployeeAvatar initials={contract.initials} />
+                        <span className="truncate text-sm font-medium">
+                          {contract.employeeName}
+                        </span>
+                      </div>
+                      <div className="truncate text-sm text-[var(--color-text-secondary)]">
+                        {t(contract.typeKey)}
+                      </div>
+                      <div className="text-sm tabular-nums">
+                        {formatContractDate(contract.startDate, i18nInstance.language)}
+                      </div>
+                      <div className="text-sm tabular-nums">{formatEndDate(contract)}</div>
+                      <div>{renderSignaturePill(contract.signed)}</div>
+                      <div>{renderRiskPill(contract.risk)}</div>
+                    </button>
                   </li>
                 )
-              : (data?.contracts ?? []).map((contract) => {
-                  const isSelected = selectedContract?.id === contract.id
-
-                  return (
-                    <li key={contract.id}>
-                      <button
-                        type="button"
-                        onClick={() => openDetailSheet(contract.id)}
-                        className={cn(
-                          'grid w-full min-w-0 touch-target items-center gap-3 px-4 py-3 text-left transition-colors',
-                          CONTRACT_TABLE_GRID_COLS,
-                          isSelected
-                            ? 'bg-[var(--color-primary-soft)]'
-                            : 'hover:bg-[var(--color-bg-elevated)]',
-                        )}
-                      >
-                        <div className="flex min-w-0 items-center gap-2">
-                          <EmployeeAvatar initials={contract.initials} />
-                          <span className="truncate text-sm font-medium">{contract.employeeName}</span>
-                        </div>
-                        <div className="truncate text-sm text-[var(--color-text-secondary)]">
-                          {t(contract.typeKey)}
-                        </div>
-                        <div className="text-sm tabular-nums">
-                          {formatContractDate(contract.startDate, i18nInstance.language)}
-                        </div>
-                        <div className="text-sm tabular-nums">{formatEndDate(contract)}</div>
-                        <div>{renderSignaturePill(contract.signed)}</div>
-                        <div>{renderRiskPill(contract.risk)}</div>
-                      </button>
-                    </li>
-                  )
-                })}
+              })
+            )}
           </ul>
         </div>
       </section>
@@ -374,7 +430,72 @@ function SozlesmelerPage() {
                 <dd className="mt-2">{renderRiskPill(selectedContract.risk)}</dd>
               </div>
             </div>
+            <div>
+              <dt className="text-xs text-[var(--color-text-muted)]">
+                {t('contractsSetup.detailSheet.fields.document')}
+              </dt>
+              <dd className="mt-2">
+                {selectedContract.fileCount > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusPill tone="success">
+                      {t('contractsSetup.detailSheet.documentCount', {
+                        count: selectedContract.fileCount,
+                      })}
+                    </StatusPill>
+                    {selectedContract.latestFileName ? (
+                      <span className="max-w-full truncate text-[13px] text-muted-foreground">
+                        {selectedContract.latestFileName}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  <span className="text-[13px] text-muted-foreground">
+                    {t('contractsSetup.detailSheet.noDocument')}
+                  </span>
+                )}
+              </dd>
+            </div>
           </dl>
+        ) : null}
+      </SheetShell>
+
+      <SheetShell
+        open={uploadSheetOpen}
+        onOpenChange={(nextOpen) => {
+          setUploadSheetOpen(nextOpen)
+          if (!nextOpen) {
+            setUploadedEvidence(null)
+            uploadMutation.reset()
+          }
+        }}
+        title={t('contractsSetup.uploadSheet.title')}
+        description={t('contractsSetup.uploadSheet.description')}
+      >
+        {selectedContract ? (
+          <div className="space-y-4">
+            <div className="rounded-md border border-border bg-surface-2 p-3 text-sm">
+              <div className="font-medium">{selectedContract.employeeName}</div>
+              <div className="mt-1 text-[12px] text-muted-foreground">
+                {t(selectedContract.typeKey)} ·{' '}
+                {formatContractDate(selectedContract.startDate, i18nInstance.language)}
+              </div>
+            </div>
+            <FormField label={t('contractsSetup.uploadSheet.fields.file')} required>
+              <EvidenceUploadField
+                id="contract-evidence-file"
+                domain="contract"
+                value={uploadedEvidence}
+                required
+                disabled={uploadMutation.isPending}
+                isUploading={uploadMutation.isPending}
+                onUpload={(file) => uploadMutation.mutate(file)}
+                onRemove={() => {
+                  setUploadedEvidence(null)
+                  uploadMutation.reset()
+                }}
+              />
+            </FormField>
+          </div>
         ) : null}
       </SheetShell>
 

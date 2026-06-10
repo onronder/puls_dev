@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   Check,
   CheckCircle2,
-  FileUp,
   Info,
   Loader2,
   Plus,
@@ -19,6 +18,7 @@ import { toast } from 'sonner'
 import { RequestCreationReadinessBanners } from '#/components/puls/RequestCreationReadinessBanners'
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { EmptyState } from '#/components/puls/EmptyState'
+import { EvidenceUploadField } from '#/components/puls/EvidenceUploadField'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -35,11 +35,14 @@ import { useAuth } from '#/lib/auth'
 import {
   buildExpenseCreationReadiness,
   createExpenseClaim,
+  createExpenseClaimWithEvidence,
   decideApprovalRequest,
   fetchExpenseOverviewWithMeta,
   fetchRequestCreationReadiness,
   isDataAdapterError,
+  uploadWorkflowEvidenceFile,
   type ExpenseOverview,
+  type WorkflowEvidenceUpload,
 } from '#/lib/data'
 import { formatCurrency, parseDecimalAmount } from '#/lib/format'
 import { cn } from '#/lib/utils'
@@ -66,6 +69,7 @@ type FormErrors = {
   category?: string
   amount?: string
   date?: string
+  document?: string
 }
 
 function toastAdapterError(
@@ -597,6 +601,7 @@ function ExpenseFormSheet({
   const [expenseDate, setExpenseDate] = useState('')
   const [note, setNote] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
+  const [evidenceUpload, setEvidenceUpload] = useState<WorkflowEvidenceUpload | null>(null)
 
   const { data: creationContext } = useQuery({
     queryKey: ['request-creation-readiness', 'expense', userId],
@@ -617,6 +622,9 @@ function ExpenseFormSheet({
   const createMutation = useMutation({
     mutationFn: (payload: Parameters<typeof createExpenseClaim>[1]) => {
       if (!userId) throw new Error('missing user')
+      if (payload.evidenceUploadId) {
+        return createExpenseClaimWithEvidence(userId, payload)
+      }
       return createExpenseClaim(userId, payload)
     },
     onSuccess: () => {
@@ -629,6 +637,20 @@ function ExpenseFormSheet({
     },
   })
 
+  const evidenceUploadMutation = useMutation({
+    mutationFn: (file: File) => {
+      if (!userId) throw new Error('missing user')
+      return uploadWorkflowEvidenceFile(userId, { domain: 'expense', file })
+    },
+    onSuccess: (result) => {
+      setEvidenceUpload(result)
+      setErrors((current) => ({ ...current, document: undefined }))
+    },
+    onError: (error) => {
+      toastAdapterError(error, t, 'workflowEvidence.error.uploadFailed')
+    },
+  })
+
   const amountNum = parseDecimalAmount(amount)
   const requiredOk = !!category && Number.isFinite(amountNum) && amountNum > 0 && !!expenseDate
   const selectedCategoryLimit = data?.categoryLimits.find((item) => item.id === category)
@@ -636,12 +658,14 @@ function ExpenseFormSheet({
   const receiptRequiredOver = selectedCategoryLimit?.receiptRequiredOver ?? 0
   const receiptRequired =
     receiptRequiredOver > 0 && Number.isFinite(amountNum) && amountNum > receiptRequiredOver
+  const receiptPolicyMissing = receiptRequired && !evidenceUpload
+  const showEvidenceField = receiptRequired || Boolean(evidenceUpload)
   const categoryLimitExceeded =
     !!selectedCategoryLimit &&
     selectedCategoryLimit.limit > 0 &&
     Number.isFinite(amountNum) &&
     selectedCategoryLimit.monthSpent + amountNum > selectedCategoryLimit.limit
-  const overPolicy = categoryLimitExceeded || receiptRequired
+  const overPolicy = categoryLimitExceeded || receiptPolicyMissing
 
   const categoryLabel =
     selectedCategoryLimit?.name ??
@@ -657,6 +681,8 @@ function ExpenseFormSheet({
     setVatIncluded(true)
     setExpenseDate('')
     setNote('')
+    setEvidenceUpload(null)
+    evidenceUploadMutation.reset()
     setErrors({})
   }
 
@@ -670,6 +696,9 @@ function ExpenseFormSheet({
     const nextErrors = validateExpenseForm(category, amount, expenseDate, t)
     if (!selectedCategoryIsAvailable) {
       nextErrors.category = t('requestCreationReadiness.expense.invalidCategory')
+    }
+    if (receiptRequired && !evidenceUpload) {
+      nextErrors.document = t('workflowEvidence.error.required')
     }
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
@@ -688,10 +717,12 @@ function ExpenseFormSheet({
       vatIncluded,
       expenseDate,
       description: note.trim() || null,
+      evidenceUploadId: evidenceUpload?.evidenceUploadId ?? null,
     })
   }
 
   const isSubmitting = createMutation.isPending
+  const isEvidenceUploading = evidenceUploadMutation.isPending
   const hasActiveCategories = (data?.categoryLimits.length ?? 0) > 0
   const canCreate = readiness?.canCreate ?? false
 
@@ -722,7 +753,8 @@ function ExpenseFormSheet({
               !hasActiveCategories ||
               !canCreate ||
               !selectedCategoryIsAvailable ||
-              receiptRequired
+              isEvidenceUploading ||
+              (receiptRequired && !evidenceUpload)
             }
           >
             {isSubmitting ? (
@@ -853,19 +885,28 @@ function ExpenseFormSheet({
           />
         </FormField>
 
-        <FormField
-          label={t('expenseSetup.form.document')}
-          hint={t('expenseSetup.form.documentHint')}
-        >
-          <button
-            type="button"
-            disabled
-            className="flex min-h-[80px] w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-surface-2 px-4 py-4 text-[13px] text-muted-foreground opacity-70"
+        {showEvidenceField ? (
+          <FormField
+            label={t('expenseSetup.form.document')}
+            hint={t('expenseSetup.form.documentHint')}
+            required
           >
-            <FileUp className="h-4 w-4" />
-            {t('expenseSetup.form.documentTeaser')}
-          </button>
-        </FormField>
+            <EvidenceUploadField
+              id="expense-evidence-file"
+              domain="expense"
+              value={evidenceUpload}
+              required
+              disabled={isSubmitting}
+              isUploading={isEvidenceUploading}
+              error={errors.document}
+              onUpload={(file) => evidenceUploadMutation.mutate(file)}
+              onRemove={() => {
+                setEvidenceUpload(null)
+                setErrors((current) => ({ ...current, document: undefined }))
+              }}
+            />
+          </FormField>
+        ) : null}
 
         {requiredOk ? (
           <div className="rounded-md border border-border bg-surface-2 p-3">
@@ -878,7 +919,7 @@ function ExpenseFormSheet({
                 label={t('expenseSetup.form.policyCategoryLimit', { category: categoryLabel })}
               />
               <PolicyLine
-                ok={!receiptRequired}
+                ok={!receiptRequired || Boolean(evidenceUpload)}
                 label={
                   receiptThresholdLabel
                     ? t('expenseSetup.form.policyReceiptRequired', {
@@ -910,7 +951,7 @@ function ExpenseFormSheet({
               <div>
                 <div className="font-medium">{t('expenseSetup.form.policyWarningTitle')}</div>
                 <div className="text-[12px] opacity-90">
-                  {receiptRequired && receiptThresholdLabel
+                  {receiptPolicyMissing && receiptThresholdLabel
                     ? t('expenseSetup.form.policyReceiptBlockedDesc', {
                         threshold: receiptThresholdLabel,
                       })

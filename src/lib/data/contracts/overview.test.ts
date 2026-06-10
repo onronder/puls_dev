@@ -150,6 +150,36 @@ describe('mapContractRow', () => {
       endDate: '2026-06-01',
       signed: 'pending',
       risk: 'pending',
+      fileCount: 0,
+      latestFileName: null,
+      latestFileSizeBytes: null,
+    })
+  })
+
+  it('adds attached document metadata when evidence is provided', () => {
+    expect(
+      mapContractRow(
+        {
+          id: 'c-1',
+          contract_type: 'employment',
+          start_date: '2026-01-01',
+          end_date: null,
+          signature_status: 'signed',
+          risk_band: 'low',
+          employeeName: 'Burak Aslan',
+        },
+        {
+          evidence: {
+            fileCount: 2,
+            latestFileName: 'contract.pdf',
+            latestFileSizeBytes: 1200,
+          },
+        },
+      ),
+    ).toMatchObject({
+      fileCount: 2,
+      latestFileName: 'contract.pdf',
+      latestFileSizeBytes: 1200,
     })
   })
 })
@@ -264,6 +294,7 @@ describe('fetchContractsOverviewWithMeta', () => {
       expect.objectContaining({
         employeeName: 'Burak Aslan',
         typeKey: 'contractsSetup.types.indefinite',
+        fileCount: 0,
       }),
     ])
   })
