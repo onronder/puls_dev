@@ -13,6 +13,7 @@ scripts=(
   "scripts/verify-17-2-b-workflow-closed-loop-proof.sh"
   "scripts/verify-17-2-c-settings-notification-preferences.sh"
   "scripts/verify-17-2-d-workflow-notification-dispatch.sh"
+  "scripts/verify-17-2-e-workflow-e2e-reconcile.sh"
 )
 
 for script in "${scripts[@]}"; do
