@@ -1072,17 +1072,28 @@ PR17.2E turns the planned workflow e2e/reconcile guard into a rollback-only data
 
 Verify: [`../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh)
 
+## PR17.2F Workflow evidence upload foundation
+
+PR17.2F is split so the evidence trust boundary lands before browser workflow changes.
+
+| Slice | Purpose |
+| --- | --- |
+| [PR17.2F Workflow Evidence Upload Foundation](./17_2_f_workflow_evidence_upload_foundation.md) | Shared contract for workflow evidence upload, split into backend boundary and product flow slices. |
+| PR17.2F1 Backend Boundary | Private storage bucket, staging upload table, intent/finalize RPCs, domain metadata RLS hardening, contract evidence attach, and metadata-only audit. |
+| PR17.2F2 Product Flow | Leave/expense/contract upload UI, submit-with-evidence RPCs, compact file chips, and required-evidence server enforcement. |
+
 ## PR17.2 planned follow-ups
 
 PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/reconcile guard. It still does not complete the workflow product surface: document upload, OCR/human review, richer browser journeys, and AI context feed remain intentionally separate slices.
 
 | Planned slice | Purpose |
 | --- | --- |
-| PR17.2F Document/Evidence Upload Foundation | Open evidence upload for leave, expense, and contract documents with storage, RLS, metadata, audit, size/type policy, notification impact, and clear UI behavior. |
+| PR17.2F1 Evidence Upload Backend Boundary | Open the storage/RLS/RPC/audit foundation without changing visible forms. |
+| PR17.2F2 Evidence Upload Product Flow | Bind the backend foundation to leave, expense, and contract UI flows. |
 | PR17.2G OCR & Human Review Evidence | Add OCR/extraction for expense receipts as safe evidence with confidence, human review, audit, and no automatic canonical write without approval. |
 | PR17.4 AI context feed handoff | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant. |
 
-Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 7.
+Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 8.
 
 ## Related packs
 
