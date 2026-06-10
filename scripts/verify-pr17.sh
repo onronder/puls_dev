@@ -14,6 +14,7 @@ scripts=(
   "scripts/verify-17-2-c-settings-notification-preferences.sh"
   "scripts/verify-17-2-d-workflow-notification-dispatch.sh"
   "scripts/verify-17-2-e-workflow-e2e-reconcile.sh"
+  "scripts/verify-17-2-f1-workflow-evidence-upload-foundation.sh"
 )
 
 for script in "${scripts[@]}"; do
