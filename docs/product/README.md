@@ -1096,9 +1096,11 @@ PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/r
 | PR17.2F3 Evidence Finalization Hardening  | Completed actual storage object size verification and evidence RPC error localization before OCR/human review.                                    |
 | [PR17.2G Evidence Viewing, OCR Contract & Human Review](./17_2_g_evidence_review_ocr_contract.md) | Plan evidence viewing first, then provider-agnostic OCR/job contract, human review, and vendor evaluation with cost/KVKK gates. |
 | [PR17.2G1 Evidence Viewing Access](./17_2_g1_evidence_viewing_access.md) | Completed authorized attached-evidence viewing through private Storage RLS and short-lived signed URLs; no OCR/provider/review yet. |
+| [PR17.2G2A Expense Receipt OCR DB Contract](./17_2_g2a_expense_receipt_ocr_db_contract.md) | Completed service-role-only expense receipt OCR queue/result/event database contract; no production enqueue, worker, provider SDK, or canonical write. |
+| PR17.2G2B OCR Worker Skeleton | Next: disabled-by-default worker with private storage read, server-side SHA-256, and mock/disabled provider adapter; no paid provider call. |
 | PR17.4 AI context feed handoff            | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant.               |
 
-Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 12.
+Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 13.
 
 ## Related packs
 
