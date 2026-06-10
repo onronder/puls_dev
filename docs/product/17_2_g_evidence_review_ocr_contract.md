@@ -1,6 +1,6 @@
 # PR17.2G Evidence Viewing, OCR Contract & Human Review
 
-> **Status:** Living PR17.2G contract. G1-G3 are implemented slices; G4 remains a vendor/production-enqueue decision gate.
+> **Status:** Living PR17.2G contract. G1-G3A are implemented slices; G4 remains a vendor/production-enqueue decision gate.
 > **Decision:** PR17.2G is not "build our own OCR" and not "send every receipt to an expensive vendor". It is the controlled path from attached evidence to reviewed, auditable suggestions.
 
 PR17.2F1/F2/F3 completed the evidence upload boundary: private storage, staging upload intents, finalized upload checks, product upload flows, attached metadata, and localized evidence errors. PR17.2G starts only after that boundary: authorized users must be able to view attached evidence, optional OCR/extraction can propose fields, and a human must review before any canonical expense data is changed.
@@ -23,7 +23,7 @@ For every uploaded expense evidence file, the system should try cheaper routes b
 4. **Image OCR fallback:** only scanned PDFs, photos, and POS receipt images need OCR.
 5. **Manual fallback:** if OCR is disabled, over quota, low confidence, or too expensive, the user can still fill fields manually and keep the file as evidence.
 
-This means Azure, Google, AWS, or any paid OCR provider must not be hard-coded into PR17.2G1-G3. Vendor selection belongs to PR17.2G4 after cost, quality, data residency, and KVKK/GDPR review.
+This means Azure, Google, AWS, or any paid OCR provider must not be hard-coded into PR17.2G1-G3A. Vendor selection belongs to PR17.2G4 after cost, quality, data residency, and KVKK/GDPR review.
 
 ## Provider Strategy
 
@@ -160,7 +160,8 @@ Goal: turn OCR output into a human-reviewed decision.
 
 Implemented in PR17.2G3 as a bounded human-review layer for existing expense receipt OCR results:
 review decisions are stored on `expense_receipt_ocr_results`, audit/event metadata stays safe, and
-canonical expense fields are not changed.
+canonical expense fields are not changed. PR17.2G3A tightens this boundary by blocking self-review and
+adding negative actor smoke coverage.
 
 Scope:
 
@@ -178,13 +179,14 @@ Scope:
    - request a new document.
 4. Store review decision and reviewer identity.
 5. Store review notes only in the review table under RLS; audit metadata must not include raw notes.
-6. Canonical expense mutation remains closed unless a separate explicit, audited apply step is added.
+6. G3 correction UX records a correction note only; structured corrected field entry and client-side validation are deferred to a later apply/review slice.
+7. Canonical expense mutation remains closed unless a separate explicit, audited apply step is added.
 
 Actor recommendation:
 
 - requester can view own evidence and respond to correction requests,
 - assigned approver can review evidence for assigned claims,
-- admin means the existing `hr_admin` / `superadmin` authority; a dedicated `finance` reviewer role does not exist today and requires a separate product/RBAC decision before implementation,
+- admin means the existing `hr_admin` / `superadmin` authority, but requester self-review is blocked even for admins; a dedicated `finance` reviewer role does not exist today and requires a separate product/RBAC decision before implementation,
 - AI cannot approve, reject, or write canonical values.
 
 ### PR17.2G4 — Vendor Evaluation & Worker Integration
@@ -265,6 +267,8 @@ Forbidden AI context fields:
 2. Should the signed URL TTL remain **120 seconds** after live tenant feedback?
 3. Is orphan storage object cleanup explicitly outside PR17.2G, or should a service-role janitor be included as a later G sub-slice?
 4. Which G4 provider/cost/KVKK gates must block production enqueue?
+5. Should structured corrected field entry ship before canonical OCR apply, or together with the apply boundary?
+6. Which G4 smoke should cover recover/dead-letter and long-running provider heartbeat behavior?
 
 ## Non-Goals For All G Slices
 

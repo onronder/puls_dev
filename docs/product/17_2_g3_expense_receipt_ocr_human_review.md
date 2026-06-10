@@ -54,6 +54,7 @@ The `/masraf` page shows a compact OCR review panel only when an OCR result exis
 - manager approval rows show the same status plus decision actions,
 - the document view action remains the source of truth for receipt inspection,
 - review note is stored on the OCR result row, not in audit metadata,
+- correction UX records the correction as a note in G3; structured `corrected_fields` entry is reserved for a later apply/review slice,
 - approval/rejection of the expense remains a separate workflow action.
 
 ## Verification
@@ -81,3 +82,7 @@ The smoke creates a rollback-only tenant, expense claim, receipt, OCR job/result
 ## Handoff
 
 PR17.2G4 remains the first phase where production enqueue, tenant OCR enablement, provider selection, quota, cost, KVKK/GDPR, data residency, and benchmark gates can be evaluated.
+
+## PR17.2G3A Hardening
+
+PR17.2G3A blocks self-review server-side and extends the rollback smoke with negative actor coverage. A requester cannot review their own expense receipt OCR result, even if they also hold admin authority.
