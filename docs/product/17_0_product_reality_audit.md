@@ -1,7 +1,7 @@
 # PR17.0 — Product Reality Audit & Closed-Loop HR Gap Map
 
 > **Durum:** Resmi PR17.0 ürün karar dokümanı / yol haritası (kod contract'ı değil; verify-script gerektirmez).
-> **Tarih:** 2026-06-10 · **Rev 10** (PR17.2F3 tamamlandı: evidence finalization gerçek storage size metadata ile sertleştirildi. PR17.2G OCR/human review olarak kalır). Önceki: Rev 9 (PR17.2F1/F2 tamamlandı: evidence storage/RPC boundary + ürün form akışı).
+> **Tarih:** 2026-06-10 · **Rev 11** (PR17.2G evidence viewing/OCR/human-review contract eklendi: G1 önce güvenli görüntüleme, G2 provider-agnostic OCR job/result, G3 human review, G4 vendor evaluation). Önceki: Rev 10 (PR17.2F3 finalize hardening).
 > **Kapsam:** Read-only denetim. Kod değiştirilmedi.
 > **Yöntem:** 19 ürün route'u (~10.000 satır UI), 74 migration, data adapter'lar, RLS/RPC kontratları, audit trigger'ları, notification ledger'ı ve AI context yüzeyleri okundu. 6 paralel keşif ajanı + hedefli backend doğrulamaları.
 > **Önkoşul bağlam:** PR16.10.13-20 tamamlandı (DataSource split, runtime hardening, audit/policy guard'ları, CI verify gate). Hedef: connector-bağımsız, kapalı devre AI HR App ürünleşmesi (PR17).
@@ -10,7 +10,7 @@
 
 ## 0. Executive Summary
 
-> ### 🔄 Rev 10 güncel durum (PR17.1A-D + PR17.2A-F3 sonrası, PR17.2G planı)
+> ### 🔄 Rev 11 güncel durum (PR17.1A-D + PR17.2A-F3 sonrası, PR17.2G contract planı)
 >
 > Aşağıdaki §0-§6 metni **PR17 öncesi** durumu anlatır (tarihsel referans). PR17.1 ve PR17.2 dilimleri landıktan sonra yapılan re-audit'in sonuçları:
 >
@@ -23,11 +23,11 @@
 > | **R1** HR workflow notification              | 17.2A/B/C/D                 | ✅ **KAPANDI** | Producer + 6-olay taxonomy + prefs UI + live DB dispatch tamam; teslimat connector worker beklemez                                                                                                           |
 > | **R7** workflow e2e                          | 17.2B/D/E                   | 🟡 **KISMİ**   | DB-boundary rollback-only smoke artık live dispatch + reconcile no-duplicate guard'ı kanıtlar; gerçek tarayıcı UI e2e ve tenant'ta multi-step policy yoksa zorunlu multi-step kanıtı hâlâ ürün/QA kuyruğudur |
 > | **R11** connector-bağımlı bildirim teslimatı | 17.2D                       | ✅ **KAPANDI** | Workflow row triggers same-transaction notification dispatch yapar; `run_app_notification_producers` backfill/reconcile yolu olarak kalır                                                                    |
-> | **R8** belge/evidence upload                 | 17.2F1/F2/F3 tamam; 17.2G açık | 🟡 **KISMİ**   | Private storage + staging + intent/finalize RPC + submit-with-evidence + leave/expense/contract UI tamam; finalize gerçek storage size metadata ile sertleşti; OCR/human review hâlâ ayrı faz                 |
+> | **R8** belge/evidence upload                 | 17.2F1/F2/F3 tamam; 17.2G contract planlandı | 🟡 **KISMİ**   | Private storage + staging + intent/finalize RPC + submit-with-evidence + leave/expense/contract UI tamam; 17.2G contract: viewing first, provider-agnostic OCR, human review, vendor/cost gates              |
 >
-> **Net:** PR17.1 Core HR closed-loop **gerçekten kapandı** (audit + lifecycle + edit, hepsi server-validated/audited). PR17.2 notification platformu artık **connector-bağımsız canlı teslimat** yapar: workflow event trigger'ları notification ledger'a metadata-only kayıt düşer, mevcut producer orchestrator ise duplicate-safe backfill/reconcile yolu olarak kalır. PR17.2E bu sözleşmeyi `docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql` ile kilitledi. PR17.2F1/F2 belge/evidence upload'ın storage/RPC ve browser form kenarını açtı; PR17.2F3 finalize aşamasını gerçek storage size metadata kontrolüyle sertleştirdi. Bu, workflow ürününün bittiği anlamına gelmez. PR17.2'nin açık kalan productization işleri: OCR/extraction + insan onayı (17.2G), evidence görüntüleme/indirme UX'i, gerçek tarayıcı UX e2e, AI context feed (R2) ve STUB ailesi (PR17.3/17.4).
+> **Net:** PR17.1 Core HR closed-loop **gerçekten kapandı** (audit + lifecycle + edit, hepsi server-validated/audited). PR17.2 notification platformu artık **connector-bağımsız canlı teslimat** yapar: workflow event trigger'ları notification ledger'a metadata-only kayıt düşer, mevcut producer orchestrator ise duplicate-safe backfill/reconcile yolu olarak kalır. PR17.2E bu sözleşmeyi `docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql` ile kilitledi. PR17.2F1/F2 belge/evidence upload'ın storage/RPC ve browser form kenarını açtı; PR17.2F3 finalize aşamasını gerçek storage size metadata kontrolüyle sertleştirdi. PR17.2G için contract artık net: önce evidence viewing, sonra provider-agnostic OCR job/result, sonra human review, en son vendor evaluation. Pahalı OCR provider'ı varsayılan yol değildir; structured parse/PDF text/duplicate/manual fallback önce gelir.
 
-> #### PR17.2 alt faz kararı (Rev9)
+> #### PR17.2 alt faz kararı (Rev11)
 >
 > | Faz                                                    | Amaç                                                                                                                                                                                   | Durum         |
 > | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -36,31 +36,35 @@
 > | **17.2F1 — Evidence Upload Backend Boundary**          | Private storage bucket, staging table, intent/finalize RPC, domain metadata RLS hardening, contract attach RPC ve metadata-only audit                                                  | ✅ Tamamlandı |
 > | **17.2F2 — Evidence Upload Product Flow**              | İzin eki, masraf fişi ve sözleşme belgesi UI akışlarını F1 boundary'ye bağla; required evidence submit contract'ını aç                                                                 | ✅ Tamamlandı |
 > | **17.2F3 — Evidence Finalization Hardening**           | Finalize aşamasında actual storage object size metadata kontrolü, localized evidence RPC errors ve G öncesi trust-boundary sertleştirmesi                                               | ✅ Tamamlandı |
-> | **17.2G — OCR & Human Review Evidence**                | Masraf fişi gibi belgelerden tutar/tarih/vendor çıkarımı, confidence skoru, insan onayı ve canonical kayda güvenli bağlama                                                             | 🔴 Açık       |
+> | **17.2G1 — Evidence Viewing Access**                   | Attached evidence için authorized read model + kısa TTL signed URL + compact view action; OCR yok                                                                                       | 🔴 Açık       |
+> | **17.2G2 — OCR Job & Result Contract**                  | Sadece expense receipts için provider-agnostic OCR/structured extraction job/result schema; provider disabled/mock olabilir                                                              | 🔴 Açık       |
+> | **17.2G3 — Human Review UI**                            | OCR önerilerini belgeyle yan yana göster; accept/correct/reject/new-document decision; canonical write yok                                                                               | 🔴 Açık       |
+> | **17.2G4 — Vendor Evaluation & Worker Integration**     | OCR vendor seçimi sadece cost/KVKK/data residency/Türkçe belge benchmark ve quota guard'larından sonra                                                                                   | 🔴 Açık       |
 
 **Tek cümlelik gerçek:** PULS'un _gerçek backend workflow motoru_ (RPC + RLS + audit trigger + approver resolver) ve _gerçek notification platformu_ artık HR workflow için bağlı; izin/masraf submit ve decision event'leri connector beklemeden Notification Center'a düşer. **AI context yüzeyi hâlâ HR mutation'larından beslenmiyor.**
 
-Senin tanımladığın tam döngü — **oluştur → gönder → onayla → audit → notification → belge/evidence → AI context** — izin ve masraf için artık hardened evidence upload kenarına kadar ilerledi. Kalan sistemik açıklar **tarayıcı e2e kanıtı**, **OCR/insan incelemesi**, **evidence görüntüleme/indirme UX'i** ve **AI context** katmanıdır.
+Senin tanımladığın tam döngü — **oluştur → gönder → onayla → audit → notification → belge/evidence → AI context** — izin ve masraf için artık hardened evidence upload kenarına kadar ilerledi. Kalan sistemik açıklar **evidence görüntüleme/indirme UX'i**, **OCR/insan incelemesi**, **tarayıcı e2e kanıtı** ve **AI context** katmanıdır.
 
 ### Sayfa kategorileri
 
-| Kategori                                          | Sayfalar                                                                                                             | Durum                                               |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| **Gerçek workflow (backend tam, notif/AI eksik)** | izin, masraf, izin-tanımları, masraf-kategorileri                                                                    | Backend production-ready; döngünün son 2 kenarı yok |
-| **Gerçek CRUD ama audit/notif yok**               | departmanlar, pozisyonlar, performans                                                                                | Yazıyor ama iz bırakmıyor                           |
-| **Read-only / navigasyon / stub**                 | dashboard, çalışanlar, şirket-kurulum, sözleşmeler, performans-parametreleri, kariyer, eğitim, iş-değerleme, ayarlar | Mutation yok                                        |
-| **Stabil (kabul)**                                | verikaynakları                                                                                                       | PR16.10.13-20 sonrası kabul                         |
+| Kategori                                                       | Sayfalar                                                                     | Durum                                                                                  |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Gerçek workflow (backend + notification + evidence upload)** | izin, masraf                                                                 | Evidence viewing/OCR/human review, AI context ve browser e2e açık                      |
+| **Gerçek setup/lifecycle CRUD**                                | departmanlar, pozisyonlar, izin-tanımları, masraf-kategorileri, performans   | Audit/RPC zemini güçlü; bazı ürün döngüsü aksiyonları hâlâ eksik                       |
+| **Partial ürün yüzeyi**                                        | dashboard, çalışanlar, şirket-kurulum, sözleşmeler, ayarlar                  | Seçilmiş mutation/tercih akışları gerçek; tüm sayfa closed-loop değil                  |
+| **Stub / teaser**                                              | performans-parametreleri, kariyer, eğitim, iş-değerleme, ai-koc              | Gerçek ürün akışı yok veya bilinçli teaser                                             |
+| **Stabil connector yüzeyi**                                    | verikaynakları                                                               | PR16.10.13-20 sonrası kabul                                                            |
 
-> **Envanter:** 19 ürün route'u denetlendi (`/menu` ve `/erp redirect` kapsam dışı). ~10'u read-only/stub/teaser, 4'ü gerçek workflow (backend tam), 3'ü gerçek CRUD (audit/notif eksik), 1'i stabil connector, 1'i read-only profil (gerçek logout). STUB/teaser ailesi en kalabalık grup — PR17'nin ürünleştirme yükü burada.
+> **Envanter:** 19 ürün route'u denetlendi (`/menu` ve `/erp redirect` kapsam dışı). Workflow/core setup tarafı artık gerçek RPC, RLS, audit ve notification zeminine sahip; partial/stub/teaser ailesi hâlâ PR17'nin ürünleştirme yükünü taşıyor.
 
 ### Üç sistemik açık
 
 1. ✅ **Notification kenarı HR workflow'unda bağlı (Rev5/6/7).** Ledger/center/realtime hazır; connector/runtime + file import producer'ları çalışıyor; PR17.2A-D ile HR workflow producer, preferences UI ve connector-bağımsız live dispatch tamamlandı. PR17.2E, live dispatch + reconcile/backfill duplicate-safety contract'ını DB-boundary rollback-only smoke ile kilitledi. Kalan notification işi artık gerçek tarayıcı UX e2e ve gelecek kanalların ürün kararıdır.
-2. **Belge/evidence kenarı kısmi kapandı (HIGH→MEDIUM).** İzin eki, masraf fişi ve sözleşme dokümanı artık private storage + staging + RPC + form akışına bağlı. OCR/insan incelemesi ve dosya içeriğinden öneri üretimi hâlâ PR17.2G konusudur.
+2. **Belge/evidence kenarı kısmi kapandı (HIGH→MEDIUM).** İzin eki, masraf fişi ve sözleşme dokümanı artık private storage + staging + RPC + form akışına bağlı. Görüntüleme/indirme UX'i tüm attached evidence için; OCR/insan incelemesi ise özellikle masraf fişi için PR17.2G konusudur.
 3. **AI context kenarı kopuk (HIGH).** `src/lib/data/ai-coach/` var ama hiçbir HR sayfasından beslenmiyor; `/ai-koc` PR16.10.16'da dürüst "coming soon" teaser'a indirildi.
 4. **STUB/productization ailesi açık (MEDIUM).** Sözleşmeler, performans parametreleri, kariyer, eğitim ve iş-değerleme hâlâ gerçek kapalı döngü ürün yüzeyi değil; PR17.3'ün ana yükü burada.
 
-**Ortalama readiness: ~60/100** (Rev4; 19 route, Rev3'te ~56). PR17.1 Core HR dilimleri (departman/pozisyon/çalışan/şirket + audit) skorları belirgin yükseltti; STUB ailesi (sözleşme/performans-param/kariyer/eğitim/iş-değerleme) hâlâ ortalamayı aşağı çekiyor — PR17.3'ün konusu.
+**Ortalama readiness: ~60/100** (Rev11; 19 route). PR17.1 Core HR dilimleri ve PR17.2 notification/evidence upload dilimleri skorları belirgin yükseltti; STUB ailesi (performans-param/kariyer/eğitim/iş-değerleme) ve sözleşmelerin kalan ürün akışları hâlâ ortalamayı aşağı çekiyor — PR17.3'ün konusu.
 
 ---
 
@@ -73,9 +77,9 @@ Senin tanımladığın tam döngü — **oluştur → gönder → onayla → aud
 | 3   | `/departmanlar`             | HR admin           | **Gerçek CREATE/UPDATE** + **Rev4:** deactivate/restore lifecycle                                        | `puls_core.departments` + guardrail + **audit trigger + lifecycle RPC** ✓ (PR17.1A/B)                                                                                  | ✅ Kapalı (CRUD+lifecycle+audit)                                             | **YES**                                  | ~~72~~ **85**  |
 | 4   | `/pozisyonlar`              | HR admin           | **Gerçek CREATE/UPDATE** + **Rev4:** deactivate/restore lifecycle                                        | `puls_core.positions` + guardrail + **audit trigger + lifecycle RPC** ✓ (PR17.1A/B)                                                                                    | ✅ Kapalı (CRUD+lifecycle+audit)                                             | **YES**                                  | ~~71~~ **84**  |
 | 5   | `/sirket-kurulum`           | Admin/HR           | Read-only checklist + **Rev4:** şirket profili edit formu (ad/sektör/dil/tz)                             | `update_company_profile` RPC + audit ✓ (PR17.1D); tax/legal read-only                                                                                                  | 🟡 Partial (profil editable, checklist read-only)                            | MEDIUM                                   | ~~68~~ **80**  |
-| 6   | `/izin`                     | Employee + Manager | **Tam workflow**: oluştur→onayla; approver UI; **Rev9:** gerekli belge upload akışı açık                 | `create/decide` RPC + audit ✓; **Rev5:** same-transaction notification dispatch ✓; **Rev9:** `create_leave_request_with_evidence` ✓                                    | 🟡 Backend+notification+evidence upload tamam; AI/OCR yok, browser e2e eksik | MEDIUM                                   | ~~82~~ **87**¹ |
+| 6   | `/izin`                     | Employee + Manager | **Tam workflow**: oluştur→onayla; approver UI; **Rev11:** gerekli belge upload akışı açık; evidence viewing G1 konusu | `create/decide` RPC + audit ✓; **Rev5:** same-transaction notification dispatch ✓; **Rev9:** `create_leave_request_with_evidence` ✓                                    | 🟡 Backend+notification+evidence upload tamam; evidence viewing/AI/e2e eksik | MEDIUM                                   | ~~82~~ **87**¹ |
 | 7   | `/izin-tanimlari`           | HR admin           | **Tam lifecycle**: create/update/deactivate/restore + audit history + policy binding                     | `leave_types` RLS (admin-write) + lifecycle audit                                                                                                                      | 🟡 Setup mutation                                                            | MEDIUM                                   | **80**¹        |
-| 8   | `/masraf`                   | Employee + Manager | **Tam workflow** + server receipt policy; **Rev9:** gerekli fiş/belge upload akışı açık, OCR hâlâ "soon" | `create/decide` RPC; `PULS_RECEIPT_REQUIRED` ✓; **Rev5:** same-transaction notification dispatch ✓; **Rev9:** `create_expense_claim_with_evidence` ✓                   | 🟡 Backend+notification+evidence upload tamam; AI/OCR yok, browser e2e eksik | MEDIUM                                   | ~~80~~ **86**¹ |
+| 8   | `/masraf`                   | Employee + Manager | **Tam workflow** + server receipt policy; **Rev11:** gerekli fiş/belge upload akışı açık, OCR vendor seçilmedi | `create/decide` RPC; `PULS_RECEIPT_REQUIRED` ✓; **Rev5:** same-transaction notification dispatch ✓; **Rev9:** `create_expense_claim_with_evidence` ✓                   | 🟡 Backend+notification+evidence upload tamam; evidence viewing/OCR/AI/e2e eksik | MEDIUM                                   | ~~80~~ **86**¹ |
 | 9   | `/masraf-kategorileri`      | HR admin           | **Tam lifecycle** + cost-center readiness (read-only) + routing warnings                                 | `expense_categories` RLS + lifecycle audit                                                                                                                             | 🟡 Setup mutation                                                            | MEDIUM (cost-center ERP köprüsü)         | **78**¹        |
 | 10  | `/sozlesmeler`              | HR/Employee        | **Partial** — sözleşme belgesi PDF upload açık; reminder "coming soon"                                   | `puls_workflow.contracts` + `contract_files`; PR17.2F1/F2 attach RPC + metadata RLS ✓                                                                                  | 🟡 Partial (document evidence açık, reminder/e-signature yok)                | MEDIUM                                   | ~~25~~ **45**  |
 | 11  | `/performans`               | Manager            | **Gerçek create + status transition**; DB lifecycle trigger + tek-active index; **close UI yok**         | `performance_cycles` + lifecycle ✓; **Rev4:** audit trigger eklendi (PR17.1A)                                                                                          | 🟡 Partial (close UI yok, notif yok; audit artık var)                        | **YES**                                  | ~~72~~ **75**  |
@@ -204,7 +208,7 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 
 - CREATE: `createLeaveRequest()` (izin.tsx:619-632 → requests.ts:22-51 → RPC `puls_workflow.create_leave_request`). RPC auth guard (RPC.sql:194-197 `PULS_AUTH_REQUIRED`). Etkilenen tablolar: `leave_requests` INSERT, `approval_requests` INSERT, `leave_balances` pending_days UPDATE. Dönüş: `{leaveRequestId, approvalRequestId, businessDays, status:'pending', approverEmployeeId, approverName}` (requests.ts:83-108).
 - APPROVE/REJECT: **Approver UI var** — `ApprovalsTab` (izin.tsx:435-536), manager persona'da görünür (`showApprovals = activePersona === 'manager'`, 193). `decideApprovalRequest()` (izin.tsx:505-529 → approvals.ts:22-57 → RPC `decide_approval_request`).
-- **Rev9 belge upload:** `EvidenceUploadField` yalnız belge gerektiren izin tiplerinde görünür; `create_leave_request_with_evidence` finalized evidence'i aynı transaction içinde `leave_documents` kaydına bağlar.
+- **Rev11 belge/evidence:** `EvidenceUploadField` yalnız belge gerektiren izin tiplerinde görünür; `create_leave_request_with_evidence` finalized evidence'i aynı transaction içinde `leave_documents` kaydına bağlar. Dosyayı görüntüleme/indirme UX'i PR17.2G1 konusudur; OCR bu domain için G kapsam dışıdır.
 - Demo pill `source === 'demo'` (215-219); readiness `buildLeaveCreationReadiness()` (604-612); submit disabled koşulları (710-719).
 
 **4. Backend:** Şema migration 20260523160000. RPC `decide_approval_request` server guard'ları:
@@ -221,12 +225,12 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 - **Notification: TAMAM (Rev5)** — approval request insert ve leave/expense decision status update event'leri aynı transaction içinde Notification Center'a düşer; existing producer orchestrator backfill/reconcile yolu olarak kalır.
 - **AI context: YOK** — izin verisi ai-coach'a beslenmiyor.
 - Multi-step approval şema-hazır (`approval_policy_steps`, `result.final` handle ediliyor 441-456) ama **test edilmemiş**, fiilen tek-step.
-- Belge upload F1/F2 ile tamamlandı; OCR/insan incelemesi yok.
+- Belge upload F1/F2/F3 ile tamamlandı; evidence viewing/indirme UI yok.
 - **e2e yok** (adapter unit testleri var: requests.test.ts, overview.test.ts).
 
-**6. Closed-loop:** 🟡 Backend + notification + evidence upload kapalı (create→route→approve→balance→audit→notification→evidence gerçek+persist), ama **AI context**, OCR/human review ve tarayıcı e2e kenarı yok.
+**6. Closed-loop:** 🟡 Backend + notification + evidence upload kapalı (create→route→approve→balance→audit→notification→evidence gerçek+persist), ama **AI context**, evidence viewing ve tarayıcı e2e kenarı yok.
 **7. Connector bağımsız:** MEDIUM — saf PULS tablolar; sadece leave_type kurulumu gerekiyor.
-**9. Skor:** **87/100** (backend kalitesi yüksek; AI/OCR/e2e eksiği için tempolu).
+**9. Skor:** **87/100** (backend kalitesi yüksek; evidence viewing/AI/e2e eksiği için tempolu).
 **10. Faz:** PR17.2.
 
 ---
@@ -260,15 +264,15 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 
 - CREATE: `createExpenseClaim()` (617-630 → claims.ts:23-61 → RPC `create_expense_claim`). Dönüş `{expenseClaimId, approvalRequestId, policyStatus, status:'pending', title}` (claims.ts:53-60).
 - APPROVE/REJECT: `ApprovalsTab` (427-530), `decideApprovalRequest()` (paylaşımlı). RPC expense path (RPC.sql:762-791): `expense_claims.status` UPDATE + audit.
-- **Rev9 belge upload:** receipt-required durumda `EvidenceUploadField` görünür; `create_expense_claim_with_evidence` finalized evidence'i aynı transaction içinde `expense_receipts` kaydına bağlar. **OCR teaser "SOON"** hâlâ fonksiyonel değildir.
+- **Rev11 belge/evidence:** receipt-required durumda `EvidenceUploadField` görünür; `create_expense_claim_with_evidence` finalized evidence'i aynı transaction içinde `expense_receipts` kaydına bağlar. **OCR teaser "SOON"** hâlâ fonksiyonel değildir; PR17.2G önce görüntüleme, sonra provider-agnostic OCR/job, sonra insan review, en son vendor seçimi olarak fazlanmıştır.
 - **Server-side policy:** receipt threshold (`receiptRequired` submit'i bloklar, 725) ve kategori limiti (PolicyLine 876-897). `PULS_RECEIPT_REQUIRED` server-side enforce (migration 20260609070000 + masraf.tsx selectedCategoryLimit?.receiptRequiredOver).
 
 **4. Backend:** Şema migration 20260523160000. RLS `expense_claims_select` (tenant + admin/owner/manager) + `_insert` (owner-only) (702-733). Audit trigger expense_claims üzerinde. Approver resolution leave ile aynı RPC.
 
-**5. Eksik işler:** **AI context YOK**; OCR sahte; e2e yok; policy check `currency==='TRY'` kilitli (890) ama form multi-currency.
-**6. Closed-loop:** 🟡 Backend + notification + evidence upload kapalı; AI/OCR/e2e yok.
+**5. Eksik işler:** **AI context YOK**; evidence viewing yok; OCR sahte/provider seçilmedi; e2e yok; policy check `currency==='TRY'` kilitli (890) ama form multi-currency.
+**6. Closed-loop:** 🟡 Backend + notification + evidence upload kapalı; evidence viewing/OCR/AI/e2e yok.
 **7. Connector bağımsız:** MEDIUM — kategori kurulumu gerekiyor.
-**9. Skor:** **86/100** (backend + notification + evidence upload güçlü; AI/OCR/e2e tempolu).
+**9. Skor:** **86/100** (backend + notification + evidence upload güçlü; evidence viewing/OCR/AI/e2e tempolu).
 **10. Faz:** PR17.2.
 
 ---
@@ -301,7 +305,7 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 
 **4. Backend:** `fetchContractsOverviewWithMeta()` → `dashboard_overview` + `puls_workflow.contracts` + `contract_files` metadata. PR17.2F1 private `workflow-evidence` bucket + `evidence_uploads` staging + `attach_contract_file_evidence` RPC ekledi; `metadata_only` dosya içeriğinin DB'de değil private storage'da olduğunu ifade eder.
 
-**5. Eksik işler:** Reminder; e-signature; signed URL preview/download UI; OCR/human review; e2e.
+**5. Eksik işler:** Reminder; e-signature; signed URL preview/download UI; e2e. OCR/human review yalnız expense receipt kapsamıyla PR17.2G2/G3'e alınır; sözleşme OCR'ı bu kontratta hedef değildir.
 **6. Closed-loop:** 🟡 Partial (document evidence upload açık; reminder/e-signature yok).
 **7. Connector bağımsız:** MEDIUM.
 **9. Skor:** **45/100** — belge evidence upload gerçek; reminder/e-signature/metadata CRUD hâlâ eksik.
@@ -474,7 +478,7 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 | **R5**  | **Multi-step approval şema-hazır ama test edilmemiş, fiilen tek-step.**                                                                                                                                                                         | **MEDIUM**      | `approval_policy_steps` var, `result.final` handle (izin.tsx:441-456) ama e2e yok                                                                                                                                             | Çok adımlı onay üretimde ilk kez patlayabilir.                                                                                                              |
 | **R6**  | **Performans cycle "close" aksiyonu UI'da yok.**                                                                                                                                                                                                | **MEDIUM**      | `active→closed` sadece API; performans.tsx'te buton yok                                                                                                                                                                       | Cycle başlatılıp bitirilemiyor — döngü yarım.                                                                                                               |
 | **R7**  | 🟡 **KISMİ (Rev7).** DB-boundary e2e + live dispatch + reconcile duplicate guard tamamlandı. Kalan: gerçek tarayıcı/UI e2e ve tenant'ta multi-step policy yoksa zorunlu multi-step kanıtı.                                                      | **MEDIUM**      | `docs/data/17_2_b_workflow_closed_loop_smoke.sql`; `docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql`; PR17.2D trigger dispatch contract; ortak dedupe key + `UNIQUE(tenant_id,dedupe_key)`.                                 | Workflow backend sözleşmesi korunuyor; gerçek tarayıcı akışı hâlâ QA/productization kuyruğu.                                                                |
-| **R8**  | 🟡 **KISMİ (Rev10).** Belge/evidence upload storage/RPC, form akışı ve finalize hardening tamamlandı; OCR/human review açık.                                                                                                                    | **HIGH→MEDIUM** | PR17.2F1 private bucket + staging + intent/finalize/attach RPC; PR17.2F2 `create_*_with_evidence` + izin/masraf/sözleşme UI; PR17.2F3 actual storage size metadata verification.                                               | Gerçek HR'da masraf fişi/izin belgesi/sözleşme dokümanı artık yüklenebilir ve finalize daha güvenli; OCR/extraction ve insan onayı olmadan belge içeriği canonical veriye çevrilmez. |
+| **R8**  | 🟡 **KISMİ (Rev11).** Belge/evidence upload storage/RPC, form akışı ve finalize hardening tamamlandı; PR17.2G contract görüntüleme→provider-agnostic OCR→human review→vendor evaluation olarak fazlandı.                                      | **HIGH→MEDIUM** | PR17.2F1 private bucket + staging + intent/finalize/attach RPC; PR17.2F2 `create_*_with_evidence` + izin/masraf/sözleşme UI; PR17.2F3 actual storage size metadata verification; `17_2_g_evidence_review_ocr_contract.md`.       | Gerçek HR'da masraf fişi/izin belgesi/sözleşme dokümanı artık yüklenebilir; dosya içeriğini görme, OCR önerisi ve insan review'u tamamlanmadan belge içeriği canonical veriye çevrilmez. |
 | **R9**  | **§2.8 borcu açık:** çoklu-active cycle'lı tenant index'siz kaldı.                                                                                                                                                                              | **LOW**         | PR16.10.20 audit SQL eklendi (docs/data/16*10_20*...\_duplicate_audit.sql) ama cleanup migration yok                                                                                                                          | Eski kirli veri trigger'la korunuyor ama temizlenmedi.                                                                                                      |
 | **R10** | ✅ **KAPANDI (Rev4 — PR17.1C).** `update_employee_assignment` RPC (dept/pozisyon/cost-center/manager) — server-validated, audited, admin-only, ERP-source read-only korunuyor. UI'da gerçek edit formu.                                         | **LOW**         | RPC `update_employee_assignment` (migration 20260609140000): admin guard, ERP `external_source` bloğu (70-73), cycle/aktiflik validation, audit (276-308); calisanlar.tsx gerçek form + mutation (445-452, 716-798)           | Tanı + tedavi tamam (yalnız PULS-kaynaklı aktif çalışanlar).                                                                                                |
 | **R11** | ✅ **KAPANDI (Rev5 — PR17.2D).** Workflow notification teslimatı connector worker'a bağımlı değil.                                                                                                                                              | **HIGH→CLOSED** | `puls_workflow_approval_requests_notification_dispatch`, `puls_workflow_leave_requests_notification_dispatch`, `puls_workflow_expense_claims_notification_dispatch`; internal workflow-only emitter browser rollerine kapalı. | Connector hiç çalışmayan tenant'ta da izin/masraf bildirimleri workflow transaction içinde üretilir.                                                        |
@@ -502,7 +506,10 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 - ✅ **17.2F1 — Evidence Upload Backend Boundary:** `puls_workflow.evidence_uploads` staging tablosu, private storage bucket, server-generated storage path, intent/finalize RPC, metadata-only audit, direct domain metadata insert/update hardening, contract uploader metadata ve approver-readable attached evidence RLS tamamlandı.
 - ✅ **17.2F2 — Evidence Upload Product Flow:** leave/expense submit-with-evidence RPC'leri, sözleşme upload UI, compact file chip, required evidence server enforcement ve dead disabled upload kontrollerinin kaldırılması tamamlandı.
 - ✅ **17.2F3 — Evidence Finalization Hardening:** `finalize_workflow_evidence_upload` actual storage object size metadata kontrolüyle sertleşti; storage-size evidence RPC errors localized edildi. `sha256_client` hâlâ client-declared metadata; server hash/content sniffing/OCR claim'i yok.
-- **17.2G — OCR & Human Review Evidence:** masraf fişi gibi belgelerden tutar/tarih/vendor çıkarımı, confidence skoru, insan onayı, safe metadata ve canonical claim/request bağını kur. OCR sonucu otomatik canonical write yapmamalı; insan onayı ve audit gerekir.
+- **17.2G1 — Evidence Viewing Access:** attached evidence için authorized read model + private Storage RLS üzerinden kısa TTL signed URL + compact view action. Yeni OCR/provider/review yok.
+- **17.2G2 — OCR Job & Result Contract:** yalnız expense receipts için provider-agnostic OCR/structured extraction job/result modeli. Provider disabled/mock başlayabilir; ERP connector queue'suna bağlanmaz.
+- **17.2G3 — Human Review UI:** belge ve önerileri yan yana göster; accept/correct/reject/new-document kararları audit'lenir; OCR sonucu otomatik canonical write yapmaz.
+- **17.2G4 — Vendor Evaluation & Worker Integration:** OCR vendor seçimi maliyet, KVKK/GDPR, data residency, Türkçe belge benchmark'ı, quota ve fallback kararlarından sonra yapılır. Pahalı hyperscaler provider varsayılan yol değildir.
 - **AI context feed kancası:** Workflow mutation, notification ve evidence event'lerini AI context'e güvenli özet olarak besle; LLM/AI Coach wiring PR17.4'te ürünleşir.
 
 ### PR17.3 — Performance & Career Productization _(STUB ailesini ürünleştir)_
@@ -523,13 +530,13 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 
 ## 5. İlk Yapılacak 5 İş
 
-> **Rev9 not:** Notification taxonomy, producer, preferences UI, connector-bağımsız dispatch, DB-boundary e2e/reconcile guard, audit trigger'ları, Core HR edit işleri ve evidence upload F1/F2 tamamlandı. Aşağıdaki liste artık "workflow ürünü bitti" varsaymadan kalan productization kenarlarını sıralar. Orijinal liste tarihsel referans için §5-arşiv'de.
+> **Rev11 not:** Notification taxonomy, producer, preferences UI, connector-bağımsız dispatch, DB-boundary e2e/reconcile guard, audit trigger'ları, Core HR edit işleri ve evidence upload F1/F2/F3 tamamlandı. PR17.2G artık tek parça "OCR yap" işi değildir; önce belgeyi güvenli gösterme, sonra provider-agnostic extraction contract, sonra human review, en son vendor/worker entegrasyonu olarak fazlandı. Aşağıdaki liste artık "workflow ürünü bitti" varsaymadan kalan productization kenarlarını sıralar. Orijinal liste tarihsel referans için §5-arşiv'de.
 
-1. **PR17.2G — OCR & Human Review Evidence** (R8). Masraf fişi OCR/extraction yalnızca öneri/evidence üretmeli; canonical yazım insan onayı ve audit olmadan olmamalı.
-2. **Gerçek browser/UX e2e** (R7). PR17.2E DB-boundary e2e'yi kapattı; ürün QA için request→Notification Center→approve→requester notification ve evidence upload akışı Playwright/auth persona ile ayrıca yürütülmeli.
-3. **AI context'i mutation/evidence event'lerinden beslemeye başla** (R2, PR17.4 zemini). `context-readiness.ts` snapshot'ı hazır; izin/masraf/performans mutation'larını ve upload/OCR evidence özetlerini canlı besle + `ai-koc.tsx`'i adapter'a bağla.
-4. **STUB ürün ailesini kapat** (PR17.3). Sözleşme reminder, performans parametreleri, kariyer, eğitim ve iş-değerleme için gerçek ürün kararı/akışı belirlenmeli.
-5. **Notification kanalı genişletme kararı**. In-app kapalı döngü hazır; e-posta/push gerekiyorsa kanal sözleşmesi ayrı faz olmalı.
+1. **PR17.2G1 — Evidence Viewing Access** (R8). İzin eki, masraf fişi ve sözleşme belgesi yetkili kullanıcı tarafından private bucket/RLS sınırı içinde kısa TTL signed URL ile görüntülenebilmeli; public URL yok, OCR yok.
+2. **PR17.2G2/G3 — OCR Contract + Human Review** (R8). Masraf fişi extraction yalnızca öneri/evidence üretmeli; structured parse/PDF text/duplicate/manual fallback pahalı OCR'dan önce gelmeli; canonical yazım insan onayı ve audit olmadan olmamalı.
+3. **Gerçek browser/UX e2e** (R7). PR17.2E DB-boundary e2e'yi kapattı; ürün QA için request→Notification Center→approve→requester notification ve evidence upload/view akışı Playwright/auth persona ile ayrıca yürütülmeli.
+4. **AI context'i mutation/evidence event'lerinden beslemeye başla** (R2, PR17.4 zemini). `context-readiness.ts` snapshot'ı hazır; izin/masraf/performans mutation'larını ve upload/OCR evidence özetlerini canlı besle + `ai-koc.tsx`'i adapter'a bağla.
+5. **STUB ürün ailesini kapat** (PR17.3). Sözleşme reminder, performans parametreleri, kariyer, eğitim ve iş-değerleme için gerçek ürün kararı/akışı belirlenmeli.
 
 ---
 
@@ -537,13 +544,14 @@ Her sayfa için: **(1) Ürün amacı · (2) Hedef kullanıcı · (3) UI durumu �
 
 > Bunlar geliştirme değil, **ürün** kararları — kodla çözülemez.
 
-1. **Belge upload PR17 scope'unda mı?** İzin belgesi / masraf fişi gerçek HR'da çoğu zaman zorunlu. Rev10 kararı: evet; PR17.2F1/F2/F3 ile storage/RLS/RPC/audit boundary, browser form akışı ve finalize storage-size hardening açıldı. Malware scan veya server-verified hash claim'i yapılmaz; `sha256_client` client-declared metadata olarak kalır. OCR/human review PR17.2G'dir.
-2. **Notification kanalı sadece in-app mi, e-posta/push de mi?** Ledger in-app hazır. Manager onay bildirimini e-postayla da almalı mı? Producer tasarımını ve PR17.2 boyutunu belirler.
-3. **Multi-step approval gerçekten gerekiyor mu, yoksa tek-step (manager→HR fallback) yeter mi?** Şema multi-step destekliyor ama hiç kullanılmıyor. Pilot tek-step ise, multi-step'i e2e+UI yükünden çıkar.
-4. **performans-parametreleri ve sozlesmeler: ürün mü, seed-only mı?** Parametreler onboarding'de seed ediliyorsa in-app editor'e gerek yok — dürüstçe "read-only, kurulumda tanımlanır" de. Karar verilmezse 15/100 stub kalır.
-5. **calisanlar düzenlenebilir mi, yoksa ERP system-of-record mı?** "ERP no-write" bir mimari karar. Connector-bağımsız ürün hedefin varsa, PULS-kaynaklı çalışanlar **düzenlenebilir** olmalı — aksi halde connector olmadan çalışan yönetilemez.
-6. **AI Coach ne zaman gerçek olur — PR17'de mi, sonra mı?** Veri zemini (R2) yoksa AI katmanı boş. PR17.2F/G'de evidence event'lerini, PR17.4'te workflow/notification/evidence özetlerini güvenli context'e beslemeden AI Coach gerçek ürün katmanına geçemez.
-7. **STUB ailesi (kariyer / egitim / is-degerleme) ve teaser (ai-koc) PR17 scope'unda mı?** Hepsi denetlendi (§2.14-2.16, §2.18); en kritik karar **is-degerleme** — gerçek backend'i hiç yok (`fetchRealJobEvaluationOverview()` boş döner), yani "ürünleştir" demek schema+RPC+RLS sıfırdan demek. `/ai-koc` ise zemini hazır teaser (PR17.4). Her biri için: ürünleştir (roadmap'e faz) mi, yoksa menü görünürlüğünü kıs / "pilot dışı" işaretle mi? Karar verilmezse demo-seed stub olarak kalırlar.
+1. **Belge upload PR17 scope'unda mı?** İzin belgesi / masraf fişi gerçek HR'da çoğu zaman zorunlu. Rev11 kararı: evet; PR17.2F1/F2/F3 ile storage/RLS/RPC/audit boundary, browser form akışı ve finalize storage-size hardening açıldı. Malware scan veya server-verified hash claim'i yapılmaz; `sha256_client` client-declared metadata olarak kalır. PR17.2G ise belge görüntüleme, provider-agnostic OCR/structured extraction, human review ve vendor seçimi kararlarını ayrı alt fazlara böler.
+2. **OCR vendor şimdi seçiliyor mu?** Hayır. PR17.2G1-G3 vendor bağımsız kalır. Öncelik structured e-invoice/e-archive payload, PDF text layer, duplicate detection ve manual fallback'tir. Ancak XML/e-invoice intake bugün açık değildir; mevcut evidence allowlist PDF/PNG/JPEG ile sınırlıdır. Duplicate/cost guard da `sha256_client`'a dayanamaz; worker server-side content hash hesaplamalıdır. Azure/Google/AWS gibi pahalı provider'lar ancak G4'te gerçek Türkçe örnek seti, aylık maliyet, tenant quota, KVKK/GDPR, data residency ve retention kararlarından sonra benchmark/fallback olarak değerlendirilir.
+3. **Notification kanalı sadece in-app mi, e-posta/push de mi?** Ledger in-app hazır. Manager onay bildirimini e-postayla da almalı mı? Producer tasarımını ve PR17.2 boyutunu belirler.
+4. **Multi-step approval gerçekten gerekiyor mu, yoksa tek-step (manager→HR fallback) yeter mi?** Şema multi-step destekliyor ama hiç kullanılmıyor. Pilot tek-step ise, multi-step'i e2e+UI yükünden çıkar.
+5. **performans-parametreleri ve sozlesmeler: ürün mü, seed-only mı?** Parametreler onboarding'de seed ediliyorsa in-app editor'e gerek yok — dürüstçe "read-only, kurulumda tanımlanır" de. Karar verilmezse 15/100 stub kalır.
+6. **calisanlar düzenlenebilir mi, yoksa ERP system-of-record mı?** "ERP no-write" bir mimari karar. Connector-bağımsız ürün hedefin varsa, PULS-kaynaklı çalışanlar **düzenlenebilir** olmalı — aksi halde connector olmadan çalışan yönetilemez.
+7. **AI Coach ne zaman gerçek olur — PR17'de mi, sonra mı?** Veri zemini (R2) yoksa AI katmanı boş. PR17.2F/G'de evidence event'lerini, PR17.4'te workflow/notification/evidence özetlerini güvenli context'e beslemeden AI Coach gerçek ürün katmanına geçemez.
+8. **STUB ailesi (kariyer / egitim / is-degerleme) ve teaser (ai-koc) PR17 scope'unda mı?** Hepsi denetlendi (§2.14-2.16, §2.18); en kritik karar **is-degerleme** — gerçek backend'i hiç yok (`fetchRealJobEvaluationOverview()` boş döner), yani "ürünleştir" demek schema+RPC+RLS sıfırdan demek. `/ai-koc` ise zemini hazır teaser (PR17.4). Her biri için: ürünleştir (roadmap'e faz) mi, yoksa menü görünürlüğünü kıs / "pilot dışı" işaretle mi? Karar verilmezse demo-seed stub olarak kalırlar.
 
 ---
 
