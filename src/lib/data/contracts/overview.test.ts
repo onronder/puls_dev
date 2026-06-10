@@ -60,6 +60,15 @@ function queryChain(result: { data?: unknown; error?: unknown }) {
   return builder
 }
 
+function orderedQueryChain(result: { data?: unknown; error?: unknown }) {
+  const builder = {
+    select: vi.fn(() => builder),
+    in: vi.fn(() => builder),
+    order: vi.fn(async () => result),
+  }
+  return builder
+}
+
 describe('getContractInitials', () => {
   it('returns up to two uppercase initials from a full name', () => {
     expect(getContractInitials('Ayşe Kaya')).toBe('AK')
@@ -153,10 +162,27 @@ describe('mapContractRow', () => {
       fileCount: 0,
       latestFileName: null,
       latestFileSizeBytes: null,
+      evidence: [],
     })
   })
 
   it('adds attached document metadata when evidence is provided', () => {
+    const evidence = [
+      {
+        id: 'file-1',
+        domain: 'contract' as const,
+        parentId: 'c-1',
+        storageBucket: 'workflow-evidence',
+        storagePath: 'tenant-1/contract/file-1/evidence.pdf',
+        fileName: 'contract.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 1200,
+        uploadedByEmployeeId: 'employee-1',
+        attachedAt: '2026-06-10T10:00:00Z',
+        scanStatus: 'not_scanned',
+      },
+    ]
+
     expect(
       mapContractRow(
         {
@@ -170,16 +196,18 @@ describe('mapContractRow', () => {
         },
         {
           evidence: {
-            fileCount: 2,
+            fileCount: 1,
             latestFileName: 'contract.pdf',
             latestFileSizeBytes: 1200,
+            evidence,
           },
         },
       ),
     ).toMatchObject({
-      fileCount: 2,
+      fileCount: 1,
       latestFileName: 'contract.pdf',
       latestFileSizeBytes: 1200,
+      evidence,
     })
   })
 })
@@ -259,21 +287,26 @@ describe('fetchContractsOverviewWithMeta', () => {
       ),
     } as never)
     pulsWorkflowMock.mockReturnValue({
-      from: vi.fn(() =>
-        queryChain({
-          data: [
-            {
-              id: 'contract-1',
-              employee_id: 'employee-1',
-              contract_type: 'employment',
-              start_date: '2026-01-01',
-              end_date: null,
-              signature_status: 'signed',
-              risk_band: 'low',
-            },
-          ],
-          error: null,
-        }),
+      from: vi.fn((table: string) =>
+        table === 'contract_files'
+          ? orderedQueryChain({
+              data: [],
+              error: null,
+            })
+          : queryChain({
+              data: [
+                {
+                  id: 'contract-1',
+                  employee_id: 'employee-1',
+                  contract_type: 'employment',
+                  start_date: '2026-01-01',
+                  end_date: null,
+                  signature_status: 'signed',
+                  risk_band: 'low',
+                },
+              ],
+              error: null,
+            }),
       ),
     } as never)
     pulsCoreMock.mockReturnValue({

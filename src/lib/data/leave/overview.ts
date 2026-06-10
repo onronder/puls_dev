@@ -10,11 +10,20 @@ import { fromSupabaseError } from '#/lib/data/errors'
 import { pulsCalc, pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 import { fetchNamesByIds, uniqueNonNullIds } from '#/lib/data/core/lookups'
 import { resolveAdapterData, resolveAdapterDataWithMeta } from '#/lib/data/result'
+import {
+  fetchWorkflowEvidenceAttachments,
+  type WorkflowEvidenceAttachment,
+} from '#/lib/data/workflow/evidence'
 
-export type LeaveOverview = Omit<DemoLeaveOverview, 'leaveTypes'> & {
+export type LeaveOverview = Omit<DemoLeaveOverview, 'leaveTypes' | 'requests' | 'pendingApprovals'> & {
+  requests: (DemoLeaveRequest & { evidence: WorkflowEvidenceAttachment[] })[]
+  pendingApprovals: (DemoLeaveApproval & { evidence: WorkflowEvidenceAttachment[] })[]
   leaveTypes: { id: string; label: string; code: string; requiresDocument: boolean }[]
 }
 export type { LeaveStatus }
+
+type LeaveRequestWithEvidence = LeaveOverview['requests'][number]
+type LeaveApprovalWithEvidence = LeaveOverview['pendingApprovals'][number]
 
 type LeaveTypeLookupJoin = { name?: string; is_active?: boolean } | null | undefined
 
@@ -235,6 +244,13 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
   const leaveRequestById = new Map(
     (leaveRequestRows.data ?? []).map((row) => [row.id as string, row]),
   )
+  const evidenceByLeaveRequestId = await fetchWorkflowEvidenceAttachments(
+    'leave',
+    uniqueNonNullIds([
+      ...historyRows.map((row) => row.id as string | null),
+      ...(leaveRequestRows.data ?? []).map((row) => row.id as string | null),
+    ]),
+  )
 
   const overview = overviewRow.data
   const balances = (balancesRow.data ?? []).map((row) => {
@@ -266,7 +282,7 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
     })
   }
 
-  const requests: DemoLeaveRequest[] = historyRows.map((row) => {
+  const requests: LeaveRequestWithEvidence[] = historyRows.map((row) => {
     const typeMeta = resolveLeaveTypeMeta(row.leave_type_id as string)
     return {
       id: row.id as string,
@@ -277,6 +293,7 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
       businessDays: Number(row.business_days ?? 0),
       delegateName: historyDelegateNameMap.get(row.delegate_employee_id as string) ?? undefined,
       status: row.status as LeaveStatus,
+      evidence: evidenceByLeaveRequestId.get(row.id as string) ?? [],
     }
   })
 
@@ -299,7 +316,7 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
       }
     })
 
-  const pendingApprovals: DemoLeaveApproval[] = approvalRows.flatMap((row) => {
+  const pendingApprovals: LeaveApprovalWithEvidence[] = approvalRows.flatMap((row) => {
     const leaveRequest = leaveRequestById.get(row.leave_request_id as string)
     if (!leaveRequest) return []
 
@@ -316,6 +333,7 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
         startDate: leaveRequest.start_date as string,
         endDate: leaveRequest.end_date as string,
         businessDays: Number(leaveRequest.business_days ?? 0),
+        evidence: evidenceByLeaveRequestId.get(leaveRequest.id as string) ?? [],
       },
     ]
   })
@@ -343,6 +361,8 @@ async function fetchRealLeaveOverview(userId: string): Promise<LeaveOverview> {
 function mapDemoLeaveOverviewToOverview(demo: DemoLeaveOverview): LeaveOverview {
   return {
     ...demo,
+    requests: demo.requests.map((request) => ({ ...request, evidence: [] })),
+    pendingApprovals: demo.pendingApprovals.map((approval) => ({ ...approval, evidence: [] })),
     leaveTypes: demo.leaveTypes.map((type) => ({
       ...type,
       code: type.id,

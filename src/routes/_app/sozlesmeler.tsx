@@ -21,6 +21,7 @@ import { PageHeader } from '#/components/puls/PageHeader'
 import { SectionHeader } from '#/components/puls/SectionHeader'
 import { SheetShell } from '#/components/puls/SheetShell'
 import { StatusPill, type StatusTone } from '#/components/puls/StatusPill'
+import { WorkflowEvidenceViewActions } from '#/components/puls/WorkflowEvidenceViewActions'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
@@ -447,6 +448,11 @@ function SozlesmelerPage() {
                         {selectedContract.latestFileName}
                       </span>
                     ) : null}
+                    <WorkflowEvidenceViewActions
+                      items={selectedContract.evidence}
+                      compact
+                      className="w-full"
+                    />
                   </div>
                 ) : (
                   <span className="text-[13px] text-muted-foreground">

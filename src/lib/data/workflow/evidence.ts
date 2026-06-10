@@ -1,5 +1,6 @@
 import { supabase } from '#/lib/supabase'
-import { DataAdapterError, fromRpcError } from '#/lib/data/errors'
+import type { PostgrestError } from '@supabase/supabase-js'
+import { DataAdapterError, fromRpcError, fromSupabaseError } from '#/lib/data/errors'
 import { pulsWorkflow, resolveTenantContext } from '#/lib/data/client'
 
 export type WorkflowEvidenceDomain = 'leave' | 'expense' | 'contract'
@@ -12,6 +13,20 @@ export type WorkflowEvidenceUpload = {
   mimeType: string
   fileSizeBytes: number
   sha256Client: string
+  scanStatus: string
+}
+
+export type WorkflowEvidenceAttachment = {
+  id: string
+  domain: WorkflowEvidenceDomain
+  parentId: string
+  storageBucket: string
+  storagePath: string
+  fileName: string
+  mimeType: string | null
+  fileSizeBytes: number | null
+  uploadedByEmployeeId: string | null
+  attachedAt: string | null
   scanStatus: string
 }
 
@@ -46,6 +61,46 @@ const WORKFLOW_EVIDENCE_POLICIES: Record<WorkflowEvidenceDomain, WorkflowEvidenc
     maxBytes: FIFTEEN_MB,
     mimeTypes: ['application/pdf'],
   },
+}
+
+const WORKFLOW_EVIDENCE_TABLES: Record<
+  WorkflowEvidenceDomain,
+  { table: string; parentColumn: string; operation: string }
+> = {
+  leave: {
+    table: 'leave_documents',
+    parentColumn: 'leave_request_id',
+    operation: 'fetchLeaveEvidenceAttachments',
+  },
+  expense: {
+    table: 'expense_receipts',
+    parentColumn: 'expense_claim_id',
+    operation: 'fetchExpenseEvidenceAttachments',
+  },
+  contract: {
+    table: 'contract_files',
+    parentColumn: 'contract_id',
+    operation: 'fetchContractEvidenceAttachments',
+  },
+}
+
+type WorkflowEvidenceSelectResult = {
+  data: Record<string, unknown>[] | null
+  error: PostgrestError | null
+}
+
+type WorkflowEvidenceQuery = {
+  select: (columns: string) => {
+    in: (
+      column: string,
+      values: string[],
+    ) => {
+      order: (
+        column: string,
+        options: { ascending: boolean },
+      ) => Promise<WorkflowEvidenceSelectResult>
+    }
+  }
 }
 
 function invalidEvidenceResult(operation: string, message: string): DataAdapterError {
@@ -96,6 +151,82 @@ export function getWorkflowEvidenceFilePolicy(
   return WORKFLOW_EVIDENCE_POLICIES[domain]
 }
 
+export function mapWorkflowEvidenceAttachmentRow(
+  domain: WorkflowEvidenceDomain,
+  row: Record<string, unknown>,
+): WorkflowEvidenceAttachment {
+  const parentField =
+    domain === 'leave'
+      ? 'leave_request_id'
+      : domain === 'expense'
+        ? 'expense_claim_id'
+        : 'contract_id'
+
+  return {
+    id: String(row.id ?? ''),
+    domain,
+    parentId: String(row[parentField] ?? ''),
+    storageBucket: 'workflow-evidence',
+    storagePath: String(row.file_ref ?? ''),
+    fileName: String(row.file_name ?? 'evidence'),
+    mimeType: typeof row.mime_type === 'string' ? row.mime_type : null,
+    fileSizeBytes:
+      row.file_size_bytes === null || row.file_size_bytes === undefined
+        ? null
+        : Number(row.file_size_bytes),
+    uploadedByEmployeeId:
+      typeof row.uploaded_by_employee_id === 'string' ? row.uploaded_by_employee_id : null,
+    attachedAt: typeof row.created_at === 'string' ? row.created_at : null,
+    scanStatus: 'not_scanned',
+  }
+}
+
+export function groupWorkflowEvidenceByParent(
+  attachments: readonly WorkflowEvidenceAttachment[],
+): Map<string, WorkflowEvidenceAttachment[]> {
+  const grouped = new Map<string, WorkflowEvidenceAttachment[]>()
+  for (const attachment of attachments) {
+    const current = grouped.get(attachment.parentId) ?? []
+    current.push(attachment)
+    grouped.set(attachment.parentId, current)
+  }
+  return grouped
+}
+
+export async function fetchWorkflowEvidenceAttachments(
+  domain: WorkflowEvidenceDomain,
+  parentIds: readonly string[],
+): Promise<Map<string, WorkflowEvidenceAttachment[]>> {
+  const ids = Array.from(new Set(parentIds.filter((id) => id.trim().length > 0)))
+  if (ids.length === 0) return new Map()
+
+  const config = WORKFLOW_EVIDENCE_TABLES[domain]
+  const evidenceTable = pulsWorkflow().from(config.table as never) as unknown as WorkflowEvidenceQuery
+  const { data, error } = await evidenceTable
+    .select(
+      `
+      id,
+      ${config.parentColumn},
+      uploaded_by_employee_id,
+      file_ref,
+      file_name,
+      mime_type,
+      file_size_bytes,
+      created_at
+    `,
+    )
+    .in(config.parentColumn, ids)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw fromSupabaseError(error, config.operation, 'puls_workflow', config.table)
+  }
+
+  return groupWorkflowEvidenceByParent(
+    (data ?? []).map((row) => mapWorkflowEvidenceAttachmentRow(domain, row)),
+  )
+}
+
 export function validateWorkflowEvidenceFile(
   domain: WorkflowEvidenceDomain,
   file: File,
@@ -104,6 +235,29 @@ export function validateWorkflowEvidenceFile(
   if (!policy.mimeTypes.includes(file.type)) return 'type'
   if (file.size <= 0 || file.size > policy.maxBytes) return 'size'
   return null
+}
+
+export async function createWorkflowEvidenceSignedUrl(
+  attachment: WorkflowEvidenceAttachment,
+  expiresInSeconds = 120,
+): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(attachment.storageBucket)
+    .createSignedUrl(attachment.storagePath, expiresInSeconds)
+
+  if (error || !data?.signedUrl) {
+    throw new DataAdapterError({
+      code: 'storage_signed_url_failed',
+      message: error?.message ?? 'Signed URL could not be created.',
+      source: 'supabase',
+      operation: 'createWorkflowEvidenceSignedUrl',
+      schema: 'storage',
+      table: attachment.storageBucket,
+      i18nKey: 'workflowEvidence.error.viewFailed',
+    })
+  }
+
+  return data.signedUrl
 }
 
 export async function computeWorkflowEvidenceSha256(file: File): Promise<string> {
