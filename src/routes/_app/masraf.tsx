@@ -19,6 +19,7 @@ import { RequestCreationReadinessBanners } from '#/components/puls/RequestCreati
 import { DemoSourcePill } from '#/components/puls/DemoSourcePill'
 import { EmptyState } from '#/components/puls/EmptyState'
 import { EvidenceUploadField } from '#/components/puls/EvidenceUploadField'
+import { ExpenseReceiptOcrReviewPanel } from '#/components/puls/ExpenseReceiptOcrReviewPanel'
 import { FormField } from '#/components/puls/FormField'
 import { MetricCard } from '#/components/puls/MetricCard'
 import { SectionHeader } from '#/components/puls/SectionHeader'
@@ -41,8 +42,10 @@ import {
   fetchExpenseOverviewWithMeta,
   fetchRequestCreationReadiness,
   isDataAdapterError,
+  recordExpenseReceiptOcrReview,
   uploadWorkflowEvidenceFile,
   type ExpenseOverview,
+  type ExpenseReceiptOcrReviewDecision,
   type WorkflowEvidenceUpload,
 } from '#/lib/data'
 import { formatCurrency, parseDecimalAmount } from '#/lib/format'
@@ -409,6 +412,7 @@ function RecentTab({ claims, locale, t }: RecentTabProps) {
                   compact
                   className="mt-2"
                 />
+                <ExpenseReceiptOcrReviewPanel reviews={claim.ocrReviews} />
               </div>
               <div className="flex w-[110px] shrink-0 flex-col items-end gap-1">
                 <div className="text-[14px] font-semibold tabular text-foreground">
@@ -467,6 +471,24 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
     },
   })
 
+  const reviewMutation = useMutation({
+    mutationFn: (payload: {
+      resultId: string
+      reviewStatus: ExpenseReceiptOcrReviewDecision
+      reviewNote?: string | null
+    }) => {
+      if (!userId) throw new Error('missing user')
+      return recordExpenseReceiptOcrReview(userId, payload)
+    },
+    onSuccess: (result) => {
+      if (userId) invalidateExpenseQueries(queryClient, userId)
+      toast.success(t(`workflowEvidence.ocr.toast.${result.reviewStatus}`))
+    },
+    onError: (error) => {
+      toastAdapterError(error, t, 'workflowEvidence.ocr.error.reviewFailed')
+    },
+  })
+
   return (
     <section className="mt-6">
       <SectionHeader title={t('expenseSetup.sections.approvals')} />
@@ -497,6 +519,12 @@ function ApprovalsTab({ approvals, locale, t, userId, queryClient }: ApprovalsTa
                   items={approval.evidence}
                   compact
                   className="mt-2"
+                />
+                <ExpenseReceiptOcrReviewPanel
+                  reviews={approval.ocrReviews}
+                  canReview
+                  isSubmitting={reviewMutation.isPending}
+                  onReview={(payload) => reviewMutation.mutate(payload)}
                 />
               </div>
               <div className="shrink-0 text-right">

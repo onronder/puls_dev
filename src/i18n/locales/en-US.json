@@ -36,6 +36,65 @@
     "viewFile": "Open {{file}}",
     "requiredHint": "Supported file · max {{size}} · required",
     "optionalHint": "Supported file · max {{size}}",
+    "ocr": {
+      "title": "Receipt reading",
+      "boundary": "Suggestion only; expense values are not changed automatically.",
+      "confidence": "Confidence {{value}}",
+      "provider": "Source {{provider}}",
+      "duplicate": "Possible duplicate",
+      "noSuggestions": "No field suggestions are available yet.",
+      "reviewedAt": "Reviewed {{value}}",
+      "notePlaceholder": "Add a short review note if needed.",
+      "status": {
+        "not_ready": "Not requested",
+        "pending_review": "Needs review",
+        "accepted": "Accepted",
+        "corrected": "Corrected",
+        "rejected": "Rejected",
+        "needs_new_document": "New document needed"
+      },
+      "actions": {
+        "accept": "Accept",
+        "corrected": "Correct",
+        "reject": "Reject",
+        "needsNewDocument": "New doc"
+      },
+      "fields": {
+        "amount": "Amount",
+        "currency": "Currency",
+        "expense_date": "Date",
+        "category_label": "Category",
+        "merchant_name": "Merchant",
+        "vat_included": "VAT included"
+      },
+      "flags": {
+        "duplicate_suspected": "Duplicate",
+        "human_review_required": "Review needed",
+        "provider_disabled": "Provider disabled",
+        "mock_provider": "Mock result",
+        "worker_processing_failed": "Processing failed",
+        "low_confidence": "Low confidence",
+        "amount_mismatch": "Amount mismatch",
+        "date_mismatch": "Date mismatch",
+        "currency_mismatch": "Currency mismatch"
+      },
+      "toast": {
+        "accepted": "OCR review accepted.",
+        "corrected": "OCR review recorded with correction.",
+        "rejected": "OCR review rejected.",
+        "needs_new_document": "A new document was requested."
+      },
+      "error": {
+        "reviewFailed": "Could not record the OCR review.",
+        "statusInvalid": "This OCR review decision is not valid.",
+        "fieldsInvalid": "The corrected OCR fields are not allowed.",
+        "noteTooLong": "The review note is too long.",
+        "correctionRequired": "Add a note before recording a correction.",
+        "notFound": "The OCR result could not be found.",
+        "forbidden": "You are not authorized to review this OCR result.",
+        "alreadyRecorded": "This OCR result was already reviewed."
+      }
+    },
     "error": {
       "authRequired": "An employee record is required to upload evidence.",
       "fileType": "This file type is not supported.",

@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createWorkflowEvidenceSignedUrl,
   getWorkflowEvidenceFilePolicy,
+  groupExpenseReceiptOcrReviewsByReceipt,
   groupWorkflowEvidenceByParent,
+  mapExpenseReceiptOcrReviewRow,
   mapWorkflowEvidenceAttachmentRow,
   validateWorkflowEvidenceFile,
 } from '#/lib/data/workflow/evidence'
@@ -134,5 +136,64 @@ describe('workflow evidence viewing helpers', () => {
 
     expect(supabase.storage.from).toHaveBeenCalledWith('workflow-evidence')
     expect(createSignedUrl).toHaveBeenCalledWith('tenant-1/expense/upload/evidence.pdf', 120)
+  })
+})
+
+describe('expense receipt OCR review helpers', () => {
+  it('maps safe OCR review rows without raw document content', () => {
+    expect(
+      mapExpenseReceiptOcrReviewRow({
+        id: 'result-1',
+        expense_receipt_id: 'receipt-1',
+        expense_claim_id: 'claim-1',
+        job_id: 'job-1',
+        server_sha256: 'a'.repeat(64),
+        duplicate_of_result_id: null,
+        extracted_fields: { amount: '120.50', currency: 'TRY' },
+        field_confidence: { amount: 0.91, currency: '0.99' },
+        document_confidence: 0.88,
+        mismatch_flags: ['human_review_required'],
+        provider_class: 'mock',
+        provider_name: 'mock-provider',
+        provider_version: '0.0.0',
+        cost_metadata: { external_call: false },
+        review_status: 'pending_review',
+        reviewed_by_employee_id: null,
+        reviewed_at: null,
+        review_note: null,
+        corrected_fields: {},
+        created_at: '2026-06-11T10:00:00Z',
+      }),
+    ).toMatchObject({
+      id: 'result-1',
+      expenseReceiptId: 'receipt-1',
+      expenseClaimId: 'claim-1',
+      serverSha256: 'a'.repeat(64),
+      extractedFields: { amount: '120.50', currency: 'TRY' },
+      fieldConfidence: { amount: 0.91, currency: 0.99 },
+      documentConfidence: 0.88,
+      mismatchFlags: ['human_review_required'],
+      reviewStatus: 'pending_review',
+    })
+  })
+
+  it('groups OCR reviews by expense receipt id', () => {
+    const first = mapExpenseReceiptOcrReviewRow({
+      id: 'result-1',
+      expense_receipt_id: 'receipt-1',
+      expense_claim_id: 'claim-1',
+      job_id: 'job-1',
+    })
+    const second = mapExpenseReceiptOcrReviewRow({
+      id: 'result-2',
+      expense_receipt_id: 'receipt-1',
+      expense_claim_id: 'claim-1',
+      job_id: 'job-2',
+    })
+
+    expect(groupExpenseReceiptOcrReviewsByReceipt([first, second]).get('receipt-1')).toEqual([
+      first,
+      second,
+    ])
   })
 })

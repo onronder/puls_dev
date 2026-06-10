@@ -1,6 +1,6 @@
 # PR17.2G Evidence Viewing, OCR Contract & Human Review
 
-> **Status:** Planning contract for Claude/Codex review. No code or migration is implied by this document.
+> **Status:** Living PR17.2G contract. G1-G3 are implemented slices; G4 remains a vendor/production-enqueue decision gate.
 > **Decision:** PR17.2G is not "build our own OCR" and not "send every receipt to an expensive vendor". It is the controlled path from attached evidence to reviewed, auditable suggestions.
 
 PR17.2F1/F2/F3 completed the evidence upload boundary: private storage, staging upload intents, finalized upload checks, product upload flows, attached metadata, and localized evidence errors. PR17.2G starts only after that boundary: authorized users must be able to view attached evidence, optional OCR/extraction can propose fields, and a human must review before any canonical expense data is changed.
@@ -158,6 +158,10 @@ Review state recommendation:
 
 Goal: turn OCR output into a human-reviewed decision.
 
+Implemented in PR17.2G3 as a bounded human-review layer for existing expense receipt OCR results:
+review decisions are stored on `expense_receipt_ocr_results`, audit/event metadata stays safe, and
+canonical expense fields are not changed.
+
 Scope:
 
 1. Show attached document and extracted suggestions side-by-side.
@@ -255,12 +259,12 @@ Forbidden AI context fields:
 - review notes,
 - personal bank/payment identifiers.
 
-## Open Decisions Before G1 Implementation
+## Remaining Operational Decisions
 
-1. Is best-effort view audit enough for G1, or should viewing wait for a proxy/Edge Function?
-2. Is signed URL TTL **120 seconds** acceptable?
-3. Which screens are in G1 scope: `/izin`, `/masraf`, `/sozlesmeler`, or a smaller first slice?
-4. Is orphan storage object cleanup explicitly outside PR17.2G, or should a service-role janitor be included as a later G sub-slice?
+1. Is best-effort view audit enough long-term, or should viewing move behind a proxy/Edge Function?
+2. Should the signed URL TTL remain **120 seconds** after live tenant feedback?
+3. Is orphan storage object cleanup explicitly outside PR17.2G, or should a service-role janitor be included as a later G sub-slice?
+4. Which G4 provider/cost/KVKK gates must block production enqueue?
 
 ## Non-Goals For All G Slices
 
