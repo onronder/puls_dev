@@ -111,7 +111,7 @@ require_pattern "$DOC" 'No canonical `expense_claims` update'
 require_pattern "$DOC" "No second review or decision overwrite"
 require_pattern "$G_DOC" "G3 — Human Review UI"
 require_pattern "$README" "17_2_g3_expense_receipt_ocr_human_review.md"
-require_pattern "$AUDIT" "Rev 15"
+require_pattern "$AUDIT" "Rev 16"
 require_pattern "$AUDIT" "17.2G3"
 require_pattern "$AUDIT" "✅ Tamamlandı"
 require_pattern "$VERIFY_PR17" "verify-17-2-g3-expense-receipt-ocr-human-review.sh"

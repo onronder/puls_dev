@@ -1087,7 +1087,7 @@ Verify: [`../../scripts/verify-17-2-f3-evidence-finalization-hardening.sh`](../.
 
 ## PR17.2 planned follow-ups
 
-PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/reconcile guard. PR17.2F1-F3 closes the upload/finalize boundary. PR17.2G1-G3 adds evidence viewing, OCR processing contracts, a disabled worker skeleton, and human review. It still does not complete production OCR: vendor selection, tenant-level enqueue, quota/cost guardrails, richer browser journeys, and AI context feed remain intentionally separate slices.
+PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/reconcile guard. PR17.2F1-F3 closes the upload/finalize boundary. PR17.2G1-G3A adds evidence viewing, OCR processing contracts, a disabled worker skeleton, and human review. It still does not complete production OCR: vendor selection, tenant-level enqueue, quota/cost guardrails, richer browser journeys, and AI context feed remain intentionally separate slices.
 
 | Planned slice                             | Purpose                                                                                                                                           |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1099,6 +1099,7 @@ PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/r
 | [PR17.2G2A Expense Receipt OCR DB Contract](./17_2_g2a_expense_receipt_ocr_db_contract.md) | Completed service-role-only expense receipt OCR queue/result/event database contract; no production enqueue, worker, provider SDK, or canonical write. |
 | [PR17.2G2B Workflow Evidence Worker Skeleton](./17_2_g2b_workflow_evidence_worker_skeleton.md) | Completed disabled-by-default worker package with private storage read, server-side SHA-256, and mock/disabled provider adapter; no paid provider call or production enqueue. |
 | [PR17.2G3 Expense Receipt OCR Human Review](./17_2_g3_expense_receipt_ocr_human_review.md) | Completed audit-backed human review decisions for expense receipt OCR results; no canonical expense write, production enqueue, or provider integration. |
+| [PR17.2G3A OCR Review Hardening](./17_2_g3a_expense_receipt_ocr_review_hardening.md) | Blocks self-review and extends rollback smoke with unauthorized/requester negative actor coverage before G4 vendor/production-enqueue work. |
 | PR17.4 AI context feed handoff            | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant.               |
 
 Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 14.

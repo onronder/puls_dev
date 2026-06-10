@@ -35,7 +35,9 @@ DECLARE
   v_raw TEXT;
   v_requested_tenant_id UUID;
   v_tenant_id UUID;
+  v_requester_user_id UUID := gen_random_uuid();
   v_reviewer_user_id UUID := gen_random_uuid();
+  v_unauthorized_user_id UUID := gen_random_uuid();
   v_requester_id UUID;
   v_reviewer_id UUID;
   v_category_id UUID;
@@ -68,11 +70,33 @@ BEGIN
     updated_at
   )
   VALUES (
+    v_requester_user_id,
+    v_zero,
+    'authenticated',
+    'authenticated',
+    'pr17.2g3.requester@example.invalid',
+    'not-used',
+    NOW(),
+    NOW(),
+    NOW()
+  ),
+  (
     v_reviewer_user_id,
     v_zero,
     'authenticated',
     'authenticated',
     'pr17.2g3.reviewer@example.invalid',
+    'not-used',
+    NOW(),
+    NOW(),
+    NOW()
+  ),
+  (
+    v_unauthorized_user_id,
+    v_zero,
+    'authenticated',
+    'authenticated',
+    'pr17.2g3.unauthorized@example.invalid',
     'not-used',
     NOW(),
     NOW(),
@@ -92,6 +116,7 @@ BEGIN
 
   INSERT INTO puls_core.employees (
     tenant_id,
+    user_id,
     full_name,
     employee_code,
     persona_role,
@@ -99,6 +124,7 @@ BEGIN
   )
   VALUES (
     v_tenant_id,
+    v_requester_user_id,
     'PR17.2G3 Smoke Requester',
     'pr17_2g3_requester',
     'employee'::puls_core.persona_role,
@@ -123,6 +149,23 @@ BEGIN
     'active'::puls_core.employment_status
   )
   RETURNING id INTO v_reviewer_id;
+
+  INSERT INTO puls_core.employees (
+    tenant_id,
+    user_id,
+    full_name,
+    employee_code,
+    persona_role,
+    employment_status
+  )
+  VALUES (
+    v_tenant_id,
+    v_unauthorized_user_id,
+    'PR17.2G3 Smoke Unassigned Reviewer',
+    'pr17_2g3_unassigned',
+    'manager'::puls_core.persona_role,
+    'active'::puls_core.employment_status
+  );
 
   INSERT INTO puls_workflow.expense_categories (
     tenant_id,
@@ -255,6 +298,39 @@ BEGIN
     'human_review_required',
     NULL
   );
+
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', TRUE);
+  PERFORM set_config('request.jwt.claim.sub', v_unauthorized_user_id::TEXT, TRUE);
+
+  BEGIN
+    PERFORM puls_workflow.record_expense_receipt_ocr_review(
+      v_result_id,
+      'accepted'::puls_workflow.expense_receipt_ocr_review_status,
+      NULL,
+      '{}'::JSONB
+    );
+    RAISE EXCEPTION 'PR17_2G3_SMOKE_FAIL: unassigned reviewer should not be allowed.';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%PULS_OCR_REVIEW_FORBIDDEN%' THEN
+      RAISE;
+    END IF;
+  END;
+
+  PERFORM set_config('request.jwt.claim.sub', v_requester_user_id::TEXT, TRUE);
+
+  BEGIN
+    PERFORM puls_workflow.record_expense_receipt_ocr_review(
+      v_result_id,
+      'accepted'::puls_workflow.expense_receipt_ocr_review_status,
+      NULL,
+      '{}'::JSONB
+    );
+    RAISE EXCEPTION 'PR17_2G3_SMOKE_FAIL: requester self-review should not be allowed.';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%PULS_OCR_REVIEW_FORBIDDEN%' THEN
+      RAISE;
+    END IF;
+  END;
 
   PERFORM set_config('request.jwt.claim.role', 'authenticated', TRUE);
   PERFORM set_config('request.jwt.claim.sub', v_reviewer_user_id::TEXT, TRUE);

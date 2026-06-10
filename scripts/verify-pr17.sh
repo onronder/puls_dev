@@ -21,6 +21,7 @@ scripts=(
   "scripts/verify-17-2-g2a-expense-receipt-ocr-db-contract.sh"
   "scripts/verify-17-2-g2b-workflow-evidence-worker-skeleton.sh"
   "scripts/verify-17-2-g3-expense-receipt-ocr-human-review.sh"
+  "scripts/verify-17-2-g3a-expense-receipt-ocr-review-hardening.sh"
 )
 
 for script in "${scripts[@]}"; do
