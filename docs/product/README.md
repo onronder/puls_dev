@@ -167,7 +167,7 @@ PR14.1 hardens `/erp` as a provider-agnostic connector preflight surface. Canias
 | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [14_connector_preflight_readiness.md](./14_connector_preflight_readiness.md)                                     | Provider-independent connector readiness claim, inspect-first summary, and acceptance |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                   | Product-owned connector overview adapter and demo wrapper                             |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                       | Connector preflight UI with mapping, namespace, transfer posture, and guardrails      |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                 | Connector preflight UI with mapping, namespace, transfer posture, and guardrails      |
 | [`scripts/verify-14-connector-preflight-readiness.sh`](../../scripts/verify-14-connector-preflight-readiness.sh) | PR14.1 verify gate                                                                    |
 
 ## PR14.2 ERP connector onboarding empty state
@@ -178,7 +178,7 @@ PR14.2 adds the missing first `/erp` state: a new customer tenant can have no co
 | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | [14_erp_connector_onboarding_empty_state.md](./14_erp_connector_onboarding_empty_state.md)               | no-connector state machine, provider options, and acceptance criteria |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Distinguishes `no_tenant`, `no_connector`, and `connector_selected`   |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                               | Shows onboarding empty state before connector metadata exists         |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                         | Shows onboarding empty state before connector metadata exists         |
 | [`scripts/verify-14-erp-connector-empty-state.sh`](../../scripts/verify-14-erp-connector-empty-state.sh) | PR14.2 verify gate                                                    |
 
 ## PR14.3 Connector setup workbench
@@ -189,7 +189,7 @@ PR14.3 upgrades `/erp` into a provider-agnostic setup workbench: provider select
 | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | [14_connector_setup_workbench.md](./14_connector_setup_workbench.md)                                     | Setup workbench UX model, provider preview, and acceptance criteria |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Adds product-owned setup steps and provider preview requirements    |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                               | Shows the setup stepper and selectable provider preview state       |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                         | Shows the setup stepper and selectable provider preview state       |
 | [`scripts/verify-14-connector-setup-workbench.sh`](../../scripts/verify-14-connector-setup-workbench.sh) | PR14.3 verify gate                                                  |
 
 ## PR14.4 Tenant rollout readiness
@@ -231,7 +231,7 @@ PR14.7 expands authenticated e2e into a role and tenant posture matrix. It treat
 | [14_role_tenant_empty_state_matrix.md](./14_role_tenant_empty_state_matrix.md)                                 | Role matrix, tenant posture contract, and empty-state acceptance criteria |
 | [`e2e/role-tenant-matrix.spec.ts`](../../e2e/role-tenant-matrix.spec.ts)                                       | Live role + tenant e2e coverage for seeded and empty tenant behavior      |
 | [`src/routes/_app/dashboard.tsx`](../../src/routes/_app/dashboard.tsx)                                         | First-run dashboard empty-state callout and setup actions                 |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                     | No-connector setup wizard posture                                         |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                               | No-connector setup wizard posture                                         |
 | [`scripts/verify-14-role-tenant-empty-state-gate.sh`](../../scripts/verify-14-role-tenant-empty-state-gate.sh) | PR14.7 verify gate                                                        |
 
 ## PR14.8-PR14.11 Connector implementation roadmap
@@ -251,7 +251,7 @@ PR14.8 persists the connector setup selection as tenant-scoped DB state. Canias 
 | [14_connector_setup_persistence.md](./14_connector_setup_persistence.md)                                                                                                       | Persisted setup lifecycle, role boundary, data model, and rollout proof                   |
 | [`supabase/migrations/20260602090000_puls_integration_connector_setup_lifecycle.sql`](../../supabase/migrations/20260602090000_puls_integration_connector_setup_lifecycle.sql) | Adds setup lifecycle columns, tenant key, manager read policies, and admin write boundary |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                 | Connector setup persistence adapter and provider setup config                             |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                                     | Admin setup action and manager read-only notice                                           |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                               | Admin setup action and manager read-only notice                                           |
 | [`scripts/verify-14-connector-setup-persistence.sh`](../../scripts/verify-14-connector-setup-persistence.sh)                                                                   | PR14.8 verify gate                                                                        |
 
 ## PR14.9 Error observability and Sentry
@@ -285,7 +285,7 @@ PR14.10 persists the first connector field contract. Canias and CSV / Excel setu
 | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | [14_mapping_discovery.md](./14_mapping_discovery.md)                                     | Mapping discovery scope, canonical classes, defaults, and acceptance    |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                           | Default mapping contract, canonical class completeness, setup promotion |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                               | Mapping discovery workbench and source-to-PULS field contract           |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)         | Mapping discovery workbench and source-to-PULS field contract           |
 | [`scripts/verify-14-mapping-discovery.sh`](../../scripts/verify-14-mapping-discovery.sh) | PR14.10 verify gate                                                     |
 
 ## PR14.11 Connector preflight execution
@@ -296,7 +296,7 @@ PR14.11 adds the dry-run setup check before runtime connectors exist. `/erp` can
 | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | [14_connector_preflight_execution.md](./14_connector_preflight_execution.md)                                     | Dry-run preflight scope, checks, result model, and acceptance       |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                   | Preflight result evaluator and selected-connector overview contract |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                       | Admin-run setup check and read-only result panel                    |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                 | Admin-run setup check and read-only result panel                    |
 | [`scripts/verify-14-connector-preflight-execution.sh`](../../scripts/verify-14-connector-preflight-execution.sh) | PR14.11 verify gate                                                 |
 
 ## PR14.12 Source credential boundary
@@ -308,7 +308,7 @@ PR14.12 makes credential readiness source-independent. It adds generic auth mode
 | [14_source_credential_boundary.md](./14_source_credential_boundary.md)                                                                                                           | Source-independent credential state model, product rules, and handoff |
 | [`supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql`](../../supabase/migrations/20260603100000_puls_integration_source_credential_boundary.sql) | Adds generic auth mode and credential state fields                    |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                   | Safe credential posture adapter; does not select `credentials_ref`    |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                                       | Credential boundary status panel without secret inputs                |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                 | Credential boundary status panel without secret inputs                |
 | [`scripts/verify-14-source-credential-boundary.sh`](../../scripts/verify-14-source-credential-boundary.sh)                                                                       | PR14.12 verify gate                                                   |
 
 ## PR14.12B Connector state consistency findings
@@ -331,7 +331,7 @@ PR14.13 adds the source-independent connector lifecycle contract to `/erp`: life
 | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | [14_connector_lifecycle_capabilities.md](./14_connector_lifecycle_capabilities.md)                                     | Lifecycle, capability, and domain ownership acceptance              |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                         | `lifecycle`, `capabilities`, and `domainOwnership` adapter contract |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                             | Responsive lifecycle/capability/domain ownership workbench UI       |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                       | Responsive lifecycle/capability/domain ownership workbench UI       |
 | [`scripts/verify-14-connector-lifecycle-capabilities.sh`](../../scripts/verify-14-connector-lifecycle-capabilities.sh) | PR14.13 verify gate                                                 |
 
 ## PR14.14 Connector credential handoff
@@ -343,7 +343,7 @@ PR14.14 turns source-independent credential readiness into a safe handoff proces
 | [14_connector_credential_handoff.md](./14_connector_credential_handoff.md)                                                                                                           | Credential handoff state model, product boundary, and acceptance |
 | [`supabase/migrations/20260603120000_puls_integration_connector_credential_handoff.sql`](../../supabase/migrations/20260603120000_puls_integration_connector_credential_handoff.sql) | Adds safe credential handoff state and timestamps                |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                       | Source-independent handoff adapter and admin request action      |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                                           | Secure reference handoff sheet without secret inputs             |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                     | Secure reference handoff sheet without secret inputs             |
 | [`scripts/verify-14-connector-credential-handoff.sh`](../../scripts/verify-14-connector-credential-handoff.sh)                                                                       | PR14.14 verify gate                                              |
 
 ## PR14.15 Connector activity timeline
@@ -355,7 +355,7 @@ PR14.15 turns connector setup history into a safe activity timeline. `/erp` now 
 | [14_connector_activity_timeline.md](./14_connector_activity_timeline.md)                                                                                                           | Activity timeline state model, safe error detail rules, and acceptance |
 | [`supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql`](../../supabase/migrations/20260603130000_puls_integration_connector_activity_timeline.sql) | Adds metadata-only activity fields to connector setup history          |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                     | Builds `activityTimeline` and writes safe setup history records        |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                                         | Renders connector activity timeline with safe details and next actions |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                   | Renders connector activity timeline with safe details and next actions |
 | [`scripts/verify-14-connector-activity-timeline.sh`](../../scripts/verify-14-connector-activity-timeline.sh)                                                                       | PR14.15 verify gate                                                    |
 
 ## PR14.16 Connector import preview dry-run
@@ -368,7 +368,7 @@ PR14.16 adds a safe import preview boundary for prepared dry-run connector batch
 | [`supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql`](../../supabase/migrations/20260603140000_puls_integration_connector_import_preview.sql) | Adds safe preview metadata and product-safe preview record read RPC                                |
 | [`supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql`](../../supabase/seed/puls-sanayi-v1/sql/12_apply_connector_import_preview_proof.sql)         | Creates a pending dry-run proof batch without validating, previewing, or applying it automatically |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                               | Builds `importPreview` and runs validate + preview without apply                                   |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                                   | Renders safe import preview state and row outcomes                                                 |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                             | Renders safe import preview state and row outcomes                                                 |
 | [`scripts/verify-14-connector-import-preview.sh`](../../scripts/verify-14-connector-import-preview.sh)                                                                       | PR14.16 verify gate                                                                                |
 
 ## PR14.17 Connector apply readiness boundary
@@ -379,7 +379,7 @@ PR14.17 adds the human review boundary after dry-run preview. `/erp` can show wh
 | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | [14_connector_apply_readiness_boundary.md](./14_connector_apply_readiness_boundary.md)                   | Apply readiness state model, human review boundary, and acceptance criteria |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                           | Builds `applyReadiness` and records `import_apply_review` audit metadata    |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                               | Renders apply readiness, blockers, checks, and human review request action  |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                         | Renders apply readiness, blockers, checks, and human review request action  |
 | [`scripts/verify-14-connector-apply-readiness.sh`](../../scripts/verify-14-connector-apply-readiness.sh) | PR14.17 verify gate                                                         |
 
 ## PR14.18 Controlled apply design
@@ -390,7 +390,7 @@ PR14.18 makes the future apply path visible without making it executable. `/erp`
 | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | [14_connector_controlled_apply_design.md](./14_connector_controlled_apply_design.md)                 | Controlled apply gate model, UX contract, and acceptance criteria         |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                       | Builds `controlledApplyPlan` from preview, review, and credential posture |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                           | Renders controlled apply gates with execution closed                      |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                     | Renders controlled apply gates with execution closed                      |
 | [`scripts/verify-14-controlled-apply-design.sh`](../../scripts/verify-14-controlled-apply-design.sh) | PR14.18 verify gate                                                       |
 
 ## PR14.19 Connector apply approval policy
@@ -401,7 +401,7 @@ PR14.19 makes the MVP approval authority explicit before any canonical apply run
 | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | [14_connector_apply_approval_policy.md](./14_connector_apply_approval_policy.md)                                     | Admin-only approval policy, audit contract, and acceptance criteria         |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                       | Builds `applyApprovalPolicy` and records safe admin approval audit metadata |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                           | Renders approval policy inside controlled apply without opening execution   |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                     | Renders approval policy inside controlled apply without opening execution   |
 | [`scripts/verify-14-connector-apply-approval-policy.sh`](../../scripts/verify-14-connector-apply-approval-policy.sh) | PR14.19 verify gate                                                         |
 
 ## PR14.20 Connector apply execution contract
@@ -412,7 +412,7 @@ PR14.20 makes the future apply execution contract explicit while keeping canonic
 | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | [14_connector_apply_execution_contract.md](./14_connector_apply_execution_contract.md)                                     | Closed execution contract, control model, UX debt, and acceptance criteria           |
 | [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                             | Builds `applyExecutionContract` from preview, approval, and controlled apply posture |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                 | Renders the closed execution contract without adding an apply action                 |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                           | Renders the closed execution contract without adding an apply action                 |
 | [`scripts/verify-14-connector-apply-execution-contract.sh`](../../scripts/verify-14-connector-apply-execution-contract.sh) | PR14.20 verify gate                                                                  |
 
 ## PR14.21 ERP workbench information architecture
@@ -422,7 +422,7 @@ PR14.21 refactors `/erp` from one long vertical connector page into a source-ind
 | Document / artifact                                                                                                                | Purpose                                                           |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | [14_erp_workbench_information_architecture.md](./14_erp_workbench_information_architecture.md)                                     | Tabbed workbench IA, mobile rules, scope, and acceptance criteria |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                         | Source-independent tabbed workbench UI                            |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                   | Source-independent tabbed workbench UI                            |
 | [`e2e/ui-stabilization.spec.ts`](../../e2e/ui-stabilization.spec.ts)                                                               | Authenticated tab navigation and mobile overflow coverage         |
 | [`scripts/verify-14-erp-workbench-information-architecture.sh`](../../scripts/verify-14-erp-workbench-information-architecture.sh) | PR14.21 verify gate                                               |
 
@@ -430,92 +430,92 @@ PR14.21 refactors `/erp` from one long vertical connector page into a source-ind
 
 PR14 closes with the connector control plane in place: setup, mapping, preflight, credential boundary, activity history, dry-run preview, review, approval policy, closed apply contract, and a tabbed `/erp` workbench. PR15-PR16 move the product toward a multi-tenant connector runtime and HR AI operating layer without weakening the human-confirmation boundary.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [14_21_executive_status_report.md](./14_21_executive_status_report.md) | Turkish executive status report for product/sales stakeholders, including completion estimates and remaining work |
+| Document / artifact                                                              | Purpose                                                                                                                                                                   |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [14_21_executive_status_report.md](./14_21_executive_status_report.md)           | Turkish executive status report for product/sales stakeholders, including completion estimates and remaining work                                                         |
 | [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md) | Detailed PR15-PR16 plan for DB-backed job queue, Railway worker, credential runtime boundary, controlled data movement, notifications, and AI operational recommendations |
 
 ## PR15.1 Connector job queue contract
 
 PR15.1 opens the connector runtime phase by adding a tenant-scoped, idempotent, service-role worker job queue contract. It does not run connectors, resolve secrets, apply imports, write canonical data, or write back to ERP/source systems.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_connector_job_queue_contract.md](./15_connector_job_queue_contract.md) | PR15.1 queue contract, security boundary, AI-safe evidence, and PR15.2 handoff |
-| [`20260604100000_puls_integration_connector_job_queue.sql`](../../supabase/migrations/20260604100000_puls_integration_connector_job_queue.sql) | DB-backed connector job queue contract |
-| [`scripts/verify-15-connector-job-queue-contract.sh`](../../scripts/verify-15-connector-job-queue-contract.sh) | PR15.1 verify gate |
+| Document / artifact                                                                                                                            | Purpose                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [15_connector_job_queue_contract.md](./15_connector_job_queue_contract.md)                                                                     | PR15.1 queue contract, security boundary, AI-safe evidence, and PR15.2 handoff |
+| [`20260604100000_puls_integration_connector_job_queue.sql`](../../supabase/migrations/20260604100000_puls_integration_connector_job_queue.sql) | DB-backed connector job queue contract                                         |
+| [`scripts/verify-15-connector-job-queue-contract.sh`](../../scripts/verify-15-connector-job-queue-contract.sh)                                 | PR15.1 verify gate                                                             |
 
 ## PR15.2 Connector worker skeleton
 
 PR15.2 adds the safe worker ownership layer on top of the PR15.1 queue. It introduces worker heartbeat, lease renewal, stale-job recovery, and a source-independent `noop_health` skeleton path. It does not call provider APIs, read credentials, apply imports, write canonical data, or write back to ERP/source systems.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_connector_worker_skeleton.md](./15_connector_worker_skeleton.md) | PR15.2 worker skeleton contract, security boundary, AI-safe evidence, and PR15.3 handoff |
-| [`20260604110000_puls_integration_connector_worker_skeleton.sql`](../../supabase/migrations/20260604110000_puls_integration_connector_worker_skeleton.sql) | Worker heartbeat, lease ownership, and stale-job recovery DB contract |
-| [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Runtime worker skeleton service posture |
-| [`scripts/verify-15-connector-worker-skeleton.sh`](../../scripts/verify-15-connector-worker-skeleton.sh) | PR15.2 verify gate |
+| Document / artifact                                                                                                                                        | Purpose                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [15_connector_worker_skeleton.md](./15_connector_worker_skeleton.md)                                                                                       | PR15.2 worker skeleton contract, security boundary, AI-safe evidence, and PR15.3 handoff |
+| [`20260604110000_puls_integration_connector_worker_skeleton.sql`](../../supabase/migrations/20260604110000_puls_integration_connector_worker_skeleton.sql) | Worker heartbeat, lease ownership, and stale-job recovery DB contract                    |
+| [`services/erp-connector/README.md`](../../services/erp-connector/README.md)                                                                               | Runtime worker skeleton service posture                                                  |
+| [`scripts/verify-15-connector-worker-skeleton.sh`](../../scripts/verify-15-connector-worker-skeleton.sh)                                                   | PR15.2 verify gate                                                                       |
 
 ## PR15.3 Connector runtime observability and failure model
 
 PR15.3 adds safe runtime observability on top of the PR15.1 queue and PR15.2 worker skeleton. Connector jobs now carry deterministic failure class, retry/backoff, dead-letter, operator severity, and safe job-event history. `/erp` shows these signals without provider payloads, credential readback, import apply, canonical writes, or ERP/source writeback.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_connector_runtime_observability_failure_model.md](./15_connector_runtime_observability_failure_model.md) | PR15.3 failure model, retry/dead-letter rules, AI-safe evidence, and PR15.4 handoff |
+| Document / artifact                                                                                                                                                    | Purpose                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [15_connector_runtime_observability_failure_model.md](./15_connector_runtime_observability_failure_model.md)                                                           | PR15.3 failure model, retry/dead-letter rules, AI-safe evidence, and PR15.4 handoff         |
 | [`20260604120000_puls_integration_connector_runtime_observability.sql`](../../supabase/migrations/20260604120000_puls_integration_connector_runtime_observability.sql) | Runtime failure class, retry/backoff, connector job events, and safe read-model DB contract |
-| [`scripts/verify-15-connector-runtime-observability.sh`](../../scripts/verify-15-connector-runtime-observability.sh) | PR15.3 verify gate |
+| [`scripts/verify-15-connector-runtime-observability.sh`](../../scripts/verify-15-connector-runtime-observability.sh)                                                   | PR15.3 verify gate                                                                          |
 
 ## PR15.4 Secure credential runtime boundary
 
 PR15.4 adds the source-independent secure credential boundary required before runtime preflight can use real connector credentials. It keeps credential values outside product UI, client adapters, activity history, and AI context; the product DB stores only opaque reference state through service-role-only RPCs. Provider API runtime, secret manager implementation, import apply, canonical writes, and ERP/source writeback remain closed.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_connector_secure_credential_runtime_boundary.md](./15_connector_secure_credential_runtime_boundary.md) | PR15.4 credential reference, no-readback, safe event, and AI evidence boundary |
+| Document / artifact                                                                                                                                                          | Purpose                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [15_connector_secure_credential_runtime_boundary.md](./15_connector_secure_credential_runtime_boundary.md)                                                                   | PR15.4 credential reference, no-readback, safe event, and AI evidence boundary                     |
 | [`20260604130000_puls_integration_secure_credential_runtime_boundary.sql`](../../supabase/migrations/20260604130000_puls_integration_secure_credential_runtime_boundary.sql) | Service-role-only credential reference RPCs, safe credential events, and runtime-preflight blocker |
-| [`scripts/verify-15-secure-credential-runtime-boundary.sh`](../../scripts/verify-15-secure-credential-runtime-boundary.sh) | PR15.4 verify gate |
+| [`scripts/verify-15-secure-credential-runtime-boundary.sh`](../../scripts/verify-15-secure-credential-runtime-boundary.sh)                                                   | PR15.4 verify gate                                                                                 |
 
 ## PR15.5 Runtime preflight with credential reference
 
 PR15.5 adds the first safe runtime-preflight path on top of PR15.4. Admins can queue a `connector_runtime_preflight` job only when required credentials are verified; the worker reads safe setup/credential context and records a safe job result. Provider API calls, credential readback, import apply, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_connector_runtime_preflight_credential_reference.md](./15_connector_runtime_preflight_credential_reference.md) | PR15.5 runtime preflight request, verified credential gate, worker safe context, and AI evidence boundary |
-| [`20260604140000_puls_integration_runtime_preflight_credential_reference.sql`](../../supabase/migrations/20260604140000_puls_integration_runtime_preflight_credential_reference.sql) | Runtime preflight request/context RPCs and stricter verified credential enqueue gate |
-| [`scripts/verify-15-runtime-preflight-credential-reference.sh`](../../scripts/verify-15-runtime-preflight-credential-reference.sh) | PR15.5 verify gate |
+| Document / artifact                                                                                                                                                                  | Purpose                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| [15_connector_runtime_preflight_credential_reference.md](./15_connector_runtime_preflight_credential_reference.md)                                                                   | PR15.5 runtime preflight request, verified credential gate, worker safe context, and AI evidence boundary |
+| [`20260604140000_puls_integration_runtime_preflight_credential_reference.sql`](../../supabase/migrations/20260604140000_puls_integration_runtime_preflight_credential_reference.sql) | Runtime preflight request/context RPCs and stricter verified credential enqueue gate                      |
+| [`scripts/verify-15-runtime-preflight-credential-reference.sh`](../../scripts/verify-15-runtime-preflight-credential-reference.sh)                                                   | PR15.5 verify gate                                                                                        |
 
 ## PR15.6 AI runtime evidence contract
 
 PR15.6 connects connector runtime signals to AI Coach as source-disclosed, safe evidence. `/ai-koc` can now show connector job, worker event, credential state, import preview, and safe activity posture without adding migration, job start, credential readback, import apply, canonical writes, ERP/source writeback, or autonomous AI actions.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_ai_runtime_evidence_contract.md](./15_ai_runtime_evidence_contract.md) | PR15.6 AI-safe runtime evidence contract, allowed/forbidden suggestion taxonomy, and source disclosure rules |
-| [`scripts/verify-15-ai-runtime-evidence-contract.sh`](../../scripts/verify-15-ai-runtime-evidence-contract.sh) | PR15.6 verify gate |
+| Document / artifact                                                                                            | Purpose                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [15_ai_runtime_evidence_contract.md](./15_ai_runtime_evidence_contract.md)                                     | PR15.6 AI-safe runtime evidence contract, allowed/forbidden suggestion taxonomy, and source disclosure rules |
+| [`scripts/verify-15-ai-runtime-evidence-contract.sh`](../../scripts/verify-15-ai-runtime-evidence-contract.sh) | PR15.6 verify gate                                                                                           |
 
 ## PR15.7 Railway worker deployment readiness
 
 PR15.7 makes the connector worker operationally deployable on Railway before PR16 data movement begins. It adds config-as-code, a Railway start command, `/health` deployment check, required environment variables, one-replica guidance, and a remote heartbeat/noop smoke runbook. Provider API runtime, credential readback, import apply, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_railway_worker_deployment_readiness.md](./15_railway_worker_deployment_readiness.md) | PR15.7 Railway setup, env contract, remote smoke SQL, and PR16 handoff |
-| [`services/erp-connector/railway.toml`](../../services/erp-connector/railway.toml) | Railway config-as-code for the connector worker service |
-| [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Worker service posture, env contract, and Railway smoke checklist |
-| [`scripts/verify-15-railway-worker-deployment-readiness.sh`](../../scripts/verify-15-railway-worker-deployment-readiness.sh) | PR15.7 verify gate |
+| Document / artifact                                                                                                          | Purpose                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [15_railway_worker_deployment_readiness.md](./15_railway_worker_deployment_readiness.md)                                     | PR15.7 Railway setup, env contract, remote smoke SQL, and PR16 handoff |
+| [`services/erp-connector/railway.toml`](../../services/erp-connector/railway.toml)                                           | Railway config-as-code for the connector worker service                |
+| [`services/erp-connector/README.md`](../../services/erp-connector/README.md)                                                 | Worker service posture, env contract, and Railway smoke checklist      |
+| [`scripts/verify-15-railway-worker-deployment-readiness.sh`](../../scripts/verify-15-railway-worker-deployment-readiness.sh) | PR15.7 verify gate                                                     |
 
 ## PR15.8 Railway worker production guardrails
 
 PR15.8 hardens the deployed Railway worker before PR16 data movement. It disables non-production Railway queue loops by default, gates `import_apply` behind an explicit PR16 flag, pins one worker replica with zero deploy overlap and graceful drain, narrows monorepo redeploy scope with watch patterns, and updates the remote smoke proof to use connector job events for worker attribution. Provider API runtime, credential readback, import apply execution, canonical writes, ERP/source writeback, and AI autonomous actions remain closed.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [15_railway_worker_production_guardrails.md](./15_railway_worker_production_guardrails.md) | PR15.8 Railway production guardrails, env defaults, smoke expectations, and PR16 handoff |
-| [`services/erp-connector/railway.toml`](../../services/erp-connector/railway.toml) | One-replica, zero-overlap, graceful-drain Railway config-as-code |
-| [`services/erp-connector/README.md`](../../services/erp-connector/README.md) | Worker service guardrail env contract |
-| [`scripts/verify-15-railway-worker-production-guardrails.sh`](../../scripts/verify-15-railway-worker-production-guardrails.sh) | PR15.8 verify gate |
+| Document / artifact                                                                                                            | Purpose                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| [15_railway_worker_production_guardrails.md](./15_railway_worker_production_guardrails.md)                                     | PR15.8 Railway production guardrails, env defaults, smoke expectations, and PR16 handoff |
+| [`services/erp-connector/railway.toml`](../../services/erp-connector/railway.toml)                                             | One-replica, zero-overlap, graceful-drain Railway config-as-code                         |
+| [`services/erp-connector/README.md`](../../services/erp-connector/README.md)                                                   | Worker service guardrail env contract                                                    |
+| [`scripts/verify-15-railway-worker-production-guardrails.sh`](../../scripts/verify-15-railway-worker-production-guardrails.sh) | PR15.8 verify gate                                                                       |
 
 ## PR16 controlled data movement safety model
 
@@ -523,10 +523,10 @@ PR16 must not open blind import apply. Before canonical writes are enabled, PULS
 
 The audit model is business-object first: every canonical insert, update, soft-delete, restore, rollback, or compensating update needs an object event ledger entry. Guarded updates add field-level diff evidence and service-role-only rollback snapshots with default 90-day hot retention, so PULS can stay transparent without turning the operational database into an unlimited raw personal-data archive.
 
-| Document / artifact | Purpose |
-| --- | --- |
+| Document / artifact                                                                          | Purpose                                                                                                    |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | [16_controlled_data_movement_safety_model.md](./16_controlled_data_movement_safety_model.md) | PR16 overwrite, rollback, change-set, CRUD audit retention, worker execution, and AI evidence safety model |
-| [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md) | Updated PR16 delivery order from apply safety contract through AI operational recommendations |
+| [15_16_connector_runtime_ai_roadmap.md](./15_16_connector_runtime_ai_roadmap.md)             | Updated PR16 delivery order from apply safety contract through AI operational recommendations              |
 
 ## PR16.1 apply safety contract and permission hardening
 
@@ -542,25 +542,25 @@ PR16.1 implements the first closed execution boundary for controlled data moveme
 
 PR16.2 adds immutable change-set evidence for previewed dry-run batches. Admins can generate and inspect safe row-level risk summaries before PR16.3 opens any create-only worker apply path. The change-set records create/update/skip intent, blocker counts, stale/source-conflict risk, audit tier, retention bucket, and expected-current-hash metadata without exposing raw payloads or writing canonical data.
 
-| Document / artifact                                                                                                                                                  | Purpose                                                                                           |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [16_2_apply_change_set_risk_ledger.md](./16_2_apply_change_set_risk_ledger.md)                                                                                       | PR16.2 immutable change-set, safe risk ledger, data minimization, and PR16.3 handoff              |
-| [`supabase/migrations/20260605110000_puls_integration_apply_change_set.sql`](../../supabase/migrations/20260605110000_puls_integration_apply_change_set.sql)         | Change-set tables, risk classes, immutable triggers, admin generation RPC, and safe summary RPC   |
-| [`scripts/verify-16-2-apply-change-set.sh`](../../scripts/verify-16-2-apply-change-set.sh)                                                                           | PR16.2 verify gate                                                                                |
+| Document / artifact                                                                                                                                          | Purpose                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| [16_2_apply_change_set_risk_ledger.md](./16_2_apply_change_set_risk_ledger.md)                                                                               | PR16.2 immutable change-set, safe risk ledger, data minimization, and PR16.3 handoff            |
+| [`supabase/migrations/20260605110000_puls_integration_apply_change_set.sql`](../../supabase/migrations/20260605110000_puls_integration_apply_change_set.sql) | Change-set tables, risk classes, immutable triggers, admin generation RPC, and safe summary RPC |
+| [`scripts/verify-16-2-apply-change-set.sh`](../../scripts/verify-16-2-apply-change-set.sh)                                                                   | PR16.2 verify gate                                                                              |
 
 ## PR16.3 create-only worker apply
 
 PR16.3 opens the first controlled canonical write path, but only through the service-role Railway worker and only for admin-approved create-only reference-dimension rows. Browser direct apply, authenticated direct canonical writes, existing-record updates, employee apply, ERP/source writeback, credential readback, raw payload readback, provider API calls, and AI autonomous actions remain closed.
 
-| Document / artifact                                                                                                                                                            | Purpose                                                                                                      |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| [16_3_create_only_worker_apply.md](./16_3_create_only_worker_apply.md)                                                                                                         | PR16.3 create-only worker apply scope, Railway env gate, business rules, and PR16.4 handoff                  |
-| [`supabase/migrations/20260605120000_puls_integration_create_only_worker_apply.sql`](../../supabase/migrations/20260605120000_puls_integration_create_only_worker_apply.sql) | Worker-only create apply RPCs, object event audit ledger, and PR16.3 `import_apply` trigger exception        |
-| [16_3_create_only_apply_context_hardening.md](./16_3_create_only_apply_context_hardening.md)                                                                                   | PR16.3A create-only context hardening after Railway smoke exposed heartbeat context overwrite risk            |
-| [`supabase/migrations/20260605122000_puls_integration_create_only_job_context_hardening.sql`](../../supabase/migrations/20260605122000_puls_integration_create_only_job_context_hardening.sql) | Preserves queued job safe context during worker lease heartbeats                                             |
-| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                                                           | Worker execution path for PR16.3 create-only apply jobs behind an explicit env gate                          |
-| [`scripts/verify-16-3-create-only-context-hardening.sh`](../../scripts/verify-16-3-create-only-context-hardening.sh)                                                           | PR16.3A verify gate                                                                                          |
-| [`scripts/verify-16-3-create-only-worker-apply.sh`](../../scripts/verify-16-3-create-only-worker-apply.sh)                                                                     | PR16.3 verify gate                                                                                           |
+| Document / artifact                                                                                                                                                                            | Purpose                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [16_3_create_only_worker_apply.md](./16_3_create_only_worker_apply.md)                                                                                                                         | PR16.3 create-only worker apply scope, Railway env gate, business rules, and PR16.4 handoff           |
+| [`supabase/migrations/20260605120000_puls_integration_create_only_worker_apply.sql`](../../supabase/migrations/20260605120000_puls_integration_create_only_worker_apply.sql)                   | Worker-only create apply RPCs, object event audit ledger, and PR16.3 `import_apply` trigger exception |
+| [16_3_create_only_apply_context_hardening.md](./16_3_create_only_apply_context_hardening.md)                                                                                                   | PR16.3A create-only context hardening after Railway smoke exposed heartbeat context overwrite risk    |
+| [`supabase/migrations/20260605122000_puls_integration_create_only_job_context_hardening.sql`](../../supabase/migrations/20260605122000_puls_integration_create_only_job_context_hardening.sql) | Preserves queued job safe context during worker lease heartbeats                                      |
+| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                                                                           | Worker execution path for PR16.3 create-only apply jobs behind an explicit env gate                   |
+| [`scripts/verify-16-3-create-only-context-hardening.sh`](../../scripts/verify-16-3-create-only-context-hardening.sh)                                                                           | PR16.3A verify gate                                                                                   |
+| [`scripts/verify-16-3-create-only-worker-apply.sh`](../../scripts/verify-16-3-create-only-worker-apply.sh)                                                                                     | PR16.3 verify gate                                                                                    |
 
 ## PR16.4.1 guarded update evidence
 
@@ -606,361 +606,361 @@ PR16.4.4 turns recovery readiness into an operator-facing safe runbook before PR
 
 PR16.5 opens rollback preview generation for applied guarded updates without opening rollback execution. It creates immutable hash-only preview ledgers, classifies current-state drift and evidence gaps, and exposes safe preview summaries in `/erp` while keeping compensating execution, ERP/source writeback, credential/readback, provider calls, browser direct apply, and AI autonomous execution closed.
 
-| Document / artifact                                                                                                                                                          | Purpose                                                                                          |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [16_5_guarded_update_rollback_preview.md](./16_5_guarded_update_rollback_preview.md)                                                                                         | PR16.5 guarded update rollback preview scope, safety contract, and execution handoff             |
+| Document / artifact                                                                                                                                                                        | Purpose                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| [16_5_guarded_update_rollback_preview.md](./16_5_guarded_update_rollback_preview.md)                                                                                                       | PR16.5 guarded update rollback preview scope, safety contract, and execution handoff                |
 | [`supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql`](../../supabase/migrations/20260606130000_puls_integration_guarded_update_rollback_preview.sql) | Immutable rollback preview ledgers plus generate/list RPCs; no rollback execution or value readback |
-| [`scripts/verify-16-5-guarded-update-rollback-preview.sh`](../../scripts/verify-16-5-guarded-update-rollback-preview.sh)                                                     | PR16.5 verify gate                                                                               |
+| [`scripts/verify-16-5-guarded-update-rollback-preview.sh`](../../scripts/verify-16-5-guarded-update-rollback-preview.sh)                                                                   | PR16.5 verify gate                                                                                  |
 
 ## PR16.6 guarded update rollback approval
 
 PR16.6 records checksum-bound admin approval for a ready rollback preview without opening rollback execution. It adds an immutable approval ledger, admin/service-role approval RPC, safe read model, and `/erp` approval gate while keeping rollback job enqueue, rollback execution, compensating execution, ERP/source writeback, credential/readback, provider calls, browser direct rollback, and AI autonomous execution closed.
 
-| Document / artifact                                                                                                                                                          | Purpose                                                                                          |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [16_6_guarded_update_rollback_approval.md](./16_6_guarded_update_rollback_approval.md)                                                                                       | PR16.6 guarded update rollback approval scope, safety contract, and worker-execution handoff     |
+| Document / artifact                                                                                                                                                                          | Purpose                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [16_6_guarded_update_rollback_approval.md](./16_6_guarded_update_rollback_approval.md)                                                                                                       | PR16.6 guarded update rollback approval scope, safety contract, and worker-execution handoff      |
 | [`supabase/migrations/20260606140000_puls_integration_guarded_update_rollback_approval.sql`](../../supabase/migrations/20260606140000_puls_integration_guarded_update_rollback_approval.sql) | Immutable rollback approval ledger plus record/list RPCs; no rollback execution or value readback |
-| [`scripts/verify-16-6-guarded-update-rollback-approval.sh`](../../scripts/verify-16-6-guarded-update-rollback-approval.sh)                                                   | PR16.6 verify gate                                                                               |
+| [`scripts/verify-16-6-guarded-update-rollback-approval.sh`](../../scripts/verify-16-6-guarded-update-rollback-approval.sh)                                                                   | PR16.6 verify gate                                                                                |
 
 ## PR16.7 guarded update rollback worker readiness
 
 PR16.7 records an immutable worker-readiness handoff after rollback approval without enqueueing rollback jobs or opening rollback execution. It proves approval checksum, current-state hash, original apply event, field diff, rollback snapshot, and retention-window readiness while keeping canonical rollback writes, source writeback, credential/readback, provider calls, browser direct rollback, and AI autonomous execution closed.
 
-| Document / artifact                                                                                                                                                          | Purpose                                                                                              |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [16_7_guarded_update_rollback_worker_readiness.md](./16_7_guarded_update_rollback_worker_readiness.md)                                                                       | PR16.7 guarded update rollback worker readiness scope, safety contract, and execution handoff        |
+| Document / artifact                                                                                                                                                                                          | Purpose                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| [16_7_guarded_update_rollback_worker_readiness.md](./16_7_guarded_update_rollback_worker_readiness.md)                                                                                                       | PR16.7 guarded update rollback worker readiness scope, safety contract, and execution handoff        |
 | [`supabase/migrations/20260606150000_puls_integration_guarded_update_rollback_worker_readiness.sql`](../../supabase/migrations/20260606150000_puls_integration_guarded_update_rollback_worker_readiness.sql) | Immutable rollback worker readiness ledger plus generate/list RPCs; no rollback enqueue or execution |
-| [`scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh`](../../scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh)                                   | PR16.7 verify gate                                                                                   |
+| [`scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh`](../../scripts/verify-16-7-guarded-update-rollback-worker-readiness.sh)                                                                   | PR16.7 verify gate                                                                                   |
 
 ## PR16.8 guarded update rollback worker apply
 
 PR16.8 opens service-role worker-only rollback execution for approved guarded updates. It queues rollback from PR16.7 readiness, rechecks checksum/current-state/snapshot retention before write, restores only safe reference-dimension `name` values, emits rollback object events, and keeps browser direct rollback, source writeback, provider calls, credential readback, raw payload readback, snapshot payload readback, and field value readback closed.
 
-| Document / artifact                                                                                                                                                          | Purpose                                                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [16_8_guarded_update_rollback_worker_apply.md](./16_8_guarded_update_rollback_worker_apply.md)                                                                               | PR16.8 rollback worker apply scope, safety contract, execution rules, and PR16.9 handoff                  |
-| [`supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql`](../../supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql) | Worker-only guarded-update rollback enqueue/execution RPCs plus rollback object event audit support       |
-| [`scripts/verify-16-8-guarded-update-rollback-worker-apply.sh`](../../scripts/verify-16-8-guarded-update-rollback-worker-apply.sh)                                           | PR16.8 verify gate                                                                                         |
+| Document / artifact                                                                                                                                                                                  | Purpose                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [16_8_guarded_update_rollback_worker_apply.md](./16_8_guarded_update_rollback_worker_apply.md)                                                                                                       | PR16.8 rollback worker apply scope, safety contract, execution rules, and PR16.9 handoff            |
+| [`supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql`](../../supabase/migrations/20260606160000_puls_integration_guarded_update_rollback_worker_apply.sql) | Worker-only guarded-update rollback enqueue/execution RPCs plus rollback object event audit support |
+| [`scripts/verify-16-8-guarded-update-rollback-worker-apply.sh`](../../scripts/verify-16-8-guarded-update-rollback-worker-apply.sh)                                                                   | PR16.8 verify gate                                                                                  |
 
 ## PR16.9 app-wide notification center strategy
 
 PR16.9 plans Notification Center as an app-wide PULS capability instead of an `/erp`-only feature. `/erp` remains the first producer and first visible surface, while `puls_app` owns the durable notification ledger, visibility rules, read state, and optional realtime delivery posture.
 
-| Document / artifact                                                                        | Purpose                                                                                                      |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Document / artifact                                                                              | Purpose                                                                                                                |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | [16_9_app_wide_notification_center_strategy.md](./16_9_app_wide_notification_center_strategy.md) | PR16.9 follow-up contract for `puls_app`, schema exposure risk controls, sub-phases, UI strategy, and smoke discipline |
 
 ## PR16.9.0 puls_app bootstrap
 
 PR16.9.0 opens only the `puls_app` application schema and a minimal smoke RPC so Supabase/PostgREST exposure can be verified before durable notification ledgers or UI are added. Notification tables, realtime, external delivery, and producer mapping remain closed.
 
-| Document / artifact                                                                                                                          | Purpose                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [16_9_0_puls_app_bootstrap.md](./16_9_0_puls_app_bootstrap.md)                                                                               | PR16.9.0 scope, safety contract, remote exposure requirement, smoke SQL, and PR16.9.1 handoff |
+| Document / artifact                                                                                                                                                    | Purpose                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [16_9_0_puls_app_bootstrap.md](./16_9_0_puls_app_bootstrap.md)                                                                                                         | PR16.9.0 scope, safety contract, remote exposure requirement, smoke SQL, and PR16.9.1 handoff |
 | [`supabase/migrations/20260606170000_puls_app_notification_center_bootstrap.sql`](../../supabase/migrations/20260606170000_puls_app_notification_center_bootstrap.sql) | `puls_app` schema bootstrap plus safe authenticated/service-role smoke RPC                    |
-| [`scripts/verify-16-9-0-puls-app-bootstrap.sh`](../../scripts/verify-16-9-0-puls-app-bootstrap.sh)                                             | PR16.9.0 verify gate                                                                         |
+| [`scripts/verify-16-9-0-puls-app-bootstrap.sh`](../../scripts/verify-16-9-0-puls-app-bootstrap.sh)                                                                     | PR16.9.0 verify gate                                                                          |
 
 ## PR16.9.0x backend lint hardening
 
 PR16.9.0x fixes two pre-existing `puls_integration` lint errors before PR16.9.1 notification ledger work starts. It keeps PR16.9.0 `puls_app` bootstrap unchanged and does not open Notification Center tables, realtime, delivery, UI, or producer mapping.
 
-| Document / artifact                                                                                                                                    | Purpose                                                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| [16_9_0x_backend_lint_hardening.md](./16_9_0x_backend_lint_hardening.md)                                                                               | PR16.9.0x scope, Supabase exposure posture, fixed lint errors, and PR16.9.1 handoff         |
-| [`supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql`](../../supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql) | Runtime preflight enum casts plus lint-safe apply change-set typed plan                     |
-| [`scripts/verify-16-9-0x-backend-lint-hardening.sh`](../../scripts/verify-16-9-0x-backend-lint-hardening.sh)                                             | PR16.9.0x verify gate                                                                       |
+| Document / artifact                                                                                                                                                      | Purpose                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| [16_9_0x_backend_lint_hardening.md](./16_9_0x_backend_lint_hardening.md)                                                                                                 | PR16.9.0x scope, Supabase exposure posture, fixed lint errors, and PR16.9.1 handoff |
+| [`supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql`](../../supabase/migrations/20260606171000_puls_integration_backend_lint_hardening.sql) | Runtime preflight enum casts plus lint-safe apply change-set typed plan             |
+| [`scripts/verify-16-9-0x-backend-lint-hardening.sh`](../../scripts/verify-16-9-0x-backend-lint-hardening.sh)                                                             | PR16.9.0x verify gate                                                               |
 
 ## PR16.9.1 durable notification ledger
 
 PR16.9.1 adds the durable app-wide Notification Center ledger in `puls_app`, including safe service-role emission, authenticated list/summary/read/dismiss RPCs, tenant/role visibility checks, and per-employee read state. Producer mapping, UI, realtime, and external delivery remain closed for later PR16.9 sub-phases.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                           |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [16_9_1_durable_notification_ledger.md](./16_9_1_durable_notification_ledger.md)                                                                         | PR16.9.1 scope, safety contract, smoke SQL, and PR16.9.2 handoff                                 |
-| [`supabase/migrations/20260606180000_puls_app_notification_ledger.sql`](../../supabase/migrations/20260606180000_puls_app_notification_ledger.sql)       | App-wide notification ledger tables, RPC boundary, grants, and bootstrap status contract update   |
-| [`scripts/verify-16-9-1-durable-notification-ledger.sh`](../../scripts/verify-16-9-1-durable-notification-ledger.sh)                                     | PR16.9.1 verify gate                                                                              |
+| Document / artifact                                                                                                                                | Purpose                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| [16_9_1_durable_notification_ledger.md](./16_9_1_durable_notification_ledger.md)                                                                   | PR16.9.1 scope, safety contract, smoke SQL, and PR16.9.2 handoff                                |
+| [`supabase/migrations/20260606180000_puls_app_notification_ledger.sql`](../../supabase/migrations/20260606180000_puls_app_notification_ledger.sql) | App-wide notification ledger tables, RPC boundary, grants, and bootstrap status contract update |
+| [`scripts/verify-16-9-1-durable-notification-ledger.sh`](../../scripts/verify-16-9-1-durable-notification-ledger.sh)                               | PR16.9.1 verify gate                                                                            |
 
 ## PR16.9.2 connector notification producers
 
 PR16.9.2 maps selected connector/runtime evidence into the app-wide Notification Center ledger through a service-role-only producer refresh RPC. It reuses `emit_app_notification`, keeps direct authenticated table writes closed, and leaves UI, realtime, preferences, and external delivery for later PR16.9 sub-phases.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                                   |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_9_2_connector_notification_producers.md](./16_9_2_connector_notification_producers.md)                                                               | PR16.9.2 scope, source-event mapping, safety contract, smoke SQL, and PR16.9.3 handoff                    |
-| [`supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql`](../../supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql) | Service-role connector notification refresh RPC and bootstrap status producer mapping update              |
-| [`scripts/verify-16-9-2-connector-notification-producers.sh`](../../scripts/verify-16-9-2-connector-notification-producers.sh)                           | PR16.9.2 verify gate                                                                                      |
+| Document / artifact                                                                                                                                                          | Purpose                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [16_9_2_connector_notification_producers.md](./16_9_2_connector_notification_producers.md)                                                                                   | PR16.9.2 scope, source-event mapping, safety contract, smoke SQL, and PR16.9.3 handoff       |
+| [`supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql`](../../supabase/migrations/20260606190000_puls_app_connector_notification_producers.sql) | Service-role connector notification refresh RPC and bootstrap status producer mapping update |
+| [`scripts/verify-16-9-2-connector-notification-producers.sh`](../../scripts/verify-16-9-2-connector-notification-producers.sh)                                               | PR16.9.2 verify gate                                                                         |
 
 ## PR16.9.3 notification center UI
 
 PR16.9.3 adds the first production-grade app-wide Notification Center UI. It renders a global shell bell, cursor-paged notification pane, safe detail review, and read/dismiss actions through `puls_app` RPCs while keeping realtime, preferences, and external delivery closed.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                                   |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_9_3_notification_center_ui.md](./16_9_3_notification_center_ui.md)                                                                                   | PR16.9.3 UI behavior contract, mobile/Capacitor requirements, smoke SQL, and PR16.9.4 handoff             |
-| [`supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql`](../../supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql) | Cursor-paged notification RPC and bootstrap status UI readiness update                                    |
-| [`scripts/verify-16-9-3-notification-center-ui.sh`](../../scripts/verify-16-9-3-notification-center-ui.sh)                                               | PR16.9.3 verify gate                                                                                      |
+| Document / artifact                                                                                                                                                          | Purpose                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [16_9_3_notification_center_ui.md](./16_9_3_notification_center_ui.md)                                                                                                       | PR16.9.3 UI behavior contract, mobile/Capacitor requirements, smoke SQL, and PR16.9.4 handoff |
+| [`supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql`](../../supabase/migrations/20260607100000_puls_app_notification_center_ui_readiness.sql) | Cursor-paged notification RPC and bootstrap status UI readiness update                        |
+| [`scripts/verify-16-9-3-notification-center-ui.sh`](../../scripts/verify-16-9-3-notification-center-ui.sh)                                                                   | PR16.9.3 verify gate                                                                          |
 
 ## PR16.9.4 notification realtime fallback
 
 PR16.9.4 adds optional private realtime notification hints for the app-wide Notification Center. It keeps RPC reads and polling as the correctness path, sends only minimal tenant-scoped broadcast hints, and leaves preferences plus external delivery closed.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                                   |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_9_4_notification_realtime_fallback.md](./16_9_4_notification_realtime_fallback.md)                                                                   | PR16.9.4 realtime safety contract, tenant policy smoke, minimal payload checks, and PR16.9.5 handoff      |
-| [`supabase/migrations/20260607110000_puls_app_notification_realtime_fallback.sql`](../../supabase/migrations/20260607110000_puls_app_notification_realtime_fallback.sql) | Private tenant realtime topic helper, broadcast hint trigger, realtime policy, and bootstrap status update |
-| [16_9_4x_notification_summary_realtime_hotfix.md](./16_9_4x_notification_summary_realtime_hotfix.md)                                                       | PR16.9.4x notification summary realtime hotfix discovered during live UI smoke                            |
-| [`supabase/migrations/20260607114500_puls_app_notification_summary_realtime_hotfix.sql`](../../supabase/migrations/20260607114500_puls_app_notification_summary_realtime_hotfix.sql) | Aligns summary RPC realtime flag with PR16.9.4 bootstrap contract                                         |
-| [`scripts/verify-16-9-4x-notification-summary-realtime-hotfix.sh`](../../scripts/verify-16-9-4x-notification-summary-realtime-hotfix.sh)                   | PR16.9.4x verify gate                                                                                     |
+| Document / artifact                                                                                                                                                                  | Purpose                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| [16_9_4_notification_realtime_fallback.md](./16_9_4_notification_realtime_fallback.md)                                                                                               | PR16.9.4 realtime safety contract, tenant policy smoke, minimal payload checks, and PR16.9.5 handoff       |
+| [`supabase/migrations/20260607110000_puls_app_notification_realtime_fallback.sql`](../../supabase/migrations/20260607110000_puls_app_notification_realtime_fallback.sql)             | Private tenant realtime topic helper, broadcast hint trigger, realtime policy, and bootstrap status update |
+| [16_9_4x_notification_summary_realtime_hotfix.md](./16_9_4x_notification_summary_realtime_hotfix.md)                                                                                 | PR16.9.4x notification summary realtime hotfix discovered during live UI smoke                             |
+| [`supabase/migrations/20260607114500_puls_app_notification_summary_realtime_hotfix.sql`](../../supabase/migrations/20260607114500_puls_app_notification_summary_realtime_hotfix.sql) | Aligns summary RPC realtime flag with PR16.9.4 bootstrap contract                                          |
+| [`scripts/verify-16-9-4x-notification-summary-realtime-hotfix.sh`](../../scripts/verify-16-9-4x-notification-summary-realtime-hotfix.sh)                                             | PR16.9.4x verify gate                                                                                      |
 
 ## PR16.9.5 notification scenario coverage
 
 PR16.9.5 adds per-employee in-app notification preferences and a scenario contract RPC so empty inbox, producer emit, dedupe, visibility, paging, read, dismiss, preference, realtime, and safety scenarios can be verified before external delivery is opened.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                                  |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| [16_9_5_notification_scenario_coverage.md](./16_9_5_notification_scenario_coverage.md)                                                                   | PR16.9.5 scenario coverage, preference contract, smoke SQL, and PR16.9.6 handoff                         |
+| Document / artifact                                                                                                                                                      | Purpose                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| [16_9_5_notification_scenario_coverage.md](./16_9_5_notification_scenario_coverage.md)                                                                                   | PR16.9.5 scenario coverage, preference contract, smoke SQL, and PR16.9.6 handoff                         |
 | [`supabase/migrations/20260607123000_puls_app_notification_scenario_coverage.sql`](../../supabase/migrations/20260607123000_puls_app_notification_scenario_coverage.sql) | In-app preference table/RPCs, scenario contract RPC, and preference-aware list/summary/bulk-read updates |
-| [`scripts/verify-16-9-5-notification-scenario-coverage.sh`](../../scripts/verify-16-9-5-notification-scenario-coverage.sh)                               | PR16.9.5 verify gate                                                                                    |
-| [`scripts/verify-16-9-4-notification-realtime-fallback.sh`](../../scripts/verify-16-9-4-notification-realtime-fallback.sh)                               | PR16.9.4 verify gate                                                                                      |
+| [`scripts/verify-16-9-5-notification-scenario-coverage.sh`](../../scripts/verify-16-9-5-notification-scenario-coverage.sh)                                               | PR16.9.5 verify gate                                                                                     |
+| [`scripts/verify-16-9-4-notification-realtime-fallback.sh`](../../scripts/verify-16-9-4-notification-realtime-fallback.sh)                                               | PR16.9.4 verify gate                                                                                     |
 
 ## PR16.9.6 notification actions and producer orchestrator
 
 PR16.9.6 makes Notification Center actions operational instead of decorative. Known `/erp` notifications route to exact workbench tabs/sections, error notifications can export safe CSV details for support sharing, and the Railway connector worker calls a service-role producer orchestrator after real connector jobs complete. External delivery remains closed.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [16_9_6_notification_actions_and_producer_orchestrator.md](./16_9_6_notification_actions_and_producer_orchestrator.md)                                   | PR16.9.6 action routing, CSV export, producer orchestration, smoke SQL, and safety contract                  |
-| [`supabase/migrations/20260607133000_puls_app_notification_actions_and_producer_orchestrator.sql`](../../supabase/migrations/20260607133000_puls_app_notification_actions_and_producer_orchestrator.sql) | Service-role app notification producer orchestrator and bootstrap status update                              |
-| [`src/lib/notifications/app-notification-actions.ts`](../../src/lib/notifications/app-notification-actions.ts)                                             | Plug-and-play frontend notification action resolver plus safe issue CSV builder                              |
-| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                                       | Railway connector worker best-effort producer refresh after real connector jobs                              |
-| [`scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh`](../../scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh) | PR16.9.6 verify gate                                                                                        |
+| Document / artifact                                                                                                                                                                                      | Purpose                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [16_9_6_notification_actions_and_producer_orchestrator.md](./16_9_6_notification_actions_and_producer_orchestrator.md)                                                                                   | PR16.9.6 action routing, CSV export, producer orchestration, smoke SQL, and safety contract |
+| [`supabase/migrations/20260607133000_puls_app_notification_actions_and_producer_orchestrator.sql`](../../supabase/migrations/20260607133000_puls_app_notification_actions_and_producer_orchestrator.sql) | Service-role app notification producer orchestrator and bootstrap status update             |
+| [`src/lib/notifications/app-notification-actions.ts`](../../src/lib/notifications/app-notification-actions.ts)                                                                                           | Plug-and-play frontend notification action resolver plus safe issue CSV builder             |
+| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                                                                                     | Railway connector worker best-effort producer refresh after real connector jobs             |
+| [`scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh`](../../scripts/verify-16-9-6-notification-actions-and-producer-orchestrator.sh)                                               | PR16.9.6 verify gate                                                                        |
 
 ## PR16.9.7 notification preferences UI
 
 PR16.9.7 makes the existing in-app notification preference RPC contract visible in the product. Notification Center now includes source-scoped settings for ERP connection notifications, including in-app visibility, minimum severity, action-only filtering, temporary mute, and reset to defaults. External delivery remains closed.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [16_9_7_notification_preferences_ui.md](./16_9_7_notification_preferences_ui.md)                                                                         | PR16.9.7 preference UI behavior, safety contract, smoke SQL, and PR16.10 handoff                             |
-| [`supabase/migrations/20260607150000_puls_app_notification_preferences_ui_contract.sql`](../../supabase/migrations/20260607150000_puls_app_notification_preferences_ui_contract.sql) | Bootstrap status contract update for preference UI readiness                                                  |
-| [`src/components/notifications/AppNotificationCenter.tsx`](../../src/components/notifications/AppNotificationCenter.tsx)                                  | Global notification sheet with source-scoped preference UI                                                    |
-| [`scripts/verify-16-9-7-notification-preferences-ui.sh`](../../scripts/verify-16-9-7-notification-preferences-ui.sh)                                     | PR16.9.7 verify gate                                                                                        |
+| Document / artifact                                                                                                                                                                  | Purpose                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [16_9_7_notification_preferences_ui.md](./16_9_7_notification_preferences_ui.md)                                                                                                     | PR16.9.7 preference UI behavior, safety contract, smoke SQL, and PR16.10 handoff |
+| [`supabase/migrations/20260607150000_puls_app_notification_preferences_ui_contract.sql`](../../supabase/migrations/20260607150000_puls_app_notification_preferences_ui_contract.sql) | Bootstrap status contract update for preference UI readiness                     |
+| [`src/components/notifications/AppNotificationCenter.tsx`](../../src/components/notifications/AppNotificationCenter.tsx)                                                             | Global notification sheet with source-scoped preference UI                       |
+| [`scripts/verify-16-9-7-notification-preferences-ui.sh`](../../scripts/verify-16-9-7-notification-preferences-ui.sh)                                                                 | PR16.9.7 verify gate                                                             |
 
 ## PR16.9.7x settings notification status hotfix
 
 PR16.9.7x aligns `/ayarlar` with the PR16.9.7 Notification Center preference UI. Tenant-scoped users now see `Bildirim tercihleri` as ready/enabled because in-app preferences are active in the Notification Center; no-tenant sessions remain locked, and external delivery stays closed.
 
-| Document / artifact                                                                                                                                      | Purpose                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [16_9_7x_settings_notification_status_hotfix.md](./16_9_7x_settings_notification_status_hotfix.md)                                                       | Settings status alignment, safety notes, and browser smoke expectations                                      |
-| [`src/lib/data/settings/overview.ts`](../../src/lib/data/settings/overview.ts)                                                                            | Settings hub adapter state for notification preferences                                                       |
-| [`src/lib/data/settings/overview.test.ts`](../../src/lib/data/settings/overview.test.ts)                                                                  | Regression coverage for tenant-ready and no-tenant locked notification states                                |
-| [`scripts/verify-16-9-7x-settings-notification-status-hotfix.sh`](../../scripts/verify-16-9-7x-settings-notification-status-hotfix.sh)                   | PR16.9.7x verify gate                                                                                       |
+| Document / artifact                                                                                                                    | Purpose                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [16_9_7x_settings_notification_status_hotfix.md](./16_9_7x_settings_notification_status_hotfix.md)                                     | Settings status alignment, safety notes, and browser smoke expectations       |
+| [`src/lib/data/settings/overview.ts`](../../src/lib/data/settings/overview.ts)                                                         | Settings hub adapter state for notification preferences                       |
+| [`src/lib/data/settings/overview.test.ts`](../../src/lib/data/settings/overview.test.ts)                                               | Regression coverage for tenant-ready and no-tenant locked notification states |
+| [`scripts/verify-16-9-7x-settings-notification-status-hotfix.sh`](../../scripts/verify-16-9-7x-settings-notification-status-hotfix.sh) | PR16.9.7x verify gate                                                         |
 
 ## PR16.10.0 connector access readiness
 
 PR16.10.0 turns the ERP connector surface into a provider-independent access readiness module before any live customer API work begins. Canias, Logo, CSV/Excel, and custom API sources share the same readiness vocabulary: selected source, method, metadata, secure reference, customer/API access, and offline preview path. Provider calls, credential value readback, and source writeback remain closed.
 
-| Document / artifact                                                                                                                   | Purpose                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_10_0_connector_access_readiness.md](./16_10_0_connector_access_readiness.md)                                                       | PR16.10.0 product contract, safety boundary, verification, and PR17 handoff                               |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Provider-independent readiness model derived from existing safe connector setup evidence                   |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                             | Production-grade `/erp` access readiness UI and real-action routing                                       |
-| [`scripts/verify-16-10-0-connector-access-readiness.sh`](../../scripts/verify-16-10-0-connector-access-readiness.sh)                   | PR16.10.0 verify gate                                                                                    |
+| Document / artifact                                                                                                  | Purpose                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [16_10_0_connector_access_readiness.md](./16_10_0_connector_access_readiness.md)                                     | PR16.10.0 product contract, safety boundary, verification, and PR17 handoff              |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                       | Provider-independent readiness model derived from existing safe connector setup evidence |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                     | Production-grade `/erp` access readiness UI and real-action routing                      |
+| [`scripts/verify-16-10-0-connector-access-readiness.sh`](../../scripts/verify-16-10-0-connector-access-readiness.sh) | PR16.10.0 verify gate                                                                    |
 
 ## PR16.10.1 connector source catalog
 
 PR16.10.1 makes `/erp` source selection read like a connector catalog rather than a provider list. Every source option exposes source type, transfer method, setup availability, and recommended use while live provider calls, credential readback, writeback, and runtime execution remain closed.
 
-| Document / artifact                                                                                                                   | Purpose                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_10_1_connector_source_catalog.md](./16_10_1_connector_source_catalog.md)                                                           | PR16.10.1 product contract, source catalog fields, safety boundary, and verification                      |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Connector source catalog model and setup availability contract                                            |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                             | `/erp` source cards, preview, and setup draft catalog visibility                                          |
-| [`scripts/verify-16-10-1-connector-source-catalog.sh`](../../scripts/verify-16-10-1-connector-source-catalog.sh)                       | PR16.10.1 verify gate                                                                                    |
+| Document / artifact                                                                                              | Purpose                                                                              |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [16_10_1_connector_source_catalog.md](./16_10_1_connector_source_catalog.md)                                     | PR16.10.1 product contract, source catalog fields, safety boundary, and verification |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                   | Connector source catalog model and setup availability contract                       |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                 | `/erp` source cards, preview, and setup draft catalog visibility                     |
+| [`scripts/verify-16-10-1-connector-source-catalog.sh`](../../scripts/verify-16-10-1-connector-source-catalog.sh) | PR16.10.1 verify gate                                                                |
 
 ## PR16.10.2 connector customer handoff checklist
 
 PR16.10.2 turns the selected `/erp` connector into a customer-facing access package. It shows source identity, transfer method, data scope, field contract, secure access, and preview path without opening provider calls, credential readback, source writeback, runtime execution, or raw payload exposure.
 
-| Document / artifact                                                                                                                   | Purpose                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_10_2_connector_customer_handoff_checklist.md](./16_10_2_connector_customer_handoff_checklist.md)                                   | PR16.10.2 product contract, customer handoff checklist, safety boundary, and verification                 |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Connector customer handoff model derived from safe setup evidence                                         |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                             | `/erp` selected connector customer access package UI                                                      |
-| [`scripts/verify-16-10-2-connector-customer-handoff-checklist.sh`](../../scripts/verify-16-10-2-connector-customer-handoff-checklist.sh) | PR16.10.2 verify gate                                                                                    |
+| Document / artifact                                                                                                                      | Purpose                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [16_10_2_connector_customer_handoff_checklist.md](./16_10_2_connector_customer_handoff_checklist.md)                                     | PR16.10.2 product contract, customer handoff checklist, safety boundary, and verification |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                           | Connector customer handoff model derived from safe setup evidence                         |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                         | `/erp` selected connector customer access package UI                                      |
+| [`scripts/verify-16-10-2-connector-customer-handoff-checklist.sh`](../../scripts/verify-16-10-2-connector-customer-handoff-checklist.sh) | PR16.10.2 verify gate                                                                     |
 
 ## PR16.10.3 connector go-live gap plan
 
 PR16.10.3 turns the selected `/erp` connector into an actionable go-live gap plan for work that can be completed before real customer API details arrive. It shows source/method, data ownership, field contract, secure access, preview validation, and customer confirmation gaps with owner, evidence, and next action copy while live provider calls, credential readback, writeback, and runtime execution remain closed.
 
-| Document / artifact                                                                                                                   | Purpose                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_10_3_connector_go_live_gap_plan.md](./16_10_3_connector_go_live_gap_plan.md)                                                       | PR16.10.3 product contract, go-live gap plan, safety boundary, and verification                           |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                         | Connector go-live gap plan model derived from safe setup evidence                                         |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                             | `/erp` selected connector go-live gap plan UI                                                             |
-| [`scripts/verify-16-10-3-connector-go-live-gap-plan.sh`](../../scripts/verify-16-10-3-connector-go-live-gap-plan.sh)                   | PR16.10.3 verify gate                                                                                    |
+| Document / artifact                                                                                                  | Purpose                                                                         |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [16_10_3_connector_go_live_gap_plan.md](./16_10_3_connector_go_live_gap_plan.md)                                     | PR16.10.3 product contract, go-live gap plan, safety boundary, and verification |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                       | Connector go-live gap plan model derived from safe setup evidence               |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                     | `/erp` selected connector go-live gap plan UI                                   |
+| [`scripts/verify-16-10-3-connector-go-live-gap-plan.sh`](../../scripts/verify-16-10-3-connector-go-live-gap-plan.sh) | PR16.10.3 verify gate                                                           |
 
 ## PR16.10.4 ERP connector journey simplification
 
 PR16.10.4 turns `/erp` from a dense connector control board into a simple connector setup journey. The selected connector view shows one primary journey card with source, readiness, next action, and ordered setup gaps, while technical evidence and tabs remain available behind an on-demand details panel.
 
-| Document / artifact                                                                                                                   | Purpose                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [16_10_4_erp_connector_journey_simplification.md](./16_10_4_erp_connector_journey_simplification.md)                                   | PR16.10.4 product contract, simplified journey UX, safety boundary, and verification                      |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                             | `/erp` selected connector journey UI and collapsed technical details panel                                |
-| [`scripts/verify-16-10-4-erp-connector-journey-simplification.sh`](../../scripts/verify-16-10-4-erp-connector-journey-simplification.sh) | PR16.10.4 verify gate                                                                                    |
+| Document / artifact                                                                                                                      | Purpose                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [16_10_4_erp_connector_journey_simplification.md](./16_10_4_erp_connector_journey_simplification.md)                                     | PR16.10.4 product contract, simplified journey UX, safety boundary, and verification |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                         | `/erp` selected connector journey UI and collapsed technical details panel           |
+| [`scripts/verify-16-10-4-erp-connector-journey-simplification.sh`](../../scripts/verify-16-10-4-erp-connector-journey-simplification.sh) | PR16.10.4 verify gate                                                                |
 
 ## PR16.10.6 ERP step-scoped connector journey
 
 PR16.10.6 keeps ERP connectors as the main product path and treats CSV / Excel as the first executable manual file connector lane. `/erp` now renders selected connectors through a six-step journey with one primary action per step, while existing technical evidence remains available through step-scoped advanced details and deep links.
 
-| Document / artifact                                                                                                                       | Purpose                                                                                                      |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [16_10_6_erp_step_scoped_connector_journey.md](./16_10_6_erp_step_scoped_connector_journey.md)                                             | PR16.10.6 product contract, step-scoped journey UX, safety boundary, and verification                        |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                 | `/erp` selected connector stepper, primary action binding, and deep-link-aware technical details              |
-| [`scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh`](../../scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh)         | PR16.10.6 verify gate                                                                                        |
+| Document / artifact                                                                                                                | Purpose                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [16_10_6_erp_step_scoped_connector_journey.md](./16_10_6_erp_step_scoped_connector_journey.md)                                     | PR16.10.6 product contract, step-scoped journey UX, safety boundary, and verification            |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                   | `/erp` selected connector stepper, primary action binding, and deep-link-aware technical details |
+| [`scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh`](../../scripts/verify-16-10-6-erp-step-scoped-connector-journey.sh) | PR16.10.6 verify gate                                                                            |
 
 ## PR16.10.8 CSV / Excel import contract
 
 PR16.10.8 makes CSV / Excel the first production-grade manual file lane in PULS DataSource Manager. It publishes scope-specific HR templates, accepts one or more filled files as an atomic import package, detects CSV delimiters, rejects unsafe Excel formulas and sensitive fields, logs each successful file ingest, produces safe Notification Center candidates, and hands staged dry-run batches to the existing preview flow. Canonical apply, provider calls, credential readback, raw file storage, and source writeback remain closed.
 
-| Document / artifact                                                                                                                        | Purpose                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| [16_10_8_csv_excel_import_contract.md](./16_10_8_csv_excel_import_contract.md)                                                             | PR16.10.8 HR import contract, UI/backend safety boundary, and verification                                    |
-| [`supabase/migrations/20260608100000_puls_integration_file_import_contract.sql`](../../supabase/migrations/20260608100000_puls_integration_file_import_contract.sql) | Metadata-only manifest table, atomic CSV/Excel package ingest RPC, and file import notification producer      |
-| [`supabase/migrations/20260608103000_puls_integration_file_import_package_contract.sql`](../../supabase/migrations/20260608103000_puls_integration_file_import_package_contract.sql) | Idempotent package-contract alignment for databases that already applied the first PR16.10.8 migration        |
-| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                            | Browser-side template, package parsing, delimiter, type, date, formula, null, and sensitive-header contract   |
-| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                              | DataSource Manager adapter support for CSV/Excel package upload, source ownership, and safe ingest handoff    |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                            | CSV/Excel import sheet with template set download, package validation result, staging CTA, and preview handoff |
-| [`scripts/verify-16-10-8-csv-excel-import-contract.sh`](../../scripts/verify-16-10-8-csv-excel-import-contract.sh)                         | PR16.10.8 verify gate                                                                                         |
+| Document / artifact                                                                                                                                                                  | Purpose                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| [16_10_8_csv_excel_import_contract.md](./16_10_8_csv_excel_import_contract.md)                                                                                                       | PR16.10.8 HR import contract, UI/backend safety boundary, and verification                                     |
+| [`supabase/migrations/20260608100000_puls_integration_file_import_contract.sql`](../../supabase/migrations/20260608100000_puls_integration_file_import_contract.sql)                 | Metadata-only manifest table, atomic CSV/Excel package ingest RPC, and file import notification producer       |
+| [`supabase/migrations/20260608103000_puls_integration_file_import_package_contract.sql`](../../supabase/migrations/20260608103000_puls_integration_file_import_package_contract.sql) | Idempotent package-contract alignment for databases that already applied the first PR16.10.8 migration         |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                                                                     | Browser-side template, package parsing, delimiter, type, date, formula, null, and sensitive-header contract    |
+| [`src/lib/data/setup/erp.ts`](../../src/lib/data/setup/erp.ts)                                                                                                                       | DataSource Manager adapter support for CSV/Excel package upload, source ownership, and safe ingest handoff     |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                                                                     | CSV/Excel import sheet with template set download, package validation result, staging CTA, and preview handoff |
+| [`scripts/verify-16-10-8-csv-excel-import-contract.sh`](../../scripts/verify-16-10-8-csv-excel-import-contract.sh)                                                                   | PR16.10.8 verify gate                                                                                          |
 
 ## PR16.10.9 runtime safety hardening
 
 PR16.10.9 closes production safety findings after PR16.10.8 without changing the DataSource Manager UI. It tightens the audit tenant boundary, makes new connector job notifications idempotent across job status changes without updating immutable ledger rows, requires active worker leases before completion or apply execution, blocks late verification success after credential revocation, and adds Vitest to CI.
 
-| Document / artifact                                                                                                                                | Purpose                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [16_10_9_runtime_safety_hardening.md](./16_10_9_runtime_safety_hardening.md)                                                                       | PR16.10.9 runtime safety contract, safety boundary, and verification                                         |
+| Document / artifact                                                                                                                                                                                    | Purpose                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| [16_10_9_runtime_safety_hardening.md](./16_10_9_runtime_safety_hardening.md)                                                                                                                           | PR16.10.9 runtime safety contract, safety boundary, and verification                                          |
 | [`supabase/migrations/20260608120000_puls_runtime_safety_notification_idempotency_hardening.sql`](../../supabase/migrations/20260608120000_puls_runtime_safety_notification_idempotency_hardening.sql) | Audit policy hardening, notification dedupe normalization, active lease guards, and revoke/verification guard |
-| [`supabase/migrations/20260608121000_puls_app_notification_dedupe_volatility_alignment.sql`](../../supabase/migrations/20260608121000_puls_app_notification_dedupe_volatility_alignment.sql) | Idempotent STABLE volatility alignment for the notification dedupe normalizer                                 |
-| [`src/lib/supabase.ts`](../../src/lib/supabase.ts)                                                                                                  | Production Supabase environment fail-fast                                                                   |
-| [`scripts/verify-16-10-9-runtime-safety-hardening.sh`](../../scripts/verify-16-10-9-runtime-safety-hardening.sh)                                    | PR16.10.9 verify gate                                                                                        |
+| [`supabase/migrations/20260608121000_puls_app_notification_dedupe_volatility_alignment.sql`](../../supabase/migrations/20260608121000_puls_app_notification_dedupe_volatility_alignment.sql)           | Idempotent STABLE volatility alignment for the notification dedupe normalizer                                 |
+| [`src/lib/supabase.ts`](../../src/lib/supabase.ts)                                                                                                                                                     | Production Supabase environment fail-fast                                                                     |
+| [`scripts/verify-16-10-9-runtime-safety-hardening.sh`](../../scripts/verify-16-10-9-runtime-safety-hardening.sh)                                                                                       | PR16.10.9 verify gate                                                                                         |
 
 ## PR16.10.10 DataSource operational hardening
 
 PR16.10.10 stabilizes DataSource Manager after the CSV / Excel import and runtime safety phases without changing the user journey. It enforces canonical package scope order on the server, replaces regex-based credential reference checks with deterministic parsing, shares tenant Notification Center realtime subscriptions, parses import packages sequentially, and extracts high-churn DataSource Manager sheets from the route.
 
-| Document / artifact                                                                                                                     | Purpose                                                                         |
-| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| [16_10_10_datasource_operational_hardening.md](./16_10_10_datasource_operational_hardening.md)                                         | PR16.10.10 product/backend/frontend contract, safety boundary, and verification |
+| Document / artifact                                                                                                                                                  | Purpose                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [16_10_10_datasource_operational_hardening.md](./16_10_10_datasource_operational_hardening.md)                                                                       | PR16.10.10 product/backend/frontend contract, safety boundary, and verification |
 | [`supabase/migrations/20260608130000_puls_datasource_operational_hardening.sql`](../../supabase/migrations/20260608130000_puls_datasource_operational_hardening.sql) | Credential reference parser and server-side file import package ordering guard  |
-| [`src/components/data-sources/FileImportSheet.tsx`](../../src/components/data-sources/FileImportSheet.tsx)                              | Extracted CSV / Excel import sheet presentation component                       |
-| [`src/components/data-sources/ProviderDraftSheet.tsx`](../../src/components/data-sources/ProviderDraftSheet.tsx)                        | Extracted provider draft sheet presentation component                           |
-| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                        | Sequential package parsing and canonical file import scope ranking              |
-| [`src/lib/data/app/notifications.ts`](../../src/lib/data/app/notifications.ts)                                                          | Shared tenant realtime subscription registry for Notification Center signals    |
-| [`scripts/verify-16-10-10-datasource-operational-hardening.sh`](../../scripts/verify-16-10-10-datasource-operational-hardening.sh)      | PR16.10.10 verify gate                                                          |
+| [`src/components/data-sources/FileImportSheet.tsx`](../../src/components/data-sources/FileImportSheet.tsx)                                                           | Extracted CSV / Excel import sheet presentation component                       |
+| [`src/components/data-sources/ProviderDraftSheet.tsx`](../../src/components/data-sources/ProviderDraftSheet.tsx)                                                     | Extracted provider draft sheet presentation component                           |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                                                     | Sequential package parsing and canonical file import scope ranking              |
+| [`src/lib/data/app/notifications.ts`](../../src/lib/data/app/notifications.ts)                                                                                       | Shared tenant realtime subscription registry for Notification Center signals    |
+| [`scripts/verify-16-10-10-datasource-operational-hardening.sh`](../../scripts/verify-16-10-10-datasource-operational-hardening.sh)                                   | PR16.10.10 verify gate                                                          |
 
 ## PR16.10.11 security and runtime truth hardening
 
 PR16.10.11 closes the remaining trust-surface findings before PR17. It removes the vulnerable SheetJS `xlsx` dependency while keeping XLSX imports on a maintained parser, makes real-data error fallback visibly distinct from normal demo/empty fallback, moves the connector worker loop to safe backoff with bounded jitter, adds service-role header redaction coverage, and brings high dependency audit plus CI-compatible Supabase schema audit into CI.
 
-| Document / artifact                                                                                                                         | Purpose                                                                                 |
-| ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [16_10_11_security_runtime_truth_hardening.md](./16_10_11_security_runtime_truth_hardening.md)                                               | PR16.10.11 product/runtime/CI contract, safety boundary, and verification               |
-| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                             | CSV / Excel parser contract using maintained ExcelJS XLSX parsing                       |
-| [`src/components/puls/DemoSourcePill.tsx`](../../src/components/puls/DemoSourcePill.tsx)                                                     | Shared demo indicator with explicit real-data error fallback warning                    |
-| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                                         | Connector worker backoff, jitter, and loggable service-role header redaction helpers    |
-| [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)                                                                                | High dependency audit and CI-secret-backed Supabase schema audit in the quality job     |
-| [`scripts/verify-16-10-11-security-runtime-truth-hardening.sh`](../../scripts/verify-16-10-11-security-runtime-truth-hardening.sh)          | PR16.10.11 verify gate                                                                  |
+| Document / artifact                                                                                                                | Purpose                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [16_10_11_security_runtime_truth_hardening.md](./16_10_11_security_runtime_truth_hardening.md)                                     | PR16.10.11 product/runtime/CI contract, safety boundary, and verification            |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                   | CSV / Excel parser contract using maintained ExcelJS XLSX parsing                    |
+| [`src/components/puls/DemoSourcePill.tsx`](../../src/components/puls/DemoSourcePill.tsx)                                           | Shared demo indicator with explicit real-data error fallback warning                 |
+| [`services/erp-connector/src/worker.ts`](../../services/erp-connector/src/worker.ts)                                               | Connector worker backoff, jitter, and loggable service-role header redaction helpers |
+| [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)                                                                       | High dependency audit and CI-secret-backed Supabase schema audit in the quality job  |
+| [`scripts/verify-16-10-11-security-runtime-truth-hardening.sh`](../../scripts/verify-16-10-11-security-runtime-truth-hardening.sh) | PR16.10.11 verify gate                                                               |
 
 ## PR16.10.12 DataSource Manager structure hardening
 
 PR16.10.12 keeps the DataSource Manager product journey unchanged while reducing the `/verikaynaklari` route from a god component into route orchestration plus focused presentation modules. Source inventory, technical details, and shared UI mapping now have explicit component boundaries and targeted tests.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [16_10_12_datasource_manager_structure.md](./16_10_12_datasource_manager_structure.md) | PR16.10.12 product/frontend structure contract, scope, and verification |
-| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx) | DataSource Manager route orchestration, data loading, mutations, and sheet wiring |
-| [`src/components/data-sources/DataSourceManagerSection.tsx`](../../src/components/data-sources/DataSourceManagerSection.tsx) | Source inventory and selected-source summary presentation |
-| [`src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx`](../../src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx) | Existing technical audit sheet isolated from route orchestration |
-| [`src/components/data-sources/dataSourceUi.tsx`](../../src/components/data-sources/dataSourceUi.tsx) | Shared DataSource Manager tab, tone, icon, and display helpers |
-| [`src/components/data-sources/dataSourceUi.test.tsx`](../../src/components/data-sources/dataSourceUi.test.tsx) | Helper regression coverage for journey mapping and display fallbacks |
-| [`scripts/verify-16-10-12-datasource-manager-structure.sh`](../../scripts/verify-16-10-12-datasource-manager-structure.sh) | PR16.10.12 verify gate |
+| Document / artifact                                                                                                                        | Purpose                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| [16_10_12_datasource_manager_structure.md](./16_10_12_datasource_manager_structure.md)                                                     | PR16.10.12 product/frontend structure contract, scope, and verification           |
+| [`src/routes/_app/verikaynaklari.tsx`](../../src/routes/_app/verikaynaklari.tsx)                                                           | DataSource Manager route orchestration, data loading, mutations, and sheet wiring |
+| [`src/components/data-sources/DataSourceManagerSection.tsx`](../../src/components/data-sources/DataSourceManagerSection.tsx)               | Source inventory and selected-source summary presentation                         |
+| [`src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx`](../../src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx) | Existing technical audit sheet isolated from route orchestration                  |
+| [`src/components/data-sources/dataSourceUi.tsx`](../../src/components/data-sources/dataSourceUi.tsx)                                       | Shared DataSource Manager tab, tone, icon, and display helpers                    |
+| [`src/components/data-sources/dataSourceUi.test.tsx`](../../src/components/data-sources/dataSourceUi.test.tsx)                             | Helper regression coverage for journey mapping and display fallbacks              |
+| [`scripts/verify-16-10-12-datasource-manager-structure.sh`](../../scripts/verify-16-10-12-datasource-manager-structure.sh)                 | PR16.10.12 verify gate                                                            |
 
 ## PR16.10.13 DataSource technical details split
 
 PR16.10.13 finishes the DataSource Manager structure cleanup by turning the isolated technical audit sheet into a shell plus focused tab and section modules. Product behavior, connector execution, canonical writes, credentials, notifications, and visible copy remain unchanged.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [16_10_13_datasource_technical_details_split.md](./16_10_13_datasource_technical_details_split.md) | PR16.10.13 frontend structure contract, scope, and verification |
-| [`src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx`](../../src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx) | Technical sheet shell and tab router |
-| [`src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx`](../../src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx) | Preview/apply tab composition |
-| [`scripts/verify-16-10-13-datasource-technical-details-split.sh`](../../scripts/verify-16-10-13-datasource-technical-details-split.sh) | PR16.10.13 verify gate |
+| Document / artifact                                                                                                                        | Purpose                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| [16_10_13_datasource_technical_details_split.md](./16_10_13_datasource_technical_details_split.md)                                         | PR16.10.13 frontend structure contract, scope, and verification |
+| [`src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx`](../../src/components/data-sources/DataSourceTechnicalDetailsSheet.tsx) | Technical sheet shell and tab router                            |
+| [`src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx`](../../src/components/data-sources/DataSourcePreviewApplyTabPanel.tsx)   | Preview/apply tab composition                                   |
+| [`scripts/verify-16-10-13-datasource-technical-details-split.sh`](../../scripts/verify-16-10-13-datasource-technical-details-split.sh)     | PR16.10.13 verify gate                                          |
 
 ## PR16.10.14 Workflow audit and policy hardening
 
 PR16.10.14 closes the remaining pre-PR17 workflow trust-surface gaps without changing the DataSource Manager journey. Leave, expense, and approval rows now emit metadata-only tenant-bound audit evidence, while `/masraf` receipt policy uses the category contract and the server RPC blocks receipt-required submissions until document upload exists.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [16_10_14_workflow_audit_policy_hardening.md](./16_10_14_workflow_audit_policy_hardening.md) | PR16.10.14 workflow audit/policy contract, safety boundary, and verification |
-| [`supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql`](../../supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql) | Metadata-only workflow audit triggers and receipt-required server guard |
-| [`scripts/verify-16-10-14-workflow-audit-policy-hardening.sh`](../../scripts/verify-16-10-14-workflow-audit-policy-hardening.sh) | PR16.10.14 verify gate |
+| Document / artifact                                                                                                                                                | Purpose                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| [16_10_14_workflow_audit_policy_hardening.md](./16_10_14_workflow_audit_policy_hardening.md)                                                                       | PR16.10.14 workflow audit/policy contract, safety boundary, and verification |
+| [`supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql`](../../supabase/migrations/20260609070000_puls_workflow_audit_policy_hardening.sql) | Metadata-only workflow audit triggers and receipt-required server guard      |
+| [`scripts/verify-16-10-14-workflow-audit-policy-hardening.sh`](../../scripts/verify-16-10-14-workflow-audit-policy-hardening.sh)                                   | PR16.10.14 verify gate                                                       |
 
 ## PR16.10.15 Route boundary and HR cache hardening
 
 PR16.10.15 closes the next pre-PR17 reliability debts: page-level route errors no longer take down the authenticated shell, and department/position mutations refresh dependent HR dashboards and employee readiness views.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [16_10_15_route_boundary_hr_cache_hardening.md](./16_10_15_route_boundary_hr_cache_hardening.md) | PR16.10.15 route boundary/cache contract, safety boundary, and verification |
-| [`src/lib/data/query-invalidation.ts`](../../src/lib/data/query-invalidation.ts) | Shared org-structure cache invalidation helper |
-| [`scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh`](../../scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh) | PR16.10.15 verify gate |
+| Document / artifact                                                                                                                  | Purpose                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| [16_10_15_route_boundary_hr_cache_hardening.md](./16_10_15_route_boundary_hr_cache_hardening.md)                                     | PR16.10.15 route boundary/cache contract, safety boundary, and verification |
+| [`src/lib/data/query-invalidation.ts`](../../src/lib/data/query-invalidation.ts)                                                     | Shared org-structure cache invalidation helper                              |
+| [`scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh`](../../scripts/verify-16-10-15-route-boundary-hr-cache-hardening.sh) | PR16.10.15 verify gate                                                      |
 
 ## PR16.10.16 AI Coach action truth hardening
 
 PR16.10.16 removes the non-durable AI Coach "notify me" promise before PR17 and replaces the readiness-heavy AI page with a compact chat-first teaser. The `/ai-koc` surface stays read-only and does not claim notification signup success without a backend notification/subscription contract.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [16_10_16_ai_coach_action_truth_hardening.md](./16_10_16_ai_coach_action_truth_hardening.md) | PR16.10.16 product-truth contract, safety boundary, and verification |
-| [`src/routes/_app/ai-koc.tsx`](../../src/routes/_app/ai-koc.tsx) | Chat-first AI Coach teaser with disabled prompts/composer and real navigation CTA |
-| [`scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh`](../../scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh) | PR16.10.16 verify gate |
+| Document / artifact                                                                                                              | Purpose                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [16_10_16_ai_coach_action_truth_hardening.md](./16_10_16_ai_coach_action_truth_hardening.md)                                     | PR16.10.16 product-truth contract, safety boundary, and verification              |
+| [`src/routes/_app/ai-koc.tsx`](../../src/routes/_app/ai-koc.tsx)                                                                 | Chat-first AI Coach teaser with disabled prompts/composer and real navigation CTA |
+| [`scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh`](../../scripts/verify-16-10-16-ai-coach-action-truth-hardening.sh) | PR16.10.16 verify gate                                                            |
 
 ## PR16.10.17-19 Pre-PR17 hardening closure
 
 PR16.10.17-19 closes the final audit items before PR17: stale leave/expense setup selections are blocked, performance cycles get a server-enforced lifecycle, persona switch audit writes to one deterministic target, and file import warns on formula-like text while providing safe CSV export sanitization.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [16_10_17_18_19_pre_pr17_hardening.md](./16_10_17_18_19_pre_pr17_hardening.md) | PR16.10.17-19 scope, safety boundary, and acceptance |
-| [`supabase/migrations/20260609100000_puls_performance_cycle_lifecycle_hardening.sql`](../../supabase/migrations/20260609100000_puls_performance_cycle_lifecycle_hardening.sql) | Server-enforced performance cycle lifecycle and active-cycle guard |
-| [`src/lib/data/setup/request-creation-readiness.ts`](../../src/lib/data/setup/request-creation-readiness.ts) | Leave and expense setup readiness blockers for stale selected targets |
-| [`src/lib/persona.ts`](../../src/lib/persona.ts) | Deterministic persona switch audit target |
-| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts) | Formula-like text warning and CSV export sanitizer |
-| [`scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh`](../../scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh) | PR16.10.17-19 verify gate |
+| Document / artifact                                                                                                                                                            | Purpose                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| [16_10_17_18_19_pre_pr17_hardening.md](./16_10_17_18_19_pre_pr17_hardening.md)                                                                                                 | PR16.10.17-19 scope, safety boundary, and acceptance                  |
+| [`supabase/migrations/20260609100000_puls_performance_cycle_lifecycle_hardening.sql`](../../supabase/migrations/20260609100000_puls_performance_cycle_lifecycle_hardening.sql) | Server-enforced performance cycle lifecycle and active-cycle guard    |
+| [`src/lib/data/setup/request-creation-readiness.ts`](../../src/lib/data/setup/request-creation-readiness.ts)                                                                   | Leave and expense setup readiness blockers for stale selected targets |
+| [`src/lib/persona.ts`](../../src/lib/persona.ts)                                                                                                                               | Deterministic persona switch audit target                             |
+| [`src/lib/data/setup/file-import-contract.ts`](../../src/lib/data/setup/file-import-contract.ts)                                                                               | Formula-like text warning and CSV export sanitizer                    |
+| [`scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh`](../../scripts/verify-16-10-17-18-19-pre-pr17-hardening.sh)                                                             | PR16.10.17-19 verify gate                                             |
 
 ## PR16.10.20 Pre-PR17 CI gate
 
 PR16.10.20 moves the PR16.10.13-19 hardening checks from manual discipline into CI and adds a read-only audit query for tenants that may already have multiple active performance cycles before the lifecycle unique index can be guaranteed.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [16_10_20_pre_pr17_ci_gate.md](./16_10_20_pre_pr17_ci_gate.md) | PR16.10.20 CI gate and cleanup-readiness contract |
-| [`scripts/verify-pre-pr17.sh`](../../scripts/verify-pre-pr17.sh) | Aggregate verify gate for PR16.10.13-20 |
+| Document / artifact                                                                                                                | Purpose                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| [16_10_20_pre_pr17_ci_gate.md](./16_10_20_pre_pr17_ci_gate.md)                                                                     | PR16.10.20 CI gate and cleanup-readiness contract        |
+| [`scripts/verify-pre-pr17.sh`](../../scripts/verify-pre-pr17.sh)                                                                   | Aggregate verify gate for PR16.10.13-20                  |
 | [`docs/data/16_10_20_performance_active_cycle_duplicate_audit.sql`](../data/16_10_20_performance_active_cycle_duplicate_audit.sql) | Read-only duplicate active performance cycle audit query |
-| [`scripts/verify-16-10-20-pre-pr17-ci-gate.sh`](../../scripts/verify-16-10-20-pre-pr17-ci-gate.sh) | PR16.10.20 verify gate |
+| [`scripts/verify-16-10-20-pre-pr17-ci-gate.sh`](../../scripts/verify-16-10-20-pre-pr17-ci-gate.sh)                                 | PR16.10.20 verify gate                                   |
 
 ## PR17.0 Product reality audit & closed-loop roadmap
 
 PR17.0 is the entry-point decision document for PR17. It audits all 19 product routes for the full closed loop (action → backend → audit → notification → AI context), records the risk register, and proposes the PR17.1–17.4 roadmap. Key finding: the backend workflow engine and the notification/AI-context platforms are both real but **not wired together** — the highest-ROI PR17 work is connecting existing infrastructure, starting with an HR workflow notification taxonomy/contract.
 
-| Document | Purpose |
-| --- | --- |
-| [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) | Page-by-page reality audit, risk register, PR17.1–17.4 roadmap, first-5 actions, product decisions |
-| [`docs/data/16_10_20_performance_active_cycle_duplicate_audit.sql`](../data/16_10_20_performance_active_cycle_duplicate_audit.sql) | Referenced data-hygiene query for the PR17.0.x cleanup step |
+| Document                                                                                                                           | Purpose                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [17_0_product_reality_audit.md](./17_0_product_reality_audit.md)                                                                   | Page-by-page reality audit, risk register, PR17.1–17.4 roadmap, first-5 actions, product decisions |
+| [`docs/data/16_10_20_performance_active_cycle_duplicate_audit.sql`](../data/16_10_20_performance_active_cycle_duplicate_audit.sql) | Referenced data-hygiene query for the PR17.0.x cleanup step                                        |
 
 > Audit document — no verify script (product decision/roadmap, not a code contract).
 
@@ -968,11 +968,11 @@ PR17.0 is the entry-point decision document for PR17. It audits all 19 product r
 
 PR17.1A starts the Core HR closed-loop series by adding safe row-level audit triggers for the existing mutable org and performance records. It keeps the product surface unchanged while making department, position, employee, and performance-cycle changes visible in `puls_audit.audit_logs` through metadata-only payloads.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_1_a_core_hr_audit_foundation.md](./17_1_a_core_hr_audit_foundation.md) | PR17.1A scope, metadata contract, non-goals, verification |
-| [`supabase/migrations/20260609120000_puls_core_hr_audit_foundation.sql`](../../supabase/migrations/20260609120000_puls_core_hr_audit_foundation.sql) | Core HR and performance row audit trigger migration |
-| [`scripts/verify-17-1-a-core-hr-audit-foundation.sh`](../../scripts/verify-17-1-a-core-hr-audit-foundation.sh) | PR17.1A verify gate |
+| Document / artifact                                                                                                                                  | Purpose                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [17_1_a_core_hr_audit_foundation.md](./17_1_a_core_hr_audit_foundation.md)                                                                           | PR17.1A scope, metadata contract, non-goals, verification |
+| [`supabase/migrations/20260609120000_puls_core_hr_audit_foundation.sql`](../../supabase/migrations/20260609120000_puls_core_hr_audit_foundation.sql) | Core HR and performance row audit trigger migration       |
+| [`scripts/verify-17-1-a-core-hr-audit-foundation.sh`](../../scripts/verify-17-1-a-core-hr-audit-foundation.sh)                                       | PR17.1A verify gate                                       |
 
 Verify: [`../../scripts/verify-17-1-a-core-hr-audit-foundation.sh`](../../scripts/verify-17-1-a-core-hr-audit-foundation.sh)
 
@@ -980,11 +980,11 @@ Verify: [`../../scripts/verify-17-1-a-core-hr-audit-foundation.sh`](../../script
 
 PR17.1B adds safe soft lifecycle actions for PULS-owned departments and positions. It keeps imported org records read-only, blocks unsafe deactivate/restore cases, and keeps the UI compact with status filtering plus one lifecycle action in the existing edit sheet.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_1_b_core_org_lifecycle.md](./17_1_b_core_org_lifecycle.md) | PR17.1B scope, product contract, non-goals, verification |
-| [`supabase/migrations/20260609130000_puls_core_org_lifecycle_hardening.sql`](../../supabase/migrations/20260609130000_puls_core_org_lifecycle_hardening.sql) | Department and position lifecycle RPC migration |
-| [`scripts/verify-17-1-b-core-org-lifecycle.sh`](../../scripts/verify-17-1-b-core-org-lifecycle.sh) | PR17.1B verify gate |
+| Document / artifact                                                                                                                                          | Purpose                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| [17_1_b_core_org_lifecycle.md](./17_1_b_core_org_lifecycle.md)                                                                                               | PR17.1B scope, product contract, non-goals, verification |
+| [`supabase/migrations/20260609130000_puls_core_org_lifecycle_hardening.sql`](../../supabase/migrations/20260609130000_puls_core_org_lifecycle_hardening.sql) | Department and position lifecycle RPC migration          |
+| [`scripts/verify-17-1-b-core-org-lifecycle.sh`](../../scripts/verify-17-1-b-core-org-lifecycle.sh)                                                           | PR17.1B verify gate                                      |
 
 Verify: [`../../scripts/verify-17-1-b-core-org-lifecycle.sh`](../../scripts/verify-17-1-b-core-org-lifecycle.sh)
 
@@ -992,11 +992,11 @@ Verify: [`../../scripts/verify-17-1-b-core-org-lifecycle.sh`](../../scripts/veri
 
 PR17.1C lets admins update PULS-owned active employee assignments from the existing `/calisanlar` detail sheet. The server RPC validates tenant/admin authority, source ownership, active references, department-position compatibility, reporting cycles, and writes metadata-only audit evidence while imported employees remain read-only.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_1_c_employee_assignment_edit.md](./17_1_c_employee_assignment_edit.md) | PR17.1C scope, product contract, non-goals, verification |
-| [`supabase/migrations/20260609140000_puls_core_employee_assignment_edit.sql`](../../supabase/migrations/20260609140000_puls_core_employee_assignment_edit.sql) | Employee assignment edit RPC migration |
-| [`scripts/verify-17-1-c-employee-assignment-edit.sh`](../../scripts/verify-17-1-c-employee-assignment-edit.sh) | PR17.1C verify gate |
+| Document / artifact                                                                                                                                            | Purpose                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| [17_1_c_employee_assignment_edit.md](./17_1_c_employee_assignment_edit.md)                                                                                     | PR17.1C scope, product contract, non-goals, verification |
+| [`supabase/migrations/20260609140000_puls_core_employee_assignment_edit.sql`](../../supabase/migrations/20260609140000_puls_core_employee_assignment_edit.sql) | Employee assignment edit RPC migration                   |
+| [`scripts/verify-17-1-c-employee-assignment-edit.sh`](../../scripts/verify-17-1-c-employee-assignment-edit.sh)                                                 | PR17.1C verify gate                                      |
 
 Verify: [`../../scripts/verify-17-1-c-employee-assignment-edit.sh`](../../scripts/verify-17-1-c-employee-assignment-edit.sh)
 
@@ -1004,11 +1004,11 @@ Verify: [`../../scripts/verify-17-1-c-employee-assignment-edit.sh`](../../script
 
 PR17.1D opens the smallest useful `/sirket-kurulum` write loop: setup admins can update the company display name, sector, default language, and timezone through one audited RPC while tax ID, plan, package, connector, and readiness data remain read-only.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_1_d_company_profile_edit.md](./17_1_d_company_profile_edit.md) | PR17.1D scope, product contract, non-goals, verification |
-| [`supabase/migrations/20260609150000_puls_core_company_profile_edit.sql`](../../supabase/migrations/20260609150000_puls_core_company_profile_edit.sql) | Company profile edit RPC migration |
-| [`scripts/verify-17-1-d-company-profile-edit.sh`](../../scripts/verify-17-1-d-company-profile-edit.sh) | PR17.1D verify gate |
+| Document / artifact                                                                                                                                    | Purpose                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| [17_1_d_company_profile_edit.md](./17_1_d_company_profile_edit.md)                                                                                     | PR17.1D scope, product contract, non-goals, verification |
+| [`supabase/migrations/20260609150000_puls_core_company_profile_edit.sql`](../../supabase/migrations/20260609150000_puls_core_company_profile_edit.sql) | Company profile edit RPC migration                       |
+| [`scripts/verify-17-1-d-company-profile-edit.sh`](../../scripts/verify-17-1-d-company-profile-edit.sh)                                                 | PR17.1D verify gate                                      |
 
 Verify: [`../../scripts/verify-17-1-d-company-profile-edit.sh`](../../scripts/verify-17-1-d-company-profile-edit.sh)
 
@@ -1016,11 +1016,11 @@ Verify: [`../../scripts/verify-17-1-d-company-profile-edit.sh`](../../scripts/ve
 
 PR17.2A starts the Workflow Closed Loop track by wiring leave, expense, and approval records into Notification Center through the existing service-role producer orchestrator. It does not add Railway code, external delivery, provider calls, raw payload readback, or browser-side ledger writes.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_2_a_workflow_notification_producers.md](./17_2_a_workflow_notification_producers.md) | PR17.2A event taxonomy, producer boundary, safe summary contract, non-goals |
-| [`supabase/migrations/20260609160000_puls_workflow_notification_producers.sql`](../../supabase/migrations/20260609160000_puls_workflow_notification_producers.sql) | Workflow notification producer migration |
-| [`scripts/verify-17-2-a-workflow-notification-producers.sh`](../../scripts/verify-17-2-a-workflow-notification-producers.sh) | PR17.2A verify gate |
+| Document / artifact                                                                                                                                                | Purpose                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| [17_2_a_workflow_notification_producers.md](./17_2_a_workflow_notification_producers.md)                                                                           | PR17.2A event taxonomy, producer boundary, safe summary contract, non-goals |
+| [`supabase/migrations/20260609160000_puls_workflow_notification_producers.sql`](../../supabase/migrations/20260609160000_puls_workflow_notification_producers.sql) | Workflow notification producer migration                                    |
+| [`scripts/verify-17-2-a-workflow-notification-producers.sh`](../../scripts/verify-17-2-a-workflow-notification-producers.sh)                                       | PR17.2A verify gate                                                         |
 
 Verify: [`../../scripts/verify-17-2-a-workflow-notification-producers.sh`](../../scripts/verify-17-2-a-workflow-notification-producers.sh)
 
@@ -1028,11 +1028,11 @@ Verify: [`../../scripts/verify-17-2-a-workflow-notification-producers.sh`](../..
 
 PR17.2B adds the executable rollback-only proof for the workflow closed loop. The SQL smoke creates leave and expense requests through the existing authenticated RPCs, runs the service-role notification producer, completes approval decisions, checks requester/approver notifications, verifies audit evidence, and rolls the whole transaction back.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_2_b_workflow_closed_loop_proof.md](./17_2_b_workflow_closed_loop_proof.md) | PR17.2B product contract, runtime boundary, non-goals, smoke usage |
-| [`docs/data/17_2_b_workflow_closed_loop_smoke.sql`](../data/17_2_b_workflow_closed_loop_smoke.sql) | Optional rollback-only psql smoke for local or remote development databases |
-| [`scripts/verify-17-2-b-workflow-closed-loop-proof.sh`](../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh) | PR17.2B verify gate |
+| Document / artifact                                                                                                | Purpose                                                                     |
+| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| [17_2_b_workflow_closed_loop_proof.md](./17_2_b_workflow_closed_loop_proof.md)                                     | PR17.2B product contract, runtime boundary, non-goals, smoke usage          |
+| [`docs/data/17_2_b_workflow_closed_loop_smoke.sql`](../data/17_2_b_workflow_closed_loop_smoke.sql)                 | Optional rollback-only psql smoke for local or remote development databases |
+| [`scripts/verify-17-2-b-workflow-closed-loop-proof.sh`](../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh) | PR17.2B verify gate                                                         |
 
 Verify: [`../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh`](../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh)
 
@@ -1040,10 +1040,10 @@ Verify: [`../../scripts/verify-17-2-b-workflow-closed-loop-proof.sh`](../../scri
 
 PR17.2C connects the existing in-app notification preference RPCs to `/ayarlar`. The notification settings sheet now lets users manage HR workflow and data source notification preferences without adding new producers, external delivery, Railway code, or database migrations.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_2_c_settings_notification_preferences.md](./17_2_c_settings_notification_preferences.md) | PR17.2C product contract, runtime boundary, non-goals, verification |
-| [`scripts/verify-17-2-c-settings-notification-preferences.sh`](../../scripts/verify-17-2-c-settings-notification-preferences.sh) | PR17.2C verify gate |
+| Document / artifact                                                                                                              | Purpose                                                             |
+| -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [17_2_c_settings_notification_preferences.md](./17_2_c_settings_notification_preferences.md)                                     | PR17.2C product contract, runtime boundary, non-goals, verification |
+| [`scripts/verify-17-2-c-settings-notification-preferences.sh`](../../scripts/verify-17-2-c-settings-notification-preferences.sh) | PR17.2C verify gate                                                 |
 
 Verify: [`../../scripts/verify-17-2-c-settings-notification-preferences.sh`](../../scripts/verify-17-2-c-settings-notification-preferences.sh)
 
@@ -1051,12 +1051,12 @@ Verify: [`../../scripts/verify-17-2-c-settings-notification-preferences.sh`](../
 
 PR17.2D closes the R11 connector-dependency gap by emitting live leave and expense workflow notifications from database workflow events. The generic app notification emitter remains service-role only; a workflow-only internal emitter plus metadata-only triggers deliver approval/requester notifications in the same transaction as the workflow mutation.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_2_d_workflow_notification_dispatch_boundary.md](./17_2_d_workflow_notification_dispatch_boundary.md) | PR17.2D product contract, runtime boundary, non-goals, verification |
-| [`supabase/migrations/20260610100000_puls_workflow_notification_dispatch_boundary.sql`](../../supabase/migrations/20260610100000_puls_workflow_notification_dispatch_boundary.sql) | Connector-independent workflow notification dispatch migration |
-| [`scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../scripts/verify-17-2-d-workflow-notification-dispatch.sh) | PR17.2D verify gate |
-| [`scripts/verify-pr17.sh`](../../scripts/verify-pr17.sh) | Aggregate PR17 verify gate wired into CI |
+| Document / artifact                                                                                                                                                                | Purpose                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [17_2_d_workflow_notification_dispatch_boundary.md](./17_2_d_workflow_notification_dispatch_boundary.md)                                                                           | PR17.2D product contract, runtime boundary, non-goals, verification |
+| [`supabase/migrations/20260610100000_puls_workflow_notification_dispatch_boundary.sql`](../../supabase/migrations/20260610100000_puls_workflow_notification_dispatch_boundary.sql) | Connector-independent workflow notification dispatch migration      |
+| [`scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../scripts/verify-17-2-d-workflow-notification-dispatch.sh)                                                         | PR17.2D verify gate                                                 |
+| [`scripts/verify-pr17.sh`](../../scripts/verify-pr17.sh)                                                                                                                           | Aggregate PR17 verify gate wired into CI                            |
 
 Verify: [`../../scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../scripts/verify-17-2-d-workflow-notification-dispatch.sh)
 
@@ -1064,11 +1064,11 @@ Verify: [`../../scripts/verify-17-2-d-workflow-notification-dispatch.sh`](../../
 
 PR17.2E turns the planned workflow e2e/reconcile guard into a rollback-only database-boundary proof. The smoke creates leave and expense workflow records through the browser-facing RPCs, observes live trigger notifications before producer execution, then runs the service-role producer as reconcile/backfill and asserts that no duplicate notification rows are inserted.
 
-| Document / artifact | Purpose |
-| --- | --- |
-| [17_2_e_workflow_e2e_reconcile_contract.md](./17_2_e_workflow_e2e_reconcile_contract.md) | PR17.2E product contract, reconcile boundary, non-goals, smoke usage |
-| [`docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql`](../data/17_2_e_workflow_e2e_reconcile_smoke.sql) | Optional rollback-only psql smoke for local or remote development databases |
-| [`scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh) | PR17.2E verify gate wired into the aggregate PR17 verifier |
+| Document / artifact                                                                                        | Purpose                                                                     |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [17_2_e_workflow_e2e_reconcile_contract.md](./17_2_e_workflow_e2e_reconcile_contract.md)                   | PR17.2E product contract, reconcile boundary, non-goals, smoke usage        |
+| [`docs/data/17_2_e_workflow_e2e_reconcile_smoke.sql`](../data/17_2_e_workflow_e2e_reconcile_smoke.sql)     | Optional rollback-only psql smoke for local or remote development databases |
+| [`scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh) | PR17.2E verify gate wired into the aggregate PR17 verifier                  |
 
 Verify: [`../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh)
 
@@ -1076,24 +1076,26 @@ Verify: [`../../scripts/verify-17-2-e-workflow-e2e-reconcile.sh`](../../scripts/
 
 PR17.2F is split so the evidence trust boundary lands before browser workflow changes.
 
-| Slice | Purpose |
-| --- | --- |
-| [PR17.2F Workflow Evidence Upload Foundation](./17_2_f_workflow_evidence_upload_foundation.md) | Shared contract for workflow evidence upload, split into backend boundary and product flow slices. |
-| PR17.2F1 Backend Boundary | Private storage bucket, staging upload table, intent/finalize RPCs, domain metadata RLS hardening, contract evidence attach, and metadata-only audit. |
-| PR17.2F2 Product Flow | Leave/expense/contract upload UI, submit-with-evidence RPCs, compact file chips, and required-evidence server enforcement. |
+| Slice                                                                                          | Purpose                                                                                                                                               |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [PR17.2F Workflow Evidence Upload Foundation](./17_2_f_workflow_evidence_upload_foundation.md) | Shared contract for workflow evidence upload, split into backend boundary and product flow slices.                                                    |
+| PR17.2F1 Backend Boundary                                                                      | Private storage bucket, staging upload table, intent/finalize RPCs, domain metadata RLS hardening, contract evidence attach, and metadata-only audit. |
+| [PR17.2F2 Product Flow](./17_2_f2_workflow_evidence_product_flow.md)                           | Leave/expense/contract upload UI, submit-with-evidence RPCs, compact file chips, and required-evidence server enforcement.                            |
+
+Verify: [`../../scripts/verify-17-2-f2-workflow-evidence-product-flow.sh`](../../scripts/verify-17-2-f2-workflow-evidence-product-flow.sh)
 
 ## PR17.2 planned follow-ups
 
 PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/reconcile guard. It still does not complete the workflow product surface: document upload, OCR/human review, richer browser journeys, and AI context feed remain intentionally separate slices.
 
-| Planned slice | Purpose |
-| --- | --- |
-| PR17.2F1 Evidence Upload Backend Boundary | Open the storage/RLS/RPC/audit foundation without changing visible forms. |
-| PR17.2F2 Evidence Upload Product Flow | Bind the backend foundation to leave, expense, and contract UI flows. |
-| PR17.2G OCR & Human Review Evidence | Add OCR/extraction for expense receipts as safe evidence with confidence, human review, audit, and no automatic canonical write without approval. |
-| PR17.4 AI context feed handoff | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant. |
+| Planned slice                             | Purpose                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR17.2F1 Evidence Upload Backend Boundary | Completed storage/RLS/RPC/audit foundation without changing visible forms.                                                                        |
+| PR17.2F2 Evidence Upload Product Flow     | Completed leave, expense, and contract upload UI flows against the backend foundation.                                                            |
+| PR17.2G OCR & Human Review Evidence       | Add OCR/extraction for expense receipts as safe evidence with confidence, human review, audit, and no automatic canonical write without approval. |
+| PR17.4 AI context feed handoff            | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant.               |
 
-Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 8.
+Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 9.
 
 ## Related packs
 

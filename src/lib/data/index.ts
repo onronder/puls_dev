@@ -508,6 +508,7 @@ export {
 
 export {
   createLeaveRequest,
+  createLeaveRequestWithEvidence,
   parseCreateLeaveRequestResult,
   type CreateLeaveRequestPayload,
   type CreateLeaveRequestResult,
@@ -521,6 +522,7 @@ export {
 
 export {
   createExpenseClaim,
+  createExpenseClaimWithEvidence,
   type CreateExpenseClaimPayload,
   type CreateExpenseClaimResult,
 } from '#/lib/data/expense/claims'
@@ -531,6 +533,17 @@ export {
   type DecideApprovalRequestPayload,
   type DecideApprovalRequestResult,
 } from '#/lib/data/workflow/approvals'
+
+export {
+  attachContractFileEvidence,
+  computeWorkflowEvidenceSha256,
+  getWorkflowEvidenceFilePolicy,
+  uploadWorkflowEvidenceFile,
+  validateWorkflowEvidenceFile,
+  type WorkflowEvidenceDomain,
+  type WorkflowEvidenceFilePolicy,
+  type WorkflowEvidenceUpload,
+} from '#/lib/data/workflow/evidence'
 
 export {
   buildApprovalPolicyBindingInfo,
@@ -589,7 +602,10 @@ export {
   mapContractRiskStatus,
   mapContractRow,
   mapContractSignatureStatus,
+  type ContractEvidenceSummary,
+  type ContractItem,
   type ContractsOverview,
+  type ContractsOverviewWithEvidence,
   type ContractRowInput,
   type MapContractRiskStatusInput,
   type MapContractRowOptions,

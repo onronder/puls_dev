@@ -1,6 +1,6 @@
 # PR17.2F Workflow Evidence Upload Foundation
 
-> **Status:** PR17.2 planned implementation split.
+> **Status:** PR17.2F1 backend boundary complete; PR17.2F2 product flow complete; PR17.2G OCR/human review remains separate.
 > **Decision:** PR17.2F is split into F1 and F2 so the storage/RLS/RPC trust boundary lands before browser form work.
 
 PR17.2E proves the leave and expense workflow notification loop at the database boundary. PR17.2F opens the next product edge: evidence files for leave requests, expense receipts, and contract documents. This is not OCR, AI extraction, e-signature, external delivery, or automatic canonical writeback.
@@ -44,6 +44,7 @@ F2 binds the foundation to product workflows:
 5. Contract UI opens admin upload and authorized viewing against the F1 contract evidence RPC.
 6. Browser form states stay compact: file chip, upload status, remove-before-submit, one primary CTA.
 7. Notification dispatch dedupe keys and PR17.2E smoke invariants remain unchanged.
+8. No OCR, scan, extraction, antivirus, AI context feed, notification summary enrichment, public URL, or server-verified hash claim is introduced.
 
 ## Security and Honesty Rules
 
@@ -59,11 +60,11 @@ F2 binds the foundation to product workflows:
 
 ## Accepted File Policy for F1
 
-| Domain | MIME types | Max size | Notes |
-| --- | --- | --- | --- |
-| Leave | `application/pdf`, `image/png`, `image/jpeg` | 10 MB | Evidence only; no OCR. |
-| Expense | `application/pdf`, `image/png`, `image/jpeg` | 10 MB | Receipt OCR deferred to PR17.2G. |
-| Contract | `application/pdf` | 15 MB | PDF only in F1; DOCX/e-signature remains future scope. |
+| Domain   | MIME types                                   | Max size | Notes                                                  |
+| -------- | -------------------------------------------- | -------- | ------------------------------------------------------ |
+| Leave    | `application/pdf`, `image/png`, `image/jpeg` | 10 MB    | Evidence only; no OCR.                                 |
+| Expense  | `application/pdf`, `image/png`, `image/jpeg` | 10 MB    | Receipt OCR deferred to PR17.2G.                       |
+| Contract | `application/pdf`                            | 15 MB    | PDF only in F1; DOCX/e-signature remains future scope. |
 
 ## Acceptance Criteria
 
