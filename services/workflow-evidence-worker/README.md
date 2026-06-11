@@ -9,7 +9,8 @@ The worker can:
 - read attached `expense_receipts` metadata through Supabase REST,
 - download the private `workflow-evidence` object with the service-role key,
 - compute a server-side SHA-256 content hash,
-- complete the G2A RPC contract with a disabled/mock provider result.
+- run a zero-network PDF text-layer extraction when `PULS_WORKFLOW_EVIDENCE_PROVIDER_CLASS=pdf_text`,
+- complete the G2A RPC contract with a disabled/mock/pdf_text provider result.
 
 The worker does not:
 
@@ -21,3 +22,5 @@ The worker does not:
 - expose service-role keys in health or loggable header helpers.
 
 Production enqueue and provider selection remain blocked until later PR17.2G gates add tenant-level OCR enablement, quotas, cost controls, and KVKK/GDPR/provider decisions.
+
+The `pdf_text` route is a local free-route benchmark path only. It does not perform image OCR and does not send document bytes or text to any vendor.

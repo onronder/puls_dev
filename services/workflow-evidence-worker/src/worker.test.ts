@@ -242,4 +242,82 @@ describe('workflow evidence worker contract', () => {
     })
     expect(JSON.stringify(completion?.args)).not.toContain('tenant-1/expense/evidence.pdf')
   })
+
+  it('runs pdf_text extraction locally without external provider calls', async () => {
+    const config = resolveWorkflowEvidenceWorkerConfig({
+      ...configuredEnv,
+      PULS_WORKFLOW_EVIDENCE_PROVIDER_CLASS: 'pdf_text',
+    })
+    const pdfBytes = new TextEncoder().encode(`%PDF-1.4
+BT
+(PULS MARKET A.S.) Tj
+(FIS NO: ABC123) Tj
+(13.06.2026) Tj
+(TOPKDV 180,00) Tj
+(TOPLAM 1.080,00 TL) Tj
+ET
+%%EOF`)
+    const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc: WorkflowEvidenceWorkerRpc = async <T>(
+      fn: string,
+      args: Record<string, unknown>,
+    ): Promise<T> => {
+      rpcCalls.push({ fn, args })
+      if (fn === 'recover_stale_expense_receipt_ocr_jobs') return 0 as T
+      if (fn === 'claim_next_expense_receipt_ocr_job') {
+        return [claimedJob({ provider_class: 'pdf_text' })] as T
+      }
+      if (fn === 'heartbeat_expense_receipt_ocr_job') return 'job-1' as T
+      if (fn === 'complete_expense_receipt_ocr_job') return 'result-1' as T
+      throw new Error(`unexpected rpc ${fn}`)
+    }
+    const fetchMock = vi.fn(async (url: Parameters<typeof fetch>[0]) => {
+      if (String(url).includes('/rest/v1/expense_receipts?')) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: 'receipt-1',
+              tenant_id: 'tenant-1',
+              expense_claim_id: 'claim-1',
+              file_ref: 'tenant-1/expense/evidence.pdf',
+              file_name: 'evidence.pdf',
+              mime_type: 'application/pdf',
+              file_size_bytes: pdfBytes.byteLength,
+            },
+          ]),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+      return new Response(pdfBytes, { status: 200 })
+    })
+
+    await expect(runWorkerOnce(config, { rpc, fetchImpl: fetchMock })).resolves.toMatchObject({
+      status: 'completed',
+      claimed: true,
+      jobId: 'job-1',
+      resultId: 'result-1',
+    })
+
+    const completion = rpcCalls.find((call) => call.fn === 'complete_expense_receipt_ocr_job')
+    expect(completion?.args).toMatchObject({
+      p_provider_class: 'pdf_text',
+      p_provider_name: 'puls-workflow-evidence-pdf-text',
+      p_extracted_fields: {
+        merchant_name: 'PULS MARKET A.S.',
+        receipt_number: 'ABC123',
+        receipt_date: '2026-06-13',
+        total_amount: 1080,
+        tax_amount: 180,
+        currency: 'TRY',
+      },
+      p_cost_metadata: {
+        external_call: false,
+        estimated_cost_minor: 0,
+        route_used: 'pdf_text',
+        text_payload_stored: false,
+      },
+    })
+    expect(JSON.stringify(completion?.args)).not.toContain('raw_ocr_text')
+    expect(JSON.stringify(completion?.args)).not.toContain('PULS MARKET A.S.\\n')
+  })
 })

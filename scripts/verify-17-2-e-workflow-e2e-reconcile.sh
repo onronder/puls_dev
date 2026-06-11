@@ -88,7 +88,7 @@ require_pattern "$README" "17_2_e_workflow_e2e_reconcile_smoke.sql"
 require_pattern "$README" "PR17.2F1 Evidence Upload Backend Boundary"
 require_pattern "$README" "PR17.2F2 Evidence Upload Product Flow"
 
-require_pattern "$AUDIT" "Rev 19"
+require_pattern "$AUDIT" "Rev 20"
 require_pattern "$AUDIT" "PR17.2E"
 require_pattern "$AUDIT" "DB-boundary"
 require_pattern "$AUDIT" "17_2_e_workflow_e2e_reconcile_smoke.sql"

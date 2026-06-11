@@ -201,12 +201,15 @@ G4A contract: [PR17.2G4A Expense Receipt OCR Quota Gate](./17_2_g4a_expense_rece
 
 G4B contract: [PR17.2G4B Expense Receipt OCR Queue Resilience](./17_2_g4b_expense_receipt_ocr_queue_resilience.md).
 
+G4C contract: [PR17.2G4C Expense Receipt OCR Local Extraction Benchmark](./17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md).
+
 Current G4 decision:
 
 - Treat G4 as a benchmark + quota gate, not a paid provider integration PR.
 - Prefer document-to-JSON VLM benchmarks before expensive vertical receipt APIs.
 - G4A enforces tenant flags, quotas, spend caps, provider allowlists, file/page limits, and safe cost metadata server-side for service-role enqueue.
 - G4B proves worker heartbeat, stale lease recovery, retry, dead-letter, and receipt `ocr_status` projection consistency without adding a provider.
+- G4C adds a zero-COGS `pdf_text` local extraction route, Turkish amount/date validation, route coverage metrics, and a network-free synthetic benchmark harness before any paid provider run.
 - Keep browser enqueue and provider integration closed until region/retention labels, route coverage, benchmark results, and KVKK/GDPR gates are approved.
 - Use the existing `expense_receipt_ocr_provider_class` enum for provider class and store specific VLM/vendor/model identity in provider name/version metadata.
 

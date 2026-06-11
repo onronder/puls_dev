@@ -45,10 +45,11 @@ The worker never reads or writes ERP connector credentials and does not use `ser
 - `PULS_WORKFLOW_EVIDENCE_WORKER_RECOVERY_LIMIT`
 - `PULS_WORKFLOW_EVIDENCE_PROVIDER_CLASS`
 
-`PULS_WORKFLOW_EVIDENCE_PROVIDER_CLASS` supports only:
+`PULS_WORKFLOW_EVIDENCE_PROVIDER_CLASS` supports:
 
 - `disabled`
 - `mock`
+- `pdf_text` (added by G4C as a local, zero-network benchmark route)
 
 Any other value resolves to `disabled`.
 
@@ -61,7 +62,7 @@ Any other value resolves to `disabled`.
 5. Download the private `workflow-evidence` object with service-role Storage headers.
 6. Compare downloaded byte length with `expense_receipts.file_size_bytes`.
 7. Compute server-side SHA-256.
-8. Build a disabled/mock extraction result:
+8. Build a disabled/mock/local `pdf_text` extraction result:
    - no extracted canonical values,
    - no raw text,
    - no provider payload,
