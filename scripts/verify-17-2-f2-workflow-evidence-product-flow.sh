@@ -87,7 +87,7 @@ require_pattern "$DOC" "create_leave_request_with_evidence"
 require_pattern "$DOC" "create_expense_claim_with_evidence"
 require_pattern "$FOUNDATION_DOC" "PR17.2F2 Product Flow"
 require_pattern "$README" "17_2_f2_workflow_evidence_product_flow.md"
-require_pattern "$AUDIT" "Rev 16"
+require_pattern "$AUDIT" "Rev 17"
 require_pattern "$AUDIT" "17.2F1/F2/F3 + 17.2G1/G2A/G2B/G3/G3A tamam"
 require_pattern "$VERIFY_PR17" "verify-17-2-f2-workflow-evidence-product-flow.sh"
 
