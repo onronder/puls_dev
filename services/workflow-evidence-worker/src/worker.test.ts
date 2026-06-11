@@ -22,7 +22,9 @@ const configuredEnv = {
   PULS_SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-value',
 }
 
-function claimedJob(overrides: Partial<ClaimedExpenseReceiptOcrJob> = {}): ClaimedExpenseReceiptOcrJob {
+function claimedJob(
+  overrides: Partial<ClaimedExpenseReceiptOcrJob> = {},
+): ClaimedExpenseReceiptOcrJob {
   return {
     job_id: 'job-1',
     tenant_id: 'tenant-1',
@@ -111,7 +113,9 @@ describe('workflow evidence worker storage helpers', () => {
       )
     })
 
-    await expect(fetchExpenseReceiptMetadata(config, 'receipt-1', fetchMock)).resolves.toMatchObject({
+    await expect(
+      fetchExpenseReceiptMetadata(config, 'receipt-1', fetchMock),
+    ).resolves.toMatchObject({
       id: 'receipt-1',
       file_ref: 'tenant-1/expense/evidence.pdf',
     })
@@ -178,13 +182,14 @@ describe('workflow evidence worker contract', () => {
   it('runs one claimed job through metadata read, private download, hash, and complete RPC', async () => {
     const config = resolveWorkflowEvidenceWorkerConfig(configuredEnv)
     const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
-    const rpc: WorkflowEvidenceWorkerRpc = async <T,>(
+    const rpc: WorkflowEvidenceWorkerRpc = async <T>(
       fn: string,
       args: Record<string, unknown>,
     ): Promise<T> => {
       rpcCalls.push({ fn, args })
       if (fn === 'recover_stale_expense_receipt_ocr_jobs') return 0 as T
       if (fn === 'claim_next_expense_receipt_ocr_job') return [claimedJob()] as T
+      if (fn === 'heartbeat_expense_receipt_ocr_job') return 'job-1' as T
       if (fn === 'complete_expense_receipt_ocr_job') return 'result-1' as T
       throw new Error(`unexpected rpc ${fn}`)
     }
@@ -214,6 +219,17 @@ describe('workflow evidence worker contract', () => {
       jobId: 'job-1',
       resultId: 'result-1',
       serverSha256: 'd6c0441a88ceb80ec9b25000d405a1c9357a51cf3fbedf27e32335f104194c1c',
+    })
+
+    const heartbeat = rpcCalls.find((call) => call.fn === 'heartbeat_expense_receipt_ocr_job')
+    expect(heartbeat?.args).toMatchObject({
+      p_job_id: 'job-1',
+      p_worker_id: 'workflow-evidence-worker',
+      p_lease_seconds: 300,
+      p_safe_error_context: {
+        external_call: false,
+        canonical_write: false,
+      },
     })
 
     const completion = rpcCalls.find((call) => call.fn === 'complete_expense_receipt_ocr_job')

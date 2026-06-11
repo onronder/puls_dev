@@ -1087,7 +1087,7 @@ Verify: [`../../scripts/verify-17-2-f3-evidence-finalization-hardening.sh`](../.
 
 ## PR17.2 planned follow-ups
 
-PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/reconcile guard. PR17.2F1-F3 closes the upload/finalize boundary. PR17.2G1-G3A adds evidence viewing, OCR processing contracts, a disabled worker skeleton, and human review. PR17.2G4 adds the vendor/VLM extraction decision document and benchmark gate; G4A adds the tenant OCR posture and quota gate. It still does not complete production OCR: browser enqueue, paid provider integration, richer browser journeys, and AI context feed remain intentionally separate slices.
+PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/reconcile guard. PR17.2F1-F3 closes the upload/finalize boundary. PR17.2G1-G3A adds evidence viewing, OCR processing contracts, a disabled worker skeleton, and human review. PR17.2G4 adds the vendor/VLM extraction decision document and benchmark gate; G4A adds the tenant OCR posture and quota gate; G4B proves queue heartbeat/recover/dead-letter resilience. It still does not complete production OCR: browser enqueue, paid provider integration, richer browser journeys, and AI context feed remain intentionally separate slices.
 
 | Planned slice                                                                                     | Purpose                                                                                                                                                                                                      |
 | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -1102,9 +1102,10 @@ PR17.2A-E closes workflow notification delivery plus the database-boundary e2e/r
 | [PR17.2G3A OCR Review Hardening](./17_2_g3a_expense_receipt_ocr_review_hardening.md)              | Blocks self-review and extends rollback smoke with unauthorized/requester negative actor coverage before G4 vendor/production-enqueue work.                                                                  |
 | [PR17.2G4 OCR Vendor/VLM Evaluation](./17_2_g4_expense_receipt_ocr_vendor_evaluation.md)          | Decision document for VLM/document-to-JSON benchmark order, provider enum mapping, route coverage metrics, quota/spend gates, and KVKK/data residency prerequisites; no production OCR provider is approved. |
 | [PR17.2G4A OCR Quota Gate](./17_2_g4a_expense_receipt_ocr_quota_gate.md)                          | Completed DB contract for tenant/global OCR posture, document quota, spend caps, provider allowlists, file/page limits, and safe cost metering; default posture remains closed.                              |
+| [PR17.2G4B OCR Queue Resilience](./17_2_g4b_expense_receipt_ocr_queue_resilience.md)              | Completed queue proof for worker heartbeat, stale lease recovery, retry, dead-letter, and receipt `ocr_status` projection consistency; no provider or browser enqueue.                                       |
 | PR17.4 AI context feed handoff                                                                    | Feed workflow, notification, and evidence events into the AI context layer before `/ai-koc` becomes a real context-aware assistant.                                                                          |
 
-Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 18.
+Reference: [17_0_product_reality_audit.md](./17_0_product_reality_audit.md) Rev 19.
 
 ## Related packs
 
