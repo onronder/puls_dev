@@ -22,6 +22,7 @@ scripts=(
   "scripts/verify-17-2-g2b-workflow-evidence-worker-skeleton.sh"
   "scripts/verify-17-2-g3-expense-receipt-ocr-human-review.sh"
   "scripts/verify-17-2-g3a-expense-receipt-ocr-review-hardening.sh"
+  "scripts/verify-17-2-g4a-expense-receipt-ocr-quota-gate.sh"
 )
 
 for script in "${scripts[@]}"; do
@@ -67,8 +68,8 @@ grep -Fq "17_2_g4_expense_receipt_ocr_vendor_evaluation.md" "$readme" || {
   echo "verify-pr17: README does not link G4 vendor evaluation doc" >&2
   exit 1
 }
-grep -Fq "Rev 17" "$audit" || {
-  echo "verify-pr17: audit doc is not bumped to Rev 17" >&2
+grep -Fq "Rev 18" "$audit" || {
+  echo "verify-pr17: audit doc is not bumped to Rev 18" >&2
   exit 1
 }
 grep -Fq "PR17.2G4" "$audit" || {

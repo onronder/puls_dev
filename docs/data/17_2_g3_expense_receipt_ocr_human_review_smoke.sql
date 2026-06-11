@@ -255,6 +255,34 @@ BEGIN
   )
   RETURNING id INTO v_receipt_id;
 
+  INSERT INTO puls_workflow.expense_receipt_ocr_tenant_posture (
+    tenant_id,
+    enabled,
+    monthly_document_quota,
+    monthly_spend_cap_minor,
+    provider_class_allowlist,
+    region_label,
+    retention_policy_label
+  )
+  VALUES (
+    v_tenant_id,
+    TRUE,
+    10,
+    0,
+    ARRAY['mock'::puls_workflow.expense_receipt_ocr_provider_class],
+    'test',
+    'rollback_only'
+  )
+  ON CONFLICT (tenant_id) DO UPDATE
+  SET
+    enabled = EXCLUDED.enabled,
+    monthly_document_quota = EXCLUDED.monthly_document_quota,
+    monthly_spend_cap_minor = EXCLUDED.monthly_spend_cap_minor,
+    provider_class_allowlist = EXCLUDED.provider_class_allowlist,
+    region_label = EXCLUDED.region_label,
+    retention_policy_label = EXCLUDED.retention_policy_label,
+    updated_at = NOW();
+
   v_job_id := puls_workflow.enqueue_expense_receipt_ocr_job(
     v_receipt_id,
     NULL,
