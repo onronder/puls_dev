@@ -1,6 +1,6 @@
 # PR17.2G Evidence Viewing, OCR Contract & Human Review
 
-> **Status:** Living PR17.2G contract. G1-G3A are implemented slices; G4 now has a vendor/VLM evaluation decision document, while production enqueue and provider integration remain closed.
+> **Status:** Living PR17.2G contract. G1-G3A are implemented slices; G4 has a vendor/VLM evaluation decision document, and G4A adds tenant OCR posture/quota gates. Browser enqueue and provider integration remain closed.
 > **Decision:** PR17.2G is not "build our own OCR" and not "send every receipt to an expensive vendor". It is the controlled path from attached evidence to reviewed, auditable suggestions.
 
 PR17.2F1/F2/F3 completed the evidence upload boundary: private storage, staging upload intents, finalized upload checks, product upload flows, attached metadata, and localized evidence errors. PR17.2G starts only after that boundary: authorized users must be able to view attached evidence, optional OCR/extraction can propose fields, and a human must review before any canonical expense data is changed.
@@ -197,11 +197,14 @@ Goal: choose and integrate an OCR/structured parsing provider only after cost an
 
 Decision document: [PR17.2G4 Expense Receipt OCR Vendor Evaluation](./17_2_g4_expense_receipt_ocr_vendor_evaluation.md).
 
+G4A contract: [PR17.2G4A Expense Receipt OCR Quota Gate](./17_2_g4a_expense_receipt_ocr_quota_gate.md).
+
 Current G4 decision:
 
 - Treat G4 as a benchmark + quota gate, not a paid provider integration PR.
 - Prefer document-to-JSON VLM benchmarks before expensive vertical receipt APIs.
-- Keep production enqueue closed until tenant flags, quotas, spend caps, region/retention labels, route coverage, and KVKK/GDPR gates are enforced server-side.
+- G4A enforces tenant flags, quotas, spend caps, provider allowlists, file/page limits, and safe cost metadata server-side for service-role enqueue.
+- Keep browser enqueue and provider integration closed until region/retention labels, route coverage, benchmark results, and KVKK/GDPR gates are approved.
 - Use the existing `expense_receipt_ocr_provider_class` enum for provider class and store specific VLM/vendor/model identity in provider name/version metadata.
 
 Required gates:
