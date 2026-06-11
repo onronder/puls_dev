@@ -5,6 +5,7 @@ PR17.2G2B adds a disabled-by-default worker skeleton for expense receipt evidenc
 The worker can:
 
 - claim `puls_workflow.expense_receipt_ocr_jobs`,
+- heartbeat active OCR job leases,
 - read attached `expense_receipts` metadata through Supabase REST,
 - download the private `workflow-evidence` object with the service-role key,
 - compute a server-side SHA-256 content hash,

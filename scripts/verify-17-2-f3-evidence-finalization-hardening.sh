@@ -81,7 +81,7 @@ require_pattern "$DOC" "server-computed content hashing"
 require_pattern "$FOUNDATION_DOC" "PR17.2F3 Finalization Hardening"
 require_pattern "$FOUNDATION_DOC" "storage_size_verified: true"
 require_pattern "$README" "17_2_f3_evidence_finalization_hardening.md"
-require_pattern "$AUDIT" "Rev 18"
+require_pattern "$AUDIT" "Rev 19"
 require_pattern "$AUDIT" "17.2F1/F2/F3 + 17.2G1/G2A/G2B/G3/G3A tamam"
 require_pattern "$VERIFY_PR17" "verify-17-2-f3-evidence-finalization-hardening.sh"
 

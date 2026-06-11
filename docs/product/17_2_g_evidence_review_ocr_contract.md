@@ -199,11 +199,14 @@ Decision document: [PR17.2G4 Expense Receipt OCR Vendor Evaluation](./17_2_g4_ex
 
 G4A contract: [PR17.2G4A Expense Receipt OCR Quota Gate](./17_2_g4a_expense_receipt_ocr_quota_gate.md).
 
+G4B contract: [PR17.2G4B Expense Receipt OCR Queue Resilience](./17_2_g4b_expense_receipt_ocr_queue_resilience.md).
+
 Current G4 decision:
 
 - Treat G4 as a benchmark + quota gate, not a paid provider integration PR.
 - Prefer document-to-JSON VLM benchmarks before expensive vertical receipt APIs.
 - G4A enforces tenant flags, quotas, spend caps, provider allowlists, file/page limits, and safe cost metadata server-side for service-role enqueue.
+- G4B proves worker heartbeat, stale lease recovery, retry, dead-letter, and receipt `ocr_status` projection consistency without adding a provider.
 - Keep browser enqueue and provider integration closed until region/retention labels, route coverage, benchmark results, and KVKK/GDPR gates are approved.
 - Use the existing `expense_receipt_ocr_provider_class` enum for provider class and store specific VLM/vendor/model identity in provider name/version metadata.
 
@@ -282,7 +285,6 @@ Forbidden AI context fields:
 3. Is orphan storage object cleanup explicitly outside PR17.2G, or should a service-role janitor be included as a later G sub-slice?
 4. Which G4 provider/cost/KVKK gates must block production enqueue?
 5. Should structured corrected field entry ship before canonical OCR apply, or together with the apply boundary?
-6. Which G4 smoke should cover recover/dead-letter and long-running provider heartbeat behavior?
 
 ## Non-Goals For All G Slices
 

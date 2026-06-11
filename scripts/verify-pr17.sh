@@ -23,6 +23,7 @@ scripts=(
   "scripts/verify-17-2-g3-expense-receipt-ocr-human-review.sh"
   "scripts/verify-17-2-g3a-expense-receipt-ocr-review-hardening.sh"
   "scripts/verify-17-2-g4a-expense-receipt-ocr-quota-gate.sh"
+  "scripts/verify-17-2-g4b-expense-receipt-ocr-queue-resilience.sh"
 )
 
 for script in "${scripts[@]}"; do
@@ -30,10 +31,11 @@ for script in "${scripts[@]}"; do
 done
 
 g4_doc="docs/product/17_2_g4_expense_receipt_ocr_vendor_evaluation.md"
+g4b_doc="docs/product/17_2_g4b_expense_receipt_ocr_queue_resilience.md"
 readme="docs/product/README.md"
 audit="docs/product/17_0_product_reality_audit.md"
 
-for file in "$g4_doc" "$readme" "$audit"; do
+for file in "$g4_doc" "$g4b_doc" "$readme" "$audit"; do
   [[ -f "$file" ]] || {
     echo "verify-pr17: missing file: $file" >&2
     exit 1
@@ -64,16 +66,28 @@ grep -Fq "No paid vendor SDK" "$g4_doc" || {
   echo "verify-pr17: missing G4 paid-provider non-goal" >&2
   exit 1
 }
+grep -Fq "PR17.2G4B Expense Receipt OCR Queue Resilience" "$g4b_doc" || {
+  echo "verify-pr17: missing G4B document title" >&2
+  exit 1
+}
+grep -Fq "recover to \`dead_letter\`" "$g4b_doc" || {
+  echo "verify-pr17: missing G4B dead-letter proof" >&2
+  exit 1
+}
 grep -Fq "17_2_g4_expense_receipt_ocr_vendor_evaluation.md" "$readme" || {
   echo "verify-pr17: README does not link G4 vendor evaluation doc" >&2
   exit 1
 }
-grep -Fq "Rev 18" "$audit" || {
-  echo "verify-pr17: audit doc is not bumped to Rev 18" >&2
+grep -Fq "17_2_g4b_expense_receipt_ocr_queue_resilience.md" "$readme" || {
+  echo "verify-pr17: README does not link G4B queue resilience doc" >&2
   exit 1
 }
-grep -Fq "PR17.2G4" "$audit" || {
-  echo "verify-pr17: audit doc does not mention PR17.2G4" >&2
+grep -Fq "Rev 19" "$audit" || {
+  echo "verify-pr17: audit doc is not bumped to Rev 19" >&2
+  exit 1
+}
+grep -Fq "PR17.2G4B" "$audit" || {
+  echo "verify-pr17: audit doc does not mention PR17.2G4B" >&2
   exit 1
 }
 

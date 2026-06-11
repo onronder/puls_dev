@@ -170,12 +170,10 @@ export function resolveWorkflowEvidenceWorkerConfig(
     configured: supabaseUrl !== '' && serviceRoleKey !== '',
     port: clampNumber(Number(env.PORT ?? 8082), 1, 65535),
     workerId: (
-      normalizeOptionalText(env.PULS_WORKFLOW_EVIDENCE_WORKER_ID) ??
-      'workflow-evidence-worker'
+      normalizeOptionalText(env.PULS_WORKFLOW_EVIDENCE_WORKER_ID) ?? 'workflow-evidence-worker'
     ).trim(),
     runtimeVersion: (
-      normalizeOptionalText(env.PULS_WORKFLOW_EVIDENCE_WORKER_VERSION) ??
-      DEFAULT_RUNTIME_VERSION
+      normalizeOptionalText(env.PULS_WORKFLOW_EVIDENCE_WORKER_VERSION) ?? DEFAULT_RUNTIME_VERSION
     ).trim(),
     supabaseUrl: supabaseUrl || null,
     serviceRoleKey: serviceRoleKey || null,
@@ -195,7 +193,9 @@ export function resolveWorkflowEvidenceWorkerConfig(
   }
 }
 
-export function buildHealthPayload(config: WorkflowEvidenceWorkerConfig): WorkflowEvidenceWorkerHealth {
+export function buildHealthPayload(
+  config: WorkflowEvidenceWorkerConfig,
+): WorkflowEvidenceWorkerHealth {
   return {
     service: 'workflow-evidence-worker',
     status: 'ok',
@@ -318,7 +318,10 @@ export async function fetchExpenseReceiptMetadata(
 
   const payload = (await response.json().catch(() => null)) as ExpenseReceiptMetadata[] | null
   if (!response.ok) {
-    throw new WorkflowEvidenceWorkerRpcError(response.status, 'expense_receipt_metadata_fetch_failed')
+    throw new WorkflowEvidenceWorkerRpcError(
+      response.status,
+      'expense_receipt_metadata_fetch_failed',
+    )
   }
 
   const receipt = payload?.[0]
@@ -347,7 +350,10 @@ export async function downloadWorkflowEvidenceObject(
   )
 
   if (!response.ok) {
-    throw new WorkflowEvidenceWorkerRpcError(response.status, 'workflow_evidence_object_download_failed')
+    throw new WorkflowEvidenceWorkerRpcError(
+      response.status,
+      'workflow_evidence_object_download_failed',
+    )
   }
 
   return new Uint8Array(await response.arrayBuffer())
@@ -371,9 +377,7 @@ export function buildDisabledProviderExtraction(
         : ['provider_disabled', 'human_review_required'],
     providerClass,
     providerName:
-      providerClass === 'mock'
-        ? 'puls-workflow-evidence-mock'
-        : 'puls-workflow-evidence-disabled',
+      providerClass === 'mock' ? 'puls-workflow-evidence-mock' : 'puls-workflow-evidence-disabled',
     providerVersion: config.runtimeVersion,
     providerReference: null,
     costMetadata: {
@@ -455,7 +459,10 @@ function buildFailureCompletionArgs(
 function normalizeErrorCode(error: unknown) {
   if (error instanceof WorkflowEvidenceWorkerRpcError) return error.code
   if (error instanceof Error && error.message) {
-    return error.message.toLowerCase().replace(/[^a-z0-9_]+/g, '_').slice(0, 80)
+    return error.message
+      .toLowerCase()
+      .replace(/[^a-z0-9_]+/g, '_')
+      .slice(0, 80)
   }
   return 'workflow_evidence_worker_unknown_error'
 }
@@ -481,11 +488,14 @@ export async function runWorkerOnce(
     })
   }
 
-  const claimedJobs = await rpc<ClaimedExpenseReceiptOcrJob[]>('claim_next_expense_receipt_ocr_job', {
-    p_worker_id: config.workerId,
-    p_limit: 1,
-    p_lease_seconds: config.leaseSeconds,
-  })
+  const claimedJobs = await rpc<ClaimedExpenseReceiptOcrJob[]>(
+    'claim_next_expense_receipt_ocr_job',
+    {
+      p_worker_id: config.workerId,
+      p_limit: 1,
+      p_lease_seconds: config.leaseSeconds,
+    },
+  )
   const job = claimedJobs[0]
 
   if (!job) {
@@ -493,6 +503,17 @@ export async function runWorkerOnce(
   }
 
   try {
+    await rpc<string>('heartbeat_expense_receipt_ocr_job', {
+      p_job_id: job.job_id,
+      p_worker_id: config.workerId,
+      p_lease_seconds: config.leaseSeconds,
+      p_safe_error_context: {
+        worker_contract: config.runtimeVersion,
+        external_call: false,
+        canonical_write: false,
+      },
+    })
+
     const receipt = await fetchExpenseReceiptMetadata(config, job.expense_receipt_id, fetchImpl)
     const bytes = await downloadWorkflowEvidenceObject(config, receipt.file_ref, fetchImpl)
 

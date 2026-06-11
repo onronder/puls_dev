@@ -56,18 +56,19 @@ Any other value resolves to `disabled`.
 
 1. Recover stale OCR jobs through `recover_stale_expense_receipt_ocr_jobs`.
 2. Claim one job through `claim_next_expense_receipt_ocr_job`.
-3. Read the linked `expense_receipts` metadata through Supabase REST with the `puls_workflow` profile.
-4. Download the private `workflow-evidence` object with service-role Storage headers.
-5. Compare downloaded byte length with `expense_receipts.file_size_bytes`.
-6. Compute server-side SHA-256.
-7. Build a disabled/mock extraction result:
+3. Heartbeat the active lease through `heartbeat_expense_receipt_ocr_job`.
+4. Read the linked `expense_receipts` metadata through Supabase REST with the `puls_workflow` profile.
+5. Download the private `workflow-evidence` object with service-role Storage headers.
+6. Compare downloaded byte length with `expense_receipts.file_size_bytes`.
+7. Compute server-side SHA-256.
+8. Build a disabled/mock extraction result:
    - no extracted canonical values,
    - no raw text,
    - no provider payload,
    - `external_call: false`,
    - `estimated_cost_minor: 0`,
    - `human_review_required` mismatch flag.
-8. Complete the G2A job through `complete_expense_receipt_ocr_job`.
+9. Complete the G2A job through `complete_expense_receipt_ocr_job`.
 
 If the receipt metadata or private storage object cannot be read, the worker completes the claimed job as failed with safe metadata only.
 

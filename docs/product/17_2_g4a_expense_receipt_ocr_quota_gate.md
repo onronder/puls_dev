@@ -87,7 +87,7 @@ bash scripts/verify-17-2-g4a-expense-receipt-ocr-quota-gate.sh
 
 ## Handoff
 
-G4B can now add queue resilience proof and worker heartbeat coverage on top of a default-closed enqueue contract.
+G4B added queue resilience proof and worker heartbeat coverage on top of this default-closed enqueue contract.
 
 G4C can add local extraction and benchmark harnesses without opening paid providers.
 
