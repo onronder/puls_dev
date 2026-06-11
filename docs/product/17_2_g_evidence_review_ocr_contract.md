@@ -1,6 +1,6 @@
 # PR17.2G Evidence Viewing, OCR Contract & Human Review
 
-> **Status:** Living PR17.2G contract. G1-G3A are implemented slices; G4 remains a vendor/production-enqueue decision gate.
+> **Status:** Living PR17.2G contract. G1-G3A are implemented slices; G4 now has a vendor/VLM evaluation decision document, while production enqueue and provider integration remain closed.
 > **Decision:** PR17.2G is not "build our own OCR" and not "send every receipt to an expensive vendor". It is the controlled path from attached evidence to reviewed, auditable suggestions.
 
 PR17.2F1/F2/F3 completed the evidence upload boundary: private storage, staging upload intents, finalized upload checks, product upload flows, attached metadata, and localized evidence errors. PR17.2G starts only after that boundary: authorized users must be able to view attached evidence, optional OCR/extraction can propose fields, and a human must review before any canonical expense data is changed.
@@ -107,17 +107,19 @@ Scope:
 8. Add server-side content hashing in the worker path before duplicate detection or paid provider calls. `sha256_client` remains informational only.
 9. Decide whether XML/e-invoice intake is opened in this slice. If yes, update the evidence file extension check, Storage bucket MIME allowlist, intent/finalize validation, UI copy, and tests together. If no, keep structured parsing as a future path and document that PR17.2G2 only parses current PDF/image inputs.
 10. Store safe extracted fields and confidence:
-   - vendor,
-   - receipt date,
-   - total amount,
-   - currency,
-   - tax amount,
-   - receipt/invoice number,
-   - per-field confidence,
-   - document confidence,
-   - mismatch flags,
-   - provider class/name/version/reference,
-   - estimated or actual cost metadata.
+
+- vendor,
+- receipt date,
+- total amount,
+- currency,
+- tax amount,
+- receipt/invoice number,
+- per-field confidence,
+- document confidence,
+- mismatch flags,
+- provider class/name/version/reference,
+- estimated or actual cost metadata.
+
 11. Avoid raw OCR text by default. If raw text is needed later, it must have explicit retention, RLS, and redaction rules.
 
 G2A enqueue decision:
@@ -192,6 +194,15 @@ Actor recommendation:
 ### PR17.2G4 — Vendor Evaluation & Worker Integration
 
 Goal: choose and integrate an OCR/structured parsing provider only after cost and compliance gates are explicit.
+
+Decision document: [PR17.2G4 Expense Receipt OCR Vendor Evaluation](./17_2_g4_expense_receipt_ocr_vendor_evaluation.md).
+
+Current G4 decision:
+
+- Treat G4 as a benchmark + quota gate, not a paid provider integration PR.
+- Prefer document-to-JSON VLM benchmarks before expensive vertical receipt APIs.
+- Keep production enqueue closed until tenant flags, quotas, spend caps, region/retention labels, route coverage, and KVKK/GDPR gates are enforced server-side.
+- Use the existing `expense_receipt_ocr_provider_class` enum for provider class and store specific VLM/vendor/model identity in provider name/version metadata.
 
 Required gates:
 

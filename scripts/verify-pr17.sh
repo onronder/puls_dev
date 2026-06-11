@@ -28,4 +28,52 @@ for script in "${scripts[@]}"; do
   bash "$script" "$ROOT_DIR"
 done
 
+g4_doc="docs/product/17_2_g4_expense_receipt_ocr_vendor_evaluation.md"
+readme="docs/product/README.md"
+audit="docs/product/17_0_product_reality_audit.md"
+
+for file in "$g4_doc" "$readme" "$audit"; do
+  [[ -f "$file" ]] || {
+    echo "verify-pr17: missing file: $file" >&2
+    exit 1
+  }
+done
+
+grep -Fq "PR17.2G4 Expense Receipt OCR Vendor Evaluation" "$g4_doc" || {
+  echo "verify-pr17: missing G4 document title" >&2
+  exit 1
+}
+grep -Fq "OpenAI gpt-5.4-nano direct JSON" "$g4_doc" || {
+  echo "verify-pr17: missing OpenAI VLM benchmark row" >&2
+  exit 1
+}
+grep -Fq "Google Document AI Expense parser" "$g4_doc" || {
+  echo "verify-pr17: missing Document AI expense parser cost row" >&2
+  exit 1
+}
+grep -Fq "route_used" "$g4_doc" || {
+  echo "verify-pr17: missing G4 route coverage benchmark field" >&2
+  exit 1
+}
+grep -Fq "providerClass:" "$g4_doc" || {
+  echo "verify-pr17: missing G4 provider class mapping contract" >&2
+  exit 1
+}
+grep -Fq "No paid vendor SDK" "$g4_doc" || {
+  echo "verify-pr17: missing G4 paid-provider non-goal" >&2
+  exit 1
+}
+grep -Fq "17_2_g4_expense_receipt_ocr_vendor_evaluation.md" "$readme" || {
+  echo "verify-pr17: README does not link G4 vendor evaluation doc" >&2
+  exit 1
+}
+grep -Fq "Rev 17" "$audit" || {
+  echo "verify-pr17: audit doc is not bumped to Rev 17" >&2
+  exit 1
+}
+grep -Fq "PR17.2G4" "$audit" || {
+  echo "verify-pr17: audit doc does not mention PR17.2G4" >&2
+  exit 1
+}
+
 echo "verify-pr17: OK"
