@@ -24,6 +24,7 @@ scripts=(
   "scripts/verify-17-2-g3a-expense-receipt-ocr-review-hardening.sh"
   "scripts/verify-17-2-g4a-expense-receipt-ocr-quota-gate.sh"
   "scripts/verify-17-2-g4b-expense-receipt-ocr-queue-resilience.sh"
+  "scripts/verify-17-2-g4c-expense-receipt-ocr-local-extraction-benchmark.sh"
 )
 
 for script in "${scripts[@]}"; do
@@ -32,10 +33,11 @@ done
 
 g4_doc="docs/product/17_2_g4_expense_receipt_ocr_vendor_evaluation.md"
 g4b_doc="docs/product/17_2_g4b_expense_receipt_ocr_queue_resilience.md"
+g4c_doc="docs/product/17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md"
 readme="docs/product/README.md"
 audit="docs/product/17_0_product_reality_audit.md"
 
-for file in "$g4_doc" "$g4b_doc" "$readme" "$audit"; do
+for file in "$g4_doc" "$g4b_doc" "$g4c_doc" "$readme" "$audit"; do
   [[ -f "$file" ]] || {
     echo "verify-pr17: missing file: $file" >&2
     exit 1
@@ -74,6 +76,14 @@ grep -Fq "recover to \`dead_letter\`" "$g4b_doc" || {
   echo "verify-pr17: missing G4B dead-letter proof" >&2
   exit 1
 }
+grep -Fq "PR17.2G4C Expense Receipt OCR Local Extraction Benchmark" "$g4c_doc" || {
+  echo "verify-pr17: missing G4C document title" >&2
+  exit 1
+}
+grep -Fq "route_coverage" "$g4c_doc" || {
+  echo "verify-pr17: missing G4C route coverage contract" >&2
+  exit 1
+}
 grep -Fq "17_2_g4_expense_receipt_ocr_vendor_evaluation.md" "$readme" || {
   echo "verify-pr17: README does not link G4 vendor evaluation doc" >&2
   exit 1
@@ -82,12 +92,16 @@ grep -Fq "17_2_g4b_expense_receipt_ocr_queue_resilience.md" "$readme" || {
   echo "verify-pr17: README does not link G4B queue resilience doc" >&2
   exit 1
 }
-grep -Fq "Rev 19" "$audit" || {
-  echo "verify-pr17: audit doc is not bumped to Rev 19" >&2
+grep -Fq "17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md" "$readme" || {
+  echo "verify-pr17: README does not link G4C local extraction doc" >&2
   exit 1
 }
-grep -Fq "PR17.2G4B" "$audit" || {
-  echo "verify-pr17: audit doc does not mention PR17.2G4B" >&2
+grep -Fq "Rev 20" "$audit" || {
+  echo "verify-pr17: audit doc is not bumped to Rev 20" >&2
+  exit 1
+}
+grep -Fq "PR17.2G4C" "$audit" || {
+  echo "verify-pr17: audit doc does not mention PR17.2G4C" >&2
   exit 1
 }
 

@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 
+import { extractReceiptFieldsFromPdfTextLayer } from './local-extraction.ts'
+
 export type ExpenseReceiptOcrJobStatus =
   | 'queued'
   | 'processing'
@@ -9,7 +11,7 @@ export type ExpenseReceiptOcrJobStatus =
   | 'cancelled'
   | 'dead_letter'
 
-export type ExpenseReceiptOcrProviderClass = 'disabled' | 'mock'
+export type ExpenseReceiptOcrProviderClass = 'disabled' | 'mock' | 'pdf_text'
 
 export type WorkflowEvidenceWorkerConfig = {
   enabled: boolean
@@ -133,6 +135,7 @@ function normalizeOptionalText(value: string | undefined) {
 
 function resolveProviderClass(value: string | undefined): ExpenseReceiptOcrProviderClass {
   const normalized = value?.trim().toLowerCase()
+  if (normalized === 'pdf_text') return 'pdf_text'
   return normalized === 'mock' ? 'mock' : 'disabled'
 }
 
@@ -388,6 +391,35 @@ export function buildDisabledProviderExtraction(
   }
 }
 
+export function buildLocalProviderExtraction(
+  config: WorkflowEvidenceWorkerConfig,
+  bytes: Uint8Array,
+  receipt: Pick<ExpenseReceiptMetadata, 'mime_type'>,
+): ExpenseReceiptExtractionResult {
+  if (config.providerClass !== 'pdf_text') {
+    return buildDisabledProviderExtraction(config)
+  }
+
+  const extraction = extractReceiptFieldsFromPdfTextLayer(bytes, receipt.mime_type)
+  return {
+    extractedFields: extraction.fields,
+    fieldConfidence: extraction.fieldConfidence,
+    documentConfidence: extraction.documentConfidence,
+    mismatchFlags: ['local_pdf_text', ...extraction.warnings],
+    providerClass: 'pdf_text',
+    providerName: 'puls-workflow-evidence-pdf-text',
+    providerVersion: config.runtimeVersion,
+    providerReference: null,
+    costMetadata: {
+      external_call: false,
+      estimated_cost_minor: 0,
+      route_used: extraction.routeUsed,
+      text_payload_stored: false,
+      benchmark_candidate: true,
+    },
+  }
+}
+
 export function buildCompletionArgs(
   job: ClaimedExpenseReceiptOcrJob,
   workerId: string,
@@ -522,7 +554,7 @@ export async function runWorkerOnce(
     }
 
     const serverSha256 = computeSha256Hex(bytes)
-    const extraction = buildDisabledProviderExtraction(config)
+    const extraction = buildLocalProviderExtraction(config, bytes, receipt)
     const completionArgs = {
       ...buildCompletionArgs(job, config.workerId, serverSha256, extraction),
       p_safe_error_context: {
