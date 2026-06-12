@@ -1,6 +1,6 @@
 # PR17.2G4B Expense Receipt OCR Queue Resilience
 
-> **Status:** Queue resilience proof for the existing OCR queue and disabled worker skeleton. No paid OCR/VLM provider, browser enqueue, Railway deployment, local extraction harness, or canonical expense mutation is included.
+> **Status:** Queue resilience proof for the existing OCR queue and worker skeleton. No paid OCR/VLM provider, browser enqueue, Railway deployment, or canonical expense mutation is included.
 
 PR17.2G4B closes the queue-resilience evidence gap left by G2A/G2B/G3A. It proves that a claimed OCR job can heartbeat its lease, recover after lease expiry, retry safely, and dead-letter after max attempts while keeping `expense_receipts.ocr_status` consistent.
 
@@ -8,17 +8,16 @@ PR17.2G4B closes the queue-resilience evidence gap left by G2A/G2B/G3A. It prove
 
 Worker behavior:
 
-- `runWorkerOnce` calls `heartbeat_expense_receipt_ocr_job` after claiming a job and before private evidence download or extraction work.
-- The heartbeat context is safe metadata only:
-  - worker contract,
-  - `external_call: false`,
-  - `canonical_write: false`.
-- The worker still supports only `disabled` and `mock` provider classes.
+- `runWorkerOnce` calls `heartbeat_expense_receipt_ocr_job` around metadata fetch, private evidence download, local extraction, and completion work so long operations can keep the lease alive.
+- Heartbeats send an empty safe context so they extend the lease without overwriting the job's existing `safe_error_context`.
+- Transient worker failures such as RPC/storage 5xx, 429, timeout, or fetch-level network errors complete as `retrying` with retry delay; permanent validation failures complete as `failed`.
+- The worker rejects a claimed job when `job.provider_class` does not match the configured worker provider class.
+- The worker supports `disabled`, `mock`, and the G4C local `pdf_text` provider class; all remain zero-network routes.
 
 Rollback-only queue smoke:
 
 - enqueue one mock OCR job under an explicitly enabled G4A tenant posture,
-- claim the job and record a heartbeat event,
+- claim the job, record a heartbeat event, and prove the heartbeat extends `lease_expires_at`,
 - force lease expiry and recover to `retrying`,
 - confirm receipt projection returns to `ocr_status = 'queued'`,
 - reclaim the retrying job,
@@ -36,7 +35,7 @@ Rollback-only queue smoke:
 - No Railway deployment.
 - No canonical `expense_claims` write.
 - No raw OCR text, provider payload, document bytes, storage paths, signed URLs, or credentials in DB safe contexts.
-- No local extraction or benchmark harness.
+- No paid or image OCR extraction.
 
 ## Verification
 
@@ -49,7 +48,7 @@ psql "$DATABASE_URL" \
 
 The smoke proves:
 
-- active worker heartbeat records `expense_receipt_ocr.job_heartbeat`,
+- active worker heartbeat records `expense_receipt_ocr.job_heartbeat` and extends `lease_expires_at`,
 - stale processing jobs recover to `retrying`,
 - recovered jobs clear locks and leases,
 - recovered jobs set `safe_error_code = 'OCR_LEASE_EXPIRED'`,
@@ -67,6 +66,6 @@ bash scripts/verify-17-2-g4b-expense-receipt-ocr-queue-resilience.sh
 
 ## Handoff
 
-G4C can now add local extraction and benchmark harnesses on top of a queue contract that has proven heartbeat, recovery, retry, and dead-letter behavior.
+G4C added local extraction and benchmark harnesses on top of a queue contract that has proven heartbeat, recovery, retry, and dead-letter behavior. The G4C-A hardening pass additionally proves worker-side transient retry classification, provider-class mismatch failure, and non-overwriting heartbeat context.
 
 G4D/G4E remain blocked until dataset/KVKK, budget/quota defaults, region/residency, and enqueue-trigger product decisions are explicitly approved.

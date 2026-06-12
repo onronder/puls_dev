@@ -11,7 +11,7 @@ export type LocalReceiptExtractionFields = Partial<
 >
 
 export type LocalReceiptExtraction = {
-  routeUsed: 'pdf_text' | 'no_text_layer'
+  routeUsed: 'pdf_text' | 'text_fixture' | 'no_text_layer'
   fields: LocalReceiptExtractionFields
   fieldConfidence: Partial<Record<LocalReceiptFieldKey, number>>
   documentConfidence: number
@@ -23,14 +23,17 @@ const MAX_TEXT_CHARS = 20_000
 const MIN_TEXT_LAYER_CHARS = 24
 const CURRENCY_PATTERN = /\b(TRY|TL|TRL|USD|EUR)\b|₺|\$|€/iu
 const DATE_PATTERN = /\b([0-3]?\d)[./-]([01]?\d)[./-](20\d{2})\b/u
-const AMOUNT_PATTERN = /-?\d{1,3}(?:\.\d{3})*(?:,\d{2})|-?\d+(?:,\d{2})|-?\d+\.\d{2}/u
+const AMOUNT_PATTERN = /(?<![\d.,])-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}(?![\d.,])/u
 
-const TOTAL_LABEL_PATTERN = /\b(GENEL\s+TOPLAM|TOPLAM|TOTAL)\b/iu
+const GENEL_TOTAL_LABEL_PATTERN = /\bGENEL\s+TOPLAM\b/iu
+const TURKISH_TOTAL_LABEL_PATTERN = /\bTOPLAM\b/iu
 const TAX_LABEL_PATTERN = /\b(TOPKDV|TOPLAM\s+KDV|KDV)\b/iu
 const RECEIPT_NUMBER_PATTERN =
   /\b(FIS|FİŞ|BELGE|FATURA)\s*(NO|NUMARASI|#)?\s*[:.-]?\s*([A-Z0-9-]{3,})\b/iu
 const NON_TOTAL_LABEL_PATTERN =
-  /\b(ARA\s+TOPLAM|TOPKDV|TOPLAM\s+KDV|KDV|NAKIT|NAKİT|KREDI|KREDİ|PARA\s+USTU|PARA\s+ÜSTÜ)\b/iu
+  /\b(ARA\s+TOPLAM|TOPKDV|TOPLAM\s+KDV|KDV\s+TOPLAM|NAKIT|NAKİT|KREDI|KREDİ|PARA\s+USTU|PARA\s+ÜSTÜ)\b/iu
+const ENGLISH_TOTAL_LABEL_PATTERN = /\bTOTAL\b/iu
+const ENGLISH_AMOUNT_PATTERN = /(?<![\d.,])-?\d{1,3}(?:,\d{3})+\.\d{2}(?![\d.,])/u
 
 function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, ' ').trim()
@@ -91,10 +94,12 @@ export function extractPdfTextLayer(bytes: Uint8Array, mimeType: string | null |
 }
 
 export function parseTurkishAmount(value: string): number | null {
+  if (ENGLISH_AMOUNT_PATTERN.test(value)) return null
+
   const amount = value.match(AMOUNT_PATTERN)?.[0]
   if (!amount) return null
 
-  const normalized = amount.includes(',') ? amount.replace(/\./g, '').replace(',', '.') : amount
+  const normalized = amount.replace(/\./g, '').replace(',', '.')
 
   const parsed = Number(normalized)
   if (!Number.isFinite(parsed)) return null
@@ -132,19 +137,39 @@ export function normalizeReceiptCurrency(value: string): 'TRY' | 'USD' | 'EUR' |
 }
 
 function findAmountByLabel(lines: string[], labelPattern: RegExp, excludePattern?: RegExp) {
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
     if (!labelPattern.test(line)) continue
     if (excludePattern?.test(line)) continue
-    const amount = parseTurkishAmount(line)
+    const amount = parseTurkishAmount(`${line} ${lines[index + 1] ?? ''}`)
     if (amount !== null) return amount
   }
+  return null
+}
+
+function findTotalAmount(lines: string[]) {
+  const generalTotal = findAmountByLabel(lines, GENEL_TOTAL_LABEL_PATTERN, NON_TOTAL_LABEL_PATTERN)
+  if (generalTotal !== null) return generalTotal
+
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index] ?? ''
+    if (!TURKISH_TOTAL_LABEL_PATTERN.test(line)) continue
+    if (NON_TOTAL_LABEL_PATTERN.test(line)) continue
+    const amount = parseTurkishAmount(`${line} ${lines[index + 1] ?? ''}`)
+    if (amount !== null) return amount
+  }
+
   return null
 }
 
 function findMerchantName(lines: string[]) {
   for (const line of lines.slice(0, 6)) {
     if (line.length < 3) continue
-    if (DATE_PATTERN.test(line) || AMOUNT_PATTERN.test(line) || TOTAL_LABEL_PATTERN.test(line))
+    if (
+      DATE_PATTERN.test(line) ||
+      AMOUNT_PATTERN.test(line) ||
+      TURKISH_TOTAL_LABEL_PATTERN.test(line) ||
+      ENGLISH_TOTAL_LABEL_PATTERN.test(line)
+    )
       continue
     if (TAX_LABEL_PATTERN.test(line) || RECEIPT_NUMBER_PATTERN.test(line)) continue
     return line.slice(0, 120)
@@ -160,12 +185,12 @@ function findReceiptNumber(lines: string[]) {
   return null
 }
 
-export function extractReceiptFieldsFromText(text: string): LocalReceiptExtraction {
+export function extractReceiptFieldsFromText(
+  text: string,
+  routeUsed: 'pdf_text' | 'text_fixture' = 'text_fixture',
+): LocalReceiptExtraction {
   const normalizedText = normalizeWhitespace(text)
-  const lines = text
-    .split(/\r?\n| {2,}/u)
-    .map(normalizeLine)
-    .filter(Boolean)
+  const lines = text.split(/\r?\n/u).map(normalizeLine).filter(Boolean)
 
   if (normalizedText.length < MIN_TEXT_LAYER_CHARS || lines.length === 0) {
     return {
@@ -195,7 +220,7 @@ export function extractReceiptFieldsFromText(text: string): LocalReceiptExtracti
     warnings.push('receipt_date_missing')
   }
 
-  const totalAmount = findAmountByLabel(lines, TOTAL_LABEL_PATTERN, NON_TOTAL_LABEL_PATTERN)
+  const totalAmount = findTotalAmount(lines)
   if (totalAmount !== null) {
     fields.total_amount = totalAmount
     fieldConfidence.total_amount = 0.75
@@ -223,11 +248,18 @@ export function extractReceiptFieldsFromText(text: string): LocalReceiptExtracti
     warnings.push('tax_amount_exceeds_total')
   }
 
+  if (
+    ENGLISH_TOTAL_LABEL_PATTERN.test(normalizedText) ||
+    ENGLISH_AMOUNT_PATTERN.test(normalizedText)
+  ) {
+    warnings.push('untrusted_english_total_or_amount_ignored')
+  }
+
   const scoredFields = Object.keys(fieldConfidence).length
   const documentConfidence = Math.min(0.78, Math.max(0.35, scoredFields / 8 + 0.25))
 
   return {
-    routeUsed: 'pdf_text',
+    routeUsed,
     fields,
     fieldConfidence,
     documentConfidence,
@@ -239,5 +271,5 @@ export function extractReceiptFieldsFromPdfTextLayer(
   bytes: Uint8Array,
   mimeType: string | null | undefined,
 ) {
-  return extractReceiptFieldsFromText(extractPdfTextLayer(bytes, mimeType))
+  return extractReceiptFieldsFromText(extractPdfTextLayer(bytes, mimeType), 'pdf_text')
 }
