@@ -226,10 +226,7 @@ describe('workflow evidence worker contract', () => {
       p_job_id: 'job-1',
       p_worker_id: 'workflow-evidence-worker',
       p_lease_seconds: 300,
-      p_safe_error_context: {
-        external_call: false,
-        canonical_write: false,
-      },
+      p_safe_error_context: {},
     })
 
     const completion = rpcCalls.find((call) => call.fn === 'complete_expense_receipt_ocr_job')
@@ -319,5 +316,121 @@ ET
     })
     expect(JSON.stringify(completion?.args)).not.toContain('raw_ocr_text')
     expect(JSON.stringify(completion?.args)).not.toContain('PULS MARKET A.S.\\n')
+  })
+
+  it('fails safely when the claimed job provider class does not match worker config', async () => {
+    const config = resolveWorkflowEvidenceWorkerConfig(configuredEnv)
+    const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc: WorkflowEvidenceWorkerRpc = async <T>(
+      fn: string,
+      args: Record<string, unknown>,
+    ): Promise<T> => {
+      rpcCalls.push({ fn, args })
+      if (fn === 'recover_stale_expense_receipt_ocr_jobs') return 0 as T
+      if (fn === 'claim_next_expense_receipt_ocr_job') {
+        return [claimedJob({ provider_class: 'pdf_text' })] as T
+      }
+      if (fn === 'complete_expense_receipt_ocr_job') return 'result-1' as T
+      throw new Error(`unexpected rpc ${fn}`)
+    }
+
+    await expect(runWorkerOnce(config, { rpc })).resolves.toMatchObject({
+      status: 'failed',
+      claimed: true,
+      jobId: 'job-1',
+      safeErrorCode: 'ocr_provider_class_mismatch',
+    })
+
+    expect(rpcCalls.some((call) => call.fn === 'heartbeat_expense_receipt_ocr_job')).toBe(false)
+    const completion = rpcCalls.find((call) => call.fn === 'complete_expense_receipt_ocr_job')
+    expect(completion?.args).toMatchObject({
+      p_status: 'failed',
+      p_safe_error_code: 'ocr_provider_class_mismatch',
+      p_retry_after_seconds: null,
+    })
+  })
+
+  it('marks transient worker failures as retrying instead of final failed', async () => {
+    const config = resolveWorkflowEvidenceWorkerConfig(configuredEnv)
+    const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc: WorkflowEvidenceWorkerRpc = async <T>(
+      fn: string,
+      args: Record<string, unknown>,
+    ): Promise<T> => {
+      rpcCalls.push({ fn, args })
+      if (fn === 'recover_stale_expense_receipt_ocr_jobs') return 0 as T
+      if (fn === 'claim_next_expense_receipt_ocr_job') return [claimedJob()] as T
+      if (fn === 'heartbeat_expense_receipt_ocr_job') return 'job-1' as T
+      if (fn === 'complete_expense_receipt_ocr_job') return 'result-1' as T
+      throw new Error(`unexpected rpc ${fn}`)
+    }
+    const fetchMock = vi.fn(async () => {
+      return new Response(JSON.stringify({ code: 'temporary_failure' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    })
+
+    await expect(runWorkerOnce(config, { rpc, fetchImpl: fetchMock })).resolves.toMatchObject({
+      status: 'retrying',
+      claimed: true,
+      jobId: 'job-1',
+      safeErrorCode: 'expense_receipt_metadata_fetch_failed',
+    })
+
+    const completion = rpcCalls.find((call) => call.fn === 'complete_expense_receipt_ocr_job')
+    expect(completion?.args).toMatchObject({
+      p_status: 'retrying',
+      p_safe_error_code: 'expense_receipt_metadata_fetch_failed',
+      p_retry_after_seconds: 120,
+      p_safe_error_context: {
+        transient: true,
+        external_call: false,
+        canonical_write: false,
+      },
+    })
+  })
+
+  it('keeps the lease alive across worker phases without overwriting job context', async () => {
+    const config = resolveWorkflowEvidenceWorkerConfig(configuredEnv)
+    const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
+    const rpc: WorkflowEvidenceWorkerRpc = async <T>(
+      fn: string,
+      args: Record<string, unknown>,
+    ): Promise<T> => {
+      rpcCalls.push({ fn, args })
+      if (fn === 'recover_stale_expense_receipt_ocr_jobs') return 0 as T
+      if (fn === 'claim_next_expense_receipt_ocr_job') return [claimedJob()] as T
+      if (fn === 'heartbeat_expense_receipt_ocr_job') return 'job-1' as T
+      if (fn === 'complete_expense_receipt_ocr_job') return 'result-1' as T
+      throw new Error(`unexpected rpc ${fn}`)
+    }
+    const fetchMock = vi.fn(async (url: Parameters<typeof fetch>[0]) => {
+      if (String(url).includes('/rest/v1/expense_receipts?')) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: 'receipt-1',
+              tenant_id: 'tenant-1',
+              expense_claim_id: 'claim-1',
+              file_ref: 'tenant-1/expense/evidence.pdf',
+              file_name: 'evidence.pdf',
+              mime_type: 'application/pdf',
+              file_size_bytes: 13,
+            },
+          ]),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+      return new Response(new TextEncoder().encode('receipt-bytes'), { status: 200 })
+    })
+
+    await runWorkerOnce(config, { rpc, fetchImpl: fetchMock })
+
+    const heartbeats = rpcCalls.filter((call) => call.fn === 'heartbeat_expense_receipt_ocr_job')
+    expect(heartbeats).toHaveLength(4)
+    expect(
+      heartbeats.every((call) => JSON.stringify(call.args.p_safe_error_context) === '{}'),
+    ).toBe(true)
   })
 })

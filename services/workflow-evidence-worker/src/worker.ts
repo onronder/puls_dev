@@ -90,6 +90,7 @@ export type WorkflowEvidenceWorkerRunResult =
   | { status: 'not_configured'; claimed: false }
   | { status: 'idle'; claimed: false }
   | { status: 'completed'; claimed: true; jobId: string; resultId: string; serverSha256: string }
+  | { status: 'retrying'; claimed: true; jobId: string; safeErrorCode: string }
   | { status: 'failed'; claimed: true; jobId: string; safeErrorCode: string }
 
 type WorkerEnv = Record<string, string | undefined>
@@ -137,6 +138,10 @@ function resolveProviderClass(value: string | undefined): ExpenseReceiptOcrProvi
   const normalized = value?.trim().toLowerCase()
   if (normalized === 'pdf_text') return 'pdf_text'
   return normalized === 'mock' ? 'mock' : 'disabled'
+}
+
+function isKnownProviderClass(value: string): value is ExpenseReceiptOcrProviderClass {
+  return value === 'disabled' || value === 'mock' || value === 'pdf_text'
 }
 
 function normalizeRpcSafeErrorCode(
@@ -457,11 +462,13 @@ function buildFailureCompletionArgs(
   job: ClaimedExpenseReceiptOcrJob,
   workerId: string,
   safeErrorCode: string,
+  status: 'failed' | 'retrying' = 'failed',
+  retryAfterSeconds: number | null = null,
 ) {
   return {
     p_job_id: job.job_id,
     p_worker_id: workerId,
-    p_status: 'failed',
+    p_status: status,
     p_server_sha256: null,
     p_extracted_fields: {},
     p_field_confidence: {},
@@ -482,9 +489,10 @@ function buildFailureCompletionArgs(
       external_call: false,
       text_payload_stored: false,
       canonical_write: false,
+      transient: status === 'retrying',
     },
     p_next_action_key: 'review_expense_receipt_ocr_worker_failure',
-    p_retry_after_seconds: null,
+    p_retry_after_seconds: retryAfterSeconds,
   } satisfies Record<string, unknown>
 }
 
@@ -497,6 +505,64 @@ function normalizeErrorCode(error: unknown) {
       .slice(0, 80)
   }
   return 'workflow_evidence_worker_unknown_error'
+}
+
+function isTransientWorkerError(error: unknown) {
+  if (error instanceof WorkflowEvidenceWorkerRpcError) {
+    return error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500
+  }
+
+  return error instanceof TypeError
+}
+
+function resolveFailureStatus(error: unknown): {
+  status: 'failed' | 'retrying'
+  retryAfterSeconds: number | null
+} {
+  return isTransientWorkerError(error)
+    ? { status: 'retrying', retryAfterSeconds: 120 }
+    : { status: 'failed', retryAfterSeconds: null }
+}
+
+function assertProviderClassMatchesJob(
+  config: WorkflowEvidenceWorkerConfig,
+  job: ClaimedExpenseReceiptOcrJob,
+) {
+  if (!isKnownProviderClass(job.provider_class)) {
+    throw new WorkflowEvidenceWorkerRpcError(422, 'ocr_provider_class_unknown')
+  }
+
+  if (job.provider_class !== config.providerClass) {
+    throw new WorkflowEvidenceWorkerRpcError(422, 'ocr_provider_class_mismatch')
+  }
+}
+
+async function withLeaseHeartbeat<T>(
+  config: WorkflowEvidenceWorkerConfig,
+  job: ClaimedExpenseReceiptOcrJob,
+  rpc: WorkflowEvidenceWorkerRpc,
+  operation: () => Promise<T>,
+): Promise<T> {
+  const heartbeat = () =>
+    rpc<string>('heartbeat_expense_receipt_ocr_job', {
+      p_job_id: job.job_id,
+      p_worker_id: config.workerId,
+      p_lease_seconds: config.leaseSeconds,
+      p_safe_error_context: {},
+    })
+
+  await heartbeat()
+
+  const heartbeatEveryMs = clampNumber((config.leaseSeconds * 1000) / 3, 5000, 30000)
+  const interval = setInterval(() => {
+    void heartbeat().catch(() => undefined)
+  }, heartbeatEveryMs)
+
+  try {
+    return await operation()
+  } finally {
+    clearInterval(interval)
+  }
 }
 
 export async function runWorkerOnce(
@@ -535,26 +601,23 @@ export async function runWorkerOnce(
   }
 
   try {
-    await rpc<string>('heartbeat_expense_receipt_ocr_job', {
-      p_job_id: job.job_id,
-      p_worker_id: config.workerId,
-      p_lease_seconds: config.leaseSeconds,
-      p_safe_error_context: {
-        worker_contract: config.runtimeVersion,
-        external_call: false,
-        canonical_write: false,
-      },
-    })
+    assertProviderClassMatchesJob(config, job)
 
-    const receipt = await fetchExpenseReceiptMetadata(config, job.expense_receipt_id, fetchImpl)
-    const bytes = await downloadWorkflowEvidenceObject(config, receipt.file_ref, fetchImpl)
+    const receipt = await withLeaseHeartbeat(config, job, rpc, () =>
+      fetchExpenseReceiptMetadata(config, job.expense_receipt_id, fetchImpl),
+    )
+    const bytes = await withLeaseHeartbeat(config, job, rpc, () =>
+      downloadWorkflowEvidenceObject(config, receipt.file_ref, fetchImpl),
+    )
 
     if (receipt.file_size_bytes !== null && bytes.byteLength !== receipt.file_size_bytes) {
       throw new WorkflowEvidenceWorkerRpcError(422, 'workflow_evidence_object_size_mismatch')
     }
 
     const serverSha256 = computeSha256Hex(bytes)
-    const extraction = buildLocalProviderExtraction(config, bytes, receipt)
+    const extraction = await withLeaseHeartbeat(config, job, rpc, async () =>
+      buildLocalProviderExtraction(config, bytes, receipt),
+    )
     const completionArgs = {
       ...buildCompletionArgs(job, config.workerId, serverSha256, extraction),
       p_safe_error_context: {
@@ -567,7 +630,9 @@ export async function runWorkerOnce(
         mime_type: receipt.mime_type,
       },
     }
-    const resultId = await rpc<string>('complete_expense_receipt_ocr_job', completionArgs)
+    const resultId = await withLeaseHeartbeat(config, job, rpc, () =>
+      rpc<string>('complete_expense_receipt_ocr_job', completionArgs),
+    )
 
     return {
       status: 'completed',
@@ -578,13 +643,20 @@ export async function runWorkerOnce(
     }
   } catch (error) {
     const safeErrorCode = normalizeErrorCode(error)
+    const failure = resolveFailureStatus(error)
     await rpc<string>(
       'complete_expense_receipt_ocr_job',
-      buildFailureCompletionArgs(job, config.workerId, safeErrorCode),
+      buildFailureCompletionArgs(
+        job,
+        config.workerId,
+        safeErrorCode,
+        failure.status,
+        failure.retryAfterSeconds,
+      ),
     )
 
     return {
-      status: 'failed',
+      status: failure.status,
       claimed: true,
       jobId: job.job_id,
       safeErrorCode,

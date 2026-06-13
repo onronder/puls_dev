@@ -42,6 +42,8 @@ DECLARE
   v_job_id UUID;
   v_claimed_job_id UUID;
   v_recovered_count INTEGER;
+  v_lease_before TIMESTAMPTZ;
+  v_lease_after TIMESTAMPTZ;
   v_worker_id TEXT := 'pr17_2g4b_smoke_worker';
 BEGIN
   SELECT raw_value INTO v_raw FROM pr17_2g4b_psql_vars WHERE key = 'tenant_id';
@@ -181,12 +183,26 @@ BEGIN
     RAISE EXCEPTION 'PR17_2G4B_SMOKE_FAIL: first claim did not return the queued job.';
   END IF;
 
+  SELECT lease_expires_at
+  INTO v_lease_before
+  FROM puls_workflow.expense_receipt_ocr_jobs
+  WHERE id = v_job_id;
+
   PERFORM puls_workflow.heartbeat_expense_receipt_ocr_job(
     v_job_id,
     v_worker_id,
-    30,
+    120,
     jsonb_build_object('smoke', 'pr17.2g4b_heartbeat')
   );
+
+  SELECT lease_expires_at
+  INTO v_lease_after
+  FROM puls_workflow.expense_receipt_ocr_jobs
+  WHERE id = v_job_id;
+
+  IF v_lease_after IS NULL OR v_lease_before IS NULL OR v_lease_after <= v_lease_before THEN
+    RAISE EXCEPTION 'PR17_2G4B_SMOKE_FAIL: heartbeat did not extend the active lease.';
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1

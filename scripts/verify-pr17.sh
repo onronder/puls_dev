@@ -84,6 +84,10 @@ grep -Fq "route_coverage" "$g4c_doc" || {
   echo "verify-pr17: missing G4C route coverage contract" >&2
   exit 1
 }
+grep -Fq "mean_field_accuracy" "$g4c_doc" || {
+  echo "verify-pr17: missing G4C accuracy gate contract" >&2
+  exit 1
+}
 grep -Fq "17_2_g4_expense_receipt_ocr_vendor_evaluation.md" "$readme" || {
   echo "verify-pr17: README does not link G4 vendor evaluation doc" >&2
   exit 1
@@ -96,12 +100,12 @@ grep -Fq "17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md" "$readme" 
   echo "verify-pr17: README does not link G4C local extraction doc" >&2
   exit 1
 }
-grep -Fq "Rev 20" "$audit" || {
-  echo "verify-pr17: audit doc is not bumped to Rev 20" >&2
+grep -Fq "Rev 21" "$audit" || {
+  echo "verify-pr17: audit doc is not bumped to Rev 21" >&2
   exit 1
 }
-grep -Fq "PR17.2G4C" "$audit" || {
-  echo "verify-pr17: audit doc does not mention PR17.2G4C" >&2
+grep -Fq "PR17.2G4C-A" "$audit" || {
+  echo "verify-pr17: audit doc does not mention PR17.2G4C-A" >&2
   exit 1
 }
 
