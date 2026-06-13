@@ -75,7 +75,7 @@ require_pattern "$DOC" "Default posture"
 require_pattern "$DOC" "Idempotent enqueue hits return the existing job"
 require_pattern "$G_DOC" "G4A"
 require_pattern "$README" "17_2_g4a_expense_receipt_ocr_quota_gate.md"
-require_pattern "$AUDIT" "Rev 20"
+grep -Eq "^> \*\*Tarih:\*\* .*\*\*Rev 2[0-9]\*\*" "$AUDIT" || fail "audit doc missing current PR17 Rev 2x marker"
 require_pattern "$AUDIT" "PR17.2G4A"
 require_pattern "$VERIFY_PR17" "verify-17-2-g4a-expense-receipt-ocr-quota-gate.sh"
 

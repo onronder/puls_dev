@@ -87,7 +87,7 @@ require_pattern "$DOC" "No paid OCR/VLM provider"
 require_pattern "$DOC" 'No canonical `expense_claims` write'
 require_pattern "$G_DOC" "G4B"
 require_pattern "$README" "17_2_g4b_expense_receipt_ocr_queue_resilience.md"
-require_pattern "$AUDIT" "Rev 21"
+grep -Eq "^> \*\*Tarih:\*\* .*\*\*Rev 2[0-9]\*\*" "$AUDIT" || fail "audit doc missing current PR17 Rev 2x marker"
 require_pattern "$AUDIT" "PR17.2G4B"
 require_pattern "$VERIFY_PR17" "verify-17-2-g4b-expense-receipt-ocr-queue-resilience.sh"
 

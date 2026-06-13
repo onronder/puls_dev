@@ -28,6 +28,7 @@ const AMOUNT_PATTERN = /(?<![\d.,])-?(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}(?![\d.,])
 const GENEL_TOTAL_LABEL_PATTERN = /\bGENEL\s+TOPLAM\b/iu
 const TURKISH_TOTAL_LABEL_PATTERN = /\bTOPLAM\b/iu
 const TAX_LABEL_PATTERN = /\b(TOPKDV|TOPLAM\s+KDV|KDV)\b/iu
+const NON_TAX_LABEL_PATTERN = /\bKDV\s+DAHIL\s+TOPLAM\b/iu
 const RECEIPT_NUMBER_PATTERN =
   /\b(FIS|FİŞ|BELGE|FATURA)\s*(NO|NUMARASI|#)?\s*[:.-]?\s*([A-Z0-9-]{3,})\b/iu
 const NON_TOTAL_LABEL_PATTERN =
@@ -228,7 +229,7 @@ export function extractReceiptFieldsFromText(
     warnings.push('total_amount_missing')
   }
 
-  const taxAmount = findAmountByLabel(lines, TAX_LABEL_PATTERN)
+  const taxAmount = findAmountByLabel(lines, TAX_LABEL_PATTERN, NON_TAX_LABEL_PATTERN)
   if (taxAmount !== null) {
     fields.tax_amount = taxAmount
     fieldConfidence.tax_amount = 0.65

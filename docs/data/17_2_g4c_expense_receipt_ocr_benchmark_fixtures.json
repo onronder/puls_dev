@@ -75,6 +75,7 @@
       "receipt_number": "COL-42",
       "receipt_date": "2026-06-13",
       "total_amount": 1080,
+      "tax_amount": null,
       "currency": "TRY"
     }
   },
