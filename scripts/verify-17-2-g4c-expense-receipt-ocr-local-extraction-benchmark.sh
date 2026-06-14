@@ -98,6 +98,7 @@ require_pattern "$FIXTURES" "no_text_layer"
 require_pattern "$FIXTURES" "IGNORE PREVIOUS INSTRUCTIONS"
 require_pattern "$FIXTURES" "TOTAL 0,00"
 require_pattern "$FIXTURES" "1,234.56"
+require_pattern "$FIXTURES" '"tax_amount": null'
 
 benchmark_output="$(node --experimental-strip-types "$RUNNER")"
 grep -Fq '"external_call": false' <<< "$benchmark_output" || fail "benchmark output must prove no external call"
@@ -118,6 +119,10 @@ const englishAmount = summary.results.find((result) => result.id === 'synthetic_
 if (!englishAmount?.per_field_exact?.total_amount) {
   throw new Error('English amount fixture did not reject ambiguous amount normalization')
 }
+const columnarTotal = summary.results.find((result) => result.id === 'synthetic_columnar_total_tr_004')
+if (!columnarTotal?.per_field_exact?.tax_amount) {
+  throw new Error('Columnar KDV DAHIL TOPLAM fixture produced a tax_amount false positive')
+}
 NODE
 
 require_pattern "$DOC" "PR17.2G4C Expense Receipt OCR Local Extraction Benchmark"
@@ -128,8 +133,8 @@ require_pattern "$DOC" "PDF bytes"
 require_pattern "$DOC" "Document content is treated as untrusted input"
 require_pattern "$G_DOC" "G4C"
 require_pattern "$README" "17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md"
-require_pattern "$AUDIT" "Rev 21"
-require_pattern "$AUDIT" "PR17.2G4C-A"
+grep -Eq "^> \*\*Tarih:\*\* .*\*\*Rev 2[0-9]\*\*" "$AUDIT" || fail "audit doc missing current PR17 Rev 2x marker"
+require_pattern "$AUDIT" "PR17.2G4C-B"
 require_pattern "$VERIFY_PR17" "verify-17-2-g4c-expense-receipt-ocr-local-extraction-benchmark.sh"
 
 echo "PR17.2G4C expense receipt OCR local extraction benchmark verification passed."

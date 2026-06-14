@@ -21,6 +21,7 @@ Deterministic parser:
 - Currency normalization for `TRY`, `TL`, `TRL`, `₺`, `USD`, and `EUR`.
 - Label preference for `GENEL TOPLAM` and the last Turkish `TOPLAM` over `ARA TOPLAM`, payment lines, `PARA ÜSTÜ`, or adversarial English `TOTAL` lines.
 - Columnar total rows such as `KDV DAHIL TOPLAM      1.080,00 TL` stay on one logical line so the amount is not split away from the label.
+- `KDV DAHIL TOPLAM` is treated as a total label, not a tax label; benchmark fixtures assert it does not produce a `tax_amount` false positive.
 - `TOPKDV`/`KDV` extraction as tax amount.
 - Receipt number extraction from `FIS/FİŞ/BELGE/FATURA NO`.
 - Document content is treated as untrusted input; benchmark fixtures include an adversarial instruction string.
@@ -41,6 +42,7 @@ Benchmark harness:
   - adversarial instruction ignored count,
   - `external_call: false`.
 - Verify fails unless `mean_field_accuracy` meets the local threshold and adversarial fixtures preserve the expected total.
+- Verify uses a current Rev marker regex instead of depending on a stale `Rev 20`/`Rev 21` substring in audit history.
 
 ## Explicit Non-Goals
 

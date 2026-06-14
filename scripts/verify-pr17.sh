@@ -100,12 +100,12 @@ grep -Fq "17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md" "$readme" 
   echo "verify-pr17: README does not link G4C local extraction doc" >&2
   exit 1
 }
-grep -Fq "Rev 21" "$audit" || {
-  echo "verify-pr17: audit doc is not bumped to Rev 21" >&2
+grep -Eq "^> \*\*Tarih:\*\* .*\*\*Rev 2[0-9]\*\*" "$audit" || {
+  echo "verify-pr17: audit doc missing current PR17 Rev 2x marker" >&2
   exit 1
 }
-grep -Fq "PR17.2G4C-A" "$audit" || {
-  echo "verify-pr17: audit doc does not mention PR17.2G4C-A" >&2
+grep -Fq "PR17.2G4C-B" "$audit" || {
+  echo "verify-pr17: audit doc does not mention PR17.2G4C-B" >&2
   exit 1
 }
 

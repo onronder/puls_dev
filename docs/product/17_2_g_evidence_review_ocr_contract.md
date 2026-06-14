@@ -211,6 +211,7 @@ Current G4 decision:
 - G4B proves worker heartbeat, stale lease recovery, retry, dead-letter, and receipt `ocr_status` projection consistency without adding a provider.
 - G4C adds a zero-COGS `pdf_text` local extraction route, Turkish amount/date validation, route coverage metrics, and a network-free synthetic benchmark harness before any paid provider run.
 - G4C-A hardens that harness before G4D: PDF-byte fixtures are separated from direct text fixtures, `mean_field_accuracy` and adversarial totals are verify-gated, English `TOTAL 0,00`/`1,234.56` cases cannot silently hijack Turkish totals, worker heartbeats preserve existing job context, provider-class mismatches fail safely, and transient worker failures complete as `retrying`.
+- G4C-B removes stale audit Rev substring dependencies from PR17 verify scripts and prevents `KDV DAHIL TOPLAM` total rows from being emitted as `tax_amount`.
 - Keep browser enqueue and provider integration closed until region/retention labels, route coverage, benchmark results, and KVKK/GDPR gates are approved.
 - Use the existing `expense_receipt_ocr_provider_class` enum for provider class and store specific VLM/vendor/model identity in provider name/version metadata.
 

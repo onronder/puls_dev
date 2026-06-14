@@ -81,6 +81,7 @@ describe('local receipt extraction', () => {
     `)
 
     expect(result.fields.total_amount).toBe(1080)
+    expect(result.fields.tax_amount).toBeUndefined()
   })
 
   it('extracts simple uncompressed PDF text-layer candidates', () => {
