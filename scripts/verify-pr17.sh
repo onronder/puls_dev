@@ -25,6 +25,7 @@ scripts=(
   "scripts/verify-17-2-g4a-expense-receipt-ocr-quota-gate.sh"
   "scripts/verify-17-2-g4b-expense-receipt-ocr-queue-resilience.sh"
   "scripts/verify-17-2-g4c-expense-receipt-ocr-local-extraction-benchmark.sh"
+  "scripts/verify-17-2-g4d-expense-receipt-ocr-paid-benchmark-runbook.sh"
 )
 
 for script in "${scripts[@]}"; do
@@ -34,10 +35,11 @@ done
 g4_doc="docs/product/17_2_g4_expense_receipt_ocr_vendor_evaluation.md"
 g4b_doc="docs/product/17_2_g4b_expense_receipt_ocr_queue_resilience.md"
 g4c_doc="docs/product/17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md"
+g4d_doc="docs/product/17_2_g4d_expense_receipt_ocr_paid_benchmark_runbook.md"
 readme="docs/product/README.md"
 audit="docs/product/17_0_product_reality_audit.md"
 
-for file in "$g4_doc" "$g4b_doc" "$g4c_doc" "$readme" "$audit"; do
+for file in "$g4_doc" "$g4b_doc" "$g4c_doc" "$g4d_doc" "$readme" "$audit"; do
   [[ -f "$file" ]] || {
     echo "verify-pr17: missing file: $file" >&2
     exit 1
@@ -88,6 +90,30 @@ grep -Fq "mean_field_accuracy" "$g4c_doc" || {
   echo "verify-pr17: missing G4C accuracy gate contract" >&2
   exit 1
 }
+grep -Fq "PR17.2G4D Expense Receipt OCR Paid Benchmark Runbook" "$g4d_doc" || {
+  echo "verify-pr17: missing G4D document title" >&2
+  exit 1
+}
+grep -Fq "Benchmark runbook and decision protocol only" "$g4d_doc" || {
+  echo "verify-pr17: missing G4D benchmark-only scope" >&2
+  exit 1
+}
+grep -Fq "route-specific" "$g4d_doc" || {
+  echo "verify-pr17: missing G4D route-specific cost contract" >&2
+  exit 1
+}
+grep -Fq "cost_per_avoided_review" "$g4d_doc" || {
+  echo "verify-pr17: missing G4D review-savings metric" >&2
+  exit 1
+}
+grep -Fq "Redacted Results Template" "$g4d_doc" || {
+  echo "verify-pr17: missing G4D redacted result template" >&2
+  exit 1
+}
+grep -Fq "No live provider call" "$g4d_doc" || {
+  echo "verify-pr17: missing G4D live-provider non-goal" >&2
+  exit 1
+}
 grep -Fq "17_2_g4_expense_receipt_ocr_vendor_evaluation.md" "$readme" || {
   echo "verify-pr17: README does not link G4 vendor evaluation doc" >&2
   exit 1
@@ -100,12 +126,16 @@ grep -Fq "17_2_g4c_expense_receipt_ocr_local_extraction_benchmark.md" "$readme" 
   echo "verify-pr17: README does not link G4C local extraction doc" >&2
   exit 1
 }
+grep -Fq "17_2_g4d_expense_receipt_ocr_paid_benchmark_runbook.md" "$readme" || {
+  echo "verify-pr17: README does not link G4D paid benchmark runbook doc" >&2
+  exit 1
+}
 grep -Eq "^> \*\*Tarih:\*\* .*\*\*Rev 2[0-9]\*\*" "$audit" || {
   echo "verify-pr17: audit doc missing current PR17 Rev 2x marker" >&2
   exit 1
 }
-grep -Fq "PR17.2G4C-B" "$audit" || {
-  echo "verify-pr17: audit doc does not mention PR17.2G4C-B" >&2
+grep -Fq "PR17.2G4D" "$audit" || {
+  echo "verify-pr17: audit doc does not mention PR17.2G4D" >&2
   exit 1
 }
 
